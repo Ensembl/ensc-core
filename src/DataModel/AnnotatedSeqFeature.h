@@ -8,7 +8,7 @@
 #include "SeqFeature.h"
 #include "StableIdInfo.h"
 
-#define ANNOTATEDSEQFEATUREFUNCS_DATA
+#define ANNOTATEDSEQFEATUREFUNCS_DATA \
   SEQFEATUREFUNCS_DATA
 
 typedef struct AnnotatedSeqFeatureFuncsStruct {

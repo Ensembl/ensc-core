@@ -10,12 +10,12 @@
 
 #include "EnsRoot.h"
 
-typedef int (*SeqFeature_StartFunc)(SeqFeature *);
-typedef int (*SeqFeature_EndFunc)(SeqFeature *);
+typedef int (*SeqFeature_GetStartFunc)(SeqFeature *);
+typedef int (*SeqFeature_GetEndFunc)(SeqFeature *);
 
 #define SEQFEATUREFUNCS_DATA \
-  SeqFeature_StartFunc start; \
-  SeqFeature_EndFunc   end;
+  SeqFeature_GetStartFunc getStart; \
+  SeqFeature_GetEndFunc   getEnd;
 
 typedef struct SeqFeatureFuncsStruct {
   SEQFEATUREFUNCS_DATA
