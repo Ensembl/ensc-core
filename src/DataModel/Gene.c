@@ -66,15 +66,12 @@ char *Gene_setType(Gene *g, char *type) {
 }
 
 int Gene_setStart(Gene *gene, int start) {
-/* NIY
-  SeqFeature_setStart(&(gene->sf),start);
+  gene->start = start;
   Gene_setStartIsSet(gene,TRUE);
-  return SeqFeature_getStart(&(gene->sf));
-*/
+  return gene->start;
 }
 
 int Gene_getStart(Gene *gene) {
-/* NIY
   int multiFlag = 0;
 
   if (Gene_getStartIsSet(gene) == FALSE) {
@@ -86,8 +83,8 @@ int Gene_getStart(Gene *gene) {
       Exon *exon = Vector_getElementAt(exonVector,i);
 
       if (!Gene_getStartIsSet(gene) || 
-          Exon_getStart(exon) < SeqFeature_getStart(&(gene->sf))) {
-        Gene_setStart(gene, Exon_getStart(exon));
+          Exon_getStart(exon) < gene->start) {
+        gene->start = Exon_getStart(exon);
       }
       if (multiFlag || 
           (lastContig && strcmp(lastContig, BaseContig_getName(Exon_getContig(exon))))) {
@@ -104,8 +101,7 @@ int Gene_getStart(Gene *gene) {
                 "The return value from getStart may not be what you want");
   }
 
-  return SeqFeature_getStart(&(gene->sf));
-*/
+  return gene->start;
 }
 
 
