@@ -12,5 +12,6 @@ struct MapperRangeSetStruct {
 
 MapperRangeSet *MapperRangeSet_new();
 #define MapperRangeSet_getRangeAt(mrs,ind) (mrs)->ranges[(ind)]
+#define MapperRangeSet_getNumRange(mrs) (mrs)->nRange
 
 #endif

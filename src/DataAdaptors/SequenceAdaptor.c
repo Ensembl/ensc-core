@@ -3,6 +3,11 @@
 #include "MysqlUtil.h"
 #include "SeqUtil.h"
 #include "RawContig.h"
+#include "AssemblyMapperAdaptor.h"
+#include "RawContigAdaptor.h"
+#include "BaseContig.h"
+#include "Slice.h"
+#include "StrUtil.h"
 
 
 SequenceAdaptor *SequenceAdaptor_new(DBAdaptor *dba) {
@@ -76,3 +81,84 @@ char *SequenceAdaptor_fetchByRawContigStartEndStrand(SequenceAdaptor *sa,
     return NULL;
   }
 }
+
+char *SequenceAdaptor_fetchBySliceStartEndStrand(SequenceAdaptor *sa,
+                                                 Slice *slice, int start, int end,
+                                                 int strand) {
+  char *seq;
+
+  if (!slice ) {
+    fprintf(stderr,"ERROR: need a slice to work\n");
+    exit(1);
+  }
+
+  if (BaseContig_getContigType(slice) != SLICE) {
+    fprintf(stderr,"ERROR: slice fetch called with something that isn't a slice\n");
+    exit(1);
+  }
+
+  if (end == -1) {
+    end = Slice_getChrEnd(slice) - Slice_getChrStart(slice) + 1;
+  }
+
+  // need to check the strand'edness of the slice as this
+  // affects the direction in which the dna seq is grabbed
+  if (Slice_getStrand(slice) == 1) {
+    seq = SequenceAdaptor_fetchByAssemblyLocation(sa,
+            Slice_getChrStart(slice)+start-1,
+            Slice_getChrStart(slice)+end-1,
+            strand,
+            Slice_getChrId(slice),
+            Slice_getAssemblyType(slice)
+           );
+  } else if (Slice_getStrand(slice) == -1 ) {
+    seq = SequenceAdaptor_fetchByAssemblyLocation(sa,
+            Slice_getChrEnd(slice)-end+1,
+            Slice_getChrEnd(slice)-start+1,
+            strand * -1, //have to make strand relative to slice's strand
+            Slice_getChrId(slice),
+            Slice_getAssemblyType(slice)
+           );
+  } else {
+    fprintf(stderr,"ERROR: Incorrect strand set on slice\n");
+    exit(1);
+  }
+  return seq;
+}
+
+char *SequenceAdaptor_fetchByAssemblyLocation(SequenceAdaptor *sa,
+          int chrStart, int chrEnd, int strand, long chrId, char *assemblyType) {
+
+  AssemblyMapperAdaptor *ama = DBAdaptor_getAssemblyMapperAdaptor(sa->dba);
+  RawContigAdaptor *ra = DBAdaptor_getRawContigAdaptor(sa->dba);
+  AssemblyMapper *assMapper = AssemblyMapperAdaptor_fetchByType(ama, assemblyType);
+  char *seq;
+  MapperRangeSet *coordSet;
+  int i;
+
+
+  coordSet = AssemblyMapper_mapCoordinatesToRawContig(assMapper, chrId, 
+                                                      chrStart, chrEnd, strand );
+
+  // for each of the pieces get sequence
+  seq = StrUtil_CopyString("");
+  for (i=0; i<MapperRangeSet_getNumRange(coordSet); i++) {
+    MapperRange *segment = MapperRangeSet_getRangeAt(coordSet,i);
+
+    if (segment->rangeType == MAPPERRANGE_COORD) {
+      MapperCoordinate *mc = (MapperCoordinate *)segment;
+      RawContig *contig = RawContigAdaptor_fetchByDbID(ra, mc->id);
+      char *contigSeq = SequenceAdaptor_fetchByRawContigStartEndStrand(sa, contig,
+                                      mc->start, mc->end, mc->strand); 
+      seq = StrUtil_AppendString(seq,contigSeq);
+      free(contigSeq);
+    } else {
+      // its a gap
+      int length = segment->end - segment->start + 1;
+      seq = SeqUtil_addNs(seq,length);
+    }
+  }
+
+  return seq;
+}
+

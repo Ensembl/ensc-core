@@ -55,7 +55,6 @@ Analysis *AnalysisAdaptor_fetchByDbID(AnalysisAdaptor *aa, long dbID) {
 
   if (IDHash_contains(aa->analCache, dbID)) {
     anal = (Analysis *)IDHash_getValue(aa->analCache, dbID);
-    printf("Using anal cache\n");
 
   } else {
     sprintf(qStr,

@@ -7,12 +7,10 @@ unsigned int StringHash_getBucketNum(StringHash *stringHash, char *key) {
   int len = strlen(key);
   unsigned int hashCode;
 
-  printf("key = %s ",key);
   for (hash=len, i=0; i<len; ++i) {
     hash = (hash<<5)^(hash>>27)^key[i];
   }
   hashCode = (hash%stringHash->size);
-  printf("%d\n",hashCode);
 
   return hashCode;
 }

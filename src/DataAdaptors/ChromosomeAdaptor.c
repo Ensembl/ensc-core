@@ -54,7 +54,6 @@ Chromosome *ChromosomeAdaptor_fetchByChrName(ChromosomeAdaptor *ca, char *chrNam
 
   if (StringHash_contains(ca->chrNameCache,chrName)) {
 
-    printf("Using chromosome name cache\n");
     chromosome = StringHash_getValue(ca->chrNameCache, chrName);
 
   } else {

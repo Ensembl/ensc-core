@@ -17,6 +17,13 @@ struct SliceStruct {
   long chrId;
 };
 
+#ifdef __SLICE_C__
+ Slice emptySliceData = {CONTIGTYPE_NONE,-1,NULL,-1,-1,0,1,NULL,NULL,-1};
+ Slice *emptySlice = &emptySliceData;
+#else
+ extern Slice *emptySlice;
+#endif
+
 Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
                  SliceAdaptor *sa, long dbID, int empty);
 

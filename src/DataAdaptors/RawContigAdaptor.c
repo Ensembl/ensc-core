@@ -24,7 +24,6 @@ RawContig *RawContigAdaptor_fetchByDbID(RawContigAdaptor *rca, long dbID) {
 
   if (IDHash_contains(rca->rawContigCache,dbID)) {
     rawContig = (RawContig *)IDHash_getValue(rca->rawContigCache, dbID);
-    printf("Using cache\n");
   } else {
     rawContig = RawContig_new();
     RawContig_setDbID(rawContig,dbID);

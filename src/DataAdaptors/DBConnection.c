@@ -45,7 +45,7 @@ BaseAdaptor *DBConnection_getAdaptor(DBConnection *dbc, int type) {
     }
   }
   if (!ad) {
-    fprintf(stderr,"ERROR: No adaptor of type %s\n",Adaptor_TypeStrings[type]);
+    //fprintf(stderr,"ERROR: No adaptor of type %s\n",Adaptor_TypeStrings[type]);
   }
   return ad;
 }

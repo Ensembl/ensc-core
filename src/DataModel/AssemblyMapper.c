@@ -58,7 +58,7 @@ int AssemblyMapper_fastToAssembly(AssemblyMapper *am, long contigId,
 }
 
 
-MapperRangeSet *AssemblyMapper_mapCoordinatesToRawcontig(AssemblyMapper *am, long chrId, 
+MapperRangeSet *AssemblyMapper_mapCoordinatesToRawContig(AssemblyMapper *am, long chrId, 
                               int start, int end, int strand) {
   AssemblyMapper_registerRegion(am,chrId, start, end);
   

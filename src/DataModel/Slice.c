@@ -1,4 +1,6 @@
+#define __SLICE_C__
 #include "Slice.h"
+#undef __SLICE_C__
 #include "Gene.h"
 #include "GeneAdaptor.h"
 #include "SliceAdaptor.h"

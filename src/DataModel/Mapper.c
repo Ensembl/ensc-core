@@ -390,8 +390,8 @@ MapperPairSet *Mapper_listPairs(Mapper *m, long id, int start, int end, CoordSys
   pairs = IDHash_getValue(hash,id);
 
   retSet = MapperPairSet_new();
-  Mapper_dump(m,NULL);
-  fprintf(stderr, "listPairs with %d %d %d\n",id,start,end);
+  //Mapper_dump(m,NULL);
+  //fprintf(stderr, "listPairs with %d %d %d\n",id,start,end);
   
   if (start == -1 && end == -1) {
     for (i=0;i<MapperPairSet_getNumPair(pairs);i++) {
@@ -402,7 +402,7 @@ MapperPairSet *Mapper_listPairs(Mapper *m, long id, int start, int end, CoordSys
     for (i=0;i<MapperPairSet_getNumPair(pairs);i++) {
       MapperPair *pair = MapperPairSet_getPairAt(pairs,i);
       MapperUnit *fromCoord   = MapperPair_getUnit(pair, from);
-      fprintf(stderr," unit %d %d\n",fromCoord->start,fromCoord->end);
+      //fprintf(stderr," unit %d %d\n",fromCoord->start,fromCoord->end);
        
       if( fromCoord->end < start ) {
         continue;

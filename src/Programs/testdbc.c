@@ -117,11 +117,18 @@ int main(int argc, char *argv[]) {
   }
   {
     SequenceAdaptor *sa = DBAdaptor_getSequenceAdaptor(dba);
+    SliceAdaptor *sliceAd = DBAdaptor_getSliceAdaptor(dba);
+    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sliceAd,"1",9900000,10000000);
     RawContig *rc = RawContig_new();
     char *rawseq;
+    char *sliceSeq;
+
     RawContig_setDbID(rc,24);
     rawseq = SequenceAdaptor_fetchByRawContigStartEndStrand(sa,rc,1,10,1);
     
     printf("Seq = %s\n",rawseq);
+
+    sliceSeq = SequenceAdaptor_fetchBySliceStartEndStrand(sa,slice,1,100,1);
+    printf("Slice Seq = %s\n",sliceSeq);
   }
 }

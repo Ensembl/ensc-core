@@ -129,7 +129,6 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, long geneId, int chrCoords) {
 
     // store an array of exon ids for each transcript
     transcriptId = MysqlUtil_getLong(row,1);
-    printf("Transcript ID = %d\n",transcriptId);
     if( !IDHash_contains(transcriptExonsHash,transcriptId)) {
 
       if ((tes = (TranscriptExons *)calloc(1,sizeof(TranscriptExons))) == NULL) {
@@ -204,9 +203,9 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, long geneId, int chrCoords) {
 
   if( chrCoords ) {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(ga->dba);
-    Slice *emptySlice = Slice_new(NULL,0,0,0,NULL,sa,0,TRUE);
+    //Slice *emptySlice = Slice_new(NULL,0,0,0,NULL,sa,0,TRUE);
     Slice_setAdaptor(emptySlice, (BaseAdaptor *)sa);
-    Slice_setEmptyFlag(emptySlice,1);
+    //Slice_setEmptyFlag(emptySlice,1);
     // NIY $gene->transform( $empty_slice );
   }
 

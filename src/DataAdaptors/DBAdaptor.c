@@ -46,7 +46,6 @@ MetaContainer *DBAdaptor_getMetaContainer(DBAdaptor *dba) {
 
 GeneAdaptor *DBAdaptor_getGeneAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,GENE_ADAPTOR)) {
-    printf("Creating adaptor\n");
     DBConnection_addAdaptor(dba->dbc,
                             (BaseAdaptor *)GeneAdaptor_new(dba));
   }
@@ -55,7 +54,6 @@ GeneAdaptor *DBAdaptor_getGeneAdaptor(DBAdaptor *dba) {
 
 AnalysisAdaptor *DBAdaptor_getAnalysisAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,ANALYSIS_ADAPTOR)) {
-    printf("Creating adaptor\n");
     DBConnection_addAdaptor(dba->dbc,
                             (BaseAdaptor *)AnalysisAdaptor_new(dba));
   }
@@ -64,7 +62,6 @@ AnalysisAdaptor *DBAdaptor_getAnalysisAdaptor(DBAdaptor *dba) {
 
 TranscriptAdaptor *DBAdaptor_getTranscriptAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,TRANSCRIPT_ADAPTOR)) {
-    printf("Creating transcript adaptor\n");
     DBConnection_addAdaptor(dba->dbc,
                             (BaseAdaptor *)TranscriptAdaptor_new(dba));
   }
@@ -73,7 +70,6 @@ TranscriptAdaptor *DBAdaptor_getTranscriptAdaptor(DBAdaptor *dba) {
 
 ExonAdaptor *DBAdaptor_getExonAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,EXON_ADAPTOR)) {
-    printf("Creating adaptor\n");
     DBConnection_addAdaptor(dba->dbc,
                             (BaseAdaptor *)ExonAdaptor_new(dba));
   }
@@ -82,7 +78,6 @@ ExonAdaptor *DBAdaptor_getExonAdaptor(DBAdaptor *dba) {
 
 RawContigAdaptor *DBAdaptor_getRawContigAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,RAWCONTIG_ADAPTOR)) {
-    printf("Creating adaptor\n");
     DBConnection_addAdaptor(dba->dbc,
                             (BaseAdaptor *)RawContigAdaptor_new(dba));
   }
@@ -91,7 +86,6 @@ RawContigAdaptor *DBAdaptor_getRawContigAdaptor(DBAdaptor *dba) {
 
 SliceAdaptor *DBAdaptor_getSliceAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,SLICE_ADAPTOR)) {
-    printf("Creating adaptor\n");
     DBConnection_addAdaptor(dba->dbc,
                             (BaseAdaptor *)SliceAdaptor_new(dba));
   }
@@ -100,7 +94,6 @@ SliceAdaptor *DBAdaptor_getSliceAdaptor(DBAdaptor *dba) {
 
 SequenceAdaptor *DBAdaptor_getSequenceAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,SEQUENCE_ADAPTOR)) {
-    printf("Creating adaptor\n");
     DBConnection_addAdaptor(dba->dbc,
                             (BaseAdaptor *)SequenceAdaptor_new(dba));
   }
@@ -109,7 +102,6 @@ SequenceAdaptor *DBAdaptor_getSequenceAdaptor(DBAdaptor *dba) {
 
 ChromosomeAdaptor *DBAdaptor_getChromosomeAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,CHROMOSOME_ADAPTOR)) {
-    printf("Creating adaptor\n");
     DBConnection_addAdaptor(dba->dbc,
                             (BaseAdaptor *)ChromosomeAdaptor_new(dba));
   }
@@ -118,7 +110,6 @@ ChromosomeAdaptor *DBAdaptor_getChromosomeAdaptor(DBAdaptor *dba) {
 
 CloneAdaptor *DBAdaptor_getCloneAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,CLONE_ADAPTOR)) {
-    printf("Creating adaptor\n");
     DBConnection_addAdaptor(dba->dbc,
                             (BaseAdaptor *)CloneAdaptor_new(dba));
   }
@@ -127,7 +118,6 @@ CloneAdaptor *DBAdaptor_getCloneAdaptor(DBAdaptor *dba) {
 
 AssemblyMapperAdaptor *DBAdaptor_getAssemblyMapperAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,ASSEMBLYMAPPER_ADAPTOR)) {
-    printf("Creating adaptor\n");
     DBConnection_addAdaptor(dba->dbc,
                             (BaseAdaptor *)AssemblyMapperAdaptor_new(dba));
   }

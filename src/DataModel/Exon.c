@@ -90,7 +90,7 @@ Exon *Exon_transformToSlice(Exon *exon, Slice *slice) {
     fprintf(stderr,"ERROR: Exon's contig must be defined to transform to Slice coords");
     exit(1);
   }
-  fprintf(stderr,"transforming exon %d from raw contig to slice coords\n",Exon_getDbID(exon));
+  //fprintf(stderr,"transforming exon %d from raw contig to slice coords\n",Exon_getDbID(exon));
   //fprintf(stderr,"exon %s\n",Exon_getStableId(exon));
 
   adaptor = Slice_getAdaptor(slice);
@@ -133,7 +133,7 @@ Exon *Exon_transformToSlice(Exon *exon, Slice *slice) {
 
   mc = (MapperCoordinate *)MapperRangeSet_getRangeAt(mapped,0);
 
-  fprintf(stderr," Exon %s mapped range = %d %d\n",Exon_getStableId(exon),mc->start,mc->end);
+  //fprintf(stderr," Exon %s mapped range = %d %d\n",Exon_getStableId(exon),mc->start,mc->end);
 
   // the slice is an empty slice, create an enitre chromosome slice and
   // replace the empty slice with it
@@ -173,7 +173,7 @@ Exon *Exon_transformToSlice(Exon *exon, Slice *slice) {
 
   // NIY free old exon (reference counting needed ???)
 
-  fprintf(stderr,"transformed exon %s\n",Exon_getStableId(newExon));
+  //fprintf(stderr,"transformed exon %s\n",Exon_getStableId(newExon));
   return newExon;
 }
 

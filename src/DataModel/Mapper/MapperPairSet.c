@@ -30,8 +30,6 @@ int MapperPairCompFunc(const void *a, const void *b) {
   MapperPair **mp1 = (MapperPair **)a;
   MapperPair **mp2 = (MapperPair **)b;
 
-  printf("Comparing %d %d\n",MapperPair_getUnit(*mp1,sortInd)->start,
-         MapperPair_getUnit(*mp2,sortInd)->start);
   if (MapperPair_getUnit(*mp1,sortInd)->start >
       MapperPair_getUnit(*mp2,sortInd)->start) {
     return 1;

@@ -61,3 +61,23 @@ char *SeqUtil_reverseComplement(char *seqStr, int lenSeqStr) {
   
   return seqStr;
 }
+
+char *SeqUtil_addNs(char *seq, int length) {
+// NIY Make fast
+  int seqlen = strlen(seq);
+  char *chP;
+  int i;
+
+  if ((seq = (char *)realloc(seq,(strlen(seq)+1+length)*sizeof(char))) == NULL) {
+    fprintf(stderr, "ERROR: Failed reallocating sequence string\n");
+    exit(1);
+  }
+  chP = &(seq[seqlen]);
+  for (i=seqlen; i<seqlen+length; i++) {
+    *chP = 'N';
+    chP++;
+  }
+  *chP = '\0';
+  
+  return seq;
+}

@@ -21,7 +21,6 @@ char *MetaContainer_getDefaultAssembly(MetaContainer *mc) {
   MYSQL_ROW row = mysql_fetch_row(results);
 
   if( row ) {
-    printf("Ass = %s\n",row[0]);
     mysql_free_result(results);
     return MysqlUtil_getString(row,0);
   } else {

@@ -40,7 +40,7 @@ MapperRangeSet *AssemblyMapper_mapCoordinatesToAssembly(AssemblyMapper *am, long
                                                         int start, int end, int strand);
 int AssemblyMapper_fastToAssembly(AssemblyMapper *am, long contigId,
                                   int start, int end, int strand, MapperCoordinate *retRange);
-MapperRangeSet *AssemblyMapper_mapCoordinatesToRawcontig(AssemblyMapper *am, long chrId,
+MapperRangeSet *AssemblyMapper_mapCoordinatesToRawContig(AssemblyMapper *am, long chrId,
                               int start, int end, int strand);
 int AssemblyMapper_listContigIds(AssemblyMapper *am, long chrId, int start, int end, long **ids);
 void AssemblyMapper_registerRegion(AssemblyMapper *am, long chrId, int start, int end);

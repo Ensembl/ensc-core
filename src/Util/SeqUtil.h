@@ -2,5 +2,7 @@
 #define __SEQUTIL_H__
 
 char *SeqUtil_reverseComplement(char *seq, int len);
+char *SeqUtil_addNs(char *seq, int length);
+
 
 #endif

@@ -16,6 +16,12 @@ char *SequenceAdaptor_fetchByRawContigStartEndStrand(SequenceAdaptor *sa,
                                                      int start,
                                                      int end,
                                                      char strand);
+char *SequenceAdaptor_fetchByAssemblyLocation(SequenceAdaptor *sa,
+          int chrStart, int chrEnd, int strand, long chrId, char *assemblyType);
+char *SequenceAdaptor_fetchBySliceStartEndStrand(SequenceAdaptor *sa,
+                                                 Slice *slice, int start, int end,
+                                                 int strand);
+
           
 
 #endif
