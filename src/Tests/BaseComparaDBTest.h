@@ -14,13 +14,14 @@ ComparaDBAdaptor *Test_initComparaDB() {
   return cdba;
 }
 
-Slice *Test_getStandardSlice(DBAdaptor *dba) {
+Slice *Test_getStandardSlice(ComparaDBAdaptor *cdba) {
   Slice *slice;
   SliceAdaptor *sa;
+  DBAdaptor *dba = ComparaDBAdaptor_getDBAdaptor(cdba,"Homo sapiens", "NCBI31");
 
   sa = DBAdaptor_getSliceAdaptor(dba);
 
-  slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,5000000);
+  slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",500000,1000000);
 
   return slice;
 }

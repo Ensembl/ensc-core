@@ -18,6 +18,7 @@ all	: directories \
           Tests/CigarStrUtilTest \
           Tests/ClassTest \
           Tests/ComparaDBAdaptorTest \
+          Tests/ComparaDNAAlignFeatureAdaptorTest \
           Tests/DBAdaptorTest \
           Tests/DNAAlignFeatureTest \
           Tests/DNAPepAlignFeatureTest \
@@ -176,6 +177,11 @@ Tests/ComparaDBAdaptorTest: \
 	libensc.a \
 	Tests/ComparaDBAdaptorTest.c
 	$(CC) $(CFLAGS) -o Tests/ComparaDBAdaptorTest Tests/ComparaDBAdaptorTest.c -L. -lensc $(LDFLAGS)
+
+Tests/ComparaDNAAlignFeatureAdaptorTest: \
+	libensc.a \
+	Tests/ComparaDNAAlignFeatureAdaptorTest.c
+	$(CC) $(CFLAGS) -o Tests/ComparaDNAAlignFeatureAdaptorTest Tests/ComparaDNAAlignFeatureAdaptorTest.c -L. -lensc $(LDFLAGS)
 
 Tests/DBAdaptorTest: \
 	libensc.a \

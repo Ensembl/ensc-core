@@ -45,7 +45,7 @@ Vector *ComparaDNAAlignFeatureAdaptor_fetchAllBySpeciesRegion(ComparaDNAAlignFea
 						    &start,
 						    &end);
 
-  GenomicAlignAdaptor *gaa = ComparaDBAdaptor_getGenomicAlignAdaptor(gaa->dba);
+  GenomicAlignAdaptor *gaa = ComparaDBAdaptor_getGenomicAlignAdaptor(dafa->dba);
   int i;
 
   out = Vector_new();
@@ -122,7 +122,7 @@ Vector *ComparaDNAAlignFeatureAdaptor_fetchAllBySlice(ComparaDNAAlignFeatureAdap
   void *val;
   MetaContainer *mc;
 
-  if (!slice || slice->objectType==CLASS_SLICE) {
+  if (!slice || slice->objectType!=CLASS_SLICE) {
     fprintf(stderr, "Error: Invalid slice argument\n");
     exit(1);
   }

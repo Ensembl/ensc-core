@@ -23,8 +23,8 @@ char *Species_getBinomialName(Species *species) {
   if (!species->binomialName) {
     char tmpStr[1024];
     if (Vector_getNumElement(species->classification) > 1) {
-      sprintf(tmpStr, "%s %s\n", Vector_getElementAt(species->classification, 0),
-                                 Vector_getElementAt(species->classification, 0));
+      sprintf(tmpStr, "%s %s", Vector_getElementAt(species->classification, 1),
+                               Vector_getElementAt(species->classification, 0));
 
     } else if (Vector_getNumElement(species->classification) == 1) {
       fprintf(stderr, "Warning: No genus info for binomial name\n");

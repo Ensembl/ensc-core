@@ -156,7 +156,7 @@ Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect( GenomicAlignAdaptor
      "       gab.cigar_line"
      " FROM genomic_align_block gab ",0);
 
-  if (!targetGenome) {
+  if (targetGenome) {
     qStr = StrUtil_appendString(qStr,", dnafrag d");
   }
   sprintf(tmpStr," WHERE gab.method_link_id = " IDFMTSTR, methodLinkId);

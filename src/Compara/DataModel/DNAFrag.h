@@ -20,8 +20,7 @@ struct DNAFragStruct {
 };
 #undef FUNCSTRUCTTYPE
 
-#define DNAFrag_setContig(df,c) (df)->contig = (c)
-#define DNAFrag_getContig(df) (df)->contig
+BaseContig *DNAFrag_getContig(DNAFrag *df);
 
 #define DNAFrag_setStart(df,s) (df)->start = (s)
 #define DNAFrag_getStart(df) (df)->start
@@ -29,7 +28,7 @@ struct DNAFragStruct {
 #define DNAFrag_setEnd(df,e) (df)->end = (e)
 #define DNAFrag_getEnd(df) (df)->end
 
-#define DNAFrag_setType(df,t) (df)->type = (t)
+char *DNAFrag_setType(DNAFrag *df, char *type);
 #define DNAFrag_getType(df) (df)->type
 
 #define DNAFrag_setGenomeDB(df,g) (df)->genomeDB = (g)

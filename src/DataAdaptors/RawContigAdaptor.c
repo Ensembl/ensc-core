@@ -73,3 +73,32 @@ void RawContigAdaptor_fillRawContigWithRow(RawContigAdaptor *rca, RawContig *rc,
 
   return;
 }
+
+RawContig *RawContigAdaptor_fetchByName(RawContigAdaptor *rca, char *name) {
+  char qStr[256];
+  StatementHandle *sth;
+  ResultRow *row;
+  RawContig *rawContig;
+
+  sprintf(qStr,
+           "SELECT contig_id, name, clone_id, length,"
+                           " embl_offset, dna_id"
+                           " FROM contig"
+                           " WHERE name = '%s'",name );
+  sth = rca->prepare((BaseAdaptor *)rca, qStr,strlen(qStr));
+  sth->execute(sth);
+
+  if ((row = sth->fetchRow(sth))) {
+    rawContig = RawContig_new();
+    RawContig_setDbID(rawContig,row->getLongLongAt(row,0));
+    RawContig_setAdaptor(rawContig,(BaseAdaptor *)rca);
+    RawContigAdaptor_fillRawContigWithRow(rca, rawContig, row);
+  } else {
+    fprintf(stderr,"Couldn't find contig with name %s\n",name);
+    exit(1);
+  }
+  sth->finish(sth);
+
+  return rawContig;
+}
+
