@@ -5,7 +5,7 @@ CC = cc
 MYSQLCFLAGS=${shell mysql_config --cflags}
 MYSQLLIBS=${shell mysql_config --libs}
 
-CFLAGS = -O2 -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic $(MYSQLCFLAGS)
+CFLAGS = -Wall -O2 -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS)
 
 BINDIR=../bin
@@ -20,7 +20,8 @@ all	: directories \
           Tests/EcoStringTest \
           Tests/SeqUtilTest \
           Tests/StreamTest \
-          Tests/StrUtilTest
+          Tests/StrUtilTest \
+          Tests/TranslateTest
 
 directories	:
 	mkdir -p objectfiles
@@ -108,7 +109,8 @@ libensc.a	: \
 	objectfiles/Util/SeqUtil.o \
 	objectfiles/Util/StrUtil.o \
 	objectfiles/Util/Stream.o \
-	objectfiles/Util/StringHash.o
+	objectfiles/Util/StringHash.o \
+	objectfiles/Util/translate.o
 	ar rcv libensc.a objectfiles/DataModel/*.o objectfiles/DataAdaptors/*.o objectfiles/Util/*.o \
                objectfiles/DataModel/Basic/*.o objectfiles/DataModel/Mapper/*.o
 	ranlib libensc.a
@@ -157,6 +159,11 @@ Tests/StrUtilTest: \
 	libensc.a \
 	Tests/StrUtilTest.c
 	$(CC) $(CFLAGS) -o Tests/StrUtilTest Tests/StrUtilTest.c -L. -lensc $(LDFLAGS)
+
+Tests/TranslateTest: \
+	libensc.a \
+	Tests/TranslateTest.c
+	$(CC) $(CFLAGS) -o Tests/TranslateTest Tests/TranslateTest.c -L. -lensc $(LDFLAGS)
 
 # deletes compiled class files
 clean	:	
