@@ -8,21 +8,37 @@
 #include "Analysis.h"
 #include "BaseContig.h"
 
-struct SeqFeatureStruct {
-  int         start;
-  int         end;
-  signed char phase;
-  signed char endPhase;
-  signed char frame;
-  signed char strand;
-  char *      seqName;
-  Storable    st;
-  Analysis *  analysis;
-  double      score;
-  double      eValue;
-  double      percentId;
+#include "EnsRoot.h"
+
+typedef int (*SeqFeature_StartFunc)(SeqFeature *);
+typedef int (*SeqFeature_EndFunc)(SeqFeature *);
+
+typedef struct SeqFeatureFuncsStruct {
+  SeqFeature_StartFunc start;
+  SeqFeature_EndFunc   end;
+} SeqFeatureFuncs;
+
+#define SEQFEATURE_DATA \
+  ENSROOT_DATA \
+  int         start; \
+  int         end; \
+  signed char phase; \
+  signed char endPhase; \
+  signed char frame; \
+  signed char strand; \
+  char *      seqName; \
+  Storable    st; \
+  Analysis *  analysis; \
+  double      score; \
+  double      eValue; \
+  double      percentId; \
   BaseContig *contig;
+
+#define FUNCSTRUCTTYPE SeqFeatureFuncs
+struct SeqFeatureStruct {
+  SEQFEATURE_DATA
 };
+#undef FUNCSTRUCTTYPE
 
 #define SeqFeature_setStart(sf,s) (sf)->start = (s)
 #define SeqFeature_getStart(sf) (sf)->start

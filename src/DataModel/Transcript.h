@@ -11,6 +11,7 @@
 
 struct TranscriptStruct {
   SeqFeature sf;
+  Set *dbLinks;
   Translation *translation;
   IDType translationId;
   FeatureSet fs;

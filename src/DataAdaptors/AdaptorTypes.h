@@ -11,6 +11,7 @@ typedef struct ChromosomeAdaptorStruct ChromosomeAdaptor;
 typedef struct CloneAdaptorStruct CloneAdaptor;
 typedef struct DBAdaptorStruct DBAdaptor;
 typedef struct DBConnectionStruct DBConnection;
+typedef struct DBEntryAdaptorStruct DBEntryAdaptor;
 typedef struct DNAAlignFeatureAdaptorStruct DNAAlignFeatureAdaptor;
 typedef struct ExonAdaptorStruct ExonAdaptor;
 typedef struct GeneAdaptorStruct GeneAdaptor;

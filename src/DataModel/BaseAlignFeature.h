@@ -4,6 +4,9 @@
 #include "DataModelTypes.h"
 #include "SeqFeature.h"
 
+#include "EnsRoot.h"
+
+#define FUNCSTRUCTTYPE 
 struct BaseAlignFeatureStruct {
   SeqFeature sf1;
   SeqFeature sf2;

@@ -43,6 +43,7 @@ libensc.a	: \
 	objectfiles/DataAdaptors/CloneAdaptor.o \
 	objectfiles/DataAdaptors/DBAdaptor.o \
 	objectfiles/DataAdaptors/DBConnection.o \
+	objectfiles/DataAdaptors/DBEntryAdaptor.o \
 	objectfiles/DataAdaptors/DNAAlignFeatureAdaptor.o \
 	objectfiles/DataAdaptors/ExonAdaptor.o \
 	objectfiles/DataAdaptors/GeneAdaptor.o \
@@ -68,6 +69,7 @@ libensc.a	: \
 	objectfiles/DataModel/Chromosome.o \
 	objectfiles/DataModel/Class.o \
 	objectfiles/DataModel/Clone.o \
+	objectfiles/DataModel/DBEntry.o \
 	objectfiles/DataModel/DNAAlignFeature.o \
 	objectfiles/DataModel/DNAPepAlignFeature.o \
 	objectfiles/DataModel/EnsC.o \
@@ -75,6 +77,7 @@ libensc.a	: \
 	objectfiles/DataModel/FeatureSet.o \
 	objectfiles/DataModel/Gene.o \
 	objectfiles/DataModel/GenomicRange.o \
+	objectfiles/DataModel/IdentityXref.o \
 	objectfiles/DataModel/Mapper.o \
 	objectfiles/DataModel/Mapper/MapperCoordinate.o \
 	objectfiles/DataModel/Mapper/MapperGap.o \

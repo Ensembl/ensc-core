@@ -1,0 +1,51 @@
+#ifndef __DBENTRY_H__
+#define __DBENTRY_H__
+
+#include "DataModelTypes.h"
+#include "Storable.h"
+#include "Set.h"
+#include "EcoString.h"
+#include "IdentityXref.h"
+#include "Object.h"
+
+struct DBEntryStruct {
+  OBJECT_DATA
+  Storable  st;
+  char     *primaryId;
+  ECOSTRING dbName;
+  int       version;
+  char     *displayId;
+  int       release;
+  Set      *synonyms;
+  IdentityXref *idXref;
+};
+
+DBEntry *DBEntry_new(void);
+
+#define DBEntry_setDbID(d,dbID) Storable_setDbID(&((d)->st),dbID)
+#define DBEntry_getDbID(d) Storable_getDbID(&((d)->st))
+
+#define DBEntry_setAdaptor(d,ad) Storable_setAdaptor(&((d)->st),ad)
+#define DBEntry_getAdaptor(d) Storable_getAdaptor(&((d)->st))
+
+#define DBEntry_setVersion(d,ver) (d)->version = (ver)
+#define DBEntry_getVersion(d) (d)->version
+
+#define DBEntry_setRelease(d,rel) (d)->release = (rel)
+#define DBEntry_getRelease(d) (d)->release
+
+#define DBEntry_setIdentityXref(d,idx) (d)->idXref = (idx)
+#define DBEntry_getIdentityXref(d) (d)->idXref
+
+ECOSTRING setDbName(DBEntry *dbe, char *name);
+#define DBEntry_getDbName(d) (d)->dbName
+
+char *setPrimaryId(DBEntry *dbe, char *id);
+#define DBEntry_getPrimaryId(d) (d)->primaryId
+
+char *setDisplayId(DBEntry *dbe, char *id);
+#define DBEntry_getDisplayId(d) (d)->displayId
+
+#define DBEntry_getAllSynonyms(d) (d)->synonyms
+
+#endif

@@ -100,6 +100,14 @@ PredictionTranscriptAdaptor *DBAdaptor_getPredictionTranscriptAdaptor(DBAdaptor 
   return (PredictionTranscriptAdaptor *)DBConnection_getAdaptor(dba->dbc,PREDICTIONTRANSCRIPT_ADAPTOR);
 }
 
+DBEntryAdaptor *DBAdaptor_getDBEntryAdaptor(DBAdaptor *dba) {
+  if (!DBConnection_getAdaptor(dba->dbc,DBENTRY_ADAPTOR)) {
+    DBConnection_addAdaptor(dba->dbc,
+                            (BaseAdaptor *)DBEntryAdaptor_new(dba));
+  }
+  return (DBEntryAdaptor *)DBConnection_getAdaptor(dba->dbc,DBENTRY_ADAPTOR);
+}
+
 RepeatFeatureAdaptor *DBAdaptor_getRepeatFeatureAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,REPEATFEATURE_ADAPTOR)) {
     DBConnection_addAdaptor(dba->dbc,

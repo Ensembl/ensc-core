@@ -14,6 +14,21 @@ Transcript *Transcript_new() {
   return transcript;
 }
 
+Set *Transcript_getAllDBLinks(Transcript *t) {
+  if (!t->dbLinks) {
+    TranscriptAdaptor *ta = Transcript_getAdaptor(t);
+
+    if (ta) {
+      DBEntryAdaptor *dbea = DBAdaptor_getDBEntryAdaptor(ta->dba);
+      t->dbLinks = DBEntryAdaptor_fetchAllByTranscript(dbea,t);
+    } else {
+      t->dbLinks = emptySet;
+    }
+  }
+
+  return t->dbLinks;
+}
+
 char *Transcript_setType(Transcript *t, char *type) {
   if ((t->type = (char *)malloc(strlen(type)+1)) == NULL) {
     fprintf(stderr,"ERROR: Failed allocating space for transcript type\n");

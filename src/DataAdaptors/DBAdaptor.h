@@ -22,6 +22,7 @@ char *DBAdaptor_getAssemblyType(DBAdaptor *dba);
 AnalysisAdaptor             *DBAdaptor_getAnalysisAdaptor(DBAdaptor *dba);
 AssemblyMapperAdaptor       *DBAdaptor_getAssemblyMapperAdaptor(DBAdaptor *dba);
 ChromosomeAdaptor           *DBAdaptor_getChromosomeAdaptor(DBAdaptor *dba);
+DBEntryAdaptor              *DBAdaptor_getDBEntryAdaptor(DBAdaptor *dba);
 DNAAlignFeatureAdaptor      *DBAdaptor_getDNAAlignFeatureAdaptor(DBAdaptor *dba);
 ExonAdaptor                 *DBAdaptor_getExonAdaptor(DBAdaptor *dba);
 GeneAdaptor                 *DBAdaptor_getGeneAdaptor(DBAdaptor *dba);

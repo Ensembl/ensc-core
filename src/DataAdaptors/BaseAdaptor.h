@@ -30,7 +30,8 @@ char *Adaptor_TypeStrings[] = {
   "REPEATFEATURE",
   "REPEATCONSENSUS",
   "PREDICTIONTRANSCRIPT",
-  "SUPPORTINGFEATURE"
+  "SUPPORTINGFEATURE",
+  "DBENTRY"
 };
 
 #else
@@ -57,7 +58,8 @@ enum Adaptor_Types {
   REPEATFEATURE_ADAPTOR,
   REPEATCONSENSUS_ADAPTOR,
   PREDICTIONTRANSCRIPT_ADAPTOR,
-  SUPPORTINGFEATURE_ADAPTOR
+  SUPPORTINGFEATURE_ADAPTOR,
+  DBENTRY_ADAPTOR
 };
 
 typedef StatementHandle *(*BaseAdaptor_PrepareFunc)(BaseAdaptor *ba, char *qStr,size_t len);
