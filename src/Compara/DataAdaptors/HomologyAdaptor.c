@@ -172,7 +172,7 @@ Vector *HomologyAdaptor_listStableIdsFromSpecies(HomologyAdaptor *ha, char *sp) 
   species = StrUtil_strReplChr(species,'_',' ');
 
   sprintf(qStr,
-          "select  grm.member_stable_id "
+          "select  distinct grm.member_stable_id "
           " from    gene_relationship_member grm,"
           "         genome_db gd "
           " where   gd.genome_db_id = grm.genome_db_id "
