@@ -23,6 +23,10 @@ struct TranscriptStruct {
   IDType translationId;
   char startIsSet;
   char endIsSet;
+  char codingRegionStartIsSet;
+  char codingRegionEndIsSet;
+  int codingRegionStart;
+  int codingRegionEnd;
   char *type;
 };
 #undef FUNCSTRUCTTYPE
@@ -35,7 +39,6 @@ char *Transcript_setType(Transcript *transcript,char *type);
 
 #define Transcript_setVersion(transcript,ver)  StableIdInfo_setVersion(&((transcript)->si),(ver))
 int Transcript_getVersion(Transcript *transcript);
-
 
 #define Transcript_setStrand(transcript,strand) AnnotatedSeqFeature_setStrand((transcript),strand)
 #define Transcript_getStrand(transcript) AnnotatedSeqFeature_getStrand((transcript))
@@ -68,6 +71,12 @@ Transcript *Transcript_new(void);
 #define Transcript_setEndIsSet(transcript, flag)  (transcript)->endIsSet = (flag)
 #define Transcript_getEndIsSet(transcript)  (transcript)->endIsSet
 
+#define Transcript_setCodingRegionStartIsSet(transcript, flag)  (transcript)->codingRegionStartIsSet = (flag)
+#define Transcript_getCodingRegionStartIsSet(transcript)  (transcript)->codingRegionStartIsSet
+
+#define Transcript_setCodingRegionEndIsSet(transcript, flag)  (transcript)->codingRegionEndIsSet = (flag)
+#define Transcript_getCodingRegionEndIsSet(transcript)  (transcript)->codingRegionEndIsSet
+
 Exon *Transcript_getStartExon(Transcript *trans);
 Exon *Transcript_getEndExon(Transcript *trans);
 
@@ -84,6 +93,12 @@ int Transcript_getStart(SeqFeature *sf);
 
 int Transcript_setEnd(SeqFeature *sf, int end);
 int Transcript_getEnd(SeqFeature *sf);
+
+int Transcript_getCodingRegionEnd(Transcript *trans);
+int Transcript_setCodingRegionEnd(Transcript *trans, int end);
+
+int Transcript_setCodingRegionStart(Transcript *trans, int start);
+int Transcript_getCodingRegionStart(Transcript *trans); 
 
 
 #ifdef __TRANSCRIPT_MAIN__

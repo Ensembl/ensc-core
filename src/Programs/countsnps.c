@@ -22,14 +22,6 @@ char *codingTypeStrings[] = { "Undefined", "Intronic", "Coding", "NonCoding", "I
   
 
 
-int getCodingRegionStart(Transcript *trans) {
-  return 500000000;
-}
-
-int getCodingRegionEnd(Transcript *trans) {
-  return 500000000;
-}
-
 int main(int argc, char **argv) {
   char *host = "ecs2b";
   char *user = "ensro";
@@ -166,8 +158,8 @@ int main(int argc, char **argv) {
                 if (DNAAlignFeature_getEnd(snp) >= Exon_getStart(exon) && 
                     DNAAlignFeature_getStart(snp) <= Exon_getEnd(exon)) {
                   if (Transcript_getTranslation(trans) && 
-                      DNAAlignFeature_getEnd(snp) >= getCodingRegionStart(trans) && 
-                      DNAAlignFeature_getStart(snp) <= getCodingRegionEnd(trans)) {
+                      DNAAlignFeature_getEnd(snp) >= Transcript_getCodingRegionStart(trans) && 
+                      DNAAlignFeature_getStart(snp) <= Transcript_getCodingRegionEnd(trans)) {
                     codingType = CODING;
                     done = 1;
                   } else {

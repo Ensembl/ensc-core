@@ -76,7 +76,8 @@ Transcript *Transcript_transform(Transcript *trans, IDHash *exonTransforms) {
   
   for (i=0;i<Transcript_getExonCount(trans);i++) {
     Exon *exon = (Exon *)Transcript_getExonAt(trans,i);
-    IDType exonRef = (IDType)exon;
+    int exonIntRef = (int)exon;
+    IDType exonRef = (IDType)exonIntRef;
 
     // the old exon was successfully remapped then store the new exon
 /* CHECK */
@@ -161,6 +162,58 @@ int Transcript_getEnd(SeqFeature *sf) {
   }
 
   return trans->end;
+}
+
+int Transcript_setCodingRegionEnd(Transcript *trans, int end) {
+  trans->codingRegionEnd = end;
+  Transcript_setCodingRegionEndIsSet(trans,TRUE);
+  return trans->codingRegionEnd;
+}
+
+int Transcript_getCodingRegionEnd(Transcript *trans) {
+  Translation *translation = Transcript_getTranslation(trans);
+
+  if (!Transcript_getCodingRegionEndIsSet(trans) && translation) {
+    int end;
+    int strand = Exon_getStrand(Translation_getStartExon(translation));
+
+    if (strand == 1) {
+      end = Exon_getStart(Translation_getEndExon(translation));
+      end += (Translation_getEnd(translation) - 1);
+    } else {
+      end = Exon_getEnd(Translation_getStartExon(translation));
+      end -= (Translation_getStart(translation) - 1 );
+    }
+    Transcript_setCodingRegionEnd(trans,end);
+  }
+
+  return trans->codingRegionEnd;
+}
+
+int Transcript_setCodingRegionStart(Transcript *trans, int start) {
+  trans->codingRegionStart = start;
+  Transcript_setCodingRegionStartIsSet(trans,TRUE);
+  return trans->codingRegionStart;
+}
+
+int Transcript_getCodingRegionStart(Transcript *trans) {
+  Translation *translation = Transcript_getTranslation(trans);
+
+  if (!Transcript_getCodingRegionStartIsSet(trans) && translation) {
+    int start;
+    int strand = Exon_getStrand(Translation_getStartExon(translation));
+
+    if (strand == 1) {
+      start = Exon_getStart(Translation_getStartExon(translation));
+      start += (Translation_getStart(translation) - 1);
+    } else {
+      start = Exon_getEnd(Translation_getEndExon(translation));
+      start -= (Translation_getEnd(translation) - 1 );
+    }
+    Transcript_setCodingRegionStart(trans,start);
+  }
+
+  return trans->codingRegionStart;
 }
 
 void Transcript_sort(Transcript *trans) {
