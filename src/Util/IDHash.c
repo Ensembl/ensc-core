@@ -158,7 +158,7 @@ int IDHash_add(IDHash *idHash, IDType id, void *val) {
   return 1; 
 }
 
-void IDHash_free(IDHash *idHash, int freeFunc()) {
+void IDHash_free(IDHash *idHash, void freeFunc()) {
   int i;
   int j;
   

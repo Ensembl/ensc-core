@@ -1,5 +1,6 @@
 #include "MapperUnit.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 MapperUnit *MapperUnit_new() {
   MapperUnit *mu;

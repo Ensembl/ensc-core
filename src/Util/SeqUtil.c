@@ -6,6 +6,8 @@
 #include "Stream.h"
 #include "FileUtil.h"
 
+#include <stdlib.h>
+
 char *SeqUtil_reverseComplement(char *seqStr, int lenSeqStr) {
   int i;
 

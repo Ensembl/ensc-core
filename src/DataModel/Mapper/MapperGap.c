@@ -1,5 +1,6 @@
 #include "MapperGap.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 MapperGap *MapperGap_new() {
   MapperGap *mg;

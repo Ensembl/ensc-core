@@ -10,6 +10,7 @@
 #include "ExonAdaptor.h"
 #include "GeneAdaptor.h"
 #include "ProteinAlignFeatureAdaptor.h"
+#include "PredictionTranscriptAdaptor.h"
 #include "RawContigAdaptor.h"
 #include "RepeatFeatureAdaptor.h"
 #include "SequenceAdaptor.h"
@@ -38,7 +39,6 @@ int main(int argc, char *argv[]) {
 
   printf("Assembly type %s\n",DBAdaptor_getAssemblyType(dba));
 
-/*
   {
     SimpleFeatureAdaptor *sfa = DBAdaptor_getSimpleFeatureAdaptor(dba);
     SimpleFeature *sf = (SimpleFeature *)SimpleFeatureAdaptor_fetchByDbID(sfa,1);
@@ -173,7 +173,6 @@ int main(int argc, char *argv[]) {
              DNAPepAlignFeature_getEnd(dpaf), DNAPepAlignFeature_getDbID(dpaf));
     }
   }
-*/
   {
     GeneAdaptor *ga = DBAdaptor_getGeneAdaptor(dba);
     IDType *geneIds;
@@ -233,7 +232,7 @@ int main(int argc, char *argv[]) {
   }
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
-    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,230000000);
+    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);
     Set *geneSet = Slice_getAllGenes(slice,NULL);
     int i;
 
@@ -283,4 +282,5 @@ int main(int argc, char *argv[]) {
     sliceSeq = SequenceAdaptor_fetchBySliceStartEndStrand(sa,slice,1,100,1);
     printf("Slice Seq = %s\n",sliceSeq);
   }
+  return 0;
 }

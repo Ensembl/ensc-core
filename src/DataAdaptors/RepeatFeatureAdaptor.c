@@ -80,8 +80,11 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
         RepeatConsensus_setDbID(cons,RepeatConsensus_getDbID(matchedCons));
         Set_free(match,RepeatConsensus_free);
       } else {
-        RepeatConsensusAdaptor_store(rca,cons);
+        Set *consSet = Set_new();
+        Set_addElement(consSet,cons);
+        RepeatConsensusAdaptor_store(rca,consSet);
         Set_free(match,NULL);
+        Set_free(consSet,NULL);
       }
 
     } else if (!strcmp(RepeatConsensus_getRepeatClass(cons),"Simple_repeat")) {
@@ -105,7 +108,10 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
         RepeatConsensus_setDbID(cons,RepeatConsensus_getDbID(match));
         RepeatConsensus_free(match);
       } else {
-        RepeatConsensusAdaptor_store(rca,cons);
+        Set *consSet = Set_new();
+        Set_addElement(consSet,cons);
+        RepeatConsensusAdaptor_store(rca,consSet);
+        Set_free(consSet,NULL);
       }
     } else {
 
@@ -118,12 +124,15 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
           RepeatConsensus_setDbID(cons,RepeatConsensus_getDbID(match));
           RepeatConsensus_free(match);
         } else {
+          Set *consSet = Set_new();
           // if we don't match a consensus already stored create a fake one 
           // and set consensus to 'N' as null seq not allowed
           // FIXME: not happy with this, but ho hum ...
           fprintf(stderr, "Warning: Can't find %s repeat consensus\n", RepeatConsensus_getName(cons));
           RepeatConsensus_setConsensus(cons,"N");
-          RepeatConsensusAdaptor_store(rca,cons);
+          Set_addElement(consSet,cons);
+          RepeatConsensusAdaptor_store(rca,consSet);
+          Set_free(consSet,NULL);
         }
       }
     }

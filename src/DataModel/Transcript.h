@@ -63,6 +63,9 @@ void Transcript_flushExons(Transcript *trans);
 
 int Transcript_addDBLink(Transcript *t, DBEntry *dbe);
 
+Transcript *Transcript_transform(Transcript *trans, IDHash *exonTransforms);
+
+
 
 
 #endif

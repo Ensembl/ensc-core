@@ -131,7 +131,7 @@ IDType TranslationAdaptor_store(TranslationAdaptor *ta, Translation *translation
                    "and translation end_exon to be different in memory " 
                    "objects from your transcript exons - although it could " 
                    "also be an internal error in the adaptors. For your " 
-                   "info the exon memory locations are %d and %d",
+                   "info the exon memory locations are %p and %p",
                    startExon, endExon);
     exit(1);
   }

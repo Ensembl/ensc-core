@@ -25,7 +25,7 @@ typedef struct IDHashStruct {
 IDHash *IDHash_new(IDHashSizes size);
 int     IDHash_add(IDHash *idHash, IDType id, void *val);
 int     IDHash_contains(IDHash *idHash, IDType id);
-void    IDHash_free(IDHash *idHash, int freeFunc());
+void    IDHash_free(IDHash *idHash, void freeFunc());
 int     IDHash_getNumValues(IDHash *idHash);
 IDType * IDHash_getKeys(IDHash *idHash);
 void *  IDHash_getValue(IDHash *idHash, IDType id);

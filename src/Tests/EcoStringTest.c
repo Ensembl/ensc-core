@@ -39,5 +39,7 @@ int main(int argc, char **argv) {
   ok(7, !strcmp(ecoS3,&(TestStr1[1])));
 
   ok(8, EcoString_strcmp(ecoS1,ecoS3));
+ 
+  return 0;
 }
 

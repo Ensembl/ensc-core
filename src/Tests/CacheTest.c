@@ -31,4 +31,5 @@ int main(int argc, char *argv[]) {
   ok(5,retStr && retStr2); 
   ok(6,!strcmp(retStr,testStr2) && !strcmp(retStr2,testStr3));
 
+  return 0;
 }

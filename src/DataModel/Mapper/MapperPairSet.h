@@ -19,5 +19,8 @@ MapperPairSet *MapperPairSet_new();
 void MapperPairSet_sort(MapperPairSet *set, int sInd);
 void MapperPairSet_free(MapperPairSet *mps, int freePairsFlag);
 
+void MapperPairSet_addPair(MapperPairSet *mps, MapperPair *pair);
+
+
 
 #endif

@@ -14,4 +14,6 @@ int main(int argc, char *argv[]) {
 
   StrUtil_gettok(token,&chP,chP,MAXSTRLEN);
   ok(1, !strcmp(token,"the"));
+
+  return 0;
 }

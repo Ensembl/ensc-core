@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+#include <unistd.h>
+
 #include "Stream.h"
 #include "FileUtil.h"
 
@@ -30,5 +32,7 @@ int main(int argc, char **argv) {
 
   FileUtil_getStrippedLine(str,1024,fp);
   ok(3,!strcmp(str,TestStr1));
+
+  return 0;
 }
 

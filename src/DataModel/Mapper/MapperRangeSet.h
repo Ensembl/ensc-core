@@ -13,5 +13,9 @@ struct MapperRangeSetStruct {
 MapperRangeSet *MapperRangeSet_new();
 #define MapperRangeSet_getRangeAt(mrs,ind) (mrs)->ranges[(ind)]
 #define MapperRangeSet_getNumRange(mrs) (mrs)->nRange
+void MapperRangeSet_addRange(MapperRangeSet *mrs, MapperRange *range);
+void MapperRangeSet_reverse(MapperRangeSet *mrs);
+void MapperRangeSet_free(MapperRangeSet *mrs);
+
 
 #endif

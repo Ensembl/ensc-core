@@ -2,6 +2,8 @@
 #define __BASETEST_H__
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* Unusually for me I'm including the complete code so the tests compile easier */
 

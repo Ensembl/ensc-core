@@ -16,4 +16,7 @@ MapperPair *MapperPair_new();
 #define MapperPair_setUnit(mp, ind, p) (mp)->units[(ind)] = (p)
 #define MapperPair_getUnit(mp, ind) (mp)->units[(ind)]
 
+void MapperPair_free(MapperPair *mp);
+
+
 #endif

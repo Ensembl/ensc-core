@@ -360,7 +360,7 @@ MapperPairSet *Mapper_listPairs(Mapper *m, IDType id, int start, int end, CoordS
   int i;
 
   if (start > end) {
-    fprintf(stderr,"ERROR: Start is greater than end for id %d, start %d, end %d\n",id,start,end);
+    fprintf(stderr,"ERROR: Start is greater than end for id " IDFMTSTR ", start %d, end %d\n",id,start,end);
   }
 
   if( Mapper_getIsSorted(m) == 0 ) {
@@ -434,7 +434,6 @@ void Mapper_dump(Mapper *m, FILE *fp) {
   IDType *keys;
   int   nKey;
   int   i;
-  MapperPairSet *pairs;
 
   if (fp==NULL) {
     fp = stderr;
@@ -450,14 +449,14 @@ void Mapper_dump(Mapper *m, FILE *fp) {
     MapperPairSet *set = IDHash_getValue(fromHash,id);
     int j;
 
-    fprintf(fp, "From Hash %d with %d pairs\n",id, MapperPairSet_getNumPair(set));
+    fprintf(fp, "From Hash " IDFMTSTR " with %d pairs\n",id, MapperPairSet_getNumPair(set));
 
     for (j=0; j<MapperPairSet_getNumPair(set); j++) {
       MapperPair *pair = MapperPairSet_getPairAt(set,j);
       MapperUnit *fromCoord = MapperPair_getUnit(pair, MAPPER_FROM_IND);
       MapperUnit *toCoord   = MapperPair_getUnit(pair, MAPPER_TO_IND);
 
-      fprintf(fp, "    %d %d:%d %d %d\n",fromCoord->start,fromCoord->end,
+      fprintf(fp, "    %d %d:%d %d " IDFMTSTR "\n",fromCoord->start,fromCoord->end,
               toCoord->start,toCoord->end,toCoord->id);
     }
   }

@@ -9,5 +9,7 @@ int main(int argc, char **argv) {
   ok(2,!Class_isDescendent(CLASS_FEATURESET,CLASS_OBJECT));
   ok(3,Class_isDescendent(CLASS_FEATURESET,CLASS_GENE));
   ok(4,!Class_isDescendent(CLASS_STATEMENTHANDLE,CLASS_GENE));
+
+  return 0;
 }
 

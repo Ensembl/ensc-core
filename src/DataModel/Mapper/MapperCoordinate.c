@@ -1,7 +1,8 @@
 #include "MapperCoordinate.h"
 #include <stdio.h>
+#include <stdlib.h>
 
-MapperCoordinate *MapperCoordinate_new(long id, int start, int end, int strand) {
+MapperCoordinate *MapperCoordinate_new(IDType id, int start, int end, int strand) {
   MapperCoordinate *mc;
 
   if ((mc = (MapperCoordinate *)calloc(1,sizeof(MapperCoordinate))) == NULL) {

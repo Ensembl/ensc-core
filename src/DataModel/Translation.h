@@ -3,6 +3,7 @@
 
 #include "DataModelTypes.h"
 #include "Exon.h"
+#include "IDHash.h"
 
 struct TranslationStruct {
   int start;
@@ -38,5 +39,8 @@ char *Translation_getStableId(Translation *translation);
 int Translation_getVersion(Translation *translation);
 
 Translation *Translation_new(void);
+
+void Translation_transform(Translation *translation, IDHash *exonTransforms);
+
 
 #endif

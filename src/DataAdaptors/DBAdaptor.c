@@ -19,6 +19,7 @@
 #include "SliceAdaptor.h"
 #include "SupportingFeatureAdaptor.h"
 #include "TranscriptAdaptor.h"
+#include "TranslationAdaptor.h"
 
 
 #include "StrUtil.h"

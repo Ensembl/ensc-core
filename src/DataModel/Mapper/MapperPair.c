@@ -1,5 +1,7 @@
 #include "MapperPair.h"
 #include <stdio.h>
+#include <stdlib.h>
+
 
 MapperPair *MapperPair_new() {
   MapperPair *mp;

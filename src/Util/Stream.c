@@ -197,7 +197,6 @@ int Stream_outputString(STREAM *Out, char *Str) {
 /*             04/05/97 SMJS  Changed to use array of InStreams               */
 /******************************************************************************/
 int Stream_setDefaults(int HistFlag) {
-  char *DBGName;
   int i;
 
   for (i=0;i<MAXINSTREAM;i++) {

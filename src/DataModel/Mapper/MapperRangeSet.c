@@ -1,5 +1,6 @@
 #include "MapperRangeSet.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 MapperRangeSet *MapperRangeSet_new() {
   MapperRangeSet *mrs;
@@ -26,7 +27,6 @@ void MapperRangeSet_addRange(MapperRangeSet *mrs, MapperRange *range) {
 void MapperRangeSet_reverse(MapperRangeSet *mrs) {
   int up;
   int down = mrs->nRange-1; 
-  int i;
 
   for (up=0; up<mrs->nRange/2; up++, down--) {
     MapperRange *tmp = mrs->ranges[down];

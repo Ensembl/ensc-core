@@ -1,5 +1,6 @@
 #include "StableIdInfo.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 char *StableIdInfo_setStableId(StableIdInfo *si, char *sid) {
