@@ -5,9 +5,12 @@
 
 #include "DataModelTypes.h"
 #include "Storable.h"
+#include "EnsRoot.h"
 
 
+#define FUNCSTRUCTTYPE NoTypeFuncs
 struct CloneStruct {
+  ENSROOT_DATA
   char *emblAcc;
   char *name;
   int  version;
@@ -17,6 +20,7 @@ struct CloneStruct {
   time_t modified;
   Storable st;
 };
+#undef FUNCSTRUCTTYPE
 
 Clone *Clone_new(void);
 

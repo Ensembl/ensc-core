@@ -30,7 +30,7 @@ RepeatFeatureAdaptor *RepeatFeatureAdaptor_new(DBAdaptor *dba) {
   return rfa;
 }
 
-int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
+int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
   RepeatConsensusAdaptor *rca = DBAdaptor_getRepeatConsensusAdaptor(bfa->dba);
   StatementHandle *sth;
   int i;
@@ -51,8 +51,8 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
 
   sth = bfa->prepare((BaseAdaptor *)bfa,qStr,strlen(qStr));
 
-  for (i=0; i<Set_getNumElement(features); i++) {
-    RepeatFeature *rf = Set_getElementAt(features,i);
+  for (i=0; i<Vector_getNumElement(features); i++) {
+    RepeatFeature *rf = Vector_getElementAt(features,i);
     IDType dbID;
     IDType analId;
     IDType consId;
@@ -74,17 +74,17 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
 
 // NIY This is a terribly slow way to do this - f**king consensi
 
-      Set *match = RepeatConsensusAdaptor_fetchByClassAndSeq(rca, "trf", RepeatConsensus_getConsensus(cons)); 
-      if (Set_getNumElement(match)) {
-        RepeatConsensus *matchedCons = Set_getElementAt(match,0);
+      Vector *match = RepeatConsensusAdaptor_fetchByClassAndSeq(rca, "trf", RepeatConsensus_getConsensus(cons)); 
+      if (Vector_getNumElement(match)) {
+        RepeatConsensus *matchedCons = Vector_getElementAt(match,0);
         RepeatConsensus_setDbID(cons,RepeatConsensus_getDbID(matchedCons));
-        Set_free(match,RepeatConsensus_free);
+        Vector_free(match,RepeatConsensus_free);
       } else {
-        Set *consSet = Set_new();
-        Set_addElement(consSet,cons);
-        RepeatConsensusAdaptor_store(rca,consSet);
-        Set_free(match,NULL);
-        Set_free(consSet,NULL);
+        Vector *consVector = Vector_new();
+        Vector_addElement(consVector,cons);
+        RepeatConsensusAdaptor_store(rca,consVector);
+        Vector_free(match,NULL);
+        Vector_free(consVector,NULL);
       }
 
     } else if (!strcmp(RepeatConsensus_getRepeatClass(cons),"Simple_repeat")) {
@@ -108,10 +108,10 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
         RepeatConsensus_setDbID(cons,RepeatConsensus_getDbID(match));
         RepeatConsensus_free(match);
       } else {
-        Set *consSet = Set_new();
-        Set_addElement(consSet,cons);
-        RepeatConsensusAdaptor_store(rca,consSet);
-        Set_free(consSet,NULL);
+        Vector *consVector = Vector_new();
+        Vector_addElement(consVector,cons);
+        RepeatConsensusAdaptor_store(rca,consVector);
+        Vector_free(consVector,NULL);
       }
     } else {
 
@@ -124,15 +124,15 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
           RepeatConsensus_setDbID(cons,RepeatConsensus_getDbID(match));
           RepeatConsensus_free(match);
         } else {
-          Set *consSet = Set_new();
+          Vector *consVector = Vector_new();
           // if we don't match a consensus already stored create a fake one 
           // and set consensus to 'N' as null seq not allowed
           // FIXME: not happy with this, but ho hum ...
           fprintf(stderr, "Warning: Can't find %s repeat consensus\n", RepeatConsensus_getName(cons));
           RepeatConsensus_setConsensus(cons,"N");
-          Set_addElement(consSet,cons);
-          RepeatConsensusAdaptor_store(rca,consSet);
-          Set_free(consSet,NULL);
+          Vector_addElement(consVector,cons);
+          RepeatConsensusAdaptor_store(rca,consVector);
+          Vector_free(consVector,NULL);
         }
       }
     }
@@ -193,14 +193,14 @@ char *RepeatFeatureAdaptor_getColumns() {
          "rc.repeat_consensus";
 }
 
-Set *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
+Vector *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
                                                      StatementHandle *sth,
                                                      AssemblyMapper *mapper,
                                                      Slice *slice) {
   AnalysisAdaptor *aa;
   RawContigAdaptor *rca;
   RepeatConsensusAdaptor *rpca;
-  Set *features;
+  Vector *features;
   ResultRow *row;
   IDHash *rcHash;
 
@@ -209,7 +209,7 @@ Set *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
   rpca = DBAdaptor_getRepeatConsensusAdaptor(bfa->dba);
 
 
-  features = Set_new();
+  features = Vector_new();
   rcHash = IDHash_new(IDHASH_SMALL);
 
   while ((row = sth->fetchRow(sth))) {
@@ -247,7 +247,7 @@ Set *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
 
     if (row->col(row,9)) RepeatFeature_setScore(rf,row->getDoubleAt(row,9));
 
-    Set_addElement(features,rf);
+    Vector_addElement(features,rf);
   }
 
   IDHash_free(rcHash,NULL);

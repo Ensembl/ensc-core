@@ -65,7 +65,7 @@ libensc.a	: \
 	objectfiles/DataModel/AssemblyMapper.o \
 	objectfiles/DataModel/BaseAlignFeature.o \
 	objectfiles/DataModel/BaseContig.o \
-	objectfiles/DataModel/Basic/Set.o \
+	objectfiles/DataModel/Basic/Vector.o \
 	objectfiles/DataModel/Chromosome.o \
 	objectfiles/DataModel/Class.o \
 	objectfiles/DataModel/Clone.o \
@@ -154,6 +154,7 @@ Tests/StrUtilTest: \
 # deletes compiled class files
 clean	:	
 	rm -f libensc.a
+	rm -f Programs/testdbc
 	find ./ -name "*.o" -exec rm {} \;
 	find ./Tests ! -name "*.c" ! -name "*.h" -type f -perm -0700 -exec rm {} \;
 

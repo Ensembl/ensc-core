@@ -8,6 +8,7 @@ PredictionTranscript *PredictionTranscript_new() {
     return NULL;
   }
 
+  transcript->objectType = CLASS_PREDICTIONTRANSCRIPT;
   return transcript;
 }
 

@@ -19,62 +19,62 @@ RepeatConsensusAdaptor *RepeatConsensusAdaptor_new(DBAdaptor *dba) {
 
 RepeatConsensus *RepeatConsensusAdaptor_fetchByDbID(RepeatConsensusAdaptor *rca, IDType dbID) {
   char constraintStr[256];
-  Set *rcSet;
+  Vector *rcVector;
   RepeatConsensus *rc;
   
   sprintf(constraintStr,"repeat_consensus_id = " IDFMTSTR, dbID);
-  rcSet = RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
+  rcVector = RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
 
-  rc = Set_getElementAt(rcSet,0);
+  rc = Vector_getElementAt(rcVector,0);
 
-  Set_free(rcSet,NULL);
+  Vector_free(rcVector,NULL);
 
   return rc;   
 }
 
 RepeatConsensus *RepeatConsensusAdaptor_fetchByName(RepeatConsensusAdaptor *rca, char *name) {
   char constraintStr[256];
-  Set *rcSet;
+  Vector *rcVector;
   RepeatConsensus *rc;
   
   sprintf(constraintStr,"repeat_name = \'%s\'", name);
-  rcSet = RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
+  rcVector = RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
 
-  rc = Set_getElementAt(rcSet,0);
+  rc = Vector_getElementAt(rcVector,0);
 
-  Set_free(rcSet,NULL);
+  Vector_free(rcVector,NULL);
 
   return rc;   
 }
 
 RepeatConsensus *RepeatConsensusAdaptor_fetchByNameAndClass(RepeatConsensusAdaptor *rca, char *name, char *class) {
   char constraintStr[256];
-  Set *rcSet;
+  Vector *rcVector;
   RepeatConsensus *rc;
   
   sprintf(constraintStr,"repeat_name = \'%s\' AND repeat_class = \'%s\'", name,class);
-  rcSet = RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
+  rcVector = RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
 
-  rc = Set_getElementAt(rcSet,0);
+  rc = Vector_getElementAt(rcVector,0);
 
-  Set_free(rcSet,NULL);
+  Vector_free(rcVector,NULL);
 
   return rc;   
 }
 
 
-Set *RepeatConsensusAdaptor_fetchByClassAndSeq(RepeatConsensusAdaptor *rca, char *class, char *seq) {
+Vector *RepeatConsensusAdaptor_fetchByClassAndSeq(RepeatConsensusAdaptor *rca, char *class, char *seq) {
   char constraintStr[256];
   
   sprintf(constraintStr,"repeat_class = \'%s\' AND repeat_consensus = \'%s\'", class, seq);
   return RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
 }
 
-Set *RepeatConsensusAdaptor_genericFetch(RepeatConsensusAdaptor *rca, char *whereClause) {
+Vector *RepeatConsensusAdaptor_genericFetch(RepeatConsensusAdaptor *rca, char *whereClause) {
   StatementHandle *sth;
   ResultRow *row;
   char qStr[1024];
-  Set *consensi;
+  Vector *consensi;
     
   sprintf(qStr,"SELECT repeat_consensus_id, repeat_name,"
                "       repeat_class, LENGTH(repeat_consensus)"
@@ -84,7 +84,7 @@ Set *RepeatConsensusAdaptor_genericFetch(RepeatConsensusAdaptor *rca, char *wher
   sth = rca->prepare((BaseAdaptor *)rca,qStr,strlen(qStr));
   sth->execute(sth);
 
-  consensi = Set_new();
+  consensi = Vector_new();
   
   while ((row = sth->fetchRow(sth))) {
     RepeatConsensus *rc = RepeatConsensus_new();
@@ -95,12 +95,12 @@ Set *RepeatConsensusAdaptor_genericFetch(RepeatConsensusAdaptor *rca, char *wher
     // Do I really need to do this???? RepeatConsensus_setLength(rc, row->getIntAt(row,3));
     RepeatConsensus_setAdaptor(rc, (BaseAdaptor *)rca);
 
-    Set_addElement(consensi, rc);
+    Vector_addElement(consensi, rc);
   }
   return consensi;
 }
 
-int RepeatConsensusAdaptor_store(RepeatConsensusAdaptor *rca, Set *consensi) {
+int RepeatConsensusAdaptor_store(RepeatConsensusAdaptor *rca, Vector *consensi) {
   StatementHandle *sth;
   char qStr[1024];
   int i;
@@ -115,8 +115,8 @@ int RepeatConsensusAdaptor_store(RepeatConsensusAdaptor *rca, Set *consensi) {
 
   sth = rca->prepare((BaseAdaptor *)rca,qStr,strlen(qStr));
     
-  for (i=0; i<Set_getNumElement(consensi); i++) {
-    RepeatConsensus *rc = Set_getElementAt(consensi,i);
+  for (i=0; i<Vector_getNumElement(consensi); i++) {
+    RepeatConsensus *rc = Vector_getElementAt(consensi,i);
     IDType dbID; 
     char *name;
     char *class;

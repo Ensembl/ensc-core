@@ -9,6 +9,8 @@ SimpleFeature *SimpleFeature_new() {
     return NULL;
   }
 
+  sf->objectType = CLASS_SIMPLEFEATURE;
+ 
   return sf;
 }
 

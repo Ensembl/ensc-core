@@ -8,5 +8,6 @@ DNAPepAlignFeature *DNAPepAlignFeature_new() {
     return NULL;
   }
 
+  dpaf->objectType = CLASS_DNAPEPALIGNFEATURE;
   return dpaf;
 }

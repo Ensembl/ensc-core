@@ -25,7 +25,7 @@ PredictionTranscriptAdaptor *PredictionTranscriptAdaptor_new(DBAdaptor *dba) {
   return pta;
 }
 
-int PredictionTranscriptAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
+int PredictionTranscriptAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
   StatementHandle *sth;
   char qStr[1024];
   int i;
@@ -40,8 +40,8 @@ int PredictionTranscriptAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
 
   sth = bfa->prepare((BaseAdaptor *)bfa,qStr,strlen(qStr));
 
-  for (i=0; i<Set_getNumElement(features); i++) {
-    PredictionTranscript *predTrans = Set_getElementAt(features, i);
+  for (i=0; i<Vector_getNumElement(features); i++) {
+    PredictionTranscript *predTrans = Vector_getElementAt(features, i);
     int j;
     IDType dbID = 0;
     int rank = 1;
@@ -127,13 +127,13 @@ char *PredictionTranscriptAdaptor_getColumns(void) {
          "p.exon_count";
 }
 
-Set *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
+Vector *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
                                                        StatementHandle *sth,
                                                        AssemblyMapper *assMapper,
                                                        Slice *slice) {
   AnalysisAdaptor *aa;
   RawContigAdaptor *rca;
-  Set *out;
+  Vector *out;
   ResultRow *row;
   int sliceChrId;
   int sliceEnd;
@@ -151,7 +151,7 @@ Set *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *
   Analysis *analysis;
   RawContig *contig;
 
-  out = Set_new();
+  out = Vector_new();
 
   aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
   rca = DBAdaptor_getRawContigAdaptor(bfa->dba);
@@ -194,7 +194,7 @@ Set *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *
           char tmpStr[256]; 
           sprintf(tmpStr,"%s.%d.%d\n",stableCtg,stableStart,stableEnd);
           PredictionTranscript_setStableId(predTrans,tmpStr);
-          Set_addElement(out,predTrans);
+          Vector_addElement(out,predTrans);
         }
       }
 
@@ -299,7 +299,7 @@ Set *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *
       char tmpStr[256]; 
       sprintf(tmpStr,"%s.%d.%d\n",stableCtg,stableStart,stableEnd);
       PredictionTranscript_setStableId(predTrans,tmpStr);
-      Set_addElement(out,predTrans);
+      Vector_addElement(out,predTrans);
     }
   }
 

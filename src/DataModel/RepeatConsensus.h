@@ -3,13 +3,17 @@
 
 #include "Storable.h"
 #include "EcoString.h"
+#include "EnsRoot.h"
 
+#define FUNCSTRUCTTYPE NoTypeFuncs
 struct RepeatConsensusStruct {
+  ENSROOT_DATA
   Storable st;
   ECOSTRING repeatClass;
   ECOSTRING consensus;
   ECOSTRING name;
 };
+#undef FUNCSTRUCTTYPE
 
 #define RepeatConsensus_setDbID(rcs,id) Storable_setDbID(&((rcs)->st),(id))
 #define RepeatConsensus_getDbID(rcs) Storable_getDbID(&((rcs)->st))

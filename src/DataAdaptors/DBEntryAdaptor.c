@@ -8,7 +8,7 @@
 #include "Gene.h"
 #include "Translation.h"
 
-Set *DBEntryAdaptor_fetchByObjectType(DBEntryAdaptor *dbea, IDType ensObj, char *ensType);
+Vector *DBEntryAdaptor_fetchByObjectType(DBEntryAdaptor *dbea, IDType ensObj, char *ensType);
 
 
 DBEntryAdaptor *DBEntryAdaptor_new(DBAdaptor *dba) {
@@ -166,7 +166,7 @@ IDType DBEntryAdaptor_store(DBEntryAdaptor *dbea, DBEntry *exObj,
       StatementHandle *checkSth;
       StatementHandle *storeSth;
       int i;
-      Set *synonyms;
+      Vector *synonyms;
 
       sprintf(qStr,
               "SELECT xref_id, synonym"
@@ -184,8 +184,8 @@ IDType DBEntryAdaptor_store(DBEntryAdaptor *dbea, DBEntry *exObj,
 
       synonyms = DBEntry_getAllSynonyms(exObj);
 
-      for (i=0;i<Set_getNumElement(synonyms); i++) {	    
-        char *syn = Set_getElementAt(synonyms,i);
+      for (i=0;i<Vector_getNumElement(synonyms); i++) {	    
+        char *syn = Vector_getElementAt(synonyms,i);
         checkSth->execute(checkSth, dbX, syn);
         row = checkSth->fetchRow(checkSth);
         if (!row) {
@@ -319,24 +319,24 @@ int DBEntryAdaptor_fetchAllByGene(DBEntryAdaptor *dbea, Gene *gene) {
   while ((row = sth->fetchRow(sth))) {
     IDType transcriptId = row->getLongLongAt(row,0);
     int i;
-    Set *transLinks;
+    Vector *transLinks;
 
     if (row->col(row,1)) {
       IDType translationId = row->getLongLongAt(row,1);
-      Set *translatLinks = DBEntryAdaptor_fetchByObjectType(dbea, translationId,"Translation");
+      Vector *translatLinks = DBEntryAdaptor_fetchByObjectType(dbea, translationId,"Translation");
 
-      for (i=0;i<Set_getNumElement(translatLinks); i++) {
-        Gene_addDBLink(gene,Set_getElementAt(translatLinks,i));
+      for (i=0;i<Vector_getNumElement(translatLinks); i++) {
+        Gene_addDBLink(gene,Vector_getElementAt(translatLinks,i));
       }
-      Set_free(translatLinks,NULL);
+      Vector_free(translatLinks,NULL);
     }
 
     
     transLinks = DBEntryAdaptor_fetchByObjectType(dbea, transcriptId,"Transcript");
-    for (i=0;i<Set_getNumElement(transLinks); i++) {
-      Gene_addDBLink(gene, Set_getElementAt(transLinks,i));
+    for (i=0;i<Vector_getNumElement(transLinks); i++) {
+      Gene_addDBLink(gene, Vector_getElementAt(transLinks,i));
     }
-    Set_free(transLinks,NULL);
+    Vector_free(transLinks,NULL);
   }
 
 /* NIY This is wrong so I'm not going to implement it!
@@ -350,8 +350,8 @@ int DBEntryAdaptor_fetchAllByGene(DBEntryAdaptor *dbea, Gene *gene) {
   return 1;
 }
 
-Set *DBEntryAdaptor_fetchAllByRawContig(DBEntryAdaptor *dbea, RawContig *contig) {
-  Set *contigLinks = DBEntryAdaptor_fetchByObjectType(dbea, RawContig_getDbID(contig),"RawContig");
+Vector *DBEntryAdaptor_fetchAllByRawContig(DBEntryAdaptor *dbea, RawContig *contig) {
+  Vector *contigLinks = DBEntryAdaptor_fetchByObjectType(dbea, RawContig_getDbID(contig),"RawContig");
   return contigLinks;
 }
 
@@ -359,7 +359,7 @@ int DBEntryAdaptor_fetchAllByTranscript(DBEntryAdaptor *dbea, Transcript *trans)
   char qStr[512];
   StatementHandle *sth;
   ResultRow *row;
-  Set *transLinks;
+  Vector *transLinks;
   int i;
 
   sprintf(qStr, 
@@ -380,32 +380,32 @@ int DBEntryAdaptor_fetchAllByTranscript(DBEntryAdaptor *dbea, Transcript *trans)
   
   while ((row = sth->fetchRow(sth))) {
     IDType translationId = row->getLongLongAt(row,0);
-    Set *translatLinks = DBEntryAdaptor_fetchByObjectType(dbea, translationId,"Translation");
-    for (i=0;i<Set_getNumElement(translatLinks); i++) {
-      Transcript_addDBLink(trans,Set_getElementAt(translatLinks,i));
+    Vector *translatLinks = DBEntryAdaptor_fetchByObjectType(dbea, translationId,"Translation");
+    for (i=0;i<Vector_getNumElement(translatLinks); i++) {
+      Transcript_addDBLink(trans,Vector_getElementAt(translatLinks,i));
     }
-    Set_free(translatLinks,NULL);
+    Vector_free(translatLinks,NULL);
   }
 
   sth->finish(sth);
 
   transLinks = DBEntryAdaptor_fetchByObjectType(dbea, Transcript_getDbID(trans),"Transcript");
       fprintf(stderr,"transLinks\n");
-  for (i=0;i<Set_getNumElement(transLinks); i++) {
-    Transcript_addDBLink(trans,Set_getElementAt(transLinks,i));
+  for (i=0;i<Vector_getNumElement(transLinks); i++) {
+    Transcript_addDBLink(trans,Vector_getElementAt(transLinks,i));
   }
-  Set_free(transLinks,NULL);
+  Vector_free(transLinks,NULL);
 
   return 1;
 }
 
-Set *DBEntryAdaptor_fetchAllByTranslation(DBEntryAdaptor *dbea, Translation *trans) {
-  Set *translatLinks = DBEntryAdaptor_fetchByObjectType(dbea, Translation_getDbID(trans),"Translation");
+Vector *DBEntryAdaptor_fetchAllByTranslation(DBEntryAdaptor *dbea, Translation *trans) {
+  Vector *translatLinks = DBEntryAdaptor_fetchByObjectType(dbea, Translation_getDbID(trans),"Translation");
   return translatLinks;
 }
 
-Set *DBEntryAdaptor_fetchByObjectType(DBEntryAdaptor *dbea, IDType ensObj, char *ensType) {
-  Set *out;
+Vector *DBEntryAdaptor_fetchByObjectType(DBEntryAdaptor *dbea, IDType ensObj, char *ensType) {
+  Vector *out;
   char qStr[1024];
   StatementHandle *sth;
   ResultRow *row;
@@ -443,7 +443,7 @@ Set *DBEntryAdaptor_fetchByObjectType(DBEntryAdaptor *dbea, IDType ensObj, char 
   sth->execute(sth);
 
   seen = IDHash_new(IDHASH_SMALL);
-  out = Set_new();
+  out = Vector_new();
 
   while ((row = sth->fetchRow(sth))) {
     DBEntry *exDB;
@@ -474,7 +474,7 @@ Set *DBEntryAdaptor_fetchByObjectType(DBEntryAdaptor *dbea, IDType ensObj, char 
       if (row->col(row,4)) DBEntry_setDescription(exDB, row->getStringAt(row,4));
       if (row->col(row,7)) DBEntry_setStatus(exDB, row->getStringAt(row,7));
       
-      Set_addElement(out, exDB);
+      Vector_addElement(out, exDB);
       IDHash_add(seen, refID, exDB);
     } 
 

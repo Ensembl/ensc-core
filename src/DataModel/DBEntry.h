@@ -3,7 +3,7 @@
 
 #include "DataModelTypes.h"
 #include "Storable.h"
-#include "Set.h"
+#include "Vector.h"
 #include "EcoString.h"
 #include "IdentityXref.h"
 #include "Object.h"
@@ -17,7 +17,7 @@ struct DBEntryStruct {
   int       version;
   char     *displayId;
   int       release;
-  Set      *synonyms;
+  Vector   *synonyms;
   char     *description;
   IdentityXref *idXref;
 };

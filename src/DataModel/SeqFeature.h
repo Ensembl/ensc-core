@@ -13,9 +13,12 @@
 typedef int (*SeqFeature_StartFunc)(SeqFeature *);
 typedef int (*SeqFeature_EndFunc)(SeqFeature *);
 
-typedef struct SeqFeatureFuncsStruct {
-  SeqFeature_StartFunc start;
+#define SEQFEATUREFUNCS_DATA \
+  SeqFeature_StartFunc start; \
   SeqFeature_EndFunc   end;
+
+typedef struct SeqFeatureFuncsStruct {
+  SEQFEATUREFUNCS_DATA
 } SeqFeatureFuncs;
 
 #define SEQFEATURE_DATA \

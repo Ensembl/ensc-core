@@ -8,5 +8,7 @@ DNAAlignFeature *DNAAlignFeature_new() {
     return NULL;
   }
 
+  daf->objectType = CLASS_DNADNAALIGNFEATURE;
+
   return daf;
 }

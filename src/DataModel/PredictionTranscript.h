@@ -3,51 +3,52 @@
 
 #include "DataModelTypes.h"
 
-#include "SeqFeature.h"
+#include "AnnotatedSeqFeature.h"
 #include "FeatureSet.h"
 #include "StableIdInfo.h"
 
+#define FUNCSTRUCTTYPE AnnotatedSeqFeatureFuncs
 struct PredictionTranscriptStruct {
-  SeqFeature sf;
+  ANNOTATEDSEQFEATURE_DATA
   FeatureSet fs;
-  StableIdInfo si;
   char *type;
 };
+#undef FUNCSTRUCTTYPE
 
 PredictionTranscript *PredictionTranscript_new(void);
 
 #define PredictionTranscript_setStableId(transcript,sid)  StableIdInfo_setStableId(&((transcript)->si),(sid))
 #define PredictionTranscript_getStableId(transcript)  StableIdInfo_getStableId(&((transcript)->si))
 
-#define PredictionTranscript_setStart(transcript,start) SeqFeature_setStart(&((transcript)->sf),start)
-#define PredictionTranscript_getStart(transcript) SeqFeature_getStart(&((transcript)->sf))
+#define PredictionTranscript_setStart(transcript,start) AnnotatedSeqFeature_setStart((transcript),start)
+#define PredictionTranscript_getStart(transcript) AnnotatedSeqFeature_getStart((transcript))
 
-#define PredictionTranscript_setEnd(transcript,end) SeqFeature_setEnd(&((transcript)->sf),end)
-#define PredictionTranscript_getEnd(transcript) SeqFeature_getEnd(&((transcript)->sf))
+#define PredictionTranscript_setEnd(transcript,end) AnnotatedSeqFeature_setEnd((transcript),end)
+#define PredictionTranscript_getEnd(transcript) AnnotatedSeqFeature_getEnd((transcript))
 
-#define PredictionTranscript_setStrand(transcript,strand) SeqFeature_setStrand(&((transcript)->sf),strand)
-#define PredictionTranscript_getStrand(transcript) SeqFeature_getStrand(&((transcript)->sf))
+#define PredictionTranscript_setStrand(transcript,strand) AnnotatedSeqFeature_setStrand((transcript),strand)
+#define PredictionTranscript_getStrand(transcript) AnnotatedSeqFeature_getStrand((transcript))
 
-#define PredictionTranscript_addExon(trans,exon) FeatureSet_addFeature(&((trans)->fs),exon)
-#define PredictionTranscript_getExonAt(trans,ind) FeatureSet_getFeatureAt(&((trans)->fs),ind)
+#define PredictionTranscript_addExon(transcript,exon) FeatureSet_addFeature(&((transcript)->fs),exon)
+#define PredictionTranscript_getExonAt(transcript,ind) FeatureSet_getFeatureAt(&((transcript)->fs),ind)
 
-//#define PredictionTranscript_setExonCount(trans,ec) FeatureSet_setNumFeature(&((trans)->fs))
-#define PredictionTranscript_setExonCount(trans,ec)
-#define PredictionTranscript_getExonCount(trans) FeatureSet_getNumFeature(&((trans)->fs))
+//#define PredictionTranscript_setExonCount(transcript,ec) FeatureSet_setNumFeature(&((transcript)->fs))
+#define PredictionTranscript_setExonCount(transcript,ec)
+#define PredictionTranscript_getExonCount(transcript) FeatureSet_getNumFeature(&((transcript)->fs))
 
-#define PredictionTranscript_removeAllExons(trans) FeatureSet_removeAll(&((trans)->fs))
+#define PredictionTranscript_removeAllExons(transcript) FeatureSet_removeAll(&((transcript)->fs))
 
-#define PredictionTranscript_setDbID(transcript,id) SeqFeature_setDbID(&((transcript)->sf),(id))
-#define PredictionTranscript_getDbID(transcript) SeqFeature_getDbID(&((transcript)->sf))
+#define PredictionTranscript_setDbID(transcript,id) AnnotatedSeqFeature_setDbID((transcript),(id))
+#define PredictionTranscript_getDbID(transcript) AnnotatedSeqFeature_getDbID((transcript))
 
-#define PredictionTranscript_setAdaptor(transcript,ad) SeqFeature_setAdaptor(&((transcript)->sf),(ad))
-#define PredictionTranscript_getAdaptor(transcript) SeqFeature_getAdaptor(&((transcript)->sf))
+#define PredictionTranscript_setAdaptor(transcript,ad) AnnotatedSeqFeature_setAdaptor((transcript),(ad))
+#define PredictionTranscript_getAdaptor(transcript) AnnotatedSeqFeature_getAdaptor((transcript))
 
-#define PredictionTranscript_setAnalysis(transcript,an) SeqFeature_setAnalysis(&((transcript)->sf),(an))
-#define PredictionTranscript_getAnalysis(transcript) SeqFeature_getAnalysis(&((transcript)->sf))
+#define PredictionTranscript_setAnalysis(transcript,an) AnnotatedSeqFeature_setAnalysis((transcript),(an))
+#define PredictionTranscript_getAnalysis(transcript) AnnotatedSeqFeature_getAnalysis((transcript))
 
-void PredictionTranscript_flushExons(PredictionTranscript *trans);
+void PredictionTranscript_flushExons(PredictionTranscript *transcript);
 
-void PredictionTranscript_free(PredictionTranscript *trans);
+void PredictionTranscript_free(PredictionTranscript *transcript);
 
 #endif

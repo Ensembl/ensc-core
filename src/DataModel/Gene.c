@@ -16,10 +16,12 @@ Gene *Gene_new() {
   Gene_setCreated(gene,0);
   Gene_setVersion(gene,-1);
 
+  gene->objectType = CLASS_GENE;
+
   return gene;
 }
 
-Set *Gene_getAllDBLinks(Gene *g) {
+Vector *Gene_getAllDBLinks(Gene *g) {
   if (!g->dbLinks) {
     GeneAdaptor *ga = (GeneAdaptor *)Gene_getAdaptor(g);
 
@@ -27,7 +29,7 @@ Set *Gene_getAllDBLinks(Gene *g) {
       DBEntryAdaptor *dbea = DBAdaptor_getDBEntryAdaptor(ga->dba);
       DBEntryAdaptor_fetchAllByGene(dbea,g);
     } else {
-      g->dbLinks = emptySet;
+      g->dbLinks = emptyVector;
     }
   }
 
@@ -36,10 +38,10 @@ Set *Gene_getAllDBLinks(Gene *g) {
 
 int Gene_addDBLink(Gene *g, DBEntry *dbe) {
   if (!g->dbLinks) {
-    g->dbLinks = Set_new();
+    g->dbLinks = Vector_new();
   }
 
-  Set_addElement(g->dbLinks, dbe); 
+  Vector_addElement(g->dbLinks, dbe); 
   return 1;
 }
 
@@ -64,21 +66,24 @@ char *Gene_setType(Gene *g, char *type) {
 }
 
 int Gene_setStart(Gene *gene, int start) {
+/* NIY
   SeqFeature_setStart(&(gene->sf),start);
   Gene_setStartIsSet(gene,TRUE);
   return SeqFeature_getStart(&(gene->sf));
+*/
 }
 
 int Gene_getStart(Gene *gene) {
+/* NIY
   int multiFlag = 0;
 
   if (Gene_getStartIsSet(gene) == FALSE) {
     char *lastContig = NULL;
     int i;
-    Set *exonSet = Gene_getAllExons(gene);
+    Vector *exonVector = Gene_getAllExons(gene);
 
-    for (i=0; i<Set_getNumElement(exonSet); i++) {
-      Exon *exon = Set_getElementAt(exonSet,i);
+    for (i=0; i<Vector_getNumElement(exonVector); i++) {
+      Exon *exon = Vector_getElementAt(exonVector,i);
 
       if (!Gene_getStartIsSet(gene) || 
           Exon_getStart(exon) < SeqFeature_getStart(&(gene->sf))) {
@@ -91,7 +96,7 @@ int Gene_getStart(Gene *gene) {
       lastContig =  BaseContig_getName(Exon_getContig(exon));
     }
     Gene_setStartIsSet(gene,TRUE);
-    Set_free(exonSet,NULL);
+    Vector_free(exonVector,NULL);
   }
 
   if (multiFlag) {
@@ -100,13 +105,14 @@ int Gene_getStart(Gene *gene) {
   }
 
   return SeqFeature_getStart(&(gene->sf));
+*/
 }
 
 
-Set *Gene_getAllExons(Gene *gene) {
+Vector *Gene_getAllExons(Gene *gene) {
   IDHash *exonHash = IDHash_new(IDHASH_SMALL);
   int i;
-  Set *exonSet = Set_new();
+  Vector *exonVector = Vector_new();
   void **values;
 
   for (i=0;i<Gene_getTranscriptCount(gene);i++) {
@@ -124,22 +130,22 @@ Set *Gene_getAllExons(Gene *gene) {
   values = IDHash_getValues(exonHash);
 
   for (i=0;i<IDHash_getNumValues(exonHash);i++) {
-    Set_addElement(exonSet, values[i]);
+    Vector_addElement(exonVector, values[i]);
   }
   free(values);
   IDHash_free(exonHash,NULL);
   
-  return exonSet;
+  return exonVector;
 }
 
 Gene *Gene_transformToSlice(Gene *gene, Slice *slice) {
   IDHash *exonTransforms = IDHash_new(IDHASH_SMALL);
   int i;
-  Set *exons = Gene_getAllExons(gene);
+  Vector *exons = Gene_getAllExons(gene);
 
   // transform Exons
-  for (i=0;i<Set_getNumElement(exons); i++) {
-    Exon *exon = (Exon *)Set_getElementAt(exons,i);
+  for (i=0;i<Vector_getNumElement(exons); i++) {
+    Exon *exon = (Exon *)Vector_getElementAt(exons,i);
      
     Exon *newExon = Exon_transformToSlice(exon,slice);
     IDHash_add(exonTransforms, (long)exon, newExon);

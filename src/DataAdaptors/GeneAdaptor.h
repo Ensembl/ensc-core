@@ -5,7 +5,7 @@
 #include "AdaptorTypes.h"
 #include "Gene.h"
 #include "Slice.h"
-#include "Set.h"
+#include "Vector.h"
 
 #include "StringHash.h"
 
@@ -18,7 +18,7 @@ GeneAdaptor *GeneAdaptor_new(DBAdaptor *dba);
 int GeneAdaptor_listGeneIds(GeneAdaptor *ga, IDType **geneIds);
 Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords);
 int GeneAdaptor_getStableEntryInfo(GeneAdaptor *ga, Gene *gene);
-Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName);
+Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName);
 
 
 

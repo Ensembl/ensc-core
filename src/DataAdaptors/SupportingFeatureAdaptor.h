@@ -10,7 +10,7 @@ struct SupportingFeatureAdaptorStruct {
 };
 
 SupportingFeatureAdaptor *SupportingFeatureAdaptor_new(DBAdaptor *dba);
-Set *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, Exon *exon);
+Vector *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, Exon *exon);
 
 
 #endif

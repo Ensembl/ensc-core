@@ -270,7 +270,7 @@ int GeneAdaptor_getStableEntryInfo(GeneAdaptor *ga, Gene *gene) {
 }
 
 
-Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName) {
+Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName) {
   char sliceCacheKey[512];
   AssemblyMapperAdaptor *ama;
   AssemblyMapper *assMapper;
@@ -280,7 +280,7 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
   char *qStr;
   StatementHandle *sth;
   ResultRow *row;
-  Set *geneSet;
+  Vector *geneVector;
 
   if (logicName) {
     sprintf(sliceCacheKey,"%s:%s",Slice_getName(slice),logicName);
@@ -291,7 +291,7 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
 
   // check the cache which uses the slice name as it key
   if(StringHash_contains(ga->sliceGeneCache,sliceCacheKey)) {
-    return (Set *)StringHash_getValue(ga->sliceGeneCache,sliceCacheKey);
+    return (Vector *)StringHash_getValue(ga->sliceGeneCache,sliceCacheKey);
   }
 
   ama = DBAdaptor_getAssemblyMapperAdaptor(ga->dba);
@@ -305,7 +305,7 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
 
 
   if (!nContigId) {
-    return emptySet;
+    return emptyVector;
   }
 
   qStr = StrUtil_copyString(&qStr, 
@@ -315,7 +315,7 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
 
   if (!qStr) {
     Error_trace("fetch_all_by_Slice",NULL);
-    return emptySet;
+    return emptyVector;
   }
 
   for (i=0; i<nContigId; i++) {
@@ -341,7 +341,7 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
 
     if (!analysis || !Analysis_getDbID(analysis)) {
       fprintf(stderr,"WARNING: No analysis for logic name %s exists\n",logicName);
-      return emptySet;
+      return emptyVector;
     }
 
     sprintf(analStr," AND g.analysis_id = " IDFMTSTR , Analysis_getDbID(analysis));
@@ -349,7 +349,7 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
     qStr = StrUtil_appendString(qStr,analStr); 
   }
 
-  geneSet = Set_new();
+  geneVector = Vector_new();
 
   sth = ga->prepare((BaseAdaptor *)ga, qStr, strlen(qStr) );
 
@@ -367,15 +367,15 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
       push( @out, $newgene );
     }
 */
-    Set_addElement(geneSet, newGene);
+    Vector_addElement(geneVector, newGene);
   }
   sth->finish(sth);
 
   free(qStr);
 
-  StringHash_add(ga->sliceGeneCache, sliceCacheKey, geneSet);
+  StringHash_add(ga->sliceGeneCache, sliceCacheKey, geneVector);
 
-  return geneSet;
+  return geneVector;
 }
 
 IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene) {

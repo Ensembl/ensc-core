@@ -12,10 +12,12 @@ Transcript *Transcript_new() {
 
   Transcript_setVersion(transcript,-1);
 
+  transcript->objectType = CLASS_TRANSCRIPT;
+
   return transcript;
 }
 
-Set *Transcript_getAllDBLinks(Transcript *t) {
+Vector *Transcript_getAllDBLinks(Transcript *t) {
   if (!t->dbLinks) {
     TranscriptAdaptor *ta = (TranscriptAdaptor *)Transcript_getAdaptor(t);
 
@@ -23,7 +25,7 @@ Set *Transcript_getAllDBLinks(Transcript *t) {
       DBEntryAdaptor *dbea = DBAdaptor_getDBEntryAdaptor(ta->dba);
       DBEntryAdaptor_fetchAllByTranscript(dbea,t);
     } else {
-      t->dbLinks = emptySet;
+      t->dbLinks = emptyVector;
     }
   }
 
@@ -32,10 +34,10 @@ Set *Transcript_getAllDBLinks(Transcript *t) {
 
 int Transcript_addDBLink(Transcript *t, DBEntry *dbe) {
   if (!t->dbLinks) {
-    t->dbLinks = Set_new();
+    t->dbLinks = Vector_new();
   }
 
-  Set_addElement(t->dbLinks, dbe); 
+  Vector_addElement(t->dbLinks, dbe); 
   return 1;
 }
 
@@ -70,7 +72,7 @@ int Transcript_getVersion(Transcript *transcript) {
 
 Transcript *Transcript_transform(Transcript *trans, IDHash *exonTransforms) {
   int i;
-  Set *mappedExonSet = Set_new();
+  Vector *mappedExonVector = Vector_new();
   
   for (i=0;i<Transcript_getExonCount(trans);i++) {
     Exon *exon = (Exon *)Transcript_getExonAt(trans,i);
@@ -79,12 +81,12 @@ Transcript *Transcript_transform(Transcript *trans, IDHash *exonTransforms) {
     // the old exon was successfully remapped then store the new exon
 /* CHECK */
     if ( IDHash_contains(exonTransforms,exonRef)) {
-      Set_addElement(mappedExonSet,IDHash_getValue(exonTransforms, exonRef));
+      Vector_addElement(mappedExonVector,IDHash_getValue(exonTransforms, exonRef));
     }
     // but for the case where the exon was unable to be mapped, as it
     // was outside the bounds of the slice, include the original exon.
     else {
-      Set_addElement(mappedExonSet,exon);
+      Vector_addElement(mappedExonVector,exon);
     }
   }
 
@@ -92,15 +94,15 @@ Transcript *Transcript_transform(Transcript *trans, IDHash *exonTransforms) {
   Transcript_flushExons(trans);
 
   // attach the new list of exons to the transcript
-  for (i=0; i<Set_getNumElement(mappedExonSet); i++) {
-    Transcript_addExon(trans,(Exon *)Set_getElementAt(mappedExonSet,i));
+  for (i=0; i<Vector_getNumElement(mappedExonVector); i++) {
+    Transcript_addExon(trans,(Exon *)Vector_getElementAt(mappedExonVector,i));
   }
 
   if ( Transcript_getTranslation(trans)) {
     Translation_transform(Transcript_getTranslation(trans), exonTransforms);
   }
 
-  Set_free(mappedExonSet,NULL);
+  Vector_free(mappedExonVector,NULL);
 
   return trans;
 }

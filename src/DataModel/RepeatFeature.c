@@ -8,5 +8,7 @@ RepeatFeature *RepeatFeature_new() {
     return NULL;
   }
 
+  rf->objectType = CLASS_REPEATFEATURE;
+
   return rf;
 }

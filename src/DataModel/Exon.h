@@ -5,40 +5,47 @@
 
 #include "EnsC.h"
 #include "DataModelTypes.h"
-#include "SeqFeature.h"
+#include "AnnotatedSeqFeature.h"
 #include "StableIdInfo.h"
 #include "FeatureSet.h"
 #include "Slice.h"
 
-struct ExonStruct {
-  SeqFeature sf;
-  StableIdInfo si;
-  FeatureSet components;
-  int stickyRank;
+typedef struct ExonFuncsStruct {
+  ANNOTATEDSEQFEATUREFUNCS_DATA
+} ExonFuncs;
+
+#define EXON_DATA \
+  ANNOTATEDSEQFEATURE_DATA \
+  FeatureSet components; \
+  int stickyRank; \
   FeatureSet supportingFeatures;
 
+#define FUNCSTRUCTTYPE ExonFuncs
+struct ExonStruct {
+  EXON_DATA
 };
+#undef FUNCSTRUCTTYPE
 
-#define Exon_setStart(exon,start) SeqFeature_setStart(&((exon)->sf),start)
-#define Exon_getStart(exon) SeqFeature_getStart(&((exon)->sf))
+#define Exon_setStart(exon,start) AnnotatedSeqFeature_setStart((exon),start)
+#define Exon_getStart(exon) AnnotatedSeqFeature_getStart((exon))
 
-#define Exon_setEnd(exon,end) SeqFeature_setEnd(&((exon)->sf),end)
-#define Exon_getEnd(exon) SeqFeature_getEnd(&((exon)->sf))
+#define Exon_setEnd(exon,end) AnnotatedSeqFeature_setEnd((exon),end)
+#define Exon_getEnd(exon) AnnotatedSeqFeature_getEnd((exon))
 
-#define Exon_setScore(exon,score) SeqFeature_setScore(&((exon)->sf),score)
-#define Exon_getScore(exon) SeqFeature_getScore(&((exon)->sf))
+#define Exon_setScore(exon,score) AnnotatedSeqFeature_setScore((exon),score)
+#define Exon_getScore(exon) AnnotatedSeqFeature_getScore((exon))
 
-#define Exon_setpValue(exon,pValue) SeqFeature_setEValue(&((exon)->sf),pValue)
-#define Exon_getpValue(exon) SeqFeature_getEValue(&((exon)->sf))
+#define Exon_setpValue(exon,pValue) AnnotatedSeqFeature_setEValue((exon),pValue)
+#define Exon_getpValue(exon) AnnotatedSeqFeature_getEValue((exon))
 
-#define Exon_setPhase(exon,p) SeqFeature_setPhase(&((exon)->sf),(p))
-#define Exon_getPhase(exon) SeqFeature_getPhase(&((exon)->sf))
+#define Exon_setPhase(exon,p) AnnotatedSeqFeature_setPhase((exon),(p))
+#define Exon_getPhase(exon) AnnotatedSeqFeature_getPhase((exon))
 
-#define Exon_setEndPhase(exon,ep) SeqFeature_setEndPhase(&((exon)->sf),(ep))
-#define Exon_getEndPhase(exon) SeqFeature_getEndPhase(&((exon)->sf))
+#define Exon_setEndPhase(exon,ep) AnnotatedSeqFeature_setEndPhase((exon),(ep))
+#define Exon_getEndPhase(exon) AnnotatedSeqFeature_getEndPhase((exon))
 
-#define Exon_setStrand(exon,strand) SeqFeature_setStrand(&((exon)->sf),(strand))
-#define Exon_getStrand(exon) SeqFeature_getStrand(&((exon)->sf))
+#define Exon_setStrand(exon,strand) AnnotatedSeqFeature_setStrand((exon),(strand))
+#define Exon_getStrand(exon) AnnotatedSeqFeature_getStrand((exon))
 
 #define Exon_setStableId(exon,stableId)  StableIdInfo_setStableId(&((exon)->si),(stableId))
 char *Exon_getStableId(Exon *exon);
@@ -52,37 +59,37 @@ time_t Exon_getCreated(Exon *exon);
 #define Exon_setModified(exon,mod)  StableIdInfo_setModified(&((exon)->si),(mod))
 time_t Exon_getModified(Exon *exon);
 
-#define Exon_setDbID(e,dbID) SeqFeature_setDbID(&((e)->sf),(dbID))
-#define Exon_getDbID(e) SeqFeature_getDbID(&((e)->sf))
+#define Exon_setDbID(exon,dbID) AnnotatedSeqFeature_setDbID((exon),(dbID))
+#define Exon_getDbID(exon) AnnotatedSeqFeature_getDbID((exon))
 
-#define Exon_setAdaptor(e,ad) SeqFeature_setAdaptor(&((e)->sf),(ad))
-#define Exon_getAdaptor(e) SeqFeature_getAdaptor(&((e)->sf))
+#define Exon_setAdaptor(exon,ad) AnnotatedSeqFeature_setAdaptor((exon),(ad))
+#define Exon_getAdaptor(exon) AnnotatedSeqFeature_getAdaptor((exon))
 
-#define Exon_setAnalysis(e,ana) SeqFeature_setAnalysis(&((e)->sf),(ana))
-#define Exon_getAnalysis(e) SeqFeature_getAnalysis(&((e)->sf))
+#define Exon_setAnalysis(exon,ana) AnnotatedSeqFeature_setAnalysis((exon),(ana))
+#define Exon_getAnalysis(exon) AnnotatedSeqFeature_getAnalysis((exon))
 
-#define Exon_setStickyRank(e,sr) (e)->stickyRank = (sr)
-#define Exon_getStickyRank(e) (e)->stickyRank
+#define Exon_setStickyRank(exon,sr) (exon)->stickyRank = (sr)
+#define Exon_getStickyRank(exon) (exon)->stickyRank
 
-#define Exon_getLength(e) SeqFeature_getLength(&((e)->sf))
+#define Exon_getLength(exon) AnnotatedSeqFeature_getLength((exon))
 
-#define Exon_addComponentExon(e, comp) FeatureSet_addFeature(&((e)->components),(comp))
+#define Exon_addComponentExon(exon, comp) FeatureSet_addFeature(&((exon)->components),(comp))
 
-#define Exon_isSticky(e) FeatureSet_getNumFeature(&((e)->components))
-#define Exon_getComponentExonAt(e,ind) FeatureSet_getFeatureAt(&((e)->components),(ind))
-#define Exon_getComponents(e) FeatureSet_getFeatures(&((e)->components))
-#define Exon_getNumComponentExon(e) FeatureSet_getNumFeature(&((e)->components))
+#define Exon_isSticky(exon) FeatureSet_getNumFeature(&((exon)->components))
+#define Exon_getComponentExonAt(exon,ind) FeatureSet_getFeatureAt(&((exon)->components),(ind))
+#define Exon_getComponents(exon) FeatureSet_getFeatures(&((exon)->components))
+#define Exon_getNumComponentExon(exon) FeatureSet_getNumFeature(&((exon)->components))
 
-#define Exon_addSupportingFeature(e, sf) FeatureSet_addFeature(&((e)->supportingFeatures),(sf))
-#define Exon_getSupportingFeatureAt(e,ind) FeatureSet_getFeatureAt(&((e)->supportingFeatures),(ind))
-#define Exon_getSupportingFeatures(e) FeatureSet_getFeatures(&((e)->supportingFeatures))
-#define Exon_getNumSupportingFeature(e) FeatureSet_getNumFeature(&((e)->supportingFeatures))
+#define Exon_addSupportingFeature(exon, sf) FeatureSet_addFeature(&((exon)->supportingFeatures),(sf))
+#define Exon_getSupportingFeatureAt(exon,ind) FeatureSet_getFeatureAt(&((exon)->supportingFeatures),(ind))
+#define Exon_getSupportingFeatures(exon) FeatureSet_getFeatures(&((exon)->supportingFeatures))
+#define Exon_getNumSupportingFeature(exon) FeatureSet_getNumFeature(&((exon)->supportingFeatures))
 
 void Exon_sortByStickyRank(Exon *exon);
 
 
-#define Exon_setContig(exon,c) SeqFeature_setContig(&((exon)->sf),(c))
-#define Exon_getContig(exon) SeqFeature_getContig(&((exon)->sf))
+#define Exon_setContig(exon,c) AnnotatedSeqFeature_setContig((exon),(c))
+#define Exon_getContig(exon) AnnotatedSeqFeature_getContig((exon))
 
 Exon *Exon_transformToSlice(Exon *exon, Slice *slice);
 

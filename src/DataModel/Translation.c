@@ -11,6 +11,8 @@ Translation *Translation_new() {
 
   Translation_setVersion(t,-1);
 
+  t->objectType = CLASS_TRANSLATION;
+
   return t;
 }
 

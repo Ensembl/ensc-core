@@ -23,12 +23,12 @@ SimpleFeatureAdaptor *SimpleFeatureAdaptor_new(DBAdaptor *dba) {
   return sfa;
 }
 
-int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
+int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
   char qStr[512];
   StatementHandle *sth;
   int i;
   
-  if (!Set_getNumElement(features)) {
+  if (!Vector_getNumElement(features)) {
     fprintf(stderr, "Warning: SimpleFeatureAdaptor_store called with no features\n");
     return 0;
   }
@@ -42,8 +42,8 @@ int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
   sth = bfa->prepare((BaseAdaptor *)bfa, qStr,strlen(qStr));
   printf("%s\n",qStr);
 
-  for (i=0; i<Set_getNumElement(features); i++) {
-    SimpleFeature *sf = Set_getElementAt(features, i);
+  for (i=0; i<Vector_getNumElement(features); i++) {
+    SimpleFeature *sf = Vector_getElementAt(features, i);
     Analysis *analysis = SimpleFeature_getAnalysis(sf);
     RawContig *contig;
 
@@ -96,19 +96,19 @@ char *SimpleFeatureAdaptor_getColumns(void) {
          "sf.score";
 }
 
-Set *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
+Vector *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
                                                      StatementHandle *sth,
                                                      AssemblyMapper *mapper,
                                                      Slice *slice) {
   AnalysisAdaptor *aa;
   RawContigAdaptor *rca;
-  Set *features;
+  Vector *features;
   ResultRow *row;
 
   aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
   rca = DBAdaptor_getRawContigAdaptor(bfa->dba);
 
-  features = Set_new();
+  features = Vector_new();
   
   while ((row = sth->fetchRow(sth))) {
     RawContig *contig = RawContigAdaptor_fetchByDbID(rca, row->getLongLongAt(row,1));
@@ -128,7 +128,7 @@ Set *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
     
     SimpleFeature_setDbID(sf,row->getLongLongAt(row,0));
 
-    Set_addElement(features,sf);
+    Vector_addElement(features,sf);
   }
 
   return features;

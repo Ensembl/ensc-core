@@ -2,6 +2,7 @@
 #define __DATAMODELTYPES_H__
 
 typedef struct AnalysisStruct Analysis;
+typedef struct AnnotatedSeqFeatureStruct AnnotatedSeqFeature;
 typedef struct AssemblyMapperStruct AssemblyMapper;
 typedef struct BaseAlignFeatureStruct BaseAlignFeature;
 typedef struct BaseContigStruct BaseContig;

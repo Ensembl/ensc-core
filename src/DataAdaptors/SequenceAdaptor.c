@@ -99,7 +99,7 @@ char *SequenceAdaptor_fetchBySliceStartEndStrand(SequenceAdaptor *sa,
     exit(1);
   }
 
-  if (BaseContig_getContigType(slice) != SLICE) {
+  if (BaseContig_getObjectType(slice) != CLASS_SLICE) {
     fprintf(stderr,"ERROR: slice fetch called with something that isn't a slice\n");
     exit(1);
   }

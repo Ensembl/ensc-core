@@ -18,7 +18,7 @@ RawContig *RawContig_new() {
 
   rc->length = rc->emblOffset = rc->cloneId = -1;
 
-  BaseContig_setContigType(rc,RAWCONTIG);
+  rc->objectType = CLASS_RAWCONTIG;
 
   return rc;
 }
@@ -70,62 +70,62 @@ char *RawContig_getName(RawContig *rc) {
   return rc->name;
 }
 
-Set *RawContig_getAllSimpleFeatures(RawContig *rc, char *logicName, double *scoreP) {
+Vector *RawContig_getAllSimpleFeatures(RawContig *rc, char *logicName, double *scoreP) {
   RawContigAdaptor *rca = (RawContigAdaptor *)RawContig_getAdaptor(rc);
   SimpleFeatureAdaptor *sfa;
 
   if (!rca) {
     fprintf(stderr, "Warning: Contig has no adaptor - cannot retrieve simple features\n");
-    return emptySet;
+    return emptyVector;
   }
   sfa = DBAdaptor_getSimpleFeatureAdaptor(rca->dba);
   return SimpleFeatureAdaptor_fetchAllByRawContigAndScore(sfa,rc,scoreP,logicName);
 }
 
-Set *RawContig_getAllPredictionTranscripts(RawContig *rc, char *logicName) {
+Vector *RawContig_getAllPredictionTranscripts(RawContig *rc, char *logicName) {
   RawContigAdaptor *rca = (RawContigAdaptor *)RawContig_getAdaptor(rc);
   PredictionTranscriptAdaptor *pta;
 
   if (!rca) {
     fprintf(stderr, "Warning: Contig has no adaptor - cannot retrieve prediction transcripts\n");
-    return emptySet;
+    return emptyVector;
   }
   pta = DBAdaptor_getPredictionTranscriptAdaptor(rca->dba);
   return PredictionTranscriptAdaptor_fetchAllByRawContig(pta,rc,logicName);
 }
 
-Set *RawContig_getAllRepeatFeatures(RawContig *rc, char *logicName) {
+Vector *RawContig_getAllRepeatFeatures(RawContig *rc, char *logicName) {
   RawContigAdaptor *rca = (RawContigAdaptor *)RawContig_getAdaptor(rc);
   RepeatFeatureAdaptor *rfa;
 
   if (!rca) {
     fprintf(stderr, "Warning: Contig has no adaptor - cannot retrieve repeat features\n");
-    return emptySet;
+    return emptyVector;
   }
   rfa = DBAdaptor_getRepeatFeatureAdaptor(rca->dba);
   return RepeatFeatureAdaptor_fetchAllByRawContig(rfa,rc,logicName);
 }
 
 
-Set *RawContig_getAllDNAAlignFeatures(RawContig *rc, char *logicName, double *scoreP) {
+Vector *RawContig_getAllDNAAlignFeatures(RawContig *rc, char *logicName, double *scoreP) {
   RawContigAdaptor *rca = (RawContigAdaptor *)RawContig_getAdaptor(rc);
   DNAAlignFeatureAdaptor *dafa;
 
   if (!rca) {
     fprintf(stderr, "Warning: Contig has no adaptor - cannot retrieve dna align features\n");
-    return emptySet;
+    return emptyVector;
   }
   dafa = DBAdaptor_getDNAAlignFeatureAdaptor(rca->dba);
   return DNAAlignFeatureAdaptor_fetchAllByRawContigAndScore(dafa,rc,scoreP,logicName);
 }
 
-Set *RawContig_getAllProteinAlignFeatures(RawContig *rc, char *logicName, double *scoreP) {
+Vector *RawContig_getAllProteinAlignFeatures(RawContig *rc, char *logicName, double *scoreP) {
   RawContigAdaptor *rca = (RawContigAdaptor *)RawContig_getAdaptor(rc);
   ProteinAlignFeatureAdaptor *pafa;
 
   if (!rca) {
     fprintf(stderr, "Warning: Contig has no adaptor - cannot retrieve pep align features\n");
-    return emptySet;
+    return emptyVector;
   }
   pafa = DBAdaptor_getProteinAlignFeatureAdaptor(rca->dba);
   return ProteinAlignFeatureAdaptor_fetchAllByRawContigAndScore(pafa,rc,scoreP,logicName);

@@ -10,11 +10,11 @@ struct RepeatFeatureAdaptorStruct {
 
 RepeatFeatureAdaptor *RepeatFeatureAdaptor_new(DBAdaptor *dba);
 
-int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features);
+int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features);
 char *RepeatFeatureAdaptor_defaultWhereClause();
 NameTableType *RepeatFeatureAdaptor_getTables();
 char *RepeatFeatureAdaptor_getColumns();
-Set *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
+Vector *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
                                                      StatementHandle *sth,
                                                      AssemblyMapper *mapper,
                                                      Slice *slice);

@@ -10,7 +10,7 @@ Exon *StickyExon_transformToSlice(Exon *exon, Slice *slice)  {
 
   contig = Exon_getContig(exon);
   
-  if (contig && BaseContig_getContigType(contig) == RAWCONTIG) {
+  if (contig && BaseContig_getObjectType(contig) == CLASS_RAWCONTIG) {
     AssemblyMapperAdaptor *ama;
     AssemblyMapper *assMapper;
     int mappedStart = 0;

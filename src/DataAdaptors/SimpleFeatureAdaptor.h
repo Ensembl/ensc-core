@@ -11,10 +11,10 @@ struct SimpleFeatureAdaptorStruct {
 
 SimpleFeatureAdaptor *SimpleFeatureAdaptor_new(DBAdaptor *dba);
 
-int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *baf, Set *features);
+int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *baf, Vector *features);
 NameTableType *SimpleFeatureAdaptor_getTables(void);
 char *SimpleFeatureAdaptor_getColumns(void);
-Set *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf,
+Vector *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf,
                                                      StatementHandle *sth,
                                                      AssemblyMapper *mapper,
                                                      Slice *slice);

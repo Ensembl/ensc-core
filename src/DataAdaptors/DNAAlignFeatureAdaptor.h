@@ -9,10 +9,10 @@ struct DNAAlignFeatureAdaptorStruct {
 };
 
 DNAAlignFeatureAdaptor *DNAAlignFeatureAdaptor_new(DBAdaptor *dba);
-int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features);
+int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features);
 NameTableType *DNAAlignFeatureAdaptor_getTables(void); 
 char *DNAAlignFeatureAdaptor_getColumns(void);
-Set *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
+Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
                                                        StatementHandle *sth,
                                                        AssemblyMapper *assMapper,
                                                        Slice *slice);

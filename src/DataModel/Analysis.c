@@ -8,6 +8,8 @@ Analysis *Analysis_new() {
     return NULL;
   }
 
+  anal->objectType = CLASS_ANALYSIS;
+
   return anal;
 }
 

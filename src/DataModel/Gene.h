@@ -2,31 +2,36 @@
 #define __GENE_H__
 
 #include "DataModelTypes.h"
-#include "SeqFeature.h"
+#include "AnnotatedSeqFeature.h"
 #include "FeatureSet.h"
 #include "StableIdInfo.h"
 #include "Slice.h"
 #include "Transcript.h"
-#include "Set.h"
+#include "Vector.h"
 
+typedef struct GeneFuncsStruct {
+  ANNOTATEDSEQFEATUREFUNCS_DATA
+} GeneFuncs;
+
+#define FUNCSTRUCTTYPE GeneFuncs
 struct GeneStruct {
+  ANNOTATEDSEQFEATURE_DATA
   FeatureSet fs;
-  SeqFeature sf;
-  StableIdInfo si;
   char *type;
   char startIsSet;
   char endIsSet;
   char strandIsSet;
-  Set *dbLinks;
+  Vector *dbLinks;
 };
+#undef FUNCSTRUCTTYPE
 
 Gene *Gene_new(void);
 
-#define Gene_setDbID(g,dbID) SeqFeature_setDbID(&((g)->sf),dbID)
-#define Gene_getDbID(g) SeqFeature_getDbID(&((g)->sf))
+#define Gene_setDbID(gene,dbID) AnnotatedSeqFeature_setDbID((gene),dbID)
+#define Gene_getDbID(gene) AnnotatedSeqFeature_getDbID((gene))
 
-#define Gene_setAdaptor(g,ad) SeqFeature_setAdaptor(&((g)->sf),ad)
-#define Gene_getAdaptor(g) SeqFeature_getAdaptor(&((g)->sf))
+#define Gene_setAdaptor(gene,ad) AnnotatedSeqFeature_setAdaptor((gene),ad)
+#define Gene_getAdaptor(gene) AnnotatedSeqFeature_getAdaptor((gene))
 
 #define Gene_setStableId(gene,stableId)  StableIdInfo_setStableId(&((gene)->si),stableId)
 char *Gene_getStableId(Gene *gene);
@@ -55,14 +60,14 @@ char *Gene_setType(Gene *gene, char *type);
 int Gene_setStart(Gene *gene,int start);
 int Gene_getStart(Gene *gene);
 
-#define Gene_setAnalysis(gene,ana) SeqFeature_setAnalysis(&((gene)->sf),ana)
-#define Gene_getAnalysis(gene) SeqFeature_getAnalysis(&((gene)->sf))
+#define Gene_setAnalysis(gene,ana) AnnotatedSeqFeature_setAnalysis((gene),ana)
+#define Gene_getAnalysis(gene) AnnotatedSeqFeature_getAnalysis((gene))
 
-#define Gene_setEnd(gene,end) SeqFeature_setEnd(&((gene)->sf),end)
-#define Gene_getEnd(gene) SeqFeature_getEnd(&((gene)->sf))
+#define Gene_setEnd(gene,end) AnnotatedSeqFeature_setEnd((gene),end)
+#define Gene_getEnd(gene) AnnotatedSeqFeature_getEnd((gene))
 
-#define Gene_setStrand(gene,strand) SeqFeature_setStrand(&((gene)->sf),strand)
-#define Gene_getStrand(gene) SeqFeature_getStrand(&((gene)->sf))
+#define Gene_setStrand(gene,strand) AnnotatedSeqFeature_setStrand((gene),strand)
+#define Gene_getStrand(gene) AnnotatedSeqFeature_getStrand((gene))
 
 #define Gene_addTranscript(gene,trans) FeatureSet_addFeature(&((gene)->fs),trans)
 #define Gene_getTranscriptAt(gene,ind) (Transcript *)FeatureSet_getFeatureAt(&((gene)->fs),ind)
@@ -74,13 +79,9 @@ int Gene_getStart(Gene *gene);
       trans = Gene_getTranscriptAt(gene,iter);
 
 Gene *Gene_transformToSlice(Gene *gene, Slice *slice);
-Set *Gene_getAllExons(Gene *gene);
+Vector *Gene_getAllExons(Gene *gene);
 
-Set *Gene_getAllDBLinks(Gene *g);
-int Gene_addDBLink(Gene *g, DBEntry *dbe);
-
-
-
-
+Vector *Gene_getAllDBLinks(Gene *g);
+int Gene_addDBLink(Gene *gene, DBEntry *dbe);
 
 #endif

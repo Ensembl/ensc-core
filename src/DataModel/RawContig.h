@@ -4,8 +4,9 @@
 #include "DataModelTypes.h"
 #include "Storable.h"
 #include "BaseContig.h"
-#include "Set.h"
+#include "Vector.h"
 
+#define FUNCSTRUCTTYPE BaseContigFuncs
 struct RawContigStruct {
   BASECONTIG_DATA
   int length;
@@ -13,6 +14,7 @@ struct RawContigStruct {
   IDType cloneId;
   char *name;  
 };
+#undef FUNCSTRUCTTYPE
 
 RawContig *RawContig_new(void);
 
@@ -34,11 +36,11 @@ int RawContig_getEMBLOffset(RawContig *rc);
 #define RawContig_setLength(rc,l) (rc)->length = (l)
 int RawContig_getLength(RawContig *rc);
 
-Set *RawContig_getAllSimpleFeatures(RawContig *rc, char *logicName, double *scoreP);
-Set *RawContig_getAllPredictionTranscripts(RawContig *rc, char *logicName);
-Set *RawContig_getAllRepeatFeatures(RawContig *rc, char *logicName);
-Set *RawContig_getAllDNAAlignFeatures(RawContig *rc, char *logicName, double *scoreP);
-Set *RawContig_getAllProteinAlignFeatures(RawContig *rc, char *logicName, double *scoreP);
+Vector *RawContig_getAllSimpleFeatures(RawContig *rc, char *logicName, double *scoreP);
+Vector *RawContig_getAllPredictionTranscripts(RawContig *rc, char *logicName);
+Vector *RawContig_getAllRepeatFeatures(RawContig *rc, char *logicName);
+Vector *RawContig_getAllDNAAlignFeatures(RawContig *rc, char *logicName, double *scoreP);
+Vector *RawContig_getAllProteinAlignFeatures(RawContig *rc, char *logicName, double *scoreP);
 
 
 #endif

@@ -10,10 +10,10 @@ struct PredictionTranscriptAdaptorStruct {
 
 PredictionTranscriptAdaptor *PredictionTranscriptAdaptor_new(DBAdaptor *dba);
 
-int PredictionTranscriptAdaptor_store(BaseFeatureAdaptor *bfa, Set *features);
+int PredictionTranscriptAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features);
 NameTableType *PredictionTranscriptAdaptor_getTables(void);
 char *PredictionTranscriptAdaptor_getColumns(void);
-Set *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
+Vector *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
                                                        StatementHandle *sth,
                                                        AssemblyMapper *mapper,
                                                        Slice *slice);

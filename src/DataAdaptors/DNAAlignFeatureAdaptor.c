@@ -23,12 +23,12 @@ DNAAlignFeatureAdaptor *DNAAlignFeatureAdaptor_new(DBAdaptor *dba) {
   return dafa;
 }
 
-int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
+int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
   char qStr[512];
   StatementHandle *sth;
   int i;
   
-  if (!Set_getNumElement(features)) {
+  if (!Vector_getNumElement(features)) {
     fprintf(stderr, "Warning: ProteinAlignFeatureAdaptor_store called with no features\n");
     return 0;
   }
@@ -42,8 +42,8 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
   sth = bfa->prepare((BaseAdaptor *)bfa, qStr,strlen(qStr));
   printf("%s\n",qStr);
 
-  for (i=0; i<Set_getNumElement(features); i++) {
-    DNAAlignFeature *sf = Set_getElementAt(features, i);
+  for (i=0; i<Vector_getNumElement(features); i++) {
+    DNAAlignFeature *sf = Vector_getElementAt(features, i);
     Analysis *analysis = DNAAlignFeature_getAnalysis(sf);
     AnalysisAdaptor *aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
     RawContig *contig;
@@ -113,20 +113,20 @@ char *DNAAlignFeatureAdaptor_getColumns(void) {
          "daf.score";
 }
 
-Set *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
+Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
                                                        StatementHandle *sth,
                                                        AssemblyMapper *assMapper,
                                                        Slice *slice) {
 
   AnalysisAdaptor *aa;
   RawContigAdaptor *rca;
-  Set *features;
+  Vector *features;
   ResultRow *row;
 
   aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
   rca = DBAdaptor_getRawContigAdaptor(bfa->dba);
 
-  features = Set_new();
+  features = Vector_new();
 
   if (slice) {
     int featStart, featEnd, featStrand;
@@ -204,7 +204,7 @@ Set *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
       if (row->col(row,12)) DNAAlignFeature_setPercId(daf,row->getDoubleAt(row,12));
       if (row->col(row,13)) DNAAlignFeature_setScore(daf,row->getDoubleAt(row,13));
 
-      Set_addElement(features,daf);
+      Vector_addElement(features,daf);
     }
   } else { // No slice
 
@@ -237,7 +237,7 @@ Set *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
       if (row->col(row,12)) DNAAlignFeature_setPercId(daf,row->getDoubleAt(row,12));
       if (row->col(row,13)) DNAAlignFeature_setScore(daf,row->getDoubleAt(row,13));
 
-      Set_addElement(features,daf);
+      Vector_addElement(features,daf);
     }
   }
   

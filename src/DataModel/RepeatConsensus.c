@@ -9,6 +9,7 @@ RepeatConsensus *RepeatConsensus_new() {
     return NULL;
   }
 
+  rc->objectType = CLASS_REPEATCONSENSUS;
   return rc;
 }
 

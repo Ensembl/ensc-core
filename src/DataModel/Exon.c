@@ -20,6 +20,8 @@ Exon *Exon_new() {
   Exon_setCreated(exon,0);
   Exon_setVersion(exon,-1);
 
+  exon->objectType = CLASS_EXON;
+
   return exon;
 }
 

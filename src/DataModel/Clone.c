@@ -9,6 +9,8 @@ Clone *Clone_new() {
     return NULL;
   }
 
+  cl->objectType = CLASS_CLONE;
+
   return cl;
 }
 

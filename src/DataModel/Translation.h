@@ -5,7 +5,9 @@
 #include "Exon.h"
 #include "IDHash.h"
 
+#define FUNCSTRUCTTYPE NoTypeFuncs
 struct TranslationStruct {
+  ENSROOT_DATA
   int start;
   int end;
   Exon *startExon;
@@ -13,6 +15,7 @@ struct TranslationStruct {
   Storable st; 
   StableIdInfo si;
 };
+#undef FUNCSTRUCTTYPE
 
 #define Translation_setStart(translation,s) (translation)->start = (s)
 #define Translation_getStart(translation) (translation)->start

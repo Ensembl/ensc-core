@@ -4,7 +4,11 @@
 #include "DataModelTypes.h"
 #include "Storable.h"
 
+#include "EnsRoot.h"
+
+#define FUNCSTRUCTTYPE NoTypeFuncs
 struct AnalysisStruct {
+  ENSROOT_DATA
   Storable st;
   char *db;
   int   dbVersion;
@@ -20,6 +24,7 @@ struct AnalysisStruct {
   char *created;
   char *logicName;
 };
+#undef FUNCSTRUCTTYPE
 
 Analysis *Analysis_new(void);
 

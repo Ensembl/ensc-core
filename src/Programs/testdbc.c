@@ -48,11 +48,11 @@ int main(int argc, char *argv[]) {
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
     Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);
-    Set *ptSet = Slice_getAllPredictionTranscripts(slice,"");
+    Vector *ptVector = Slice_getAllPredictionTranscripts(slice,"");
     int i;
 
-    for (i=0;i<Set_getNumElement(ptSet);i++) {
-      PredictionTranscript *pt = Set_getElementAt(ptSet,i);
+    for (i=0;i<Vector_getNumElement(ptVector);i++) {
+      PredictionTranscript *pt = Vector_getElementAt(ptVector,i);
       printf("PredictionTranscript feature: %s %d-%d id " IDFMTSTR "\n", 
              PredictionTranscript_getStableId(pt), 
              PredictionTranscript_getStart(pt), PredictionTranscript_getEnd(pt), 
@@ -62,11 +62,11 @@ int main(int argc, char *argv[]) {
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
     Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);
-    Set *rfSet = Slice_getAllRepeatFeatures(slice,"");
+    Vector *rfVector = Slice_getAllRepeatFeatures(slice,"");
     int i;
 
-    for (i=0;i<Set_getNumElement(rfSet);i++) {
-      RepeatFeature *rf = Set_getElementAt(rfSet,i);
+    for (i=0;i<Vector_getNumElement(rfVector);i++) {
+      RepeatFeature *rf = Vector_getElementAt(rfVector,i);
       printf("Repeat feature: %d-%d id " IDFMTSTR "\n", RepeatFeature_getStart(rf), 
              RepeatFeature_getEnd(rf), RepeatFeature_getDbID(rf));
     }
@@ -74,11 +74,11 @@ int main(int argc, char *argv[]) {
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
     Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);
-    Set *sSet = Slice_getAllSimpleFeatures(slice,"",NULL);
+    Vector *sVector = Slice_getAllSimpleFeatures(slice,"",NULL);
     int i;
 
-    for (i=0;i<Set_getNumElement(sSet);i++) {
-      SimpleFeature *sf = Set_getElementAt(sSet,i);
+    for (i=0;i<Vector_getNumElement(sVector);i++) {
+      SimpleFeature *sf = Vector_getElementAt(sVector,i);
       printf("Simple feature: %d-%d id " IDFMTSTR "\n", SimpleFeature_getStart(sf), 
              SimpleFeature_getEnd(sf), SimpleFeature_getDbID(sf));
     }
@@ -87,76 +87,76 @@ int main(int argc, char *argv[]) {
     RawContigAdaptor *rca = DBAdaptor_getRawContigAdaptor(dba);
     RawContig *contig = RawContigAdaptor_fetchByDbID(rca,10000);
     SimpleFeatureAdaptor *sfa = DBAdaptor_getSimpleFeatureAdaptor(dba);
-    Set *sSet = RawContig_getAllSimpleFeatures(contig,"",NULL);
+    Vector *sVector = RawContig_getAllSimpleFeatures(contig,"",NULL);
     int i;
-    for (i=0;i<Set_getNumElement(sSet);i++) {
-      SimpleFeature *sf = Set_getElementAt(sSet,i);
+    for (i=0;i<Vector_getNumElement(sVector);i++) {
+      SimpleFeature *sf = Vector_getElementAt(sVector,i);
       printf("Simple feature: %d-%d id " IDFMTSTR "\n", SimpleFeature_getStart(sf), 
              SimpleFeature_getEnd(sf), SimpleFeature_getDbID(sf));
     }
     
-    SimpleFeatureAdaptor_store((BaseFeatureAdaptor *)sfa,sSet);
+    SimpleFeatureAdaptor_store((BaseFeatureAdaptor *)sfa,sVector);
   }
   {
     RawContigAdaptor *rca = DBAdaptor_getRawContigAdaptor(dba);
     RawContig *contig = RawContigAdaptor_fetchByDbID(rca,10000);
     PredictionTranscriptAdaptor *pta = DBAdaptor_getPredictionTranscriptAdaptor(dba);
-    Set *sSet = RawContig_getAllPredictionTranscripts(contig,"");
+    Vector *sVector = RawContig_getAllPredictionTranscripts(contig,"");
     int i;
-    for (i=0;i<Set_getNumElement(sSet);i++) {
-      PredictionTranscript *pt = Set_getElementAt(sSet,i);
+    for (i=0;i<Vector_getNumElement(sVector);i++) {
+      PredictionTranscript *pt = Vector_getElementAt(sVector,i);
       printf("Prediction transcript: %d-%d id " IDFMTSTR "\n", PredictionTranscript_getStart(pt), 
              PredictionTranscript_getEnd(pt), PredictionTranscript_getDbID(pt));
     }
-    PredictionTranscriptAdaptor_store((BaseFeatureAdaptor *)pta,sSet);
+    PredictionTranscriptAdaptor_store((BaseFeatureAdaptor *)pta,sVector);
   }
   {
     RawContigAdaptor *rca = DBAdaptor_getRawContigAdaptor(dba);
     RawContig *contig = RawContigAdaptor_fetchByDbID(rca,10000);
     RepeatFeatureAdaptor *rfa = DBAdaptor_getRepeatFeatureAdaptor(dba);
-    Set *sSet = RawContig_getAllRepeatFeatures(contig,"");
+    Vector *sVector = RawContig_getAllRepeatFeatures(contig,"");
     int i;
-    for (i=0;i<Set_getNumElement(sSet);i++) {
-      RepeatFeature *rf = Set_getElementAt(sSet,i);
+    for (i=0;i<Vector_getNumElement(sVector);i++) {
+      RepeatFeature *rf = Vector_getElementAt(sVector,i);
       printf("Repeat feature: %d-%d id " IDFMTSTR "\n", RepeatFeature_getStart(rf), 
              RepeatFeature_getEnd(rf), RepeatFeature_getDbID(rf));
     }
-    RepeatFeatureAdaptor_store((BaseFeatureAdaptor *)rfa,sSet);
+    RepeatFeatureAdaptor_store((BaseFeatureAdaptor *)rfa,sVector);
   }
   {
     RawContigAdaptor *rca = DBAdaptor_getRawContigAdaptor(dba);
     RawContig *contig = RawContigAdaptor_fetchByDbID(rca,10000);
     DNAAlignFeatureAdaptor *dafa = DBAdaptor_getDNAAlignFeatureAdaptor(dba);
-    Set *sSet = RawContig_getAllDNAAlignFeatures(contig,"",NULL);
+    Vector *sVector = RawContig_getAllDNAAlignFeatures(contig,"",NULL);
     int i;
-    for (i=0;i<Set_getNumElement(sSet);i++) {
-      DNAAlignFeature *daf = Set_getElementAt(sSet,i);
+    for (i=0;i<Vector_getNumElement(sVector);i++) {
+      DNAAlignFeature *daf = Vector_getElementAt(sVector,i);
       printf("DNA align feature: %d-%d id " IDFMTSTR "\n", DNAAlignFeature_getStart(daf), 
              DNAAlignFeature_getEnd(daf), DNAAlignFeature_getDbID(daf));
     }
-    DNAAlignFeatureAdaptor_store((BaseFeatureAdaptor *)dafa,sSet);
+    DNAAlignFeatureAdaptor_store((BaseFeatureAdaptor *)dafa,sVector);
   }
   {
     RawContigAdaptor *rca = DBAdaptor_getRawContigAdaptor(dba);
     RawContig *contig = RawContigAdaptor_fetchByDbID(rca,10000);
     ProteinAlignFeatureAdaptor *pafa = DBAdaptor_getProteinAlignFeatureAdaptor(dba);
-    Set *sSet = RawContig_getAllProteinAlignFeatures(contig,"",NULL);
+    Vector *sVector = RawContig_getAllProteinAlignFeatures(contig,"",NULL);
     int i;
-    for (i=0;i<Set_getNumElement(sSet);i++) {
-      DNAPepAlignFeature *paf = Set_getElementAt(sSet,i);
+    for (i=0;i<Vector_getNumElement(sVector);i++) {
+      DNAPepAlignFeature *paf = Vector_getElementAt(sVector,i);
       printf("DNA align feature: %d-%d id " IDFMTSTR "\n", DNAPepAlignFeature_getStart(paf), 
              DNAPepAlignFeature_getEnd(paf), DNAPepAlignFeature_getDbID(paf));
     }
-    ProteinAlignFeatureAdaptor_store((BaseFeatureAdaptor *)pafa,sSet);
+    ProteinAlignFeatureAdaptor_store((BaseFeatureAdaptor *)pafa,sVector);
   }
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
     Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);
-    Set *dafSet = Slice_getAllDNAAlignFeatures(slice,"",NULL);
+    Vector *dafVector = Slice_getAllDNAAlignFeatures(slice,"",NULL);
     int i;
 
-    for (i=0;i<Set_getNumElement(dafSet);i++) {
-      DNAAlignFeature *daf = Set_getElementAt(dafSet,i);
+    for (i=0;i<Vector_getNumElement(dafVector);i++) {
+      DNAAlignFeature *daf = Vector_getElementAt(dafVector,i);
       printf("DNA align feature: %d-%d id " IDFMTSTR "\n", DNAAlignFeature_getStart(daf), 
              DNAAlignFeature_getEnd(daf), DNAAlignFeature_getDbID(daf));
     }
@@ -164,11 +164,11 @@ int main(int argc, char *argv[]) {
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
     Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);
-    Set *dpafSet = Slice_getAllDNAPepAlignFeatures(slice,"",NULL);
+    Vector *dpafVector = Slice_getAllDNAPepAlignFeatures(slice,"",NULL);
     int i;
 
-    for (i=0;i<Set_getNumElement(dpafSet);i++) {
-      DNAPepAlignFeature *dpaf = Set_getElementAt(dpafSet,i);
+    for (i=0;i<Vector_getNumElement(dpafVector);i++) {
+      DNAPepAlignFeature *dpaf = Vector_getElementAt(dpafVector,i);
       printf("Pep align feature: %d-%d id " IDFMTSTR "\n", DNAPepAlignFeature_getStart(dpaf), 
              DNAPepAlignFeature_getEnd(dpaf), DNAPepAlignFeature_getDbID(dpaf));
     }
@@ -187,11 +187,11 @@ int main(int argc, char *argv[]) {
     for (i=1;i<5;i++) {
       gene = GeneAdaptor_fetchByDbID(ga,i,FALSE);
       if (gene) {
-        Set *dblinks = Gene_getAllDBLinks(gene);
+        Vector *dblinks = Gene_getAllDBLinks(gene);
         int j;
         printf("Gene %s " IDFMTSTR "\n",Gene_getStableId(gene), Gene_getDbID(gene));
-        for (j=0;j<Set_getNumElement(dblinks);j++) {
-          DBEntry *dbe = Set_getElementAt(dblinks,j);
+        for (j=0;j<Vector_getNumElement(dblinks);j++) {
+          DBEntry *dbe = Vector_getElementAt(dblinks,j);
           printf("  dblink = %s\n",DBEntry_getDisplayId(dbe));
         }
       }
@@ -233,11 +233,11 @@ int main(int argc, char *argv[]) {
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
     Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);
-    Set *geneSet = Slice_getAllGenes(slice,NULL);
+    Vector *geneVector = Slice_getAllGenes(slice,NULL);
     int i;
 
-    for (i=0;i<Set_getNumElement(geneSet);i++) {
-      Gene *gene = Set_getElementAt(geneSet,i);
+    for (i=0;i<Vector_getNumElement(geneVector);i++) {
+      Gene *gene = Vector_getElementAt(geneVector,i);
       int j;
 
       fprintf(stderr,"Gene %s\n",Gene_getStableId(gene));

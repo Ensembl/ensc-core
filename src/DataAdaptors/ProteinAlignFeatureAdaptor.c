@@ -24,12 +24,12 @@ ProteinAlignFeatureAdaptor *ProteinAlignFeatureAdaptor_new(DBAdaptor *dba) {
   return pafa;
 }
 
-int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
+int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
   char qStr[512];
   StatementHandle *sth;
   int i;
   
-  if (!Set_getNumElement(features)) {
+  if (!Vector_getNumElement(features)) {
     fprintf(stderr, "Warning: ProteinAlignFeatureAdaptor_store called with no features\n");
     return 0;
   }
@@ -43,8 +43,8 @@ int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
   sth = bfa->prepare((BaseAdaptor *)bfa, qStr,strlen(qStr));
   printf("%s\n",qStr);
 
-  for (i=0; i<Set_getNumElement(features); i++) {
-    DNAPepAlignFeature *sf = Set_getElementAt(features, i);
+  for (i=0; i<Vector_getNumElement(features); i++) {
+    DNAPepAlignFeature *sf = Vector_getElementAt(features, i);
     Analysis *analysis = DNAPepAlignFeature_getAnalysis(sf);
     AnalysisAdaptor *aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
     RawContig *contig;
@@ -114,19 +114,19 @@ char *ProteinAlignFeatureAdaptor_getColumns(void) {
          "paf.score";
 }
 
-Set *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
+Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
                                                            StatementHandle *sth,
                                                            AssemblyMapper *assMapper,
                                                            Slice *slice) {
   AnalysisAdaptor *aa;
   RawContigAdaptor *rca;
-  Set *features;
+  Vector *features;
   ResultRow *row;
 
   aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
   rca = DBAdaptor_getRawContigAdaptor(bfa->dba);
 
-  features = Set_new();
+  features = Vector_new();
 
   if (slice) {
     int featStart, featEnd, featStrand;
@@ -204,7 +204,7 @@ Set *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *b
       if (row->col(row,11)) DNAPepAlignFeature_setPercId(dpaf,row->getDoubleAt(row,11));
       if (row->col(row,12)) DNAPepAlignFeature_setScore(dpaf,row->getDoubleAt(row,12));
 
-      Set_addElement(features,dpaf);
+      Vector_addElement(features,dpaf);
     }
   } else { // No slice
 
@@ -237,7 +237,7 @@ Set *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *b
       if (row->col(row,11)) DNAPepAlignFeature_setPercId(dpaf,row->getDoubleAt(row,11));
       if (row->col(row,12)) DNAPepAlignFeature_setScore(dpaf,row->getDoubleAt(row,12));
 
-      Set_addElement(features,dpaf);
+      Vector_addElement(features,dpaf);
     }
   }
   

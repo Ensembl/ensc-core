@@ -20,10 +20,10 @@ SupportingFeatureAdaptor *SupportingFeatureAdaptor_new(DBAdaptor *dba) {
 
 
 
-Set *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, Exon *exon) {
+Vector *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, Exon *exon) {
   StatementHandle *sth;
   char qStr[512];
-  Set *out = Set_new();
+  Vector *out = Vector_new();
   ResultRow *row;
   DNAAlignFeatureAdaptor *dafa;
   ProteinAlignFeatureAdaptor *pafa;
@@ -37,7 +37,7 @@ Set *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, Exon
   if (!Exon_getDbID(exon)) {
     fprintf(stderr,"WARNING: exon has no dbID can't fetch evidence from db " 
                    "no relationship exists\n");
-    return emptySet;
+    return emptyVector;
   }
 
   sprintf(qStr,"SELECT sf.feature_type, sf.feature_id "
@@ -76,7 +76,7 @@ Set *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, Exon
     }
 #endif
 
-    Set_addElement(out,baf);
+    Vector_addElement(out,baf);
   }
 
   sth->finish(sth);

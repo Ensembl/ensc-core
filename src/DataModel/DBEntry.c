@@ -58,9 +58,9 @@ ECOSTRING DBEntry_setDbName(DBEntry *dbe, char *dbName) {
 
 int DBEntry_addSynonym(DBEntry *dbe, char *syn) {
   if (!dbe->synonyms) {
-    dbe->synonyms = Set_new();
+    dbe->synonyms = Vector_new();
   }
-  Set_addElement(dbe->synonyms, syn);
+  Vector_addElement(dbe->synonyms, syn);
   return 1;
 }
 

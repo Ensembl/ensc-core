@@ -27,14 +27,14 @@ void BaseFeatureAdaptor_init(BaseFeatureAdaptor *bfa, DBAdaptor *dba, int adapto
   return;
 }
 
-Set *BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *bfa, char *constraint,
+Vector *BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *bfa, char *constraint,
                                      char *logicName, AssemblyMapper *mapper, Slice *slice) {
 /* HACK HACK HACK */
   char qStr[65500]; 
   NameTableType *tables = bfa->getTables();
   char *columns = bfa->getColumns();
   StatementHandle *sth;
-  Set *features;
+  Vector *features;
   char allConstraints[512];
   char tableNamesStr[512]; 
   char leftJoinStr[512]; 
@@ -56,7 +56,7 @@ Set *BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *bfa, char *constraint,
 
     if (!analysis || !Analysis_getDbID(analysis) ) {
       fprintf(stderr,"No analysis for logic name %s exists\n",logicName);
-      return emptySet;
+      return emptyVector;
     }
     
     analysisId = Analysis_getDbID(analysis);
@@ -126,7 +126,7 @@ Set *BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *bfa, char *constraint,
 }
 
 SeqFeature *BaseFeatureAdaptor_fetchByDbID(BaseFeatureAdaptor *bfa, IDType dbID) {
-  Set *features;
+  Vector *features;
   SeqFeature *sf;
   char constraintStr[256];
   NameTableType *tables = bfa->getTables();
@@ -136,14 +136,14 @@ SeqFeature *BaseFeatureAdaptor_fetchByDbID(BaseFeatureAdaptor *bfa, IDType dbID)
 
   //return first element of _generic_fetch list
   features = BaseFeatureAdaptor_genericFetch(bfa, constraintStr, "", NULL, NULL);
-  sf = Set_getElementAt(features, 0);
+  sf = Vector_getElementAt(features, 0);
 // NIY free func
-  Set_free(features, NULL);
+  Vector_free(features, NULL);
 
   return (SeqFeature *)sf;
 }
 
-Set *BaseFeatureAdaptor_fetchAllByRawContigConstraint(BaseFeatureAdaptor *bfa, RawContig *contig,
+Vector *BaseFeatureAdaptor_fetchAllByRawContigConstraint(BaseFeatureAdaptor *bfa, RawContig *contig,
                                                       char *constraint, char *logicName)  {
   IDType cid;
   char allConstraints[256];
@@ -165,12 +165,12 @@ Set *BaseFeatureAdaptor_fetchAllByRawContigConstraint(BaseFeatureAdaptor *bfa, R
   return BaseFeatureAdaptor_genericFetch(bfa, allConstraints, logicName, NULL, NULL);
 }
 
-Set *BaseFeatureAdaptor_fetchAllByRawContig(BaseFeatureAdaptor *bfa, RawContig *contig,
+Vector *BaseFeatureAdaptor_fetchAllByRawContig(BaseFeatureAdaptor *bfa, RawContig *contig,
                                             char *logicName) {
   return BaseFeatureAdaptor_fetchAllByRawContigConstraint(bfa,contig,"",logicName);
 }
 
-Set *BaseFeatureAdaptor_fetchAllByRawContigAndScore(BaseFeatureAdaptor *bfa, RawContig *contig,
+Vector *BaseFeatureAdaptor_fetchAllByRawContigAndScore(BaseFeatureAdaptor *bfa, RawContig *contig,
                                                     double *scoreP, char *logicName) {
   char constraintStr[256];
   NameTableType *tables = bfa->getTables();
@@ -184,12 +184,12 @@ Set *BaseFeatureAdaptor_fetchAllByRawContigAndScore(BaseFeatureAdaptor *bfa, Raw
   return BaseFeatureAdaptor_fetchAllByRawContigConstraint(bfa, contig, constraintStr, logicName);
 }
 
-Set *BaseFeatureAdaptor_fetchAllBySlice(BaseFeatureAdaptor *bfa, Slice *slice,
+Vector *BaseFeatureAdaptor_fetchAllBySlice(BaseFeatureAdaptor *bfa, Slice *slice,
                                         char *logicName) {
   return BaseFeatureAdaptor_fetchAllBySliceConstraint(bfa, slice, "", logicName);
 }
 
-Set *BaseFeatureAdaptor_fetchAllBySliceAndScore(BaseFeatureAdaptor *bfa, Slice *slice,
+Vector *BaseFeatureAdaptor_fetchAllBySliceAndScore(BaseFeatureAdaptor *bfa, Slice *slice,
                                                 double *scoreP, char *logicName) {
   char constraintStr[256];
   NameTableType *tables = bfa->getTables();
@@ -203,13 +203,13 @@ Set *BaseFeatureAdaptor_fetchAllBySliceAndScore(BaseFeatureAdaptor *bfa, Slice *
   return BaseFeatureAdaptor_fetchAllBySliceConstraint(bfa, slice, constraintStr, logicName);
 }  
 
-Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice *slice,
+Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice *slice,
                                                   char *constraint, char *logicName) {
 
   char cacheKey[EXTREMELEN];
   void *val;
-  Set *features;
-  Set *out;
+  Vector *features;
+  Vector *out;
   char *allConstraints;
   int sliceChrId;
   int sliceEnd;
@@ -230,7 +230,7 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice
   StrUtil_strupr(cacheKey);
 
   if ((val = Cache_findElem(bfa->sliceFeatureCache, cacheKey)) != NULL) {
-    return (Set *)val;
+    return (Vector *)val;
   }
     
   sliceChrId = Slice_getChrId(slice),
@@ -249,7 +249,7 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice
 
 
   if (!nContigId) {
-    return emptySet;
+    return emptyVector;
   }
 
   //construct the SQL constraint for the contig ids 
@@ -263,7 +263,7 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice
 
   if (!allConstraints) {
     Error_trace("fetch_all_by_Slice",NULL);
-    return emptySet;
+    return emptyVector;
   }
 
   for (i=0; i<nContigId; i++) {
@@ -284,10 +284,10 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice
   features = 
     BaseFeatureAdaptor_genericFetch(bfa, allConstraints, logicName, assMapper, slice); 
   
-  if (Set_getNumElement(features)) {
+  if (Vector_getNumElement(features)) {
 // Can't easily do this in C     && (!$features->[0]->can('contig') || 
 // Its for the PredictionTranscriptAdaptor so HACK HACK HACK
-    SeqFeature *sf = (SeqFeature *)Set_getElementAt(features,0);
+    SeqFeature *sf = (SeqFeature *)Vector_getElementAt(features,0);
     if (bfa->adaptorType == PREDICTIONTRANSCRIPT_ADAPTOR || SeqFeature_getContig(sf) == (BaseContig *)slice) {
       // features have been converted to slice coords already, cache and return
       Cache_addElement(bfa->sliceFeatureCache, cacheKey, features, NULL);
@@ -297,12 +297,12 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice
 
   //remapping has not been done, we have to do our own conversion from
   //raw contig coords to slice coords
-  out = Set_new();
+  out = Vector_new();
 
     
-  for (i=0;i<Set_getNumElement(features); i++) {
+  for (i=0;i<Vector_getNumElement(features); i++) {
     //since feats were obtained in contig coords, attached seq is a contig
-    SeqFeature *f = Set_getElementAt(features, i);
+    SeqFeature *f = Vector_getElementAt(features, i);
     IDType contigId = RawContig_getDbID(SeqFeature_getContig(f));
     MapperCoordinate fRange;
   
@@ -332,7 +332,7 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice
       
     SeqFeature_setContig(f,slice);
       
-    Set_addElement(out,f);
+    Vector_addElement(out,f);
   }
     
   //update the cache
@@ -340,7 +340,7 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice
   return out;
 }
 
-int BaseFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
+int BaseFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
   fprintf(stderr,"ERROR: Abstract method store not defined by implementing subclass\n");
   exit(1);
 
@@ -426,7 +426,7 @@ char *BaseFeatureAdaptor_finalClause(void) {
   return "";
 }
 
-Set *BaseFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa, StatementHandle *sth, 
+Vector *BaseFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa, StatementHandle *sth, 
                                                    AssemblyMapper *mapper, Slice *slice) {
   fprintf(stderr,"ERROR: Abstract method objectsFromStatementHandle not defined by implementing subclass\n");
   exit(1);
