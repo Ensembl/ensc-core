@@ -148,7 +148,7 @@ char *SequenceAdaptor_fetchByAssemblyLocation(SequenceAdaptor *sa,
                                                       chrStart, chrEnd, strand );
 
   // for each of the pieces get sequence
-  seq = StrUtil_copyString(seq, "", 0);
+  seq = StrUtil_copyString(&seq, "", 0);
   for (i=0; i<MapperRangeSet_getNumRange(coordSet); i++) {
     MapperRange *segment = MapperRangeSet_getRangeAt(coordSet,i);
 

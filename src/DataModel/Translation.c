@@ -34,15 +34,18 @@ void Translation_transform(Translation *translation, IDHash *exonTransforms) {
 
   Exon * startExon = Translation_getStartExon(translation);
   Exon * endExon   = Translation_getEndExon(translation);
+  int64 startExonRef = (int)startExon;
+  int64 endExonRef = (int)endExon;
 
-  if (IDHash_contains(exonTransforms,(long)startExon)) {
-    Translation_setStartExon(translation,IDHash_getValue(exonTransforms,(long)startExon));
+/* CHECK */
+  if (IDHash_contains(exonTransforms,startExonRef)) {
+    Translation_setStartExon(translation,IDHash_getValue(exonTransforms,startExonRef));
   } else {
     // do nothing, the start exon wasnt mapped
   }
 
-  if (IDHash_contains(exonTransforms,(long)endExon)) {
-    Translation_setEndExon(translation,IDHash_getValue(exonTransforms,(long)endExon));
+  if (IDHash_contains(exonTransforms,endExonRef)) {
+    Translation_setEndExon(translation,IDHash_getValue(exonTransforms,endExonRef));
   } else {
     // do nothing, the end exon wasnt mapped
   }

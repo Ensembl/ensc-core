@@ -12,7 +12,7 @@
 struct TranscriptStruct {
   SeqFeature sf;
   Translation *translation;
-  long translationId;
+  int64 translationId;
   FeatureSet fs;
   StableIdInfo si;
   char *type;

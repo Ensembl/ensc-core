@@ -5,7 +5,7 @@
 #include "BaseAdaptor.h"
 
 struct StorableStruct {
-  long     dbID;
+  int64     dbID;
   BaseAdaptor *adaptor;
 };
 

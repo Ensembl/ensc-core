@@ -9,7 +9,7 @@ struct RawContigStruct {
   BASECONTIG_DATA
   int length;
   int emblOffset;
-  long cloneId;
+  int64 cloneId;
   char *name;  
 };
 

@@ -47,10 +47,12 @@ Transcript *Transcript_transform(Transcript *trans, IDHash *exonTransforms) {
   
   for (i=0;i<Transcript_getExonCount(trans);i++) {
     Exon *exon = (Exon *)Transcript_getExonAt(trans,i);
+    int64 exonRef = (int)exon;
 
     // the old exon was successfully remapped then store the new exon
-    if ( IDHash_contains(exonTransforms,(long)exon)) {
-      Set_addElement(mappedExonSet,IDHash_getValue(exonTransforms, (long)exon));
+/* CHECK */
+    if ( IDHash_contains(exonTransforms,exonRef)) {
+      Set_addElement(mappedExonSet,IDHash_getValue(exonTransforms, exonRef));
     }
     // but for the case where the exon was unable to be mapped, as it
     // was outside the bounds of the slice, include the original exon.

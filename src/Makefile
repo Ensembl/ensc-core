@@ -12,6 +12,7 @@ BINDIR=../bin
 
 all	: directories \
           libensc.a \
+          Programs/testdbc \
           Tests/EcoStringTest \
           Tests/StreamTest \
           Tests/ClassTest \
@@ -83,6 +84,11 @@ libensc.a	: \
 	ar rcv libensc.a objectfiles/DataModel/*.o objectfiles/DataAdaptors/*.o objectfiles/Util/*.o \
                objectfiles/DataModel/Basic/*.o objectfiles/DataModel/Mapper/*.o
 	ranlib libensc.a
+
+Programs/testdbc: \
+	libensc.a \
+	Programs/testdbc.c
+	cc $(CFLAGS) $(LDFLAGS) -o Programs/testdbc Programs/testdbc.c -L. -lensc
 
 Tests/ClassTest: \
 	libensc.a \

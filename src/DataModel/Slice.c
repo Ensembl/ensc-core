@@ -9,7 +9,7 @@
 #include "StrUtil.h"
 
 Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
-                 SliceAdaptor *sa, long dbID, int empty) {
+                 SliceAdaptor *sa, int64 dbID, int empty) {
   Slice *slice;
 
   if ((slice = (Slice *)calloc(1,sizeof(Slice))) == NULL) {

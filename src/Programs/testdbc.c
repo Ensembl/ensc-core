@@ -16,6 +16,8 @@
 int main(int argc, char *argv[]) {
   DBAdaptor *dba;
 
+  initEnsC();
+
   printf("Opening connection ...");
   //dba = DBAdaptor_new("localhost","root",NULL,"test_ensembl",3306,NULL);
   dba = DBAdaptor_new("kaka.sanger.ac.uk","anonymous",NULL,"homo_sapiens_core_12_31",3306,NULL);
@@ -26,7 +28,7 @@ int main(int argc, char *argv[]) {
 
   {
     GeneAdaptor *ga = DBAdaptor_getGeneAdaptor(dba);
-    long *geneIds;
+    int64 *geneIds;
     int   nGeneId;
     int   i;
     Gene *gene;
