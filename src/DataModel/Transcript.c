@@ -76,8 +76,7 @@ Transcript *Transcript_transform(Transcript *trans, IDHash *exonTransforms) {
   
   for (i=0;i<Transcript_getExonCount(trans);i++) {
     Exon *exon = (Exon *)Transcript_getExonAt(trans,i);
-    int exonIntRef = (int)exon;
-    IDType exonRef = (IDType)exonIntRef;
+    IDType exonRef = (IDType)exonRef;
 
     // the old exon was successfully remapped then store the new exon
 /* CHECK */
