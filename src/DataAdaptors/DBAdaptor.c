@@ -60,6 +60,38 @@ AnalysisAdaptor *DBAdaptor_getAnalysisAdaptor(DBAdaptor *dba) {
   return (AnalysisAdaptor *)DBConnection_getAdaptor(dba->dbc,ANALYSIS_ADAPTOR);
 }
 
+SimpleFeatureAdaptor *DBAdaptor_getSimpleFeatureAdaptor(DBAdaptor *dba) {
+  if (!DBConnection_getAdaptor(dba->dbc,SIMPLEFEATURE_ADAPTOR)) {
+    DBConnection_addAdaptor(dba->dbc,
+                            (BaseAdaptor *)SimpleFeatureAdaptor_new(dba));
+  }
+  return (SimpleFeatureAdaptor *)DBConnection_getAdaptor(dba->dbc,SIMPLEFEATURE_ADAPTOR);
+}
+
+DnaAlignFeatureAdaptor *DBAdaptor_getDnaAlignFeatureAdaptor(DBAdaptor *dba) {
+  if (!DBConnection_getAdaptor(dba->dbc,DNAALIGNFEATURE_ADAPTOR)) {
+    DBConnection_addAdaptor(dba->dbc,
+                            (BaseAdaptor *)DnaAlignFeatureAdaptor_new(dba));
+  }
+  return (DnaAlignFeatureAdaptor *)DBConnection_getAdaptor(dba->dbc,DNAALIGNFEATURE_ADAPTOR);
+}
+
+ProteinAlignFeatureAdaptor *DBAdaptor_getProteinAlignFeatureAdaptor(DBAdaptor *dba) {
+  if (!DBConnection_getAdaptor(dba->dbc,PROTEINALIGNFEATURE_ADAPTOR)) {
+    DBConnection_addAdaptor(dba->dbc,
+                            (BaseAdaptor *)ProteinAlignFeatureAdaptor_new(dba));
+  }
+  return (ProteinAlignFeatureAdaptor *)DBConnection_getAdaptor(dba->dbc,PROTEINALIGNFEATURE_ADAPTOR);
+}
+
+RepeatFeatureAdaptor *DBAdaptor_getRepeatFeatureAdaptor(DBAdaptor *dba) {
+  if (!DBConnection_getAdaptor(dba->dbc,REPEATFEATURE_ADAPTOR)) {
+    DBConnection_addAdaptor(dba->dbc,
+                            (BaseAdaptor *)RepeatFeatureAdaptor_new(dba));
+  }
+  return (RepeatFeatureAdaptor *)DBConnection_getAdaptor(dba->dbc,REPEATFEATURE_ADAPTOR);
+}
+
 TranscriptAdaptor *DBAdaptor_getTranscriptAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,TRANSCRIPT_ADAPTOR)) {
     DBConnection_addAdaptor(dba->dbc,
