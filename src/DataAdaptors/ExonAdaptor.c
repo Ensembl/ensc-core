@@ -144,7 +144,7 @@ int ExonAdaptor_fetchAllByGeneId(ExonAdaptor *ea, IDType geneId, Exon ***retExon
   }
 
   sprintf(qStr,
-    "SELECT  e.exon_id"
+    "SELECT STRAIGHT_JOIN e.exon_id"
     "  , e.contig_id"
     "  , e.contig_start"
     "  , e.contig_end"
@@ -152,9 +152,9 @@ int ExonAdaptor_fetchAllByGeneId(ExonAdaptor *ea, IDType geneId, Exon ***retExon
     "  , e.phase"
     "  , e.end_phase"
     "  , e.sticky_rank"
-    " FROM exon e"
+    " FROM transcript t"
     "  , exon_transcript et"
-    "  , transcript t"
+    "  , exon e"
     " WHERE t.gene_id = "
     IDFMTSTR
     "  AND et.transcript_id = t.transcript_id"
