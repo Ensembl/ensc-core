@@ -38,5 +38,7 @@ typedef long long IDType;
 
 void initEnsC(void);
 
+typedef int (*SortCompFunc)(const void *a, const void *b);
+
 
 #endif

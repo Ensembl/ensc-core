@@ -91,6 +91,9 @@ char *SeqFeature_setStableId(SeqFeature *sf, char *stableId);
 
 #define SeqFeature_getLength(sf) ((sf)->end - (sf)->start + 1)
 
+int SeqFeature_startCompFunc(const void *a, const void *b);
+
+
 #ifdef __SEQFEATURE_MAIN__
  SeqFeatureFuncs seqFeatureFuncs = {NULL, NULL};
 #else

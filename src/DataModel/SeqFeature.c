@@ -12,3 +12,16 @@ char *SeqFeature_setSeqName(SeqFeature *sf, char *seqName) {
 
   return sf->seqName;
 }
+
+int SeqFeature_startCompFunc(const void *a, const void *b) {
+  SeqFeature **e1 = (SeqFeature **)a;
+  SeqFeature **e2 = (SeqFeature **)b;
+
+  if (SeqFeature_getStart(*e1) > SeqFeature_getStart(*e2)) {
+    return 1;
+  } else if (SeqFeature_getStart(*e1) < SeqFeature_getStart(*e2)) {
+    return -1;
+  } else {
+    return 0;
+  }
+}

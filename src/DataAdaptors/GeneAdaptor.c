@@ -504,3 +504,4 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene) {
   return Gene_getDbID(gene);
 }
 
+

@@ -1,4 +1,13 @@
 #include "DBAdaptor.h"
+#include "Vector.h"
+#include "Slice.h"
+#include "StringHash.h"
+#include "Chromosome.h"
+#include "DNAAlignFeature.h"
+#include "ChromosomeAdaptor.h"
+#include "SliceAdaptor.h"
+
+#include <stdlib.h>
 
 typedef enum CodingTypesEnum {
   UNDEFINED,
@@ -9,24 +18,33 @@ typedef enum CodingTypesEnum {
   NCODINGTYPE
 } CodingTypes;
 
-char **codingTypeStrings = { "Undefined", "Intronic", "Coding", "NonCoding", "Intergenic" };
+char *codingTypeStrings[] = { "Undefined", "Intronic", "Coding", "NonCoding", "Intergenic" };
   
 
 
-int main(int argc, char *argv) {
+int getCodingRegionStart(Transcript *trans) {
+  return 500000000;
+}
+
+int getCodingRegionEnd(Transcript *trans) {
+  return 500000000;
+}
+
+int main(int argc, char **argv) {
   char *host = "ecs2b";
   char *user = "ensro";
   char *dbname = "steve_chr6_new_typed_snp";
   char *path = "SANGER_13";
-  char **geneTypes = {"Known","Novel_CDS",NULL};
-  char **chromosomes = {"6",NULL}
-  char *chrName;
-  char **snpTypes = NULL;
+  char *geneTypes[] = {"Known","Novel_CDS",NULL};
+  char *chromosomes[] = {"6",NULL};
+  char **chrName;
+  char *snpTypes[] = {NULL};
 
   DBAdaptor *dba;
   SliceAdaptor *sa;
   GeneAdaptor *ga;
   DNAAlignFeatureAdaptor *dafa;
+  ChromosomeAdaptor *ca;
 
 
   initEnsC();
@@ -35,13 +53,7 @@ int main(int argc, char *argv) {
 
   printf("Default assembly type %s\n",DBAdaptor_getAssemblyType(dba));
 
-
-
-if (scalar(@snptypes)) {
-  @snptypes = split(/,/,join(',',@snptypes));
-}
-
-  DBAdaptor_setAssemblyType(path);
+  DBAdaptor_setAssemblyType(dba, path);
 
   sa   = DBAdaptor_getSliceAdaptor(dba);
   ga   = DBAdaptor_getGeneAdaptor(dba);
@@ -49,26 +61,27 @@ if (scalar(@snptypes)) {
   ca   = DBAdaptor_getChromosomeAdaptor(dba);
 
   chrName = chromosomes;
-  while (chrName) {
-    char *geneType;
+  while (*chrName) {
+    char **geneType;
     Vector *genes = Vector_new();
     Vector *snps = Vector_new();
-    Chromosome *chrom = ChromosomeAdaptor_fetchByChrName(ca, chrName);
+    Chromosome *chrom = ChromosomeAdaptor_fetchByChrName(ca, *chrName);
     int chrStart = 1;
     int chrEnd = Chromosome_getLength(chrom);
-    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa, chrName,chrStart,chrEnd);
-    int count=0;
+    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa, *chrName,chrStart,chrEnd);
+    int i;
     StringHash *snpCodingType = StringHash_new(STRINGHASH_SMALL);
+    char **snpType;
     
-    fprintf(stderr, "Chr %s from %d to %d\n", chr, chrStart, chrEnd);
+    fprintf(stderr, "Chr %s from %d to %d\n", *chrName, chrStart, chrEnd);
 
     printf("Fetching genes\n");
     
     geneType = geneTypes;
 
-    while (geneType) {
-      Vector *genesOfType = Slice_getAllGenes(slice, geneType);
-      printf("Got %d %s genes\n",Vector_getNumElement(genesOfType),geneType);
+    while (*geneType) {
+      Vector *genesOfType = Slice_getAllGenesByType(slice, *geneType);
+      printf("Got %d %s genes\n",Vector_getNumElement(genesOfType),*geneType);
 
       Vector_append(genes,genesOfType);
 
@@ -83,12 +96,12 @@ if (scalar(@snptypes)) {
     printf("Fetching SNPs\n");
 
     snpType = snpTypes;
-    if (!snpType) {
+    if (!(*snpType)) {
       snps = Slice_getAllDNAAlignFeatures(slice,"",NULL);
     } else {
-      while (snpType) {
-        Vector *snpsOfType = Slice_getAllDNAAlignFeatures(slice,snpType,NULL);
-        printf("Got %d %s SNPs\n",Vector_getNumElement(snpsOfType),snpType);
+      while (*snpType) {
+        Vector *snpsOfType = Slice_getAllDNAAlignFeatures(slice,*snpType,NULL);
+        printf("Got %d %s SNPs\n",Vector_getNumElement(snpsOfType),*snpType);
 
         Vector_append(snps,snpsOfType);
 
@@ -99,13 +112,12 @@ if (scalar(@snptypes)) {
 
     printf("Done fetching SNPs (fetched %d)\n",Vector_getNumElement(snps));
 
-    Vector_sort(genes, SeqFeature_startCompFunc);
-
+    Vector_sort(snps, SeqFeature_startCompFunc);
 
     printf("Starting coding type calcs\n");
 
     for (i=0;i<Vector_getNumElement(snps); i++) {
-      DNADNAAlignFeature *snp = Vector_getElementAt(snps,i);
+      DNAAlignFeature *snp = Vector_getElementAt(snps,i);
       int j;
       char *logicName;
       CodingTypes codingType = UNDEFINED;
@@ -113,16 +125,17 @@ if (scalar(@snptypes)) {
       int *counts;
   
       if (!(i%1000)) {
-        print ".";
+        printf(".");
+        fflush(stdout);
       }
   
       for (j=0; j < Vector_getNumElement(genes) && !done; j++) {
-        Gene *gene = genes[j]; 
+        Gene *gene = Vector_getElementAt(genes,j); 
         if (!gene) {
           continue;
         }
-        if (DNADNAAlignFeature_getEnd(snp) >= Gene_getStart(gene) && 
-            DNADNAAlignFeature_getStart(snp) <= Gene_getEnd(gene)) {
+        if (DNAAlignFeature_getEnd(snp) >= Gene_getStart((SeqFeature *)gene) && 
+            DNAAlignFeature_getStart(snp) <= Gene_getEnd((SeqFeature *)gene)) {
           int k;
   
           if (codingType == UNDEFINED) codingType = INTRONIC;
@@ -130,18 +143,18 @@ if (scalar(@snptypes)) {
           for (k=0; k<Gene_getTranscriptCount(gene) && !done; k++) {
             Transcript *trans = Gene_getTranscriptAt(gene,k);
   
-            if (DNADNAAlignFeature_getEnd(snp) >= Transcript_getStart(trans) && 
-                DNADNAAlignFeature_getStart(snp) <= Transcript_getEnd(trans)) {
+            if (DNAAlignFeature_getEnd(snp) >= Transcript_getStart((SeqFeature *)trans) && 
+                DNAAlignFeature_getStart(snp) <= Transcript_getEnd((SeqFeature *)trans)) {
               int m;
        
               for (m=0; m<Transcript_getExonCount(trans); m++) {
                 Exon *exon = Transcript_getExonAt(trans,m);
   
-                if (DNADNAAlignFeature_getEnd(snp) >= Exon_getStart(exon) && 
-                    DNADNAAlignFeature_getStart(snp) <= Exon_getEnd(exon)) {
+                if (DNAAlignFeature_getEnd(snp) >= Exon_getStart(exon) && 
+                    DNAAlignFeature_getStart(snp) <= Exon_getEnd(exon)) {
                   if (Transcript_getTranslation(trans) && 
-                      DNADNAAlignFeature_getEnd(snp) >= getCodingRegionStart(trans) && 
-                      DNADNAAlignFeature_getStart(snp) <= getCodingRegionEnd(trans))
+                      DNAAlignFeature_getEnd(snp) >= getCodingRegionStart(trans) && 
+                      DNAAlignFeature_getStart(snp) <= getCodingRegionEnd(trans)) {
                     codingType = CODING;
                     done = 1;
                   } else {
@@ -151,19 +164,24 @@ if (scalar(@snptypes)) {
               }
             }
           }
-        } elsif (Gene_getStart(gene) > DNADNAAlignFeature_getEnd(snp)) {
+        } else if (Gene_getStart((SeqFeature *)gene) > DNAAlignFeature_getEnd(snp)) {
           done = 1;
-        } elsif (Gene_getEnd(gene) < DNADNAAlignFeature_getStart(snp)) {
-          printf("Removing gene %s\n", Gene_getStableId(gene));
+        } else if (Gene_getEnd((SeqFeature *)gene) < DNAAlignFeature_getStart(snp)) {
+          /* 
+          printf("Removing gene %s with extent %d to %d\n", 
+                 Gene_getStableId(gene), 
+                 Gene_getStart(gene),
+                 Gene_getEnd(gene));
+          */
           Vector_setElementAt(genes,j,NULL);
         }
       }
 
-      logicName = Analysis_getLogicName(DNADNAAlignFeature_getAnalysis(snp));
-      if (codingType == UNDEFINED)) {
+      logicName = Analysis_getLogicName(DNAAlignFeature_getAnalysis(snp));
+      if (codingType == UNDEFINED) {
         codingType = INTERGENIC;
       }
-      if (!StringHash_contains(logicName)) {
+      if (!StringHash_contains(snpCodingType, logicName)) {
         if ((counts = (int *)calloc(NCODINGTYPE,sizeof(int))) == NULL) {
           fprintf(stderr,"Error: Unable to allocate space for counts\n");
           exit(1);
@@ -175,17 +193,16 @@ if (scalar(@snptypes)) {
     }
 
     { // This brace is just me being lazy 
-      char *key;
       char **keys = StringHash_getKeys(snpCodingType);
       int j;
 
       printf("\n\nCODING TYPE COUNTS\n\n");
 
-      for (j=0; j<StringHash_getNumValue(snpCodingType); j++) {
+      for (j=0; j<StringHash_getNumValues(snpCodingType); j++) {
         int *counts = StringHash_getValue(snpCodingType, keys[j]);
         int k;
 
-        printf(" SNP Type %s\n", keys[j])
+        printf(" SNP Type %s\n", keys[j]);
 
         for (k=0; k<NCODINGTYPE; k++) {
           printf("  Type %s count = %d\n",codingTypeStrings[k], counts[k]);
@@ -198,14 +215,9 @@ if (scalar(@snptypes)) {
     Vector_free(snps,NULL);
     Vector_free(genes,NULL);
     StringHash_free(snpCodingType,free);
+    chrName++;
   }
   printf("Done\n");
-}
 
-int getCodingRegionStart(Transcript *trans) {
-  return 500000000;
-}
-
-int getCodingRegionEnd(Transcript *trans) {
-  return 500000000;
+  return 0;
 }

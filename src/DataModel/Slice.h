@@ -67,6 +67,8 @@ Vector *Slice_getAllDNAPepAlignFeatures(Slice *slice, char *logicName, double *s
 Vector *Slice_getAllPredictionTranscripts(Slice *slice, char *logicName);
 Vector *Slice_getAllRepeatFeatures(Slice *slice, char *logicName);
 
+Vector *Slice_getAllGenesByType(Slice *slice, char *type);
+
 
 
 #endif

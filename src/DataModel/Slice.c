@@ -69,7 +69,7 @@ ECOSTRING Slice_getName(Slice *slice) {
   char tmpStr[MAXSTRLEN];
   ECOSTRING retStr;
 
-  printf("Need to redo this\n");
+  // NIY printf("Need to redo this\n");
   sprintf(tmpStr,"%s.%d-%d",Slice_getChrName(slice),
           Slice_getChrStart(slice),Slice_getChrEnd(slice));
   EcoString_copyStr(ecoSTable,&retStr,tmpStr,0);
@@ -81,6 +81,23 @@ Vector *Slice_getAllGenes(Slice *slice, char *logicName) {
   GeneAdaptor *ga = DBAdaptor_getGeneAdaptor(Slice_getAdaptor(slice)->dba);
 
   return GeneAdaptor_fetchAllBySlice(ga,slice,logicName);
+}
+
+Vector *Slice_getAllGenesByType(Slice *slice, char *type) {
+  GeneAdaptor *ga = DBAdaptor_getGeneAdaptor(Slice_getAdaptor(slice)->dba);
+  Vector *allGenes = Slice_getAllGenes(slice, NULL);
+  Vector *typedGenes = Vector_new();
+  int i;
+
+  for (i=0;i<Vector_getNumElement(allGenes);i++) {
+    Gene *gene = Vector_getElementAt(allGenes,i);
+    if (!strcmp(Gene_getType(gene),type)) {
+      Vector_addElement(typedGenes,gene);
+    }
+  }
+  //Vector_free(allGenes,NULL);
+  
+  return typedGenes;
 }
 
 Vector *Slice_getAllSimpleFeatures(Slice *slice, char *logicName, double *score) {

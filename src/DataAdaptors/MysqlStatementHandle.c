@@ -56,7 +56,7 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
 
   Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);
 
-  printf("Statement = %s\n",sth->statementFormat);
+  // printf("Statement = %s\n",sth->statementFormat);
 
   m_sth = (MysqlStatementHandle *)sth;
 

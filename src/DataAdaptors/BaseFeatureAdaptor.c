@@ -35,11 +35,13 @@ Vector *BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *bfa, char *constrain
   char *columns = bfa->getColumns();
   StatementHandle *sth;
   Vector *features;
-  char allConstraints[512];
+/* HACK HACK HACK */
+  char allConstraints[65500];
   char tableNamesStr[512]; 
   char leftJoinStr[512]; 
   char **lj;
-  char tmpStr[32568];
+/* HACK HACK HACK */
+  char tmpStr[65500];
   int i;
   
   allConstraints[0] = '\0';
@@ -101,7 +103,7 @@ Vector *BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *bfa, char *constrain
 
   //append a where clause if it was defined
   if (allConstraints[0]) { 
-    printf("qStr = %s allConstraints = %s\n",qStr,allConstraints);
+    // printf("qStr = %s allConstraints = %s\n",qStr,allConstraints);
     sprintf(tmpStr," where %s", allConstraints);
     strcat(qStr,tmpStr);
     if ((bfa->defaultWhereClause())[0]) {
@@ -226,7 +228,7 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Sl
   // check the cache and return if we have already done this query
 
   sprintf(cacheKey,"%s%s%s",Slice_getName(slice), constraint, logicName);
-  printf("cacheKey = %s\n",cacheKey);
+  //printf("cacheKey = %s\n",cacheKey);
   StrUtil_strupr(cacheKey);
 
   if ((val = Cache_findElem(bfa->sliceFeatureCache, cacheKey)) != NULL) {
@@ -280,7 +282,7 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Sl
   allConstraints = StrUtil_appendString(allConstraints,")");
 
   // for speed the remapping to slice may be done at the time of object creation
-  printf("allConstraints = %s\n",allConstraints);
+  //printf("allConstraints = %s\n",allConstraints);
   features = 
     BaseFeatureAdaptor_genericFetch(bfa, allConstraints, logicName, assMapper, slice); 
   

@@ -1,6 +1,7 @@
 #define __MAIN_C__
 #include "Vector.h"
 #undef __MAIN_C__
+#include "EnsC.h"
 
 Vector *Vector_new() {
   Vector *vector;
@@ -20,10 +21,36 @@ void *Vector_getElementAt(Vector *v, int ind) {
   return v->elements[ind];
 }
 
+void *Vector_setElementAt(Vector *v, int ind, void *elem) {
+  if (ind < 0 || ind >= v->nElement) {
+    fprintf(stderr,"ERROR: Invalid element index %d\n",ind);
+    exit(1);
+  }
+/* NIY free old one
+*/
+  
+  v->elements[ind] = elem;
+
+  return v->elements[ind];
+}
+
+void Vector_append(Vector *dest, Vector *src) {
+  int i;
+
+  for (i=0; i<Vector_getNumElement(src); i++) {
+    Vector_addElement(dest, Vector_getElementAt(src,i));
+  }
+
+  return;
+}
+
+void Vector_sort(Vector *v, SortCompFunc sortFunc) {
+  qsort(v->elements,v->nElement,sizeof(void *),sortFunc);
+}
+
 void *Vector_addElement(Vector *v, void *elem) {
   if (elem == NULL) {
-    fprintf(stderr, "ERROR: Element null in Vector_addElement call\n");
-    return NULL;
+    fprintf(stderr, "WARNING: Element null in Vector_addElement call\n");
   }
 
   if (!v->nElement) v->elements = NULL;
@@ -49,7 +76,9 @@ void Vector_free(Vector *v, int freeFunc()) {
 
   if (freeFunc) {
     for (i=0;i<v->nElement;i++) {
-      freeFunc(v->elements[i]);
+      if (v->elements[i]) {
+        freeFunc(v->elements[i]);
+      }
     }
   }
   free(v->elements);

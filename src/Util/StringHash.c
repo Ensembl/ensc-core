@@ -177,7 +177,7 @@ int StringHash_add(StringHash *stringHash, char *key, void *val) {
   return 1; 
 }
 
-void StringHash_free(StringHash *stringHash, void *freeFunc()) {
+void StringHash_free(StringHash *stringHash, void freeFunc()) {
   int i;
   int j;
   
