@@ -366,7 +366,7 @@ sub StickyExon_getSeq(StickyExon *stickyExon) {
 
   for (i=0; i<StickyExon_getComponentExonCount(stickyExon); i++) {
     Exon *cExon = StickyExon_getComponentExonAt(stickyExon, i);
-    StrUtil_appendString(&seqString, Exon_getSeqString(cExon);
+    StrUtil_appendString(&seqString, Exon_getSeqString(cExon));
   }
   $self->{'_seq'} = $seqString;
 
@@ -452,9 +452,7 @@ Vector *StickyExon_getAllSupportingFeatures(StickyExon *stickyExon) {
     Exon *subExon = StickyExon_getComponentExonAt(stickyExon, i);
     int j;
 
-    for (j=0;j<Exon_getSupportingFeatureCount(subExon);j++) {
-      Vector_addElement(out, Exon_getSupportingFeatureAt(subExon,j));
-    }
+    Vector_append(out, Exon_getAllSupportingFeatures(subExon));
   }
 
   return out;
@@ -479,7 +477,8 @@ void StickyExon_addSupportingFeatures(StickyExon *stickyExon, Vector *features) 
       BaseContig *featContig = SeqFeature_getContig(feature);
       if (cexonContig && featContig &&
           EcoString_strcmp(BaseContig_getName(cexonContig), BaseContig_getName(featContig))) {
-        Exon_addSupportingFeature(cexon, feature);
+        Vector_setElementAt(singleEntryVector,0,feature);
+        Exon_addSupportingFeatures(cexon, singleEntryVector);
         beenAdded = 1;
       }
     }

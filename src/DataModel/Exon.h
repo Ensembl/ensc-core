@@ -15,7 +15,7 @@
   typedef void     (* CLASSTYPE ## _LoadGenomicMapperFunc)(CLASSTYPE *exon, Mapper *mapper, IDType id, int start); \
   typedef CLASSTYPE *   (* CLASSTYPE ## _AdjustStartEndFunc)(CLASSTYPE *exon, int startAdjust, int endAdjust); \
   typedef char *   (* CLASSTYPE ## _GetPeptideFunc)(CLASSTYPE *exon); \
-  typedef void     (* CLASSTYPE ## _AddSupportingFeatureFunc)(CLASSTYPE *exon, SeqFeature *sf); \
+  typedef void     (* CLASSTYPE ## _AddSupportingFeaturesFunc)(CLASSTYPE *exon, Vector *features); \
   typedef Vector * (* CLASSTYPE ## _GetAllSupportingFeaturesFunc)(CLASSTYPE *exon); \
   typedef char *   (* CLASSTYPE ## _GetSeqStringFunc)(CLASSTYPE *exon); \
 
@@ -26,7 +26,7 @@ EXONFUNC_TYPES(Exon)
   CLASSTYPE ## _LoadGenomicMapperFunc loadGenomicMapper; \
   CLASSTYPE ## _AdjustStartEndFunc adjustStartEnd; \
   CLASSTYPE ## _GetPeptideFunc getPeptide; \
-  CLASSTYPE ## _AddSupportingFeatureFunc addSupportingFeature; \
+  CLASSTYPE ## _AddSupportingFeaturesFunc addSupportingFeatures; \
   CLASSTYPE ## _GetAllSupportingFeaturesFunc getAllSupportingFeatures; \
   CLASSTYPE ## _GetSeqStringFunc getSeqString;
 
@@ -37,7 +37,7 @@ typedef struct ExonFuncsStruct {
 #define EXON_DATA \
   ANNOTATEDSEQFEATURE_DATA \
   int stickyRank; \
-  FeatureSet supportingFeatures; \
+  Vector *supportingFeatures; \
   char *seqCacheString;
 
 #define FUNCSTRUCTTYPE ExonFuncs
@@ -96,10 +96,11 @@ time_t Exon_getModified(Exon *exon);
 
 #define Exon_getLength(exon) AnnotatedSeqFeature_getLength((exon))
 
-#define Exon_getSupportingFeatureAt(exon,ind) FeatureSet_getFeatureAt(&((exon)->supportingFeatures),(ind))
-#define Exon_addSupportingFeature(exon, sf) FeatureSet_addFeature(&((exon)->supportingFeatures),(sf))
-#define Exon_getAllSupportingFeatures(exon) FeatureSet_getFeatures(&((exon)->supportingFeatures))
-#define Exon_getSupportingFeatureCount(exon) FeatureSet_getNumFeature(&((exon)->supportingFeatures))
+//#define Exon_getSupportingFeatureAt(exon,ind) FeatureSet_getFeatureAt(&((exon)->supportingFeatures),(ind))
+//#define Exon_addSupportingFeature(exon, sf) FeatureSet_addFeature(&((exon)->supportingFeatures),(sf))
+Vector *Exon_getAllSupportingFeaturesImpl(Exon *exon);
+void Exon_addSupportingFeaturesImpl(Exon *exon, Vector *features);
+//#define Exon_getSupportingFeatureCount(exon) FeatureSet_getNumFeature(&((exon)->supportingFeatures))
 
 
 #define Exon_setContig(exon,c) AnnotatedSeqFeature_setContig((exon),(c))
@@ -109,6 +110,7 @@ Exon *Exon_transformRawContigToSliceImpl(Exon *exon, Slice *slice);
 Exon *Exon_transformSliceToRawContigImpl(Exon *exon);
 
 #define Exon_transformToSlice(exon,slice) AnnotatedSeqFeature_transformToSlice((exon), (slice))
+#define Exon_transformToRawContig(exon) AnnotatedSeqFeature_transformToRawContig((exon))
 
 
 Exon *Exon_new();
@@ -120,6 +122,36 @@ int Exon_forwardStrandCompFunc(const void *a, const void *b);
 
 void Exon_loadGenomicMapperImpl(Exon *exon, Mapper *mapper, IDType id, int start);
 Exon *Exon_adjustStartEndImpl(Exon *exon, int startAdjust, int endAdjust);
+
+#define Exon_loadGenomicMapper(exon,mapper,id,start) \
+      ((exon)->funcs->loadGenomicMapper == NULL ? \
+         (fprintf(stderr,"Error: Null pointer for loadGenomicMapper - bye\n"),  exit(1)) : \
+         ((exon)->funcs->loadGenomicMapper((exon),(mapper),(id),(start))))
+
+#define Exon_adjustStartEnd(exon,start,end) \
+      ((exon)->funcs->adjustStartEnd == NULL ? \
+         (fprintf(stderr,"Error: Null pointer for adjustStartEnd - bye\n"),  exit(1), (Exon *)NULL) : \
+         ((exon)->funcs->adjustStartEnd((exon),(start),(end))))
+
+#define Exon_addSupportingFeatures(exon,features) \
+      ((exon)->funcs->addSupportingFeatures == NULL ? \
+         (fprintf(stderr,"Error: Null pointer for addSupportingFeatures - bye\n"),  exit(1)) : \
+         ((exon)->funcs->addSupportingFeatures((exon),(features))))
+
+#define Exon_getAllSupportingFeatures(exon) \
+      ((exon)->funcs->addSupportingFeatures == NULL ? \
+         (fprintf(stderr,"Error: Null pointer for getAllSupportingFeatures - bye\n"),  exit(1), (Vector *)NULL) : \
+         ((exon)->funcs->getAllSupportingFeatures((exon))))
+
+#define Exon_getSeqString(exon) \
+      ((exon)->funcs->getSeqString == NULL ? \
+         (fprintf(stderr,"Error: Null pointer for getSeqString - bye\n"),  exit(1), (char *)NULL) : \
+         ((exon)->funcs->getSeqString((exon))))
+
+#define Exon_getPeptide(exon) \
+      ((exon)->funcs->getPeptide == NULL ? \
+         (fprintf(stderr,"Error: Null pointer for getPeptide - bye\n"),  exit(1), (char *)NULL) : \
+         ((exon)->funcs->getPeptide((exon))))
 
 
 #ifdef __EXON_MAIN__
@@ -143,7 +175,7 @@ Exon *Exon_adjustStartEndImpl(Exon *exon, int startAdjust, int endAdjust);
                  Exon_loadGenomicMapperImpl,
                  Exon_adjustStartEndImpl,
                  NULL, // getPeptide
-                 Exon_addSupportingFeatureImpl,
+                 Exon_addSupportingFeaturesImpl,
                  Exon_getAllSupportingFeaturesImpl,
                  Exon_getSeqStringImpl
                 };

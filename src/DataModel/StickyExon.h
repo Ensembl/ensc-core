@@ -94,9 +94,10 @@ int StickyExon_getLength(StickyExon *exon);
 #define StickyExon_getComponents(exon) FeatureSet_getFeatures(&((exon)->components))
 #define StickyExon_getComponentExonCount(exon) FeatureSet_getNumFeature(&((exon)->components))
 
-#define StickyExon_addSupportingFeature(exon, sf) Exon_addSupportingFeature((exon),(sf))
-#define StickyExon_getSupportingFeatureAt(exon,ind) Exon_getSupportingFeatureAt((exon),(ind))
+void StickyExon_addSupportingFeatures(StickyExon *exon, Vector *features);
 Vector *StickyExon_getAllSupportingFeatures(StickyExon *stickyExon);
+
+//#define StickyExon_getSupportingFeatureAt(exon,ind) Exon_getSupportingFeatureAt((exon),(ind))
 //#define StickyExon_getSupportingFeatureCount(exon) Exon_getSupportingFeatureCount((exon))
 
 void StickyExon_sortByStickyRank(StickyExon *exon);
@@ -133,7 +134,7 @@ StickyExon *StickyExon_new();
                        StickyExon_loadGenomicMapper,
                        StickyExon_adjustStartEnd,
                        NULL, // getPeptide
-                       StickyExon_addSupportingFeature,
+                       StickyExon_addSupportingFeatures,
                        StickyExon_getAllSupportingFeatures,
                        StickyExon_getSeqString
                       };

@@ -79,7 +79,7 @@ int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) 
                       DNAPepAlignFeature_getStrand(sf), 
                       DNAPepAlignFeature_getHitStart(sf), 
                       DNAPepAlignFeature_getHitEnd(sf),
-                      DNAPepAlignFeature_getHitId(sf), 
+                      DNAPepAlignFeature_getHitSeqName(sf), 
                       DNAPepAlignFeature_getCigarString(sf),
                       (IDType)Analysis_getDbID(analysis),
                       DNAPepAlignFeature_getScore(sf), 
@@ -195,7 +195,7 @@ Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor
 
       DNAPepAlignFeature_setHitStart(dpaf,row->getIntAt(row,6));
       DNAPepAlignFeature_setHitEnd(dpaf,row->getIntAt(row,7));
-      DNAPepAlignFeature_setHitId(dpaf,row->getStringAt(row,8));
+      DNAPepAlignFeature_setHitSeqName(dpaf,row->getStringAt(row,8));
       DNAPepAlignFeature_setHitStrand(dpaf,1);
 
       DNAPepAlignFeature_setCigarString(dpaf,row->getStringAt(row,9));
@@ -228,7 +228,7 @@ Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor
 
       DNAPepAlignFeature_setHitStart(dpaf,row->getIntAt(row,6));
       DNAPepAlignFeature_setHitEnd(dpaf,row->getIntAt(row,7));
-      DNAPepAlignFeature_setHitId(dpaf,row->getStringAt(row,8));
+      DNAPepAlignFeature_setHitSeqName(dpaf,row->getStringAt(row,8));
       DNAPepAlignFeature_setHitStrand(dpaf,1);
 
       DNAPepAlignFeature_setCigarString(dpaf,row->getStringAt(row,9));

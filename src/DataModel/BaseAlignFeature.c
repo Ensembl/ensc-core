@@ -44,7 +44,7 @@ Vector *BaseAlignFeature_getUngappedFeatures(BaseAlignFeature *baf) {
   }
 }
 
-void BaseAlignFeature_reverseComplement(BaseAlignFeature *baf) {
+void BaseAlignFeature_reverseComplementImpl(BaseAlignFeature *baf) {
   char *newCigarString;
   char *oldCigarString = BaseAlignFeature_getCigarString(baf);
   char *oldChP;

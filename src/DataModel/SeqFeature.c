@@ -32,6 +32,20 @@ char *SeqFeature_setSeqName(SeqFeature *sf, char *seqName) {
   return sf->seqName;
 }
 
+char *SeqFeature_getSeqName(SeqFeature *sf) {
+  BaseContig *contig = SeqFeature_getContig(sf);
+
+  if (contig) {
+    return BaseContig_getName(contig);
+  } else if (sf->seqName) {
+    return sf->seqName;
+  } else {
+    fprintf(stderr,"Warning: No seq name defined for feature\n");
+    return emptyString;
+  }
+
+}
+
 int SeqFeature_startCompFunc(const void *a, const void *b) {
   SeqFeature **e1 = (SeqFeature **)a;
   SeqFeature **e2 = (SeqFeature **)b;

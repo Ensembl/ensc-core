@@ -23,8 +23,8 @@ DNAAlignFeature *DNAAlignFeature_new(void);
 #define DNAAlignFeature_setCigarString(fp, ciggy) BaseAlignFeature_setCigarString((BaseAlignFeature *)(fp), (ciggy))
 #define DNAAlignFeature_getCigarString(fp) BaseAlignFeature_getCigarString((fp))
 
-#define DNAAlignFeature_setHitId(fp,stableId)  BaseAlignFeature_setHitId((BaseAlignFeature *)(fp),(stableId))
-#define DNAAlignFeature_getHitId(fp)  BaseAlignFeature_getHitId((fp))
+#define DNAAlignFeature_setHitSeqName(fp,stableId)  BaseAlignFeature_setHitSeqName((BaseAlignFeature *)(fp),(stableId))
+#define DNAAlignFeature_getHitSeqName(fp)  BaseAlignFeature_getHitSeqName((fp))
 
 #define DNAAlignFeature_setStart(fp,start) BaseAlignFeature_setStart((fp),(start))
 #define DNAAlignFeature_getStart(fp) BaseAlignFeature_getStart((fp))

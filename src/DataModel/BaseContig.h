@@ -43,10 +43,14 @@ char *BaseContig_getName(BaseContig *bc);
 
 #define BaseContig_getObjectType(bc) (bc)->objectType
 
-#define BaseContig_getSubSeq(seq,start,end,strand) ((seq)->funcs->getSubSeq == NULL ? fprintf(stderr,"Error: Null pointer for getSubSeq - bye\n"), exit(1), NULL : \
-                                                                 ((seq)->funcs->getSubSeq((seq),(start),(end),(strand))))
+#define BaseContig_getSubSeq(seq,start,end,strand) \
+      ((seq)->funcs->getSubSeq == NULL ? \
+         (fprintf(stderr,"Error: Null pointer for getSubSeq - bye\n"),  exit(1), (char *)NULL) : \
+         ((seq)->funcs->getSubSeq((seq),(start),(end),(strand))))
+
 #define BaseContig_getSeq(seq) ((seq)->funcs->getSeq == NULL ? ((seq)->seq) : \
-                                                                 ((seq)->funcs->getSeq((seq))))
+                                                               ((seq)->funcs->getSeq((seq))))
+
 #define BaseContig_getName(seq) ((seq)->funcs->getName == NULL ? ((seq)->name) : \
                                                                  ((seq)->funcs->getName((seq))))
 

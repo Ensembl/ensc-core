@@ -18,7 +18,7 @@ FeaturePair *FeaturePair_new(void) {
   return fp;
 }
 
-char *FeaturePair_setHitId(FeaturePair *fp, char *str) {
+char *FeaturePair_setHitSeqName(FeaturePair *fp, char *str) {
   fp->hitId = StrUtil_copyString(&(fp->hitId),str,0);
 
   return fp->hitId;

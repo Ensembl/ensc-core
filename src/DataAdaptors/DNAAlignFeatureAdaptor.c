@@ -79,7 +79,7 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
                       DNAAlignFeature_getHitStart(sf), 
                       DNAAlignFeature_getHitEnd(sf),
                       DNAAlignFeature_getHitStrand(sf),
-                      DNAAlignFeature_getHitId(sf), 
+                      DNAAlignFeature_getHitSeqName(sf), 
                       DNAAlignFeature_getCigarString(sf),
                       (IDType)Analysis_getDbID(analysis),
                       DNAAlignFeature_getScore(sf), 
@@ -195,7 +195,7 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
 
       DNAAlignFeature_setHitStart(daf,row->getIntAt(row,6));
       DNAAlignFeature_setHitEnd(daf,row->getIntAt(row,7));
-      DNAAlignFeature_setHitId(daf,row->getStringAt(row,8));
+      DNAAlignFeature_setHitSeqName(daf,row->getStringAt(row,8));
       DNAAlignFeature_setHitStrand(daf,row->getIntAt(row,9));
 
       DNAAlignFeature_setCigarString(daf,row->getStringAt(row,10));
@@ -228,7 +228,7 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
 
       DNAAlignFeature_setHitStart(daf,row->getIntAt(row,6));
       DNAAlignFeature_setHitEnd(daf,row->getIntAt(row,7));
-      DNAAlignFeature_setHitId(daf,row->getStringAt(row,8));
+      DNAAlignFeature_setHitSeqName(daf,row->getStringAt(row,8));
       DNAAlignFeature_setHitStrand(daf,row->getIntAt(row,9));
 
       DNAAlignFeature_setCigarString(daf,row->getStringAt(row,10));

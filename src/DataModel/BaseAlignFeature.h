@@ -40,8 +40,8 @@ BaseAlignFeature *BaseAlignFeature_new(void);
 char *BaseAlignFeature_setCigarString(BaseAlignFeature *fp, char *ciggy);
 #define BaseAlignFeature_getCigarString(fp)  (fp)->cigarString
 
-#define BaseAlignFeature_getHitId(fp)  FeaturePair_getHitId((fp))
-#define BaseAlignFeature_setHitId(fp,hid) FeaturePair_setHitId((FeaturePair *)(fp),(hid))
+#define BaseAlignFeature_getHitSeqName(fp)  FeaturePair_getHitSeqName((fp))
+#define BaseAlignFeature_setHitSeqName(fp,hid) FeaturePair_setHitSeqName((FeaturePair *)(fp),(hid))
 
 #define BaseAlignFeature_setStart(fp,start) FeaturePair_setStart((fp),(start))
 #define BaseAlignFeature_getStart(fp) FeaturePair_getStart((fp))
@@ -85,14 +85,26 @@ char *BaseAlignFeature_setCigarString(BaseAlignFeature *fp, char *ciggy);
 #define BaseAlignFeature_setPercId(fp,pid) FeaturePair_setPercId((fp),(pid))
 #define BaseAlignFeature_getPercId(fp) FeaturePair_getPercId((fp))
 
+#define BaseAlignFeature_setSeqName(fp,str) FeaturePair_setSeqName((fp),(str))
+
 Vector *BaseAlignFeature_parseCigar(BaseAlignFeature *baf);
 Vector *BaseAlignFeature_transformSliceToRawContigImpl(BaseAlignFeature *baf);
 int BaseAlignFeature_getHitUnitImpl(void);
 int BaseAlignFeature_getQueryUnitImpl(void);
 Vector *BaseAlignFeature_transformFeatureSliceToRawContig(BaseAlignFeature *baf, FeaturePair *fp);
 Vector *BaseAlignFeature_getUngappedFeatures(BaseAlignFeature *baf);
-void BaseAlignFeature_reverseComplement(BaseAlignFeature *baf);
+void BaseAlignFeature_reverseComplementImpl(BaseAlignFeature *baf);
 int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features);
+
+#define BaseAlignFeature_getHitUnit() \
+      ((baf)->funcs->getHitUnit == NULL ? \
+         (fprintf(stderr,"Error: Null pointer for getHitUnit - bye\n"),  exit(1), 0) : \
+         ((baf)->funcs->getHitUnit()))
+
+#define BaseAlignFeature_getQueryUnit() \
+      ((baf)->funcs->getQueryUnit == NULL ? \
+         (fprintf(stderr,"Error: Null pointer for getQueryUnit - bye\n"),  exit(1), 0) : \
+         ((baf)->funcs->getQueryUnit()))
 
 
 
@@ -108,7 +120,7 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features);
                              NULL, // getSeq
                              NULL, // setSeq
                              NULL, // getLength
-                             BaseAlignFeature_reverseComplement,
+                             BaseAlignFeature_reverseComplementImpl,
                              (BaseAlignFeature_TransformToRawContigFunc)SeqFeature_transformToRawContigImpl,
                              (BaseAlignFeature_TransformToSliceFunc)SeqFeature_transformToSliceImpl,
                              (BaseAlignFeature_TransformRawContigToSliceFunc)SeqFeature_transformRawContigToSliceImpl, // Que???

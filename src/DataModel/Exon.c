@@ -223,6 +223,7 @@ Exon *Exon_copy(Exon *copy, Exon *orig, CopyDepth depth) {
 
 void Exon_findSupportingEvidence(Exon *exon, Vector *features, int isSorted) {
   int i;
+  Vector *support = Vector_new();
 
   for (i=0; i<Vector_getNumElement(features); i++) {
     SeqFeature *f = Vector_getElementAt(features,i);
@@ -244,13 +245,24 @@ void Exon_findSupportingEvidence(Exon *exon, Vector *features, int isSorted) {
         if (SeqFeature_getEnd(f) >= Exon_getStart(exon) && 
             SeqFeature_getStart(f) <= Exon_getEnd(exon) && 
             SeqFeature_getStrand(f) == Exon_getStrand(exon)) {
-          Exon_addSupportingFeature(exon, f);
+          Vector_addElement(support,f);
         }
       }
 /* NIY subfeatures
     }
 */
   }
+  Exon_addSupportingFeatures(exon, support);
+
+  Vector_free(support,NULL);
+}
+
+Vector *Exon_getAllSupportingFeaturesImpl(Exon *exon) {
+  return exon->supportingFeatures;
+}
+
+void Exon_addSupportingFeaturesImpl(Exon *exon, Vector *v) {
+  Vector_append(exon->supportingFeatures,v);
 }
 
 Exon *Exon_adjustStartEndImpl(Exon *exon, int startAdjust, int endAdjust) {

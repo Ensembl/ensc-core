@@ -134,6 +134,30 @@ Vector *SeqFeature_transformSliceToRawContigImpl(SeqFeature *sf);
 SeqFeature *SeqFeature_transformToSliceImpl(SeqFeature *sf, Slice *slice);
 SeqFeature *SeqFeature_transformRawContigToSliceImpl(SeqFeature *sf, Slice *slice);
 
+char *SeqFeature_setSeqName(SeqFeature *sf, char *seqName);
+char *SeqFeature_getSeqName(SeqFeature *sf);
+
+
+#define SeqFeature_transformToSlice(sf,slice) \
+      ((sf)->funcs->transformToSlice == NULL ? \
+         (fprintf(stderr,"Error: Null pointer for transformToSlice - bye\n"),  exit(1), (void *)NULL) : \
+         ((sf)->funcs->transformToSlice((sf),(slice))))
+
+#define SeqFeature_transformToRawContig(sf) \
+      ((sf)->funcs->transformToRawContig == NULL ? \
+         (fprintf(stderr,"Error: Null pointer for transformToRawContig - bye\n"),  exit(1), (void *)NULL) : \
+         ((sf)->funcs->transformToRawContig((sf))))
+
+#define SeqFeature_transformSliceToRawContig(sf) \
+      ((sf)->funcs->transformSliceToRawContig == NULL ? \
+         (fprintf(stderr,"Error: Null pointer for transformSliceToRawContig - bye\n"),  exit(1), (Vector *)NULL) : \
+         ((sf)->funcs->transformSliceToRawContig((sf))))
+
+#define SeqFeature_transformRawContigToSlice(sf,slice) \
+      ((sf)->funcs->transformRawContigToSlice == NULL ? \
+         (fprintf(stderr,"Error: Null pointer for transformRawContigToSlice - bye\n"),  exit(1), (void *)NULL) : \
+         ((sf)->funcs->transformRawContigToSlice((sf),(slice))))
+
 #ifdef __SEQFEATURE_MAIN__
  SeqFeatureFuncs 
    seqFeatureFuncs = {

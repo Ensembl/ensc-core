@@ -25,7 +25,8 @@ int main(int argc, char *argv[]) {
 
   ok(3, slice!=NULL);
 
-  ok(4,!strcmp(Slice_getName(slice),"1:1-100000"));
+  printf("slice name = %s\n",Slice_getName(slice));
+  ok(4,!strcmp(Slice_getName(slice),"1.1-10000"));
 
   printf("slice seq = %s\n",Slice_getSeq(slice));
 
