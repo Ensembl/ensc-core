@@ -112,7 +112,20 @@ int main(int argc, char **argv) {
 
     printf("Done fetching SNPs (fetched %d)\n",Vector_getNumElement(snps));
 
+    printf("Starting sorting SNPs\n");
     Vector_sort(snps, SeqFeature_startCompFunc);
+    printf("Done sorting SNPs\n");
+
+    printf("Starting transcript sorting\n");
+    for (i=0;i<Vector_getNumElement(genes); i++) {
+      Gene *gene = Vector_getElementAt(genes,i); 
+      int j;
+      for (j=0; j<Gene_getTranscriptCount(gene); j++) {
+        Transcript *trans = Gene_getTranscriptAt(gene,j);
+        Transcript_sort(trans);
+      }
+    }
+    printf("Done transcript sorting\n");
 
     printf("Starting coding type calcs\n");
 
