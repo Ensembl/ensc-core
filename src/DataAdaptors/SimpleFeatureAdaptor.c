@@ -1,7 +1,9 @@
 #include "SimpleFeatureAdaptor.h"
 
+#include "RawContigAdaptor.h"
+#include "AnalysisAdaptor.h"
 
-char ***SimpleFeatureAdaptor_tableNames = {{"simple_feature","sf"}};
+char *SimpleFeatureAdaptor_tableNames[][2] = {{"simple_feature","sf"}};
 
 SimpleFeatureAdaptor *SimpleFeatureAdaptor_new(DBAdaptor *dba) {
   SimpleFeatureAdaptor *sfa;
@@ -11,6 +13,12 @@ SimpleFeatureAdaptor *SimpleFeatureAdaptor_new(DBAdaptor *dba) {
     return NULL;
   }
   BaseFeatureAdaptor_init((BaseFeatureAdaptor *)sfa, dba, SIMPLEFEATURE_ADAPTOR);
+
+  sfa->getTables = SimpleFeatureAdaptor_getTables;
+  sfa->getColumns = SimpleFeatureAdaptor_getColumns;
+  sfa->store = SimpleFeatureAdaptor_store;
+  sfa->objectsFromStatementHandle = SimpleFeatureAdaptor_objectsFromStatementHandle;
+
 
   return sfa;
 }
@@ -95,16 +103,16 @@ Set *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf,
     SimpleFeature_setEnd(sf,row->getIntAt(row,3));
     SimpleFeature_setStrand(sf,row->getIntAt(row,4));
     SimpleFeature_setAnalysis(sf,analysis);
-    SimpleFeature_setDisplayLabel(sf,row->getStringAt(5));
-    SimpleFeature_attachSeq(sf,contig); 
+    SimpleFeature_setDisplayLabel(sf,row->getStringAt(row,5));
+    SimpleFeature_setContig(sf,contig); 
 
-    if (row->col(7)) {
-      SimpleFeature_setScore(sf,row->getDouble(7));
+    if (row->col(row,7)) {
+      SimpleFeature_setScore(sf,row->getDoubleAt(row,7));
     }
     
-    SimpleFeature_setDbID(sf,row->getLongLongAt(0));
+    SimpleFeature_setDbID(sf,row->getLongLongAt(row,0));
 
-    Set_add(features,sf);
+    Set_addElement(features,sf);
   }
 
   return features;

@@ -31,6 +31,9 @@ struct SeqFeatureStruct {
 #define SeqFeature_setEnd(sf,e) (sf)->end = (e)
 #define SeqFeature_getEnd(sf) (sf)->end
 
+#define SeqFeature_setScore(sf,s) (sf)->score = (s)
+#define SeqFeature_getScore(sf) (sf)->score
+
 #define SeqFeature_setPhase(sf,p) (sf)->phase = (p)
 #define SeqFeature_getPhase(sf) (sf)->phase
 

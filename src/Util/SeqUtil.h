@@ -3,6 +3,8 @@
 
 char *SeqUtil_reverseComplement(char *seq, int len);
 char *SeqUtil_addNs(char *seq, int length);
+void SeqUtil_printConvTable(int *convTable);
+
 
 #ifdef __SEQUTIL_MAIN__
  int nucToIntArray[] = {

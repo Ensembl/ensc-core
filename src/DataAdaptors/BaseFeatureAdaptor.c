@@ -1,8 +1,14 @@
 #include "BaseFeatureAdaptor.h"
 
+#include "AnalysisAdaptor.h"
+#include "AssemblyMapperAdaptor.h"
+#include "StrUtil.h"
 
 int SLICE_FEATURE_CACHE_SIZE = 4;
 
+
+#define NAME 0
+#define SYN  1
 
 void BaseFeatureAdaptor_init(BaseFeatureAdaptor *bfa, DBAdaptor *dba, int adaptorType) {
   BaseAdaptor_init((BaseAdaptor *)bfa,dba,adaptorType);
@@ -22,237 +28,304 @@ void BaseFeatureAdaptor_init(BaseFeatureAdaptor *bfa, DBAdaptor *dba, int adapto
 
 Set *BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *bfa, char *constraint,
                                      char *logicName, AssemblyMapper *mapper, Slice *slice) {
+  char qStr[2048]; 
+  char ***tables = bfa->getTables();
+  char *columns = bfa->getColumns();
+  StatementHandle *sth;
+  Set *features;
+  char allConstraints[512];
+  char tableNamesStr[512]; 
+  char leftJoinStr[512]; 
+  char **lj;
+  char tmpStr[256];
+  int i;
+/* HACK HACK HACK */
+  int nTable = 1;
   
-  my @tabs = $self->_tables;
-  my $columns = join(', ', $self->_columns());
+  allConstraints[0] = '\0';
+  if (constraint) strcpy(allConstraints,constraint);
   
-  if($logic_name) {
-    #determine the analysis id via the logic_name
-    my $analysis = 
-      $self->db->get_AnalysisAdaptor()->fetch_by_logic_name($logic_name);
-    unless(defined $analysis && $analysis->dbID() ) {
-      $self->warn("No analysis for logic name $logic_name exists\n");
-      return [];
+  if (logicName) {
+    AnalysisAdaptor *aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
+    Analysis *analysis;
+    char *syn;
+    int64 analysisId;
+
+    //determine the analysis id via the logic_name
+    analysis = AnalysisAdaptor_fetchByLogicName(aa, logicName);
+
+    if (!analysis || !Analysis_getDbID(analysis) ) {
+      fprintf(stderr,"No analysis for logic name %s exists\n",logicName);
+      return emptySet;
     }
     
-    my $analysis_id = $analysis->dbID();
+    analysisId = Analysis_getDbID(analysis);
 
-    #get the synonym for the primary table
-    my $syn = $tabs[0]->[1];
+    // get the synonym for the primary table
+    syn = tables[0][SYN];
 
-    if($constraint) {
-      $constraint .= " AND ${syn}.analysis_id = $analysis_id";
+    if(constraint) {
+      sprintf(allConstraints,"%s  AND %s.analysis_id = " INT64FMTSTR, constraint, syn, analysisId);
     } else {
-      $constraint = " ${syn}.analysis_id = $analysis_id";
+      sprintf(allConstraints," %s.analysis_id = " INT64FMTSTR, syn, analysisId);
     }
   } 
 
-  #
-  # Construct a left join statement if one was defined, and remove the
-  # left-joined table from the table list
-  #
-  my ($tablename, $condition) = $self->_left_join;
-  my $left_join = '';
-  my @tables;
-  if($tablename && $condition) {
-    while(my $t = shift @tabs) {
-      if($tablename eq $t->[0]) {
-	my $syn = $t->[1]; 
-	$left_join =  "LEFT JOIN $tablename $syn $condition";
-	push @tables, @tabs;
-	last;
+  //
+  // Construct a left join statement if one was defined, and remove the
+  // left-joined table from the table list
+  // 
+
+  leftJoinStr[0]   = '\0';
+  tableNamesStr[0] = '\0';
+
+  lj = bfa->leftJoin();
+
+  for (i=0;i<nTable;i++) {
+    char **t = tables[i];
+    if (lj!=NULL && !strcmp(lj[0],t[0])) {
+      sprintf(leftJoinStr,"LEFT JOIN %s %s %s",lj[0], t[SYN], lj[1]);
+    } else {
+      if (tableNamesStr[0]) {
+        sprintf(tmpStr,", %s %s",t[NAME],t[SYN]);
       } else {
-	push @tables, $t;
+        sprintf(tmpStr,"%s %s",t[NAME],t[SYN]);
       }
+      strcat(tableNamesStr,tmpStr);
     }
-  } else {
-    @tables = @tabs;
   }
       
-  #construct a nice table string like 'table1 t1, table2 t2'
-  my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
+  sprintf(qStr,"SELECT %s FROM %s %s", columns, tableNamesStr, leftJoinStr);
 
-  my $sql = "SELECT $columns FROM $tablenames $left_join";
-
-  my $default_where = $self->_default_where_clause;
-  my $final_clause = $self->_final_clause;
-
-  #append a where clause if it was defined
-  if($constraint) { 
-    $sql .= " where $constraint ";
-    if($default_where) {
-      $sql .= " and $default_where ";
+  //append a where clause if it was defined
+  if (allConstraints[0]) { 
+    sprintf(tmpStr," where %s", allConstraints);
+    strcat(qStr,tmpStr);
+    if (bfa->defaultWhereClause()) {
+      sprintf(tmpStr," and %s", bfa->defaultWhereClause());
+      strcat(qStr,tmpStr);
     }
-  } elsif($default_where) {
-    $sql .= " where $default_where ";
+  } else if (bfa->defaultWhereClause()) {
+    sprintf(tmpStr," where %s", bfa->defaultWhereClause());
+    strcat(qStr,tmpStr);
   }
 
-  #append additional clauses which may have been defined
-  $sql .= " $final_clause";
+  //append additional clauses which may have been defined
+  if (bfa->finalClause()) strcat(qStr, bfa->finalClause());
 
-  my $sth = $self->prepare($sql);
-  
-  $sth->execute;  
+  sth = bfa->prepare((BaseAdaptor *)bfa,qStr,strlen(qStr));
+  sth->execute(sth);  
 
-  return bfa->objectsFromStatementHandle(bfa, sth, mapper, slice);
+  features = bfa->objectsFromStatementHandle(bfa, sth, mapper, slice);
+  sth->finish(sth);
+
+  return features;
 }
 
 SeqFeature *BaseFeatureAdaptor_fetchByDbID(BaseFeatureAdaptor *bfa, int64 dbID) {
+  Set *features;
+  SeqFeature *sf;
+  char constraintStr[256];
+  char ***tables = bfa->getTables();
 
-  my @tabs = $self->_tables;
+  //construct a constraint like 't1.table1_id = 1'
+  sprintf(constraintStr,"%s.%s_id = " INT64FMTSTR, tables[0][SYN], tables[0][NAME], dbID);
 
-  my ($name, $syn) = @{$tabs[0]};
+  //return first element of _generic_fetch list
+  features = BaseFeatureAdaptor_genericFetch(bfa, constraintStr, NULL, NULL, NULL);
+  sf = Set_getElementAt(features, 0);
+// NIY free func
+  Set_free(features, NULL);
 
-  #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "${syn}.${name}_id = $id";
-
-  #return first element of _generic_fetch list
-  my ($feat) = @{$self->generic_fetch($constraint)}; 
-  return $feat;
+  return (SeqFeature *)sf;
 }
 
 Set *BaseFeatureAdaptor_fetchAllByRawContigConstraint(BaseFeatureAdaptor *bfa, RawContig *contig,
                                                       char *constraint, char *logicName)  {
+  int64 cid;
+  char allConstraints[256];
+  char ***tables = bfa->getTables();
+
   if (contig == NULL) {
     fprintf(stderr,"ERROR: fetch_by_Contig_constraint must have an contig\n");
     exit(1);
   }
 
-  my $cid = $contig->dbID();
+  cid = RawContig_getDbID(contig);
 
-  #get the synonym of the primary_table
-  my @tabs = $self->_tables;
-  my $syn = $tabs[0]->[1];
-
-  if($constraint) {
-    $constraint .= " AND ${syn}.contig_id = $cid";
+  if (constraint) {
+    sprintf(allConstraints,"%s AND %s.contig_id = " INT64FMTSTR, constraint, tables[0][SYN], cid);
   } else {
-    $constraint = "${syn}.contig_id = $cid";
+    sprintf(allConstraints,"%s.contig_id = " INT64FMTSTR, tables[0][SYN], cid);
   }
 
-  return $self->generic_fetch($constraint, $logic_name);
+  return BaseFeatureAdaptor_genericFetch(bfa, allConstraints, logicName, NULL, NULL);
 }
 
 Set *BaseFeatureAdaptor_fetchAllByRawContig(BaseFeatureAdaptor *bfa, RawContig *contig,
                                             char *logicName) {
-  return BaseFeatureAdaptor_fetchAllByRawContigConstraint(bfa,contig,"",logicName);
+  return BaseFeatureAdaptor_fetchAllByRawContigConstraint(bfa,contig,NULL,logicName);
 }
 
 Set *BaseFeatureAdaptor_fetchAllByRawContigAndScore(BaseFeatureAdaptor *bfa, RawContig *contig,
                                                     double score, char *logicName) {
-  my($self, $contig, $score, $logic_name) = @_;
+  char constraintStr[256];
+  char ***tables = bfa->getTables();
 
-  my $constraint;
-
-  if(defined $score){
-    // get the synonym of the primary_table
-    my @tabs = $self->_tables;
-    my $syn = $tabs[0]->[1];
-    $constraint = "${syn}.score > $score";
-  }
+// Perl does a defined check on score
+  sprintf(constraintStr,"%s.score > %f",tables[0][SYN], score);
     
-  return BaseFeatureAdaptor_fetchAllByRawContigConstraint(RawContig *contig, char *constraint, 
-					                  char *logicName);
+  return BaseFeatureAdaptor_fetchAllByRawContigConstraint(bfa, contig, constraintStr, logicName);
 }
 
 Set *BaseFeatureAdaptor_fetchAllBySlice(BaseFeatureAdaptor *bfa, Slice *slice,
                                         char *logicName) {
-  return BaseFeatureAdaptor_fetchAllBySliceConstraint(slice, "", logicName);
+  return BaseFeatureAdaptor_fetchAllBySliceConstraint(bfa, slice, NULL, logicName);
 }
 
 Set *BaseFeatureAdaptor_fetchAllBySliceAndScore(BaseFeatureAdaptor *bfa, Slice *slice,
                                                 double score, char *logicName) {
-  char constraint[256];
+  char constraintStr[256];
+  char ***tables = bfa->getTables();
 
-  if(defined $score) {
-    // get the synonym of the primary_table
-    my @tabs = $self->_tables;
-    my $syn = $tabs[0]->[1];
-    $constraint = "${syn}.score > $score";
-  }
+// Perl does a defined check on score
+  sprintf(constraintStr,"%s.score > %f",tables[0][SYN], score);
 
-  return BaseFeatureAdaptor_fetchAllBySliceConstraint(slice, constraint, logicName);
+  return BaseFeatureAdaptor_fetchAllBySliceConstraint(bfa, slice, constraintStr, logicName);
 }  
 
 Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice *slice,
                                                   char *constraint, char *logicName) {
 
+  char cacheKey[256];
+  void *val;
+  Set *features;
+  Set *out;
+  char *allConstraints;
+  int sliceChrId;
+  int sliceEnd;
+  int sliceStart;
+  int sliceStrand;
+  char ***tables = bfa->getTables();
+  int nContigId;
+  int64 *contigIds;
+  char tmpStr[512];
+  AssemblyMapper *assMapper;
+  AssemblyMapperAdaptor *ama;
+  int i;
+
   // check the cache and return if we have already done this query
-  my $key = uc(join($slice->name, $constraint, $logic_name));
-  return $self->{'_slice_feature_cache'}{$key} 
-    if $self->{'_slice_feature_cache'}{$key};
+
+  sprintf(cacheKey,"%s%s%s",Slice_getName(slice), constraint, logicName);
+  StrUtil_strupr(cacheKey);
+
+  if ((val = Cache_findElem(bfa->sliceFeatureCache, cacheKey)) != NULL) {
+    return (Set *)val;
+  }
     
-  my $slice_start  = $slice->chr_start();
-  my $slice_end    = $slice->chr_end();
-  my $slice_strand = $slice->strand();
-		 
-  my $mapper = 
-    $self->db->get_AssemblyMapperAdaptor->fetch_by_type($slice->assembly_type);
+  sliceChrId = Slice_getChrId(slice),
+  sliceStart = Slice_getChrStart(slice),
+  sliceEnd   = Slice_getChrEnd(slice),
+  sliceStrand= Slice_getStrand(slice),
 
-  #get the list of contigs this slice is on
-  my @cids = 
-    $mapper->list_contig_ids( $slice->chr_name, $slice_start ,$slice_end );
-  
-  return [] unless scalar(@cids);
+  ama = DBAdaptor_getAssemblyMapperAdaptor(bfa->dba);
+  assMapper = AssemblyMapperAdaptor_fetchByType(ama,Slice_getAssemblyType(slice));
 
-  my $cid_list = join(',',@cids);
+  nContigId = AssemblyMapper_listContigIds(assMapper,
+                                           sliceChrId,
+                                           sliceStart,
+                                           sliceEnd,
+                                           &contigIds);
 
-  #get the synonym of the primary_table
-  my @tabs = $self->_tables;
-  my $syn = $tabs[0]->[1];
 
-  #construct the SQL constraint for the contig ids 
-  if($constraint) {
-    $constraint .= " AND ${syn}.contig_id IN ($cid_list)";
+  if (!nContigId) {
+    return emptySet;
+  }
+
+  //construct the SQL constraint for the contig ids 
+  if (constraint) {
+    sprintf(tmpStr,"%s AND %s.contig_id IN (", constraint, tables[0][SYN]);
   } else {
-    $constraint = "${syn}.contig_id IN ($cid_list)";
+    sprintf(tmpStr,"%s.contig_id IN (", tables[0][SYN]);
   }
 
-  #for speed the remapping to slice may be done at the time of object creation
-  my $features = 
-    $self->generic_fetch($constraint, $logic_name, $mapper, $slice); 
-  
-  if(@$features && (!$features->[0]->can('contig') || 
-		    $features->[0]->contig == $slice)) {
-    #features have been converted to slice coords already, cache and return
-    return $self->{'_slice_feature_cache'}{$key} = $features;
+  allConstraints = StrUtil_copyString(&allConstraints,tmpStr,0);
+
+  if (!allConstraints) {
+    Error_trace("fetch_all_by_Slice",NULL);
+    return emptySet;
   }
 
-  #remapping has not been done, we have to do our own conversion from
-  # raw contig coords to slice coords
-
-  my @out = ();
-  
-  my ($feat_start, $feat_end, $feat_strand); 
-
-  foreach my $f (@$features) {
-    #since feats were obtained in contig coords, attached seq is a contig
-    my $contig_id = $f->contig->dbID();
-
-    my ($chr_name, $start, $end, $strand) = 
-      $mapper->fast_to_assembly($contig_id, $f->start(), 
-				$f->end(),$f->strand(),"rawcontig");
-
-    # undefined start means gap
-    next unless defined $start;     
-
-    # maps to region outside desired area 
-    next if ($start > $slice_end) || ($end < $slice_start);  
-    
-    #shift the feature start, end and strand in one call
-    if($slice_strand == -1) {
-      $f->move( $slice_end - $end + 1, $slice_end - $start + 1, $strand * -1 );
+  for (i=0; i<nContigId; i++) {
+    char numStr[256];
+    if (i!=(nContigId-1)) {
+      sprintf(numStr,INT64FMTSTR ",",contigIds[i]);
     } else {
-      $f->move( $start - $slice_start + 1, $end - $slice_start + 1, $strand );
+      sprintf(numStr,INT64FMTSTR,contigIds[i]);
     }
-    
-    $f->contig($slice);
-    
-    push @out,$f;
+    allConstraints = StrUtil_appendString(allConstraints, numStr);
   }
+
+
+  allConstraints = StrUtil_appendString(allConstraints,")");
+
+  // for speed the remapping to slice may be done at the time of object creation
+  features = 
+    BaseFeatureAdaptor_genericFetch(bfa, allConstraints, logicName, assMapper, slice); 
   
-  #update the cache
-  return $self->{'_slice_feature_cache'}{$key} = \@out;
+  if (Set_getNumElement(features)) {
+// Can't easily do this in C     && (!$features->[0]->can('contig') || 
+    SeqFeature *sf = (SeqFeature *)Set_getElementAt(features,0);
+    if (SeqFeature_getContig(sf) == (BaseContig *)slice) {
+      // features have been converted to slice coords already, cache and return
+      Cache_addElement(bfa->sliceFeatureCache, out);
+      return features;
+    }
+  } 
+
+  //remapping has not been done, we have to do our own conversion from
+  //raw contig coords to slice coords
+  out = Set_new();
+
+    
+  for (i=0;i<Set_getNumElement(features); i++) {
+    //since feats were obtained in contig coords, attached seq is a contig
+    SeqFeature *f = Set_getElementAt(features, i);
+    int64 contigId = RawContig_getDbID(SeqFeature_getContig(f));
+    MapperCoordinate fRange;
+  
+    int mapSucceeded = AssemblyMapper_fastToAssembly(assMapper, contigId, 
+                                               SeqFeature_getStart(f), 
+                                               SeqFeature_getEnd(f), 
+                                               SeqFeature_getStrand(f), 
+  				               &fRange);
+  
+    // undefined start means gap
+    if (!mapSucceeded) continue;
+  
+    // maps to region outside desired area 
+    if (fRange.start > sliceEnd || fRange.end < sliceStart) continue;
+      
+    // shift the feature start, end and strand in one call
+    // In C I can't be arsed to write this call - it should be quick enough
+    if(sliceStrand == -1) {
+      SeqFeature_setStart (f, sliceEnd - fRange.end + 1);
+      SeqFeature_setEnd   (f, sliceEnd - fRange.start + 1);
+      SeqFeature_setStrand(f, fRange.strand * -1 );
+    } else {
+      SeqFeature_setStart (f, fRange.start - sliceStart + 1);
+      SeqFeature_setEnd   (f, fRange.end - sliceStart + 1);
+      SeqFeature_setStrand(f, fRange.strand);
+    }
+      
+    SeqFeature_setContig(f,slice);
+      
+    Set_addElement(out,f);
+  }
+    
+  //update the cache
+  Cache_addElement(bfa->sliceFeatureCache, out);
+  return out;
 }
 
 int BaseFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
@@ -261,7 +334,7 @@ int BaseFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
 }
 
 int BaseFeatureAdaptor_remove(BaseFeatureAdaptor *bfa, SeqFeature *feature) {
-  char qStr[256]
+  char qStr[256];
   char *tableName = (bfa->getTables())[0][0];
   StatementHandle *sth;
   
@@ -278,13 +351,13 @@ int BaseFeatureAdaptor_remove(BaseFeatureAdaptor *bfa, SeqFeature *feature) {
   sth->finish(sth);
 
   //unset the feature dbID
-  SeqFeature_setDbID(0);
+  SeqFeature_setDbID(feature, 0);
   
   return;
 }
 
 int BaseFeatureAdaptor_removeByRawContig(BaseFeatureAdaptor *bfa, RawContig *contig) {
-  char qStr[256]
+  char qStr[256];
   char *tableName = (bfa->getTables())[0][0];
   StatementHandle *sth;
 
@@ -297,7 +370,7 @@ int BaseFeatureAdaptor_removeByRawContig(BaseFeatureAdaptor *bfa, RawContig *con
 
   sprintf(qStr, "DELETE FROM %s WHERE contig_id = " INT64FMTSTR, tableName, RawContig_getDbID(contig));
 
-  sth = bfa->prepare((BaseAdaptor *)bfa,qStr,strlen(qStr))
+  sth = bfa->prepare((BaseAdaptor *)bfa,qStr,strlen(qStr));
   sth->execute(sth);
   sth->finish(sth);
 
@@ -329,7 +402,8 @@ char *BaseFeatureAdaptor_finalClause(void) {
   return NULL;
 }
 
-Set *BaseFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa, StatementHandle *sth) {
+Set *BaseFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa, StatementHandle *sth, 
+                                                   AssemblyMapper *mapper, Slice *slice) {
   fprintf(stderr,"ERROR: Abstract method objectsFromStatementHandle not defined by implementing subclass\n");
   exit(1);
 } 

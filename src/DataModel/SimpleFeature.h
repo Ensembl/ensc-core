@@ -8,6 +8,7 @@
 
 struct SimpleFeatureStruct {
   SeqFeature sf;
+  char *displayLabel;
 };
 
 #define SimpleFeature_setStart(simpleFeature,start) SeqFeature_setStart(&((simpleFeature)->sf),start)
@@ -15,6 +16,9 @@ struct SimpleFeatureStruct {
 
 #define SimpleFeature_setEnd(simpleFeature,end) SeqFeature_setEnd(&((simpleFeature)->sf),end)
 #define SimpleFeature_getEnd(simpleFeature) SeqFeature_getEnd(&((simpleFeature)->sf))
+
+#define SimpleFeature_setScore(simpleFeature,score) SeqFeature_setScore(&((simpleFeature)->sf),score)
+#define SimpleFeature_getScore(simpleFeature) SeqFeature_getScore(&((simpleFeature)->sf))
 
 #define SimpleFeature_setPhase(simpleFeature,p) SeqFeature_setPhase(&((simpleFeature)->sf),(p))
 #define SimpleFeature_getPhase(simpleFeature) SeqFeature_getPhase(&((simpleFeature)->sf))
@@ -42,6 +46,8 @@ struct SimpleFeatureStruct {
 SimpleFeature *SimpleFeature_transformToSlice(SimpleFeature *simpleFeature, Slice *slice);
 
 SimpleFeature *SimpleFeature_new();
+
+char *SimpleFeature_setDisplayLabel(SimpleFeature *sf, char *label);
 
 
 #endif

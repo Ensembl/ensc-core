@@ -12,6 +12,8 @@
 #include "TranscriptAdaptor.h"
 #include "RawContig.h"
 #include "ExonAdaptor.h"
+#include "SimpleFeature.h"
+#include "SimpleFeatureAdaptor.h"
 
 int main(int argc, char *argv[]) {
   DBAdaptor *dba;
@@ -41,8 +43,6 @@ int main(int argc, char *argv[]) {
       gene = GeneAdaptor_fetchByDbID(ga,i,FALSE);
       if (gene) printf("Gene %s " INT64FMTSTR "\n",Gene_getStableId(gene), Gene_getDbID(gene));
     }
-
-    
   }
   {
     AnalysisAdaptor *aa = DBAdaptor_getAnalysisAdaptor(dba);
@@ -76,7 +76,6 @@ int main(int argc, char *argv[]) {
       e = exons[i];
       printf("Exon " INT64FMTSTR " %d %d %d\n",Exon_getDbID(e), Exon_getStart(e), Exon_getEnd(e), Exon_getStrand(e));
     }
-    
   }
   {
     RawContigAdaptor *rca = DBAdaptor_getRawContigAdaptor(dba);
@@ -132,5 +131,11 @@ int main(int argc, char *argv[]) {
 
     sliceSeq = SequenceAdaptor_fetchBySliceStartEndStrand(sa,slice,1,100,1);
     printf("Slice Seq = %s\n",sliceSeq);
+  }
+  {
+    SimpleFeatureAdaptor *sfa = DBAdaptor_getSimpleFeatureAdaptor(dba);
+    SimpleFeature *sf = (SimpleFeature *)SimpleFeatureAdaptor_fetchByDbID(sfa,1);
+    printf("Simple feature: %d-%d id " INT64FMTSTR, SimpleFeature_getStart(sf), 
+           SimpleFeature_getEnd(sf), SimpleFeature_getDbID(sf));
   }
 }

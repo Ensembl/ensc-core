@@ -1,4 +1,5 @@
 #include "SimpleFeature.h"
+#include "StrUtil.h"
 
 SimpleFeature *SimpleFeature_new() {
   SimpleFeature *sf;
@@ -9,4 +10,9 @@ SimpleFeature *SimpleFeature_new() {
   }
 
   return sf;
+}
+
+char *SimpleFeature_setDisplayLabel(SimpleFeature *sf, char *label) {
+  sf->displayLabel = StrUtil_copyString(&(sf->displayLabel), label, 0);
+  return sf->displayLabel;
 }

@@ -38,6 +38,7 @@ libensc.a	: \
 	objectfiles/DataAdaptors/AnalysisAdaptor.o \
 	objectfiles/DataAdaptors/AssemblyMapperAdaptor.o \
 	objectfiles/DataAdaptors/BaseAdaptor.o \
+	objectfiles/DataAdaptors/BaseFeatureAdaptor.o \
 	objectfiles/DataAdaptors/ChromosomeAdaptor.o \
 	objectfiles/DataAdaptors/CloneAdaptor.o \
 	objectfiles/DataAdaptors/DBAdaptor.o \
@@ -49,6 +50,7 @@ libensc.a	: \
 	objectfiles/DataAdaptors/MysqlStatementHandle.o \
 	objectfiles/DataAdaptors/RawContigAdaptor.o \
 	objectfiles/DataAdaptors/SequenceAdaptor.o \
+	objectfiles/DataAdaptors/SimpleFeatureAdaptor.o \
 	objectfiles/DataAdaptors/SliceAdaptor.o \
 	objectfiles/DataAdaptors/TranscriptAdaptor.o \
 	objectfiles/DataAdaptors/TranslationAdaptor.o \
@@ -74,6 +76,7 @@ libensc.a	: \
 	objectfiles/DataModel/Mapper/MapperUnit.o \
 	objectfiles/DataModel/RawContig.o \
 	objectfiles/DataModel/SeqFeature.o \
+	objectfiles/DataModel/SimpleFeature.o \
 	objectfiles/DataModel/Slice.o \
 	objectfiles/DataModel/StableIdInfo.o \
 	objectfiles/DataModel/StickyExon.o \

@@ -68,6 +68,15 @@ SimpleFeatureAdaptor *DBAdaptor_getSimpleFeatureAdaptor(DBAdaptor *dba) {
   return (SimpleFeatureAdaptor *)DBConnection_getAdaptor(dba->dbc,SIMPLEFEATURE_ADAPTOR);
 }
 
+#ifdef DONE
+PredictionTranscriptAdaptor *DBAdaptor_getPredictionTranscriptAdaptor(DBAdaptor *dba) {
+  if (!DBConnection_getAdaptor(dba->dbc,PREDICTIONTRANSCRIPT_ADAPTOR)) {
+    DBConnection_addAdaptor(dba->dbc,
+                            (BaseAdaptor *)PredictionTranscriptAdaptor_new(dba));
+  }
+  return (PredictionTranscriptAdaptor *)DBConnection_getAdaptor(dba->dbc,PREDICTIONTRANSCRIPT_ADAPTOR);
+}
+
 DNAAlignFeatureAdaptor *DBAdaptor_getDNAAlignFeatureAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,DNAALIGNFEATURE_ADAPTOR)) {
     DBConnection_addAdaptor(dba->dbc,
@@ -99,6 +108,7 @@ RepeatConsensusAdaptor *DBAdaptor_getRepeatConsensusAdaptor(DBAdaptor *dba) {
   }
   return (RepeatConsensusAdaptor *)DBConnection_getAdaptor(dba->dbc,REPEATCONSENSUS_ADAPTOR);
 }
+#endif
 
 TranscriptAdaptor *DBAdaptor_getTranscriptAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,TRANSCRIPT_ADAPTOR)) {

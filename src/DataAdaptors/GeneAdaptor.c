@@ -356,7 +356,7 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
     Gene *gene  = GeneAdaptor_fetchByDbID(ga, geneId, NULL );
     Gene *newGene = Gene_transformToSlice(gene, slice);
 
-/*
+/* NIY
     if (Gene_getStart(newgene) <= Slice_getLength(slice) &&
         Gene_getEnd(gene) >= 1 ) {
       // only take the gene if its really overlapping the Slice
