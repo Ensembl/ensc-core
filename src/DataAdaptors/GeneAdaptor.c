@@ -188,7 +188,7 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
     IDType translationId;
     TranscriptExons *tes = IDHash_getValue(transcriptExonsHash,transcriptId);
     int i;
-    sscanf((char *)IDHash_getValue(translationHash,transcriptId),"%qd",&translationId);
+    sscanf((char *)IDHash_getValue(translationHash,transcriptId),IDFMTSTR,&translationId);
 
     Transcript_setDbID( transcript, transcriptId );
     Transcript_setAdaptor(transcript, (BaseAdaptor *)ta);

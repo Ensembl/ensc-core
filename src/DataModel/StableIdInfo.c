@@ -1,5 +1,6 @@
 #include "StableIdInfo.h"
 
+#include <string.h>
 
 char *StableIdInfo_setStableId(StableIdInfo *si, char *sid) {
   if ((si->stableId = (char *)malloc(strlen(sid)+1)) == NULL) {

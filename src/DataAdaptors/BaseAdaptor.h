@@ -2,6 +2,7 @@
 #define __BASEADAPTOR_H__
 
 #include <mysql.h>
+#include <string.h>
 
 #include "AdaptorTypes.h"
 #include "DBAdaptor.h"
@@ -59,7 +60,7 @@ enum Adaptor_Types {
   SUPPORTINGFEATURE_ADAPTOR
 };
 
-typedef StatementHandle *(*BaseAdaptor_PrepareFunc)(BaseAdaptor *ba, char *qStr, int len);
+typedef StatementHandle *(*BaseAdaptor_PrepareFunc)(BaseAdaptor *ba, char *qStr,size_t len);
 
 #define BASEADAPTOR_DATA \
   DBAdaptor *dba; \
@@ -71,6 +72,6 @@ struct BaseAdaptorStruct {
 };
 
 void BaseAdaptor_init(BaseAdaptor *ba, DBAdaptor *dba, int adaptorType);
-StatementHandle *BaseAdaptor_prepare(BaseAdaptor *ba, char *qStr, int len);
+StatementHandle *BaseAdaptor_prepare(BaseAdaptor *ba, char *qStr,size_t len);
 
 #endif

@@ -81,7 +81,7 @@ Set *RepeatConsensusAdaptor_genericFetch(RepeatConsensusAdaptor *rca, char *wher
                " FROM repeat_consensus"
                " WHERE %s", whereClause);
 
-  rca->prepare((BaseAdaptor *)rca,qStr,strlen(qStr));
+  sth = rca->prepare((BaseAdaptor *)rca,qStr,strlen(qStr));
   sth->execute(sth);
 
   consensi = Set_new();
@@ -143,8 +143,10 @@ int RepeatConsensusAdaptor_store(RepeatConsensusAdaptor *rca, Set *consensi) {
     RepeatConsensus_setAdaptor(rc, (BaseAdaptor *)rca);
   }
   sth->finish(sth);
+  return 1;
 }
 
 int RepeatConsensus_free(RepeatConsensus *rc) {
   fprintf(stderr,"RepeatConsensus_free not implemented\n");
+  return 0;
 }

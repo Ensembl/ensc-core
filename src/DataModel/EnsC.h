@@ -22,7 +22,7 @@ typedef enum CopyDepthEnum {
 
 typedef long long IDType;
 #ifdef __osf__
- #define IDFMTSTR "%Ld"
+ #define IDFMTSTR "%lld"
 #else
  #define IDFMTSTR "%qd"
 #endif

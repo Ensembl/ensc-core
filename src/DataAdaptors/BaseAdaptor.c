@@ -8,7 +8,7 @@ void BaseAdaptor_init(BaseAdaptor *ba, DBAdaptor *dba, int adaptorType) {
   ba->prepare = BaseAdaptor_prepare;
 }
 
-StatementHandle *BaseAdaptor_prepare(BaseAdaptor *ba, char *qStr, int len) {
+StatementHandle *BaseAdaptor_prepare(BaseAdaptor *ba, char *qStr, size_t len) {
   /*printf("Query = %s len = %d\n",qStr,len);*/
   return DBAdaptor_prepare(ba->dba,qStr,len);
 }

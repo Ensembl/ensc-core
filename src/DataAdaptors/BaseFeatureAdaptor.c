@@ -289,7 +289,7 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice
     SeqFeature *sf = (SeqFeature *)Set_getElementAt(features,0);
     if (bfa->adaptorType == PREDICTIONTRANSCRIPT_ADAPTOR || SeqFeature_getContig(sf) == (BaseContig *)slice) {
       // features have been converted to slice coords already, cache and return
-      Cache_addElement(bfa->sliceFeatureCache, cacheKey, out, NULL);
+      Cache_addElement(bfa->sliceFeatureCache, cacheKey, features, NULL);
       return features;
     }
   } 
@@ -342,6 +342,9 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice
 int BaseFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
   fprintf(stderr,"ERROR: Abstract method store not defined by implementing subclass\n");
   exit(1);
+
+// Please the compiler
+  return 0;
 }
 
 int BaseFeatureAdaptor_remove(BaseFeatureAdaptor *bfa, SeqFeature *feature) {
@@ -365,7 +368,7 @@ int BaseFeatureAdaptor_remove(BaseFeatureAdaptor *bfa, SeqFeature *feature) {
   //unset the feature dbID
   SeqFeature_setDbID(feature, 0);
   
-  return;
+  return 0;
 }
 
 int BaseFeatureAdaptor_removeByRawContig(BaseFeatureAdaptor *bfa, RawContig *contig) {
@@ -394,11 +397,17 @@ int BaseFeatureAdaptor_removeByRawContig(BaseFeatureAdaptor *bfa, RawContig *con
 NameTableType *BaseFeatureAdaptor_getTables(void) {
   fprintf(stderr,"ERROR: Abstract method getTables not defined by implementing subclass\n");
   exit(1);
+
+// Please the compiler
+  return NULL;
 }
 
 char *BaseFeatureAdaptor_getColumns(void) {
   fprintf(stderr,"ERROR: Abstract method getColumns not defined by implementing subclass\n");
   exit(1);
+
+// Please the compiler
+  return NULL;
 }
 
 /* Actually added to default where */
@@ -420,4 +429,7 @@ Set *BaseFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa, Stat
                                                    AssemblyMapper *mapper, Slice *slice) {
   fprintf(stderr,"ERROR: Abstract method objectsFromStatementHandle not defined by implementing subclass\n");
   exit(1);
+
+// Please the compiler
+  return NULL;
 } 

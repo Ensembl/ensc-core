@@ -74,6 +74,8 @@ Transcript *Transcript_transform(Transcript *trans, IDHash *exonTransforms) {
   }
 
   Set_free(mappedExonSet,NULL);
+
+  return trans;
 }
 
 void Transcript_flushExons(Transcript *trans) {

@@ -36,6 +36,7 @@ char *Gene_setType(Gene *g, char *type) {
 int Gene_setStart(Gene *gene, int start) {
   SeqFeature_setStart(&(gene->sf),start);
   Gene_setStartIsSet(gene,TRUE);
+  return SeqFeature_getStart(&(gene->sf));
 }
 
 int Gene_getStart(Gene *gene) {

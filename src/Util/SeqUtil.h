@@ -1,6 +1,8 @@
 #ifndef __SEQUTIL_H__
 #define __SEQUTIL_H__
 
+#include <string.h>
+
 char *SeqUtil_reverseComplement(char *seq, int len);
 char *SeqUtil_addNs(char *seq, int length);
 void SeqUtil_printConvTable(int *convTable);

@@ -106,6 +106,7 @@ int PredictionTranscriptAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
   }
 
   sth->finish(sth);
+  return 1;
 }
 
 

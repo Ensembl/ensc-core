@@ -69,6 +69,8 @@ int CacheElement_free(CacheElement *ce) {
   }
   free(ce->key);
   free(ce);
+
+  return 1;
 }
 
 CacheElement *CacheElement_new(char *key, void *data, int freeFunc()) {

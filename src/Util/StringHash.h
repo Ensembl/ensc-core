@@ -1,6 +1,8 @@
 #ifndef __STRINGHASH_H__
 #define __STRINGHASH_H__
 
+#include <string.h>
+
 typedef enum StringHashSizesEnum {
   STRINGHASH_SMALL,
   STRINGHASH_MEDIUM,

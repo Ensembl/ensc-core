@@ -50,14 +50,17 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
                         ", analysis_id )"
       " VALUES(NULL, %" IDFMTSTR ",%%d,%%d,%%d,%" IDFMTSTR ",%%d,%%d,%%f,%" IDFMTSTR ")");
 
+  sth = bfa->prepare((BaseAdaptor *)bfa,qStr,strlen(qStr));
+
   for (i=0; i<Set_getNumElement(features); i++) {
     RepeatFeature *rf = Set_getElementAt(features,i);
     IDType dbID;
     IDType analId;
     IDType consId;
     RawContig *contig;
+    RepeatConsensus *cons = RepeatFeature_getConsensus(rf);
 
-    if (!RepeatFeature_getConsensus(rf)) {
+    if (!cons) {
       fprintf(stderr,"Error: Must have a RepeatConsensus attached\n");
       exit(1);
     }
@@ -158,6 +161,8 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
     RepeatFeature_setAdaptor(rf, (BaseAdaptor *)bfa);
   }
   sth->finish(sth);
+
+  return 1;
 }
 
 NameTableType *RepeatFeatureAdaptor_getTables() {
