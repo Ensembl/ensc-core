@@ -27,6 +27,7 @@ int main(int argc, char **argv) {
   char *user = "ensro";
   char *dbname = "steve_chr6_new_typed_snp";
   char *path = "SANGER_13";
+  int port = 3306;
   char *geneTypes[] = {"Known","Novel_CDS",NULL};
   char *chromosomes[] = {"6",NULL};
   char **chrName;
@@ -41,7 +42,7 @@ int main(int argc, char **argv) {
 
   initEnsC();
 
-  dba = DBAdaptor_new(host,user,NULL,dbname,3306,NULL);
+  dba = DBAdaptor_new(host,user,NULL,dbname,port,NULL);
 
   printf("Default assembly type %s\n",DBAdaptor_getAssemblyType(dba));
 
