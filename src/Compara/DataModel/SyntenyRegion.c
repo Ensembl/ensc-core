@@ -1,4 +1,6 @@
+#define __SYNTENYREGION_MAIN__
 #include "SyntenyRegion.h"
+#undef __SYNTENYREGION_MAIN__
 
 SyntenyRegion *SyntenyRegion_new() {
   SyntenyRegion *sr;
@@ -9,6 +11,9 @@ SyntenyRegion *SyntenyRegion_new() {
   }
 
   sr->objectType = CLASS_SYNTENYREGION;
+
+  sr->funcs = &syntenyRegionFuncs;
+
   Object_incRefCount(sr);
   return sr;
 }

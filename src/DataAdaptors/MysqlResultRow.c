@@ -1,4 +1,6 @@
+#define __MYSQLRESULTROW_MAIN__
 #include "MysqlResultRow.h"
+#undef __MYSQLRESULTROW_MAIN__
 
 #include "MysqlUtil.h"
 #include "Class.h"
@@ -14,6 +16,8 @@ MysqlResultRow *MysqlResultRow_new() {
   }
 
   rr->objectType = CLASS_MYSQLRESULTROW;
+
+  rr->funcs = &mysqlResultRowFuncs;
 
   rr->getStringAt   = MysqlResultRow_getStringAt;
   rr->getIntAt      = MysqlResultRow_getIntAt;

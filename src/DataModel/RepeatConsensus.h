@@ -5,7 +5,14 @@
 #include "EcoString.h"
 #include "EnsRoot.h"
 
-#define FUNCSTRUCTTYPE NoTypeFuncs
+OBJECTFUNC_TYPES(RepeatConsensus)
+
+typedef struct RepeatConsensusFuncsStruct {
+  OBJECTFUNCS_DATA(RepeatConsensus)
+} RepeatConsensusFuncs;
+
+
+#define FUNCSTRUCTTYPE RepeatConsensusFuncs
 struct RepeatConsensusStruct {
   ENSROOT_DATA
   Storable st;
@@ -31,5 +38,17 @@ ECOSTRING RepeatConsensus_setName(RepeatConsensus *rc, char *name);
 #define RepeatConsensus_getName(rcs) (rcs)->name
 
 RepeatConsensus *RepeatConsensus_new();
+
+void RepeatConsensus_free(RepeatConsensus *rc);
+
+#ifdef __REPEATCONSENSUS_MAIN__
+  RepeatConsensusFuncs
+    repeatConsensusFuncs = {
+                    RepeatConsensus_free
+                   };
+#else
+  extern RepeatConsensusFuncs repeatConsensusFuncs;
+#endif
+
 
 #endif

@@ -12,6 +12,7 @@
 #include "EnsRoot.h"
 
 #define SEQFEATUREFUNC_TYPES(CLASSTYPE) \
+typedef void (*CLASSTYPE ## _FreeFunc)(CLASSTYPE *); \
 typedef int (*CLASSTYPE ## _GetStartFunc)(CLASSTYPE *); \
 typedef int (*CLASSTYPE ## _SetStartFunc)(CLASSTYPE *, int start); \
 typedef int (*CLASSTYPE ## _GetEndFunc)(CLASSTYPE *); \
@@ -29,6 +30,7 @@ typedef CLASSTYPE * (*CLASSTYPE ## _TransformRawContigToSliceFunc)(CLASSTYPE *sf
 typedef CLASSTYPE * (*CLASSTYPE ## _TransformSliceToSliceFunc)(CLASSTYPE *sf, Slice *slice);
 
 #define SEQFEATUREFUNCS_DATA(CLASSTYPE) \
+  CLASSTYPE ## _FreeFunc free; \
   CLASSTYPE ## _GetStartFunc getStart; \
   CLASSTYPE ## _SetStartFunc setStart; \
   CLASSTYPE ## _GetEndFunc getEnd; \
@@ -106,7 +108,7 @@ SeqFeature *SeqFeature_new(void);
 #define SeqFeature_setEndPhase(sf,ep) (sf)->endPhase = (ep)
 #define SeqFeature_getEndPhase(sf) (sf)->endPhase
 
-#define SeqFeature_setAnalysis(sf,ana) (sf)->analysis = ana, Object_incRefCount(ana)
+#define SeqFeature_setAnalysis(sf,ana) (ana) ? (sf)->analysis = (ana), Object_incRefCount((ana)) : NULL
 #define SeqFeature_getAnalysis(sf) (sf)->analysis
 
 char *SeqFeature_setStableId(SeqFeature *sf, char *stableId);
@@ -158,9 +160,15 @@ ECOSTRING SeqFeature_getSeqName(SeqFeature *sf);
          (fprintf(stderr,"Error: Null pointer for transformRawContigToSlice - bye\n"),  exit(1), (void *)NULL) : \
          ((sf)->funcs->transformRawContigToSlice((sf),(slice))))
 
+#define SeqFeature_free(sf) \
+      ((sf)->funcs->free == NULL ? \
+         (fprintf(stderr,"Error: Null pointer for free func - bye\n"),  exit(1), (void *)NULL) : \
+         ((sf)->funcs->free((sf))))
+
 #ifdef __SEQFEATURE_MAIN__
  SeqFeatureFuncs 
    seqFeatureFuncs = {
+                      NULL, // free
                       NULL, // getStart
                       NULL, // setStart
                       NULL, // getEnd

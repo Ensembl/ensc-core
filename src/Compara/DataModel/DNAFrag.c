@@ -1,4 +1,6 @@
+#define __DNAFRAG_MAIN__
 #include "DNAFrag.h"
+#undef __DNAFRAG_MAIN__
 #include "StrUtil.h"
 #include "BaseContig.h"
 #include "DBAdaptor.h"
@@ -14,6 +16,9 @@ DNAFrag *DNAFrag_new() {
   }
 
   df->objectType = CLASS_DNAFRAG;
+
+  df->funcs = &dnaFragFuncs;
+
   Object_incRefCount(df);
   return df;
 }

@@ -89,9 +89,13 @@ Gene *Gene_transformToRawContig(Gene *gene);
 Vector *Gene_getAllDBLinks(Gene *g);
 int Gene_addDBLink(Gene *gene, DBEntry *dbe);
 
+void Gene_free(Gene *gene);
+
+
 #ifdef __GENE_MAIN__
   GeneFuncs 
     geneFuncs = {
+                 Gene_free,
                  Gene_getStart, 
                  Gene_setStart,
                  Gene_getEnd,

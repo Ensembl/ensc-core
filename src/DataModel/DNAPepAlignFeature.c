@@ -25,7 +25,7 @@ int DNAPepAlignFeature_getQueryUnit(void) {
   return 3;
 }
 
-void DNAPepAlignFeature_free(DNAPepAlignFeature *dpaf) {
+void DNAPepAlignFeature_freeImpl(DNAPepAlignFeature *dpaf) {
   Object_decRefCount(dpaf);
 
   if (Object_getRefCount(dpaf) > 0) {

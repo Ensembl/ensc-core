@@ -13,6 +13,13 @@ typedef IDType     (*ResultRow_getLongLongAtFunc)(ResultRow *row, int ind);
 typedef double    (*ResultRow_getDoubleAtFunc)(ResultRow *row, int ind);
 typedef char *    (*ResultRow_colFunc)(ResultRow *row,int ind);
 
+OBJECTFUNC_TYPES(ResultRow)
+
+typedef struct ResultRowFuncsStruct {
+  OBJECTFUNCS_DATA(ResultRow)
+} ResultRowFuncs;
+
+
 #define RESULTROW_DATA \
   OBJECT_DATA \
   ResultRow_getStringAtFunc   getStringAt; \
@@ -22,8 +29,11 @@ typedef char *    (*ResultRow_colFunc)(ResultRow *row,int ind);
   ResultRow_getDoubleAtFunc   getDoubleAt; \
   ResultRow_colFunc           col;
 
+#define FUNCSTRUCTTYPE ResultRowFuncs
 struct ResultRowStruct {
   RESULTROW_DATA
 };
+#undef FUNCSTRUCTTYPE
+
 
 #endif

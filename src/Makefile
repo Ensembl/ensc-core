@@ -5,7 +5,7 @@ CC = cc
 MYSQLCFLAGS=${shell mysql_config --cflags}
 MYSQLLIBS=${shell mysql_config --libs}
 
-CFLAGS =  -O3 -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel $(MYSQLCFLAGS)
+CFLAGS =  -g -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS)
 
 BINDIR=../bin
@@ -23,6 +23,7 @@ all	: directories \
           Tests/DNAAlignFeatureTest \
           Tests/DNAPepAlignFeatureTest \
           Tests/EcoStringTest \
+          Tests/FreeTest \
           Tests/HomologyTest \
           Tests/PredictionTranscriptTest \
           Tests/RepeatFeatureTest \
@@ -203,6 +204,11 @@ Tests/EcoStringTest: \
 	libensc.a \
 	Tests/EcoStringTest.c
 	$(CC) $(CFLAGS) -o Tests/EcoStringTest Tests/EcoStringTest.c -L. -lensc $(LDFLAGS)
+
+Tests/FreeTest: \
+	libensc.a \
+	Tests/FreeTest.c
+	$(CC) $(CFLAGS) -o Tests/FreeTest Tests/FreeTest.c -L. -lensc $(LDFLAGS)
 
 Tests/HomologyTest: \
 	libensc.a \

@@ -112,6 +112,8 @@ Exon *Exon_transformSliceToRawContigImpl(Exon *exon);
 #define Exon_transformToSlice(exon,slice) AnnotatedSeqFeature_transformToSlice((exon), (slice))
 #define Exon_transformToRawContig(exon) AnnotatedSeqFeature_transformToRawContig((exon))
 
+void Exon_freeImpl(Exon *exon);
+#define Exon_free(exon) AnnotatedSeqFeature_free((exon))
 
 Exon *Exon_new();
 Exon *Exon_copy(Exon *copy, Exon *orig, CopyDepth depth);
@@ -158,6 +160,7 @@ Exon *Exon_adjustStartEndImpl(Exon *exon, int startAdjust, int endAdjust);
 #ifdef __EXON_MAIN__
   ExonFuncs 
     exonFuncs = {
+                 Exon_freeImpl, // free
                  NULL, // getStart
                  NULL, // setStart
                  NULL, // getEnd

@@ -16,7 +16,8 @@ Vector *RepeatConsensusAdaptor_genericFetch(RepeatConsensusAdaptor *rca, char *w
 RepeatConsensus *RepeatConsensusAdaptor_fetchByName(RepeatConsensusAdaptor *rca, char *name);
 RepeatConsensus *RepeatConsensusAdaptor_fetchByNameAndClass(RepeatConsensusAdaptor *rca, char *name, char *class);
 Vector *RepeatConsensusAdaptor_fetchByClassAndSeq(RepeatConsensusAdaptor *rca, char *class, char *seq);
-int RepeatConsensus_free(RepeatConsensus *rc);
 int RepeatConsensusAdaptor_store(RepeatConsensusAdaptor *rca, Vector *consensi);
+int RepeatConsensusAdaptor_free(RepeatConsensusAdaptor *rc);
+
 
 #endif

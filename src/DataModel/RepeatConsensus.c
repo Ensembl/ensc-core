@@ -1,4 +1,6 @@
+#define __REPEATCONSENSUS_MAIN__
 #include "RepeatConsensus.h"
+#undef __REPEATCONSENSUS_MAIN__
 #include "EcoString.h"
 
 RepeatConsensus *RepeatConsensus_new() {
@@ -10,6 +12,9 @@ RepeatConsensus *RepeatConsensus_new() {
   }
 
   rc->objectType = CLASS_REPEATCONSENSUS;
+
+  rc->funcs = &repeatConsensusFuncs;
+
   Object_incRefCount(rc);
   return rc;
 }

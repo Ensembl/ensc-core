@@ -97,6 +97,8 @@ char *BaseAlignFeature_setCigarString(BaseAlignFeature *fp, char *ciggy);
 #define BaseAlignFeature_transformToRawContig(fp) FeaturePair_transformToRawContig((fp))
 #define BaseAlignFeature_transformToSlice(fp,slice) FeaturePair_transformToSlice((fp),(slice))
 
+#define BaseAlignFeature_free(fp) FeaturePair_free((fp))
+
 Vector *BaseAlignFeature_parseCigar(BaseAlignFeature *baf);
 Vector *BaseAlignFeature_transformSliceToRawContigImpl(BaseAlignFeature *baf);
 int BaseAlignFeature_getHitUnitImpl(void);
@@ -105,6 +107,8 @@ Vector *BaseAlignFeature_transformFeatureSliceToRawContig(BaseAlignFeature *baf,
 Vector *BaseAlignFeature_getUngappedFeatures(BaseAlignFeature *baf);
 void BaseAlignFeature_reverseComplementImpl(BaseAlignFeature *baf);
 int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features);
+
+void BaseAlignFeature_freeImpl(BaseAlignFeature *baf);
 
 #define BaseAlignFeature_getHitUnit() \
       ((baf)->funcs->getHitUnit == NULL ? \
@@ -118,9 +122,11 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features);
 
 
 
+
 #ifdef __BASEALIGNFEATURE_MAIN__
   BaseAlignFeatureFuncs 
     baseAlignFeatureFuncs = {
+                             BaseAlignFeature_freeImpl, // free
                              NULL, // getStart
                              NULL, // setStart
                              NULL, // getEnd

@@ -104,10 +104,12 @@ MapperRangeSet *PredictionTranscript_genomic2cDNA(PredictionTranscript *trans, i
 
 Mapper *PredictionTranscript_getcDNACoordMapper(PredictionTranscript *trans);
 
+void PredictionTranscript_free(PredictionTranscript *trans);
 
 #ifdef __PREDICTIONTRANSCRIPT_MAIN__
   PredictionTranscriptFuncs 
     predictionTranscriptFuncs = {
+                       PredictionTranscript_free,
                        PredictionTranscript_getStart,
                        PredictionTranscript_setStart,
                        PredictionTranscript_getEnd,

@@ -15,13 +15,31 @@ IDType     MysqlResultRow_getLongLongAt(ResultRow *row, int ind);
 double    MysqlResultRow_getDoubleAt(ResultRow *row, int ind);
 char *    MysqlResultRow_col(ResultRow *row, int ind);
 
+OBJECTFUNC_TYPES(MysqlResultRow)
+
+typedef struct MysqlResultRowFuncsStruct {
+  OBJECTFUNCS_DATA(MysqlResultRow)
+} MysqlResultRowFuncs;
+
 
 #define MYSQLRESULTROW_DATA \
   RESULTROW_DATA \
   MYSQL_ROW mysql_row;
 
+#define FUNCSTRUCTTYPE MysqlResultRowFuncs
 struct MysqlResultRowStruct {
   MYSQLRESULTROW_DATA
 };
+#undef FUNCSTRUCTTYPE
+
+#ifdef __MYSQLRESULTROW_MAIN__
+  MysqlResultRowFuncs
+    mysqlResultRowFuncs = {
+                      NULL // free
+                     };
+#else
+  extern MysqlResultRowFuncs mysqlResultRowFuncs;
+#endif
+
 
 #endif

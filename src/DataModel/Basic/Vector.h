@@ -8,13 +8,24 @@
 #include <stdlib.h>
 
 typedef void   (*Vector_ElementFreeFunc)();
-typedef struct VectorStruct {
+
+typedef struct VectorStruct Vector;
+
+OBJECTFUNC_TYPES(Vector)
+
+typedef struct VectorFuncsStruct {
+  OBJECTFUNCS_DATA(Vector)
+} VectorFuncs;
+
+#define FUNCSTRUCTTYPE VectorFuncs
+struct VectorStruct {
   OBJECT_DATA
   void **elements;
   int nElement;
   int isSpecial;
   Vector_ElementFreeFunc freeElement;  
-} Vector;
+};
+#undef FUNCSTRUCTTYPE
 
 #ifdef __VECTOR_MAIN__
   Vector  emptyVectorData = {CLASS_VECTOR,-1,NULL,0,1};
@@ -40,6 +51,17 @@ void *Vector_setElementAt(Vector *v, int ind, void *elem);
 void Vector_sort(Vector *v, SortCompFunc sortFunc);
 void *Vector_getLastElement(Vector *v);
 void Vector_setNumElement(Vector *v, int nElem);
+
+#ifdef __VECTOR_MAIN__
+  VectorFuncs
+    vectorFuncs = {
+                    Vector_free,
+                   };
+#else
+  extern VectorFuncs vectorFuncs;
+#endif
+
+
 
 
 #endif

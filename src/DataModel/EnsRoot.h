@@ -3,14 +3,6 @@
 
 #include "Object.h"
 
-/* FUNCSTRUCTTYPE must be #defined where ENSROOT_DATA is used */
-typedef struct NoTypeFuncsStruct {
-  int i; // Get compiler complaints if its empty
-} NoTypeFuncs;
-
-#define ENSROOT_DATA \
-  OBJECT_DATA \
-  FUNCSTRUCTTYPE *funcs;
-
+#define ENSROOT_DATA OBJECT_DATA
 
 #endif

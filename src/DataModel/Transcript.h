@@ -131,10 +131,13 @@ Mapper *Transcript_getcDNACoordMapper(Transcript *trans);
 
 char *Transcript_translate(Transcript *trans);
 
+void Transcript_free(Transcript *trans);
+
 
 #ifdef __TRANSCRIPT_MAIN__
   TranscriptFuncs 
     transcriptFuncs = {
+                       Transcript_free,
                        Transcript_getStart,
                        Transcript_setStart,
                        Transcript_getEnd,

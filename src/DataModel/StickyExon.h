@@ -114,9 +114,13 @@ char *StickyExon_getPeptide(StickyExon *stickyExon, Transcript *trans);
 
 StickyExon *StickyExon_new();
 
+void StickyExon_freeImpl(StickyExon *stickyExon);
+#define StickyExon_free(exon) Exon_free((exon))
+
 #ifdef __STICKYEXON_MAIN__
   StickyExonFuncs 
     stickyExonFuncs = {
+                       StickyExon_freeImpl, // free
                        NULL, // getStart
                        NULL, // setStart
                        NULL, // getEnd

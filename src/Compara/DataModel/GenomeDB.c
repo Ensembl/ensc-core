@@ -1,4 +1,6 @@
+#define __GENOMEDB_MAIN__
 #include "GenomeDB.h"
+#undef __GENOMEDB_MAIN__
 #include "GenomeDBAdaptor.h"
 
 GenomeDB *GenomeDB_new() {
@@ -10,6 +12,9 @@ GenomeDB *GenomeDB_new() {
   }
 
   gdb->objectType = CLASS_GENOMEDB;
+
+  gdb->funcs = &genomeDBFuncs;
+
   Object_incRefCount(gdb);
   return gdb;
 }

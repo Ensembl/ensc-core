@@ -78,9 +78,12 @@ time_t AnnotatedSeqFeature_getModified(AnnotatedSeqFeature *asf);
 #define AnnotatedSeqFeature_transformToSlice(asf, slice) SeqFeature_transformToSlice((asf),(slice))
 #define AnnotatedSeqFeature_transformToRawContig(asf) SeqFeature_transformToRawContig((asf))
 
+#define AnnotatedSeqFeature_free(asf) SeqFeature_free((asf))
+
 #ifdef __ANNOTATEDSEQFEATURE_MAIN__
   AnnotatedSeqFeatureFuncs 
        annotatedSeqFeatureFuncs = {
+                                   NULL, // free
                                    NULL, // getStart
                                    NULL, // setStart
                                    NULL, // getEnd

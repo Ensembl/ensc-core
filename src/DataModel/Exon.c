@@ -631,7 +631,7 @@ void Exon_loadGenomicMapperImpl(Exon *exon, Mapper *mapper, IDType id, int start
 }
 
 
-void Exon_free(Exon *exon) {
+void Exon_freeImpl(Exon *exon) {
   printf("Exon_free not implemented\n");
 }
 

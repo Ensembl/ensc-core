@@ -1,4 +1,6 @@
+#define __ANALYSIS_MAIN__
 #include "Analysis.h"
+#undef __ANALYSIS_MAIN__
 
 Analysis *Analysis_new() {
   Analysis *anal;
@@ -9,6 +11,8 @@ Analysis *Analysis_new() {
   }
 
   anal->objectType = CLASS_ANALYSIS;
+
+  anal->funcs = &analysisFuncs;
 
   Object_incRefCount(anal);
 

@@ -5,7 +5,13 @@
 #include "EnsC.h"
 #include "EnsRoot.h"
 
-#define FUNCSTRUCTTYPE NoTypeFuncs
+OBJECTFUNC_TYPES(Homology)
+
+typedef struct HomologyFuncsStruct {
+  OBJECTFUNCS_DATA(Homology)
+} HomologyFuncs;
+
+#define FUNCSTRUCTTYPE HomologyFuncs
 struct HomologyStruct {
   ENSROOT_DATA
   ECOSTRING species;
@@ -34,5 +40,15 @@ ECOSTRING Homology_setSpecies(Homology *hom, char *spec);
 #define Homology_getSpecies(hom) (hom)->species
 
 void Homology_free(Homology *hom);
+
+#ifdef __HOMOLOGY_MAIN__
+  HomologyFuncs
+    homologyFuncs = {
+                    Homology_free
+                   };
+#else
+  extern HomologyFuncs homologyFuncs;
+#endif
+
 
 #endif

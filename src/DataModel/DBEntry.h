@@ -8,6 +8,13 @@
 #include "IdentityXref.h"
 #include "Object.h"
 
+OBJECTFUNC_TYPES(DBEntry)
+
+typedef struct DBEntryFuncsStruct {
+  OBJECTFUNCS_DATA(DBEntry)
+} DBEntryFuncs;
+
+#define FUNCSTRUCTTYPE DBEntryFuncs
 struct DBEntryStruct {
   OBJECT_DATA
   Storable  st;
@@ -21,6 +28,8 @@ struct DBEntryStruct {
   char     *description;
   IdentityXref *idXref;
 };
+#undef FUNCSTRUCTTYPE
+
 
 DBEntry *DBEntry_new(void);
 
@@ -56,6 +65,18 @@ int DBEntry_addSynonym(DBEntry *dbe, char *syn);
 #define DBEntry_getAllSynonyms(d) (d)->synonyms
 
 ECOSTRING DBEntry_setStatus(DBEntry *dbe, char *status);
+
+void DBEntry_free(DBEntry *dbe);
+
+
+#ifdef __DBENTRY_MAIN__
+  DBEntryFuncs
+    dBEntryFuncs = {
+                    DBEntry_free
+                   };
+#else
+  extern DBEntryFuncs dBEntryFuncs;
+#endif
 
 
 #endif

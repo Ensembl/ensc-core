@@ -63,20 +63,13 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
     // will only store if object is not already stored in this database
     AnalysisAdaptor_store(aa,analysis);
 
-    if (DNAAlignFeature_getContig(sf)->objectType != CLASS_RAWCONTIG) {
+    contig = (RawContig *)DNAAlignFeature_getContig(sf);
+
+    if (!contig || contig->objectType != CLASS_RAWCONTIG) {
       fprintf(stderr,"Error: contig isn't raw contig when trying to store\n");
       exit(1);
     }
 
-    contig = (RawContig *)DNAAlignFeature_getContig(sf);
-
-/* NIY
-     unless(defined $contig && $contig->isa("Bio::EnsEMBL::RawContig")) { 
-       $self->throw("Cannot store feature without Contig attached via " .
-                    "attach_seq\n");
-     }   
-*/
-     
     sth->execute(sth, (IDType)RawContig_getDbID(contig), 
                       DNAAlignFeature_getStart(sf), 
                       DNAAlignFeature_getEnd(sf), 
@@ -128,10 +121,12 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
   Vector *features;
   ResultRow *row;
 
-  aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
+  aa  = DBAdaptor_getAnalysisAdaptor(bfa->dba);
   rca = DBAdaptor_getRawContigAdaptor(bfa->dba);
 
   features = Vector_new();
+
+  Vector_setFreeFunc(features,DNAAlignFeature_freeImpl);
 
   if (slice) {
     int featStart, featEnd, featStrand;

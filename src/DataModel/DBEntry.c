@@ -1,4 +1,6 @@
+#define __DBENTRY_MAIN__
 #include "DBEntry.h"
+#undef __DBENTRY_MAIN__
 
 DBEntry *DBEntry_new() {
   DBEntry *dbe;
@@ -9,6 +11,9 @@ DBEntry *DBEntry_new() {
   }
 
   dbe->objectType = CLASS_DBENTRY;
+
+  dbe->funcs = &dBEntryFuncs;
+
   Object_incRefCount(dbe);
   return dbe;
 }

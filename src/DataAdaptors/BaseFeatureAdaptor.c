@@ -139,6 +139,9 @@ SeqFeature *BaseFeatureAdaptor_fetchByDbID(BaseFeatureAdaptor *bfa, IDType dbID)
   //return first element of _generic_fetch list
   features = BaseFeatureAdaptor_genericFetch(bfa, constraintStr, "", NULL, NULL);
   sf = Vector_getElementAt(features, 0);
+
+  if (sf) Object_incRefCount(sf);
+
 // NIY free func
   if (Vector_getNumElement(features) > 1) {
     fprintf(stderr,

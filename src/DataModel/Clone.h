@@ -7,8 +7,15 @@
 #include "Storable.h"
 #include "EnsRoot.h"
 
+OBJECTFUNC_TYPES(Clone)
 
-#define FUNCSTRUCTTYPE NoTypeFuncs
+typedef struct CloneFuncsStruct {
+  OBJECTFUNCS_DATA(Clone)
+} CloneFuncs;
+
+
+
+#define FUNCSTRUCTTYPE CloneFuncs
 struct CloneStruct {
   ENSROOT_DATA
   char *emblAcc;
@@ -50,6 +57,18 @@ char *Clone_setEmblAcc(Clone *cl, char *acc);
 
 #define Clone_setModified(cl,mod) (cl)->modified = (mod)
 #define Clone_getModified(cl) (cl)->modified
+
+void Clone_free(Clone *clone);
+
+#ifdef __CLONE_MAIN__
+  CloneFuncs
+    cloneFuncs = {
+                    Clone_free
+                   };
+#else
+  extern CloneFuncs cloneFuncs;
+#endif
+
 
 
 #endif

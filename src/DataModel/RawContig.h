@@ -53,6 +53,7 @@ char *RawContig_getSeq(RawContig *contig);
 
 #ifdef __RAWCONTIG_MAIN__
   RawContigFuncs rawContigFuncs = {
+                           NULL, // free
                            RawContig_getName,
                            RawContig_getSeq,
                            RawContig_getSubSeq

@@ -15,6 +15,8 @@ Vector *Vector_new() {
 
   Object_incRefCount(vector);
 
+  vector->funcs = &vectorFuncs;
+
   return vector;
 }
 
@@ -118,7 +120,6 @@ void Vector_free(Vector *v) {
     printf(" - special vector so returning\n");
     return;
   }
-
 
   Object_decRefCount(v);
 

@@ -1,4 +1,6 @@
+#define __SPECIES_MAIN__
 #include "Species.h"
+#undef __SPECIES_MAIN__
 #include "StrUtil.h"
 
 Species *Species_new() {
@@ -8,6 +10,8 @@ Species *Species_new() {
     fprintf(stderr,"ERROR: Failed allocating space for species\n");
     return NULL;
   }
+
+  species->funcs = &speciesFuncs;
 
   return species;
 }

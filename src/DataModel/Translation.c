@@ -1,4 +1,6 @@
+#define __TRANSLATION_MAIN__
 #include "Translation.h"
+#undef __TRANSLATION_MAIN__
 #include "TranslationAdaptor.h"
 
 Translation *Translation_new() {
@@ -12,6 +14,9 @@ Translation *Translation_new() {
   Translation_setVersion(t,-1);
 
   t->objectType = CLASS_TRANSLATION;
+
+  t->funcs = &translationFuncs;
+
   Object_incRefCount(t);
 
   return t;

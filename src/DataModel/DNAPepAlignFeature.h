@@ -69,9 +69,15 @@ int DNAPepAlignFeature_getQueryUnit(void);
 #define DNAPepAlignFeature_transformToSlice(fp,slice) BaseAlignFeature_transformToSlice((fp),(slice))
 #define DNAPepAlignFeature_transformToRawContig(fp) BaseAlignFeature_transformToRawContig((fp))
 
+#define DNAPepAlignFeature_free(fp) BaseAlignFeature_free((fp))
+
+void DNAPepAlignFeature_freeImpl(DNAPepAlignFeature *dpaf);
+
+
 #ifdef __DNAPEPALIGNFEATURE_MAIN__
   DNAPepAlignFeatureFuncs
     dnaPepAlignFeatureFuncs = {
+                             DNAPepAlignFeature_freeImpl,
                              NULL, // getStart
                              NULL, // setStart
                              NULL, // getEnd

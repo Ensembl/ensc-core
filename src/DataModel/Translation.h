@@ -5,7 +5,13 @@
 #include "Exon.h"
 #include "IDHash.h"
 
-#define FUNCSTRUCTTYPE NoTypeFuncs
+OBJECTFUNC_TYPES(Translation)
+
+typedef struct TranslationFuncsStruct {
+  OBJECTFUNCS_DATA(Translation)
+} TranslationFuncs;
+
+#define FUNCSTRUCTTYPE TranslationFuncs
 struct TranslationStruct {
   ENSROOT_DATA
   int start;
@@ -44,6 +50,19 @@ int Translation_getVersion(Translation *translation);
 Translation *Translation_new(void);
 
 void Translation_transform(Translation *translation, IDHash *exonTransforms);
+
+void Translation_free(Translation *translation);
+
+
+#ifdef __TRANSLATION_MAIN__
+  TranslationFuncs
+    translationFuncs = {
+                    Translation_free
+                   };
+#else
+  extern TranslationFuncs translationFuncs;
+#endif
+
 
 
 #endif

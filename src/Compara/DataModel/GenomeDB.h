@@ -6,7 +6,13 @@
 #include "Storable.h"
 #include "Vector.h"
 
-#define FUNCSTRUCTTYPE NoTypeFuncs
+OBJECTFUNC_TYPES(GenomeDB)
+
+typedef struct GenomeDBFuncsStruct {
+  OBJECTFUNCS_DATA(GenomeDB)
+} GenomeDBFuncs;
+
+#define FUNCSTRUCTTYPE GenomeDBFuncs
 struct GenomeDBStruct {
   ENSROOT_DATA
   Storable st;
@@ -38,5 +44,18 @@ char *GenomeDB_setName(GenomeDB *gd, char *name);
 GenomeDB *GenomeDB_new();
 
 Vector *GenomeDB_linkedGenomesByMethodLinkId(GenomeDB *gdb, IDType methodLinkId);
+
+void GenomeDB_free(GenomeDB *gd);
+
+#ifdef __GENOMEDB_MAIN__
+  GenomeDBFuncs
+    genomeDBFuncs = {
+                     GenomeDB_free
+                    };
+#else
+  extern GenomeDBFuncs enomeDBFuncs;
+#endif
+
+
 
 #endif

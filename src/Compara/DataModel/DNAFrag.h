@@ -7,7 +7,14 @@
 #include "Storable.h"
 #include "GenomeDB.h"
 
-#define FUNCSTRUCTTYPE NoTypeFuncs
+
+OBJECTFUNC_TYPES(DNAFrag)
+
+typedef struct DNAFragFuncsStruct {
+  OBJECTFUNCS_DATA(DNAFrag)
+} DNAFragFuncs;
+
+#define FUNCSTRUCTTYPE DNAFragFuncs
 struct DNAFragStruct {
   ENSROOT_DATA
   Storable st;
@@ -44,5 +51,17 @@ char *DNAFrag_setName(DNAFrag *df, char *name);
 #define DNAFrag_getName(df) (df)->name
 
 DNAFrag *DNAFrag_new();
+
+void DNAFrag_free(DNAFrag *df);
+
+#ifdef __DNAFRAG_MAIN__
+  DNAFragFuncs
+    dnaFragFuncs = {
+                    DNAFrag_free
+                   };
+#else
+  extern DNAFragFuncs dnaFragFuncs;
+#endif
+
 
 #endif

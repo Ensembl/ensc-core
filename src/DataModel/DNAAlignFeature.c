@@ -26,7 +26,7 @@ int DNAAlignFeature_getQueryUnit(void) {
   return 1;
 }
 
-void DNAAlignFeature_free(DNAAlignFeature *daf) {
+void DNAAlignFeature_freeImpl(DNAAlignFeature *daf) {
   Object_decRefCount(daf);
 
   if (Object_getRefCount(daf) > 0) {

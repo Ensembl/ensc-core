@@ -73,7 +73,8 @@ Vector *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, E
     } else {
       //we might have to convert the features coordinate system
       if (BaseContig_getDbID(BaseAlignFeature_getContig(baf)) != BaseContig_getDbID(Exon_getContig(exon))) {
-        fprintf(stderr,"Error: Free for different contig skip not implemented\n");
+        // fprintf(stderr,"Error: Free for different contig skip not implemented\n");
+        BaseAlignFeature_free(baf);
         continue;
       }
     }

@@ -65,11 +65,16 @@ struct RepeatFeatureStruct {
 #define RepeatFeature_transformToSlice(repeat,slice) SeqFeature_transformToSlice((repeat),(slice))
 #define RepeatFeature_transformToRawContig(repeat) SeqFeature_transformToRawContig((repeat))
 
+#define RepeatFeature_free(repeat) SeqFeature_free((repeat))
+
 RepeatFeature *RepeatFeature_new();
+
+void RepeatFeature_freeImpl(RepeatFeature *repeat);
 
 #ifdef __REPEATFEATURE_MAIN__
  RepeatFeatureFuncs 
    repeatFeatureFuncs = {
+                      RepeatFeature_freeImpl, // free
                       NULL, // getStart
                       NULL, // setStart
                       NULL, // getEnd

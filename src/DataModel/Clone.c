@@ -1,4 +1,6 @@
+#define __CLONE_MAIN__
 #include "Clone.h"
+#undef __CLONE_MAIN__
 #include "CloneAdaptor.h"
 
 Clone *Clone_new() {
@@ -10,6 +12,9 @@ Clone *Clone_new() {
   }
 
   cl->objectType = CLASS_CLONE;
+
+  cl->funcs = &cloneFuncs;
+
   Object_incRefCount(cl);
 
   return cl;

@@ -1,4 +1,6 @@
+#define __HOMOLOGY_MAIN__
 #include "Homology.h"
+#undef __HOMOLOGY_MAIN__
 #include <stdio.h>
 
 Homology *Homology_new() {
@@ -11,6 +13,9 @@ Homology *Homology_new() {
   Object_incRefCount(hm);
 
   hm->objectType = CLASS_HOMOLOGY;
+
+  hm->funcs = &homologyFuncs;
+
   return hm;
 }
 

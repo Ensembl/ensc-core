@@ -6,7 +6,13 @@
 #include "Storable.h"
 #include "DNAFrag.h"
 
-#define FUNCSTRUCTTYPE NoTypeFuncs 
+OBJECTFUNC_TYPES(GenomicAlign)
+
+typedef struct GenomicAlignFuncsStruct {
+  OBJECTFUNCS_DATA(GenomicAlign)
+} GenomicAlignFuncs;
+
+#define FUNCSTRUCTTYPE GenomicAlignFuncs
 struct GenomicAlignStruct {
   ENSROOT_DATA
   Storable st;
@@ -66,8 +72,20 @@ char *GenomicAlign_setAlignmentType(GenomicAlign *ga, char *at);
 
 GenomicAlign *GenomicAlign_new();
 
+void GenomicAlign_free(GenomicAlign *ga);
+
 #define GENOMICALIGN_CONSENSUS    1<<1
 #define GENOMICALIGN_ALIGNSLICES  1<<2
 #define GENOMICALIGN_FIXCONSENSUS 1<<3
 #define GENOMICALIGN_FIXQUERY     1<<4
+
+#ifdef __GENOMICALIGN_MAIN__
+  GenomicAlignFuncs
+    genomicAlignFuncs = {
+                    GenomicAlign_free
+                   };
+#else
+  extern GenomicAlignFuncs genomicAlignFuncs;
+#endif
+
 #endif

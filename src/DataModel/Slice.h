@@ -80,6 +80,7 @@ char *Slice_getSeq(Slice *slice);
 
 #ifdef __SLICE_MAIN__
   SliceFuncs sliceFuncs = {
+                           NULL, // free
                            Slice_getName, 
                            Slice_getSeq,
                            Slice_getSubSeq

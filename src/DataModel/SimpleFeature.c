@@ -24,7 +24,7 @@ ECOSTRING SimpleFeature_setDisplayLabel(SimpleFeature *sf, char *label) {
   return sf->displayLabel;
 }
 
-void SimpleFeature_free(SimpleFeature *sf) {
+void SimpleFeature_freeImpl(SimpleFeature *sf) {
   Object_decRefCount(sf);
 
   if (Object_getRefCount(sf) > 0) {

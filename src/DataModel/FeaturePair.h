@@ -91,9 +91,14 @@ ECOSTRING FeaturePair_setHitSpecies(FeaturePair *fp, char *str);
 #define FeaturePair_transformToRawContig(fp) SeqFeature_transformToRawContig((fp))
 #define FeaturePair_transformToSlice(fp,slice) SeqFeature_transformToSlice((fp),(slice))
 
+#define FeaturePair_free(fp) SeqFeature_free((fp))
+
+void FeaturePair_freeImpl(FeaturePair *fp);
+
 #ifdef __FEATUREPAIR_MAIN__
   FeaturePairFuncs 
     featurePairFuncs = {
+                        FeaturePair_freeImpl, // free
                         NULL, // getStart
                         NULL, // setStart
                         NULL, // getEnd

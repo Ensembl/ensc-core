@@ -5,7 +5,13 @@
 #include "EnsRoot.h"
 #include "Storable.h"
 
-#define FUNCSTRUCTTYPE NoTypeFuncs
+OBJECTFUNC_TYPES(SyntenyRegion)
+
+typedef struct SyntenyRegionFuncsStruct {
+  OBJECTFUNCS_DATA(SyntenyRegion)
+} SyntenyRegionFuncs;
+
+#define FUNCSTRUCTTYPE SyntenyRegionFuncs
 struct SyntenyRegionStruct {
   ENSROOT_DATA
   Storable st;
@@ -69,4 +75,16 @@ ECOSTRING SyntenyRegion_setHitChrName(SyntenyRegion *sr, char *hitChrName);
 ECOSTRING SyntenyRegion_setHitSeqType(SyntenyRegion *sr, char *hitSeqType);
 
 ECOSTRING SyntenyRegion_setSeqType(SyntenyRegion *sr, char *seqType);
+
+void SyntenyRegion_free(SyntenyRegion *sr);
+
+#ifdef __SYNTENYREGION_MAIN__
+  SyntenyRegionFuncs
+    syntenyRegionFuncs = {
+                    SyntenyRegion_free
+                   };
+#else
+  extern SyntenyRegionFuncs syntenyRegionFuncs;
+#endif
+
 #endif

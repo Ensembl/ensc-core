@@ -79,9 +79,15 @@ int DNAAlignFeature_getQueryUnit(void);
 #define DNAAlignFeature_transformToRawContig(fp) BaseAlignFeature_transformToRawContig((fp))
 #define DNAAlignFeature_transformToSlice(fp,slice) BaseAlignFeature_transformToSlice((fp),(slice))
 
+#define DNAAlignFeature_free(fp) BaseAlignFeature_free((fp))
+
+void DNAAlignFeature_freeImpl(DNAAlignFeature *daf);
+
+
 #ifdef __DNAALIGNFEATURE_MAIN__
   DNAAlignFeatureFuncs 
     dnaAlignFeatureFuncs = {
+                             DNAAlignFeature_freeImpl,
                              NULL, // getStart
                              NULL, // setStart
                              NULL, // getEnd

@@ -18,7 +18,7 @@ struct AssemblyMapperStruct {
   IDHash *chrChunkHash;
 };
 
-#define AssemblyMapper_setChrChunkHash(am,h) (am)->chrChunkHash = h
+#define AssemblyMapper_setChrChunkHash(am,h) (am)->chrChunkHash = (h)
 #define AssemblyMapper_getChrChunkHash(am) (am)->chrChunkHash
 
 #define AssemblyMapper_setAdaptor(am, ad) (am)->adaptor = (ad)

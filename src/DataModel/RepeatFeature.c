@@ -18,7 +18,7 @@ RepeatFeature *RepeatFeature_new() {
   return rf;
 }
 
-void RepeatFeature_free(RepeatFeature *rf) {
+void RepeatFeature_freeImpl(RepeatFeature *rf) {
   Object_decRefCount(rf);
 
   if (Object_getRefCount(rf) > 0) {

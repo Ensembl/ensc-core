@@ -6,7 +6,13 @@
 
 #include "EnsRoot.h"
 
-#define FUNCSTRUCTTYPE NoTypeFuncs
+OBJECTFUNC_TYPES(Analysis)
+
+typedef struct AnalysisFuncsStruct {
+  OBJECTFUNCS_DATA(Analysis)
+} AnalysisFuncs;
+
+#define FUNCSTRUCTTYPE AnalysisFuncs
 struct AnalysisStruct {
   ENSROOT_DATA
   Storable st;
@@ -74,6 +80,18 @@ Analysis *Analysis_new(void);
 #define Analysis_getParameters(a) a->parameters
 
 int Analysis_compare(Analysis *a, Analysis *b);
+
+void Analysis_free(Analysis *anal);
+
+#ifdef __ANALYSIS_MAIN__
+  AnalysisFuncs
+    analysisFuncs = {
+                    Analysis_free,
+                   };
+#else
+  extern AnalysisFuncs analysisFuncs;
+#endif
+
 
 
 #endif

@@ -1,4 +1,6 @@
+#define __GENOMICALIGN_MAIN__
 #include "GenomicAlign.h"
+#undef __GENOMICALIGN_MAIN__
 #include <stdlib.h>
 
 #include "StrUtil.h"
@@ -15,6 +17,9 @@ GenomicAlign *GenomicAlign_new() {
   }
 
   ga->objectType = CLASS_GENOMICALIGN;
+
+  ga->funcs = &genomicAlignFuncs;
+
   Object_incRefCount(ga);
   return ga;
 }

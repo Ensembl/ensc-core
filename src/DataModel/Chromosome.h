@@ -5,12 +5,21 @@
 #include "Storable.h"
 #include "Object.h"
 
+OBJECTFUNC_TYPES(Chromosome)
+
+typedef struct ChromosomeFuncsStruct {
+  OBJECTFUNCS_DATA(Chromosome)
+} ChromosomeFuncs;
+
+#define FUNCSTRUCTTYPE ChromosomeFuncs
 struct ChromosomeStruct {
   OBJECT_DATA
   Storable st;
   int length;
   char *name;
 };
+#undef FUNCSTRUCTTYPE
+
 
 Chromosome *Chromosome_new(void);
 
@@ -27,5 +36,15 @@ ECOSTRING Chromosome_setName(Chromosome *c,char *name);
 #define Chromosome_getName(c) (c)->name
 
 void Chromosome_free(Chromosome *chr);
+
+#ifdef __CHROMOSOME_MAIN__
+  ChromosomeFuncs
+    chromosomeFuncs = {
+                    Chromosome_free
+                   };
+#else
+  extern ChromosomeFuncs chromosomeFuncs;
+#endif
+
 
 #endif

@@ -59,14 +59,19 @@ struct SimpleFeatureStruct {
 #define SimpleFeature_transformToSlice(simpleFeature,slice) SeqFeature_transformToSlice((simpleFeature),(slice))
 #define SimpleFeature_transformToRawContig(simpleFeature) SeqFeature_transformToRawContig((simpleFeature))
 
+#define SimpleFeature_free(simpleFeature) SeqFeature_free((simpleFeature))
+
 SimpleFeature *SimpleFeature_new();
 
 ECOSTRING SimpleFeature_setDisplayLabel(SimpleFeature *sf, char *label);
 #define SimpleFeature_getDisplayLabel(simpleFeature) (simpleFeature)->displayLabel
 
+void SimpleFeature_freeImpl(SimpleFeature *sf);
+
 #ifdef __SIMPLEFEATURE_MAIN__
  SimpleFeatureFuncs
    simpleFeatureFuncs = {
+                      SimpleFeature_freeImpl,
                       NULL, // getStart
                       NULL, // setStart
                       NULL, // getEnd

@@ -498,6 +498,6 @@ void StickyExon_addSupportingFeatures(StickyExon *stickyExon, Vector *features) 
   }
 }
 
-void StickyExon_free(StickyExon *stickyExon) {
+void StickyExon_freeImpl(StickyExon *stickyExon) {
   printf("StickyExon_free not implemented\n");
 }

@@ -1,4 +1,6 @@
+#define __MYSQLSTATEMENTHANDLE_MAIN__
 #include "MysqlStatementHandle.h"
+#undef __MYSQLSTATEMENTHANDLE_MAIN__
 #include "MysqlResultRow.h"
 #include "StrUtil.h"
 #include "mysql.h"
@@ -17,6 +19,8 @@ StatementHandle *MysqlStatementHandle_new(DBConnection *dbc, char *query) {
   }
 
   sth->objectType = CLASS_MYSQLSTATEMENTHANDLE;
+
+  sth->funcs = &mysqlStatementHandleFuncs;
 
   sth->execute     = MysqlStatementHandle_execute;
   sth->fetchRow    = MysqlStatementHandle_fetchRow;
