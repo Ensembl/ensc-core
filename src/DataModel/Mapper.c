@@ -289,6 +289,8 @@ void Mapper_addMapCoordinates(Mapper *m, long contigId, int contigStart, int con
                               
   if ((contigEnd - contigStart) != (chrEnd - chrStart)) {
     fprintf(stderr,"ERROR: Cannot deal with mis-lengthed mappings so far\n");
+    fprintf(stderr,"Contig %d to %d and chromosome %d to %d\n",contigStart,contigEnd,
+            chrStart,chrEnd);
     exit(1);
   }
 
@@ -388,6 +390,8 @@ MapperPairSet *Mapper_listPairs(Mapper *m, long id, int start, int end, CoordSys
   pairs = IDHash_getValue(hash,id);
 
   retSet = MapperPairSet_new();
+  Mapper_dump(m,NULL);
+  fprintf(stderr, "listPairs with %d %d %d\n",id,start,end);
   
   if (start == -1 && end == -1) {
     for (i=0;i<MapperPairSet_getNumPair(pairs);i++) {
@@ -398,6 +402,7 @@ MapperPairSet *Mapper_listPairs(Mapper *m, long id, int start, int end, CoordSys
     for (i=0;i<MapperPairSet_getNumPair(pairs);i++) {
       MapperPair *pair = MapperPairSet_getPairAt(pairs,i);
       MapperUnit *fromCoord   = MapperPair_getUnit(pair, from);
+      fprintf(stderr," unit %d %d\n",fromCoord->start,fromCoord->end);
        
       if( fromCoord->end < start ) {
         continue;
@@ -435,7 +440,7 @@ void Mapper_dump(Mapper *m, FILE *fp) {
     fp = stderr;
   }
 
-  fromHash = Mapper_getPairHash(m, MAPPER_FROM_IND);
+  fromHash = Mapper_getPairHash(m, MAPPER_TO_IND);
 
   keys = IDHash_getKeys(fromHash);
   nKey = IDHash_getNumValues(fromHash);
@@ -445,10 +450,10 @@ void Mapper_dump(Mapper *m, FILE *fp) {
     MapperPairSet *set = IDHash_getValue(fromHash,id);
     int j;
 
-    fprintf(fp, "From Hash %d\n",id);
+    fprintf(fp, "From Hash %d with %d pairs\n",id, MapperPairSet_getNumPair(set));
 
     for (j=0; j<MapperPairSet_getNumPair(set); j++) {
-      MapperPair *pair = MapperPairSet_getPairAt(pairs,j);
+      MapperPair *pair = MapperPairSet_getPairAt(set,j);
       MapperUnit *fromCoord = MapperPair_getUnit(pair, MAPPER_FROM_IND);
       MapperUnit *toCoord   = MapperPair_getUnit(pair, MAPPER_TO_IND);
 

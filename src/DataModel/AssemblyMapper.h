@@ -18,6 +18,7 @@ struct AssemblyMapperStruct {
   IDHash *chrChunkHash;
 };
 
+#define AssemblyMapper_setChrChunkHash(am,h) (am)->chrChunkHash = h
 #define AssemblyMapper_getChrChunkHash(am) (am)->chrChunkHash
 
 #define AssemblyMapper_setAdaptor(am, ad) (am)->adaptor = (ad)
@@ -41,7 +42,7 @@ int AssemblyMapper_fastToAssembly(AssemblyMapper *am, long contigId,
                                   int start, int end, int strand, MapperCoordinate *retRange);
 MapperRangeSet *AssemblyMapper_mapCoordinatesToRawcontig(AssemblyMapper *am, long chrId,
                               int start, int end, int strand);
-long *AssemblyMapper_listContigIds(AssemblyMapper *am, long chrId, int start, int end);
+int AssemblyMapper_listContigIds(AssemblyMapper *am, long chrId, int start, int end, long **ids);
 void AssemblyMapper_registerRegion(AssemblyMapper *am, long chrId, int start, int end);
 int AssemblyMapper_registerRegionAroundContig(AssemblyMapper *am, long contigId, int left, int right);
 int AssemblyMapper_haveRegisteredContig(AssemblyMapper *am, long id);

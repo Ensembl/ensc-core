@@ -2,10 +2,12 @@
 #define __RAWCONTIG_H__
 
 #include "Storable.h"
+#include "BaseContig.h"
 
 typedef struct RawContigStruct RawContig;
 
 struct RawContigStruct {
+  BASECONTIG_DATA
   int length;
   int emblOffset;
   long cloneId;

@@ -1,5 +1,6 @@
 #include "GeneAdaptor.h"
 #include "AnalysisAdaptor.h"
+#include "AssemblyMapperAdaptor.h"
 #include "StrUtil.h"
 #include "BaseAdaptor.h"
 #include "MysqlUtil.h"
@@ -7,6 +8,7 @@
 #include "IDHash.h"
 #include "Transcript.h"
 #include "Slice.h"
+#include "AssemblyMapper.h"
 
 
 GeneAdaptor *GeneAdaptor_new(DBAdaptor *dba) {
@@ -17,6 +19,7 @@ GeneAdaptor *GeneAdaptor_new(DBAdaptor *dba) {
     return NULL;
   }
   BaseAdaptor_init((BaseAdaptor *)ga, dba, GENE_ADAPTOR);
+  ga->sliceGeneCache = StringHash_new(STRINGHASH_MEDIUM);
 
   return ga;
 }
@@ -201,7 +204,7 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, long geneId, int chrCoords) {
 
   if( chrCoords ) {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(ga->dba);
-    Slice *emptySlice = Slice_new();
+    Slice *emptySlice = Slice_new(NULL,0,0,0,NULL,sa,0,TRUE);
     Slice_setAdaptor(emptySlice, (BaseAdaptor *)sa);
     Slice_setEmptyFlag(emptySlice,1);
     // NIY $gene->transform( $empty_slice );
@@ -244,5 +247,93 @@ int GeneAdaptor_getStableEntryInfo(GeneAdaptor *ga, Gene *gene) {
   Gene_setVersion(gene,MysqlUtil_getInt(row,3));
 
   return 1;
+}
+
+
+Gene **GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName) {
+  Gene **out;
+  char sliceName[256];
+  char sliceCacheKey[512];
+  AssemblyMapperAdaptor *ama;
+  AssemblyMapper *assMapper;
+  long *contigIds;
+  int nContigId;
+  int i;
+
+  if (logicName) {
+    sprintf(sliceCacheKey,"%s:%s",Slice_getName(slice,sliceName),logicName);
+  } else {
+    sprintf(sliceCacheKey,"%s:",Slice_getName(slice,sliceName));
+  }
+  StrUtil_strupr(sliceCacheKey);
+
+  // check the cache which uses the slice name as it key
+  if(StringHash_contains(ga->sliceGeneCache,sliceCacheKey)) {
+    return (Gene **)StringHash_getValue(ga->sliceGeneCache,sliceCacheKey);
+  }
+
+  ama = DBAdaptor_getAssemblyMapperAdaptor(ga->dba);
+  assMapper = AssemblyMapperAdaptor_fetchByType(ama,Slice_getAssemblyType(slice));
+
+  nContigId = AssemblyMapper_listContigIds(assMapper,
+                                           Slice_getChrId(slice),
+                                           Slice_getChrStart(slice),
+                                           Slice_getChrEnd(slice),
+                                           &contigIds);
+
+  printf("Num Contigs = %d\n",nContigId);
+  for (i=0; i<nContigId; i++) {
+    printf("Contig %d\n",contigIds[i]);
+  }
+/*
+  # no genes found so return
+  if ( scalar (@cids) == 0 ) {
+    return [];
+  }
+
+  my $str = "(".join( ",",@cids ).")";
+
+  my $where = "WHERE e.contig_id in $str
+               AND   et.exon_id = e.exon_id
+               AND   et.transcript_id = t.transcript_id
+               AND   g.gene_id = t.gene_id";
+
+  if($logic_name) {
+    #determine analysis id via logic_name
+    my $analysis =
+      $self->db->get_AnalysisAdaptor()->fetch_by_logic_name($logic_name);
+    unless(defined($analysis) && $analysis->dbID()) {
+      $self->warn("No analysis for logic name $logic_name exists");
+      return [];
+    }
+
+    my $analysis_id = $analysis->dbID;
+    $where .= " AND g.analysis_id = $analysis_id";
+  }
+
+  my $sql = "
+    SELECT distinct(t.gene_id)
+    FROM   transcript t,exon_transcript et,exon e, gene g
+    $where";
+
+  my $sth = $self->db->prepare($sql);
+  $sth->execute;
+
+  while( my ($geneid) = $sth->fetchrow ) {
+    my $gene = $self->fetch_by_dbID( $geneid );
+    my $newgene = $gene->transform( $slice );
+
+    if( $newgene->start() <= $slice->length() &&
+        $newgene->end() >= 1 ) {
+      # only take the gene if its really overlapping the Slice
+      push( @out, $newgene );
+    }
+ }
+
+  #place the results in an LRU cache
+  $self->{'_slice_gene_cache'}{$key} = \@out;
+
+  return \@out;
+*/
 }
 

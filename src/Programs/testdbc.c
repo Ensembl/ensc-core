@@ -8,6 +8,7 @@
 #include "AnalysisAdaptor.h"
 #include "ChromosomeAdaptor.h"
 #include "SequenceAdaptor.h"
+#include "SliceAdaptor.h"
 #include "TranscriptAdaptor.h"
 #include "RawContig.h"
 #include "ExonAdaptor.h"
@@ -33,7 +34,7 @@ int main(int argc, char *argv[]) {
 
     printf("nGeneId = %d\n",nGeneId);
 
-    for (i=1;i<100;i++) {
+    for (i=1;i<5;i++) {
       gene = GeneAdaptor_fetchByDbID(ga,i,FALSE);
       if (gene) printf("Gene %s %d\n",Gene_getStableId(gene), Gene_getDbID(gene));
     }
@@ -79,6 +80,8 @@ int main(int argc, char *argv[]) {
   }
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
+    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,1500000);
+    Gene **genes = Slice_getAllGenes(slice,NULL);
   }
   {
     ChromosomeAdaptor *ca = DBAdaptor_getChromosomeAdaptor(dba);

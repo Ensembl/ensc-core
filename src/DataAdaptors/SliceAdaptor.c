@@ -15,36 +15,24 @@ SliceAdaptor *SliceAdaptor_new(DBAdaptor *dba) {
   return sa;
 }
 
-Slice *SliceAdaptor_fetchByDbID(SliceAdaptor *sa, long dbID) {
+Slice *SliceAdaptor_fetchByChrStartEnd(SliceAdaptor *sa, char *chr, int start, int end) {
   Slice *slice;
-  char qStr[256];
-  MYSQL_RES *results;
-  MYSQL_ROW row;
+  char *assemblyType;
 
-  sprintf(qStr,
-    "SELECT slice_id, logic_name,"
-    "       program, program_version, program_file,"
-    "       db, db_version, db_file,"
-    "       module, module_version,"
-    "       gff_source, gff_feature,"
-    "       created, parameters"
-    " FROM   slice"
-    " WHERE  slice_id = %d", dbID);
-
-  results = sa->prepare((BaseAdaptor *)sa,qStr,strlen(qStr));
-
-  row = mysql_fetch_row(results);
-  if( row == NULL ) {
-    return NULL;
+  if (!chr) {
+    fprintf(stderr,"ERROR: chromosome name argument must be defined and not ''\n");
+    exit(1);
   }
 
-  slice = SliceAdaptor_sliceFromRow(sa, row);
+  if(start > end) {
+    fprintf(stderr,"ERROR: start must be less than end: parameters %s:%d:%d\n",chr,start,end);
+    exit(1);
+  }
+
+  assemblyType = DBAdaptor_getAssemblyType(sa->dba);
+
+  slice = Slice_new(chr, start, end, 1, assemblyType, sa, 0, FALSE);
 
   return slice;
 }
 
-Slice *SliceAdaptor_sliceFromRow(SliceAdaptor *sa, MYSQL_ROW row) {
-  Slice *slice = Slice_new();
-
-  return slice;
-}

@@ -1,4 +1,5 @@
 #include "StrUtil.h"
+#include <ctype.h>
 
 char *StrUtil_CopyString(char *str) {
   char *copy;
@@ -30,4 +31,16 @@ void StrUtil_ReverseString(char *string, int len) {
     chPDown--;
   }
   return;
+}
+
+int StrUtil_strupr(char *string) {
+  int len=0;;
+  char *chP = string;
+
+  while (*chP != '\0') {
+    *chP = toupper(*chP);
+    len++;
+    chP++;
+  }
+  return len;
 }

@@ -3,6 +3,16 @@
 
 typedef struct BaseContigStruct BaseContig;
 
+typedef enum ContigTypeEnum {
+  RAWCONTIG,
+  SLICE
+} ContigType;
+
+#define BASECONTIG_DATA \
+  ContigType contigType; \
+  int start; \
+  int end;
+
 struct BaseContigStruct {
 };
 

@@ -20,6 +20,7 @@ char *DBAdaptor_setAssemblyType(DBAdaptor *dba, char *type);
 char *DBAdaptor_getAssemblyType(DBAdaptor *dba);
 
 AnalysisAdaptor   *DBAdaptor_getAnalysisAdaptor(DBAdaptor *dba);
+AssemblyMapperAdaptor *DBAdaptor_getAssemblyMapperAdaptor(DBAdaptor *dba);
 ChromosomeAdaptor *DBAdaptor_getChromosomeAdaptor(DBAdaptor *dba);
 ExonAdaptor       *DBAdaptor_getExonAdaptor(DBAdaptor *dba);
 GeneAdaptor       *DBAdaptor_getGeneAdaptor(DBAdaptor *dba);

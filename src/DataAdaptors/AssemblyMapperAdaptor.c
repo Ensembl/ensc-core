@@ -14,9 +14,20 @@ AssemblyMapperAdaptor *AssemblyMapperAdaptor_new(DBAdaptor *dba) {
     return NULL;
   }
   BaseAdaptor_init((BaseAdaptor *)ama, dba, ASSEMBLYMAPPER_ADAPTOR);
+  ama->typeCache = StringHash_new(STRINGHASH_SMALL);
 
   return ama;
 }
+
+AssemblyMapper *AssemblyMapperAdaptor_fetchByType(AssemblyMapperAdaptor *ama, char *type) {
+
+  if( !StringHash_contains(ama->typeCache,type)) {
+    StringHash_add(ama->typeCache,type,AssemblyMapper_new(ama,type));
+  }
+
+  return StringHash_getValue(ama->typeCache,type);
+}
+
 
 void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama, 
                                           AssemblyMapper *assMapper,
@@ -41,7 +52,7 @@ void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama,
     "    assembly ass,"
     "    chromosome chr"
     " where"
-    "    chr.chromosome_id= '%d' and"
+    "    chr.chromosome_id= %d and"
     "    ass.chromosome_id = chr.chromosome_id and"
     "    %d <= ass.chr_end  and"
     "    %d >= ass.chr_start  and"
@@ -62,9 +73,9 @@ void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama,
                                MysqlUtil_getInt(row,0),
                                MysqlUtil_getInt(row,1),
                                MysqlUtil_getInt(row,3),
-                               MysqlUtil_getLong(row,3),
-                               MysqlUtil_getInt(row,4),
-                               MysqlUtil_getInt(row,5));
+                               MysqlUtil_getLong(row,4),
+                               MysqlUtil_getInt(row,5),
+                               MysqlUtil_getInt(row,6));
     }
   }
 

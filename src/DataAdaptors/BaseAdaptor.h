@@ -21,7 +21,7 @@ char *Adaptor_TypeStrings[] = {
   "CHROMOSOME",
   "METACONTAINER",
   "SEQUENCE",
-  "DNAALIGNFEATURE"
+  "DNAALIGNFEATURE",
   "ASSEMBLYMAPPER"
 };
 

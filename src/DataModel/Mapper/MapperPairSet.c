@@ -13,7 +13,7 @@ MapperPairSet *MapperPairSet_new() {
   return mps;
 }
 
-void MapperPairSet_addPair(MapperPairSet *mps, MapperPair *range) {
+void MapperPairSet_addPair(MapperPairSet *mps, MapperPair *pair) {
   if (mps->nPair == 0 || !(mps->nPair%10)) {
     if ((mps->pairs = (MapperPair **)realloc(mps->pairs, 
                                                (mps->nPair+10)*sizeof(MapperPair *))) == NULL) {
@@ -21,16 +21,25 @@ void MapperPairSet_addPair(MapperPairSet *mps, MapperPair *range) {
       exit(1);
     }
   } 
-  mps->pairs[mps->nPair++] = range;
+  mps->pairs[mps->nPair++] = pair;
 }
 
 
 int MapperPairCompFunc(const void *a, const void *b) {
-  MapperPair *mp1 = (MapperPair *)a;
-  MapperPair *mp2 = (MapperPair *)b;
+  MapperPair **mp1 = (MapperPair **)a;
+  MapperPair **mp2 = (MapperPair **)b;
 
-  return (MapperPair_getUnit(mp2,MAPPER_FROM_IND)->start - 
-          MapperPair_getUnit(mp1,MAPPER_FROM_IND)->start);
+  printf("Comparing %d %d\n",MapperPair_getUnit(*mp1,MAPPER_TO_IND)->start,
+         MapperPair_getUnit(*mp2,MAPPER_TO_IND)->start);
+  if (MapperPair_getUnit(*mp1,MAPPER_TO_IND)->start >
+      MapperPair_getUnit(*mp2,MAPPER_TO_IND)->start) {
+    return 1;
+  } else if (MapperPair_getUnit(*mp1,MAPPER_TO_IND)->start <
+             MapperPair_getUnit(*mp2,MAPPER_TO_IND)->start) {
+    return -1;
+  } else {
+    return 0;
+  }
 }
 
 void MapperPairSet_sort(MapperPairSet *mps) {

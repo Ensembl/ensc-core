@@ -34,3 +34,13 @@ void MapperRangeSet_reverse(MapperRangeSet *mrs) {
     mrs->ranges[up]   = tmp;
   }
 }
+
+void MapperRangeSet_free(MapperRangeSet *mrs) {
+  int i;
+
+  for (i=0;i<mrs->nRange;i++) {
+    free(mrs->ranges[i]);
+  }
+  free(mrs->ranges);
+  free(mrs);
+}

@@ -10,7 +10,7 @@ struct SliceAdaptorStruct {
 };
 
 SliceAdaptor *SliceAdaptor_new(DBAdaptor *dba);
-Slice *SliceAdaptor_sliceFromRow(SliceAdaptor *sa, MYSQL_ROW row);
+Slice *SliceAdaptor_fetchByChrStartEnd(SliceAdaptor *sa, char *chr, int start, int end);
 
 
 #endif

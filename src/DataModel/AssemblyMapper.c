@@ -16,6 +16,7 @@ AssemblyMapper *AssemblyMapper_new(AssemblyMapperAdaptor *ama, char *type) {
   }
   
   AssemblyMapper_setContigRegister(am, IDHash_new(IDHASH_MEDIUM));
+  AssemblyMapper_setChrChunkHash(am, IDHash_new(IDHASH_SMALL));
   AssemblyMapper_setAdaptor(am, ama);
   AssemblyMapper_setType(am, type);
 
@@ -66,8 +67,7 @@ MapperRangeSet *AssemblyMapper_mapCoordinatesToRawcontig(AssemblyMapper *am, lon
 }
 
 
-long *AssemblyMapper_listContigIds(AssemblyMapper *am, long chrId, int start, int end) {
-  long *ids; 
+int AssemblyMapper_listContigIds(AssemblyMapper *am, long chrId, int start, int end, long  **ids) {
   MapperPairSet *pairs;
   int nPair;
   int i;
@@ -77,18 +77,18 @@ long *AssemblyMapper_listContigIds(AssemblyMapper *am, long chrId, int start, in
   pairs = Mapper_listPairs(AssemblyMapper_getMapper(am), chrId, 
                            start, end, ASSEMBLY_COORDS);
   
-  if ((ids = (long *)calloc(MapperPairSet_getNumPair(pairs),sizeof(long))) == NULL) {
+  if ((*ids = (long *)calloc(MapperPairSet_getNumPair(pairs),sizeof(long))) == NULL) {
     fprintf(stderr,"ERROR: Failed allocating ids array\n");
     exit(1);
   }
   
   for (i=0;i<MapperPairSet_getNumPair(pairs);i++) {
-    ids[i] = MapperPair_getUnit(MapperPairSet_getPairAt(pairs,i),MAPPER_FROM_IND)->id;
+    (*ids)[i] = MapperPair_getUnit(MapperPairSet_getPairAt(pairs,i),MAPPER_FROM_IND)->id;
   }
 
  // NIY free pairs 
 
-  return ids;
+  return MapperPairSet_getNumPair(pairs);
 }
 
 
