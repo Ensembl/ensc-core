@@ -101,7 +101,7 @@ char *StrUtil_copyString(char **to, char *from,int Start) {
 
   if ((Len=strlen(from))-1 < Start) {
     if ((*to = (char *)calloc(1,sizeof(char)))==NULL) {
-      Error_write(EMALLERR,"CopyString",ERR_SEVERE,"to");
+      Error_write(EMALLERR,"StrUtil_copyString",ERR_SEVERE,"to");
       return NULL;
     }
     (*to)[0]='\0';
@@ -109,7 +109,7 @@ char *StrUtil_copyString(char **to, char *from,int Start) {
     Len-=Start;
     cp = &from[Start];
     if ((*to = (char *)calloc(Len+2,sizeof(char)))==NULL) {
-      Error_write(EMALLERR,"CopyString",ERR_SEVERE,"to");
+      Error_write(EMALLERR,"StrUtil_copyString",ERR_SEVERE,"to");
       return NULL;
     }
     strcpy(*to,cp);
@@ -701,3 +701,42 @@ int StrUtil_rmQuotes(char *str) {
   }
   return len;
 }
+
+int StrUtil_tokenize(char ***tokens, int *ntok, char *string) {
+  char token[MAXSTRLEN];
+  char *ChP = string;
+  int count = 0;
+
+  while (StrUtil_gettok(token,&ChP,ChP,MAXSTRLEN)) {
+    if (!strlen(token)) break;
+    if (!count || !((count+1)%10)) {
+      *tokens = (char **)realloc(*tokens,(count+10)*sizeof(char *));
+    }
+#ifdef DBG
+    printf("Adding token %s\n",token);
+#endif
+    StrUtil_copyString(&((*tokens)[count++]),token,0);
+  }
+  *ntok = count;
+  return 1;
+}
+
+int StrUtil_tokenizeByDelim(char ***tokens, int *ntok, char *string, char delim) {
+  char token[MAXSTRLEN];
+  char *chP = string;
+  char *retChP;
+  int count = 0;
+
+  while (retChP = strchr(chP,delim)) {
+    StrUtil_strncpy(token,chP,retChP-chP);
+    printf("token = %s\n",token);
+    if (!count || !((count+1)%10)) {
+      *tokens = (char **)realloc(*tokens,(count+10)*sizeof(char *));
+    }
+    StrUtil_copyString(&((*tokens)[count++]),token,0);
+    chP = retChP;
+  }
+  *ntok = count;
+  return 1;
+}
+
