@@ -11,6 +11,8 @@ RawContig *RawContig_new() {
 
   rc->length = rc->emblOffset = rc->cloneId = -1;
 
+  BaseContig_setContigType(rc,RAWCONTIG);
+
   return rc;
 }
 

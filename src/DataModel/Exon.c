@@ -1,9 +1,11 @@
 #include "Exon.h"
 #include "ExonAdaptor.h"
 #include "AssemblyMapperAdaptor.h"
+#include "AssemblyMapper.h"
 #include "DBAdaptor.h"
 #include "SliceAdaptor.h"
 #include "ChromosomeAdaptor.h"
+#include "StickyExon.h"
 
 Exon *Exon_new() {
   Exon *exon;
@@ -62,9 +64,9 @@ int ExonStickyRankCompFunc(const void *a, const void *b) {
   Exon **e2 = (Exon **)b;
 
   if (Exon_getStickyRank(*e1) > Exon_getStickyRank(*e2)) {
-    return -1;
-  } else if (Exon_getStickyRank(*e1) < Exon_getStickyRank(*e2)) {
     return 1;
+  } else if (Exon_getStickyRank(*e1) < Exon_getStickyRank(*e2)) {
+    return -1;
   } else {
     return 0;
   }
@@ -85,6 +87,11 @@ Exon *Exon_transformToSlice(Exon *exon, Slice *slice) {
   AssemblyMapper *assMapper;
   MapperRangeSet *mapped;
   MapperCoordinate *mc;
+
+// HACK HACK HACK
+  if (Exon_isSticky(exon)) {
+    return StickyExon_transformToSlice(exon,slice);
+  }
 
   if (!Exon_getContig(exon)) {
     fprintf(stderr,"ERROR: Exon's contig must be defined to transform to Slice coords");
@@ -117,8 +124,8 @@ Exon *Exon_transformToSlice(Exon *exon, Slice *slice) {
   // exons should always transform so in theory no error check necessary
   // actually we could have exons inside and outside the Slice 
   // because of db design and the query that produces them
-  if( !mapped ) {
-    fprintf(stderr, "ERROR: Exon couldnt map\n");
+  if( !mapped || mapped->nRange == 0) {
+    fprintf(stderr, "ERROR: Exon couldnt map dbID = %d\n",Exon_getDbID(exon));
     exit(1);
   }
 
