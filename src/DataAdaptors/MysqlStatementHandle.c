@@ -53,7 +53,7 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
 
   Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);
 
-  printf("Statement = %s\n",sth->statementFormat);
+  // printf("Statement = %s\n",sth->statementFormat);
 
   m_sth = (MysqlStatementHandle *)sth;
 
@@ -106,6 +106,13 @@ ResultRow *MysqlStatementHandle_fetchRow(StatementHandle *sth) {
   Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);
 
   m_sth = (MysqlStatementHandle *)sth;
+
+  if (m_sth->results == NULL) {
+    fprintf(stderr,"ERROR: Tried to fetch a row for a StatementHandle with no results for %s\n",
+            sth->statementFormat);
+    exit(1);
+  }
+
   mysql_row = mysql_fetch_row(m_sth->results);
 
   if (mysql_row == NULL) {

@@ -439,3 +439,104 @@ int StrUtil_stripnewline(char *str) {
   return 1;
 }
 
+/******************************************************************************/
+/* Routine   :                                                                */
+/*            gettok()                                                        */
+/* Role      :                                                                */
+/*            To get the first white space seperated string from a supplied   */
+/*            char array                                                      */
+/* Arguments :                                                                */
+/*            str    - the extracted token (RETURNED)                         */
+/*            out_pp - a pointer to a string pointer to return the position   */
+/*                     after the newly read token (RETURNED)                  */
+/*            in_p   - the input string                                       */
+/*            MaxLen - maximum length for token                               */
+/* Returns   :                                                                */
+/*            1 - success                                                     */
+/*            0 - failure                                                     */
+/* Notes     :                                                                */
+/*            Tidied up file created 4/93 for human                           */
+/* History   :                                                                */
+/*            07/06/93 SMJS  Version created for my parser                    */
+/*            11/06/93 SMJS  Changed so that it doesn't give an error if no   */
+/*                           argument read.                                   */
+/*            28/01/94 SMJS  Changed so that can deal with quoted strings     */
+/*            31/07/98 SMJS  Added maximum length argument to gettok()        */
+/*                           instead of using fixed maximum length            */
+/******************************************************************************/
+int StrUtil_gettok(char *str,char **out_pp,char *in_p,int MaxLen) {
+  int i;
+  int NQuote=0;
+  int LenInStr;
+
+  if (in_p==NULL) {
+    Error_write(ENULLPOINTER,"gettok",ERR_SEVERE,"in_p");
+    str[0]='\0';
+    return 0;
+  }
+
+  i=0;
+  LenInStr = strlen(in_p);
+  while ((in_p[i]==' ' || in_p[i]=='\t' || in_p[i]=='\n') && i<LenInStr) {
+    i++;
+  }
+
+  if (i==strlen(in_p)) {
+    *out_pp=(&in_p[i]); /* out_pp contains a pointer to the position in */
+                        /* the string */
+    str[0]='\0';
+    return 1;
+  }
+
+  if (in_p[i]!='\"') {
+    in_p=(&in_p[i]);
+    LenInStr = strlen(in_p);
+    i=0;
+    while (in_p[i]!=' ' && i<MaxLen && in_p[i]!='\0' && in_p[i]!='\n' &&
+           in_p[i]!='\t' && i<LenInStr) {
+      str[i]=in_p[i];
+      i++;
+    }
+    *out_pp=(&in_p[i]);/* out_pp contains a pointer to the position in the*/
+                       /* string after the token decoded */
+  } else {
+    in_p=(&in_p[i+1]);
+    LenInStr = strlen(in_p);
+    i=0;
+    while ((in_p[i]!='\"' || in_p[i+1]=='\"') && i<MaxLen && 
+           in_p[i]!='\0' && i<LenInStr) {
+      if (in_p[i]!='\"') {
+        str[i-NQuote]=in_p[i];
+        i++;
+      } else {
+        str[i-NQuote]='\"';
+        NQuote++;
+        i+=2;
+      }
+    }
+    if (in_p[i]=='\"') {
+      *out_pp=(&in_p[i+1]); /*out_pp contains pointer to position in */
+                            /* string after the token decoded */
+    } else if (i==MaxLen) {
+      Error_write(EMAXLENTOK,"gettok",ERR_SEVERE,
+                  "Maximum length for token (%d) exceeded. String:\n%s",
+                  MaxLen,str);
+      return 0;
+    } else {
+      Error_write(EQUOTE,"gettok",ERR_SEVERE,"Missing closing quote in %s",in_p);
+      return 0;
+    }
+  }
+
+  if (i==MaxLen) {
+    Error_write(EMAXLENTOK,"gettok",ERR_SEVERE,
+                "Maximum length for token (%d) exceeded in string:\n%s",
+                MaxLen,str);
+    return 0;
+  }
+
+  str[i-NQuote]='\0';
+
+  return 1; 
+}
+

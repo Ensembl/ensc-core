@@ -13,10 +13,11 @@ BINDIR=../bin
 all	: directories \
           libensc.a \
           Programs/testdbc \
+          Tests/ClassTest \
+          Tests/DBAdaptorTest \
           Tests/EcoStringTest \
           Tests/StreamTest \
-          Tests/ClassTest \
-          Tests/DBAdaptorTest
+          Tests/StrUtilTest
 
 directories	:
 	mkdir -p objectfiles
@@ -94,27 +95,32 @@ libensc.a	: \
 Programs/testdbc: \
 	libensc.a \
 	Programs/testdbc.c
-	cc $(CFLAGS) -o Programs/testdbc Programs/testdbc.c -L. -lensc $(LDFLAGS)
+	$(CC) $(CFLAGS) -o Programs/testdbc Programs/testdbc.c -L. -lensc $(LDFLAGS)
 
 Tests/ClassTest: \
 	libensc.a \
 	Tests/ClassTest.c
-	cc $(CFLAGS) -o Tests/ClassTest Tests/ClassTest.c -L. -lensc $(LDFLAGS)
+	$(CC) $(CFLAGS) -o Tests/ClassTest Tests/ClassTest.c -L. -lensc $(LDFLAGS)
 
 Tests/DBAdaptorTest: \
 	libensc.a \
 	Tests/DBAdaptorTest.c
-	cc $(CFLAGS) -o Tests/DBAdaptorTest Tests/DBAdaptorTest.c -L. -lensc $(LDFLAGS)
+	$(CC) $(CFLAGS) -o Tests/DBAdaptorTest Tests/DBAdaptorTest.c -L. -lensc $(LDFLAGS)
 
 Tests/EcoStringTest: \
 	libensc.a \
 	Tests/EcoStringTest.c
-	cc $(CFLAGS) -o Tests/EcoStringTest Tests/EcoStringTest.c -L. -lensc $(LDFLAGS)
+	$(CC) $(CFLAGS) -o Tests/EcoStringTest Tests/EcoStringTest.c -L. -lensc $(LDFLAGS)
 
 Tests/StreamTest: \
 	libensc.a \
 	Tests/StreamTest.c
-	cc $(CFLAGS) -o Tests/StreamTest Tests/StreamTest.c -L. -lensc $(LDFLAGS)
+	$(CC) $(CFLAGS) -o Tests/StreamTest Tests/StreamTest.c -L. -lensc $(LDFLAGS)
+
+Tests/StrUtilTest: \
+	libensc.a \
+	Tests/StrUtilTest.c
+	$(CC) $(CFLAGS) -o Tests/StrUtilTest Tests/StrUtilTest.c -L. -lensc $(LDFLAGS)
 
 # deletes compiled class files
 clean	:	

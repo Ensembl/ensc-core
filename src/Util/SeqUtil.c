@@ -1,5 +1,8 @@
 #include "SeqUtil.h"
 #include "StrUtil.h"
+#include "Error.h"
+#include "Stream.h"
+#include "FileUtil.h"
 
 char *SeqUtil_reverseComplement(char *seqStr, int lenSeqStr) {
   int i;
@@ -81,3 +84,123 @@ char *SeqUtil_addNs(char *seq, int length) {
   
   return seq;
 }
+
+
+/******************************************************************************/
+/* Routine    :                                                               */
+/*             ReadTransTab()                                                 */
+/* Role       :                                                               */
+/* Arguments  :                                                               */
+/* Returns    :                                                               */
+/* History    :                                                               */
+/******************************************************************************/
+int SeqUtil_readTransTab(char *fName, char TransTab[4][4][4]) {
+  FILE *FpIn;
+  char  Line[MAXSTRLEN];
+  char  Token[MAXSTRLEN];
+  int   i;
+  int   j;
+  int   k;
+  int   Inds[3];
+  char  aa;
+  char *ChP;
+  char  TmpName[MAXSTRLEN];
+  char *headerStr = "Symbol   3-letter    Codons";
+
+  if ((FpIn=FileUtil_open(fName,"r","ReadTransTab"))==NULL) {
+    Error_trace("ReadTransTab",NULL);
+    return 0;
+  }
+
+  fgets(Line,MAXSTRLEN,FpIn);
+
+  while (strncmp(Line,headerStr,sizeof(headerStr)) && !feof(FpIn)) {
+    fgets(Line,MAXSTRLEN,FpIn);
+  }
+
+  fgets(Line,MAXSTRLEN,FpIn);
+
+  while(!feof(FpIn)) {
+    fgets(Line,MAXSTRLEN,FpIn);
+    ChP = Line;
+    if (!StrUtil_gettok(Token,&ChP,ChP,MAXSTRLEN)) {
+      Error_trace("ReadTransTab",NULL);
+      return 0;
+    }
+    if (strlen(Token)!=1) {
+      Error_write(ESTRTOLONG,"ReadTransTab",ERR_SEVERE,
+               "String should be aa single letter code = %s\n",Token);
+      return 0;
+    }
+    aa = Token[0];
+    if (!StrUtil_gettok(Token,&ChP,ChP,MAXSTRLEN)) {
+      Error_trace("ReadTransTab",NULL);
+      return 0;
+    }
+    if (strlen(Token)!=3) {
+      Error_write(ESTRTOLONG,"ReadTransTab",ERR_SEVERE,
+               "String should be aa three letter code = %s\n",Token);
+      return 0;
+    }
+    if (!StrUtil_gettok(Token,&ChP,ChP,MAXSTRLEN)) {
+      Error_trace("ReadTransTab",NULL);
+      return 0;
+    }
+    while (strcmp(Token,"!") && strcmp(Token,"...")) {
+      if (strlen(Token)!=3) {
+        Error_write(ESTRTOLONG,"ReadTransTab",ERR_SEVERE,
+                 "String should be a three letter nucleotide = %s\n",Token);
+        return 0;
+      }
+      for (i=0;i<3;i++) {
+        if (!NucToInt(Token[i],&(Inds[i]))) {
+          Error_trace("ReadTransTab",NULL);
+          return 0;
+        }
+      }
+      TransTab[Inds[0]][Inds[1]][Inds[2]] = aa;
+      if (!StrUtil_gettok(Token,&ChP,ChP,MAXSTRLEN)) {
+        Error_trace("ReadTransTab",NULL);
+        return 0;
+      }
+    }
+  }
+  for (i=0;i<4;i++) {
+    for (j=0;j<4;j++) {
+      Stream_fprintf(OutStream,"{");
+      for (k=0;k<4;k++) {
+        Stream_fprintf(OutStream,"%c ",TransTab[i][j][k]);
+      }
+      Stream_fprintf(OutStream,"} ");
+    }
+    Stream_fprintf(OutStream,"\n");
+  }
+  return 1;
+}
+int NucToInt(char Nuc, int *NucInt) {
+   switch (Nuc)
+   {
+      case 'A':
+      case 'a':
+         *NucInt = 0;
+         break;
+      case 'C':
+      case 'c':
+         *NucInt = 1;
+         break;
+      case 'G':
+      case 'g':
+         *NucInt = 2;
+         break;
+      case 'T':
+      case 't':
+         *NucInt = 3;
+         break;
+      default:
+         Error_write(EFALLTHRU,"NucToInt",ERR_SEVERE,
+                     "Nucleotide = %c (not A,C,G or T)",Nuc);
+         return 0;
+   }
+   return 1;
+}
+
