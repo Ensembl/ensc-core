@@ -3,6 +3,10 @@
 #include "DBAdaptor.h"
 #include "Species.h"
 #include "MetaContainer.h"
+#include "StrUtil.h"
+#include "FileUtil.h"
+
+Vector *ComparaDBAdaptor_readConfFile(ComparaDBAdaptor *cdba, char *fileName);
 
 ComparaDBAdaptor *ComparaDBAdaptor_new(char *host, char *user, char *pass, char *dbname,
                                        unsigned int port, char *confFile) {
@@ -18,50 +22,164 @@ ComparaDBAdaptor *ComparaDBAdaptor_new(char *host, char *user, char *pass, char 
   cdba->genomes = StringHash_new(STRINGHASH_SMALL);
 
   if (confFile) {
-    fprintf(stderr,"Error: Conf file reading not implemented\n");
-    exit(1);
-
-#ifdef DONE
     //read configuration file from disk
-    my @conf = @{do $conf_file};
-
-    foreach my $genome (@conf) {
-      my ($species, $assembly, $db_hash) = @$genome;
-      my $db;
-
-      my $module = $db_hash->{'module'};
-      my $mod = $module;
-
-      eval {
-	// require needs /'s rather than colons
-	if ( $mod =~ /::/ ) {
-	  $mod =~ s/::/\//g;
-	}
-	require "${mod}.pm";
-
-	$db = $module->new(-dbname => $db_hash->{'dbname'},
-			   -host   => $db_hash->{'host'},
-			   -user   => $db_hash->{'user'},
-			   -pass   => $db_hash->{'pass'},
-			   -port   => $db_hash->{'port'},
-			   -driver => $db_hash->{'driver'});
-      };
-
-      if($@) {
-	$self->throw("could not load module specified in configuration " .
-		     "file:$@");
-      }
-
-      unless($db && ref $db && $db->isa('Bio::EnsEMBL::DBSQL::DBConnection')) {
-	$self->throw("[$db] specified in conf file is not a " .
-		     "Bio::EnsEMBL::DBSQL::DBConnection");
-      }
-
-      $self->{'genomes'}->{"$species:$assembly"} = $db;
-    }
-#endif
+    ComparaDBAdaptor_readConfFile(cdba, confFile);
   }
   return cdba;
+}
+
+/* Format of conf file:-
+# $compara_db->get_bd_adaptor("Homo sapiens","NCBI31")
+
+[
+['Homo sapiens', 'NCBI31', {'host' => "ecs2b.internal.sanger.ac.uk",
+                            'user' => "ensro",
+                            'dbname' => "ens_NCBI_31",
+                            'module' => 'Bio::EnsEMBL::DBSQL::DBAdaptor'}],
+]
+*/
+Vector *ComparaDBAdaptor_readConfFile(ComparaDBAdaptor *cdba, char *fileName) {
+  int inOuter = 0;
+  int inInner = 0;
+  int inHash = 0;
+  FILE *confFP;
+  char line[MAXSTRLEN];
+  char *confStr;
+  int confStrLen = 0;
+  char *chP;
+
+  if ((confFP = FileUtil_open(fileName, "r", "ComparaDBAdaptor_readConfFile")) == NULL) {
+    fprintf(stderr, "Error: Failed opening conf file.\n");
+    exit(1);
+  }
+
+  StrUtil_copyString(&confStr, "", 0);
+  while (fgets(line, MAXSTRLEN, confFP)) {
+    int len;
+
+    StrUtil_truncateAtChar(line, '#');
+    len = StrUtil_rmspace(line);
+
+    if (line[0] == '[' || inOuter) {
+      inOuter = 1;
+      confStr = StrUtil_appendString(confStr, line);
+      confStrLen+=len;
+    } else if (len > 0) {
+      fprintf(stderr,"Error: Failed reading conf file at %s\n",line);
+    }
+  }
+  
+  // printf("confStr = %s\n",confStr);
+
+  if (confStr[confStrLen-1] != ']') {
+    fprintf(stderr,"Error: conf file missing closing ']'\n");
+    exit(1);
+  }
+
+// Remove the outer []
+  chP = confStr+1;
+  confStr[confStrLen-1] = '\0';
+
+  while (*chP != '\0') {
+    int sectLen;
+    int tokLen;
+    char *startSect;
+    int tokNum = 0;
+    char species[1024];
+    char assembly[1024];
+    char user[1024];
+    char dbname[1024];
+    char host[1024];
+    char genomeHashKey[1024];
+    DBAdaptor *dba;
+
+    host[0] = species[0] = assembly[0] = user[0] = dbname[0] = '\0';
+
+    if (*chP != '[') {
+      fprintf(stderr, "Error: didn't get a '[' at start of conf section\n");
+      exit(1);
+    }
+
+    startSect = ++chP;
+
+    sectLen = StrUtil_truncateAtChar(chP, ']');
+    // printf("section = %s\n",chP);
+
+    while ((tokLen = StrUtil_truncateAtChar(chP,','))) {
+      //printf("token = %s\n",chP);
+      switch (tokNum) {
+        case 0:
+          strcpy(species, chP);
+          StrUtil_rmQuotes(species);
+          break;
+        case 1:
+          strcpy(assembly, chP);
+          StrUtil_rmQuotes(assembly);
+          break;
+        default:
+          {
+            char key[1024];
+            char value[1024];
+            char *fillP = key;
+            char *tokP = chP;
+            char prevCh = '\0';
+  
+            while (*tokP != '\0') {
+              if (prevCh == '=' && *tokP == '>') {
+                *(fillP-1) = '\0';
+                fillP = value;
+              } else if (*tokP!='{' && *tokP!='}') {
+                *fillP = *tokP;
+                fillP++;
+              }
+              prevCh = *tokP;
+              tokP++;
+            }
+            *fillP = '\0';
+
+            //printf("Before key = %s value = %s\n",key,value);
+            StrUtil_rmQuotes(key);
+            StrUtil_rmQuotes(value);
+            //printf("After  key = %s value = %s\n",key,value);
+            if (!strcmp(key,"host")) {
+              strcpy(host, value);
+            } else if (!strcmp(key,"user")) {
+              strcpy(user, value);
+            } else if (!strcmp(key,"dbname")) {
+              strcpy(dbname, value);
+            } else if (!strcmp(key,"module")) {
+              if (strcmp(value,"Bio::EnsEMBL::DBSQL::DBAdaptor")) {
+                fprintf(stderr,"Error: Module not normal adaptor is %s\n",value);
+                exit(1);
+              }
+            }
+          }
+          break;
+      }
+
+      tokNum++;  
+      chP+=tokLen+1;
+    }
+
+    if (host[0] == '\0' ||
+        species[0] == '\0' ||
+        assembly[0] == '\0' ||
+        user[0] == '\0' ||
+        dbname[0] == '\0') {
+      fprintf(stderr,"Error: Missing parameter in conf section\n");
+      exit(1);
+    }
+    dba = DBAdaptor_new(host,user,NULL,dbname,3306,NULL);
+    DBAdaptor_setAssemblyType(dba, assembly);
+    sprintf(genomeHashKey,"%s:%s",species,assembly);
+    StringHash_add(cdba->genomes, genomeHashKey, dba);
+
+    chP = startSect + (sectLen+2);
+  }
+
+
+  free(confStr);
+  FileUtil_close(confFP,fileName);
 }
 
 void ComparaDBAdaptor_addDBAdaptor(ComparaDBAdaptor *cdba, DBAdaptor *dba) {
@@ -148,6 +266,7 @@ HomologyAdaptor *ComparaDBAdaptor_getHomologyAdaptor(ComparaDBAdaptor *cdba) {
   return (HomologyAdaptor *)DBConnection_getAdaptor(cdba->dbc,HOMOLOGY_ADAPTOR);
 }
 
+/* Seems to be crap
 SyntenyRegionAdaptor *ComparaDBAdaptor_getSyntenyRegionAdaptor(ComparaDBAdaptor *cdba) {
   if (!DBConnection_getAdaptor(cdba->dbc,SYNTENYREGION_ADAPTOR)) {
     DBConnection_addAdaptor(cdba->dbc,
@@ -155,12 +274,12 @@ SyntenyRegionAdaptor *ComparaDBAdaptor_getSyntenyRegionAdaptor(ComparaDBAdaptor 
   }
   return (SyntenyRegionAdaptor *)DBConnection_getAdaptor(cdba->dbc,SYNTENYREGION_ADAPTOR);
 }
-
+*/
 
 ComparaDNAAlignFeatureAdaptor *ComparaDBAdaptor_getComparaDNAAlignFeatureAdaptor(ComparaDBAdaptor *cdba)  {
   if (!DBConnection_getAdaptor(cdba->dbc,COMPARADNAALIGNFEATURE_ADAPTOR)) {
     DBConnection_addAdaptor(cdba->dbc,
-                            (BaseAdaptor *)ComparaDNAFeatureAdaptor_new(cdba));
+                            (BaseAdaptor *)ComparaDNAAlignFeatureAdaptor_new(cdba));
   }
   return (ComparaDNAAlignFeatureAdaptor *)DBConnection_getAdaptor(cdba->dbc,COMPARADNAALIGNFEATURE_ADAPTOR);
 }

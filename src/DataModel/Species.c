@@ -40,3 +40,7 @@ char *Species_getBinomialName(Species *species) {
   return species->binomialName;
 
 }
+
+void Species_free(Species *species) {
+  fprintf(stderr,"Warning: Species_free NIY\n");
+}

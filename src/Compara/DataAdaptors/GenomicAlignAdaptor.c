@@ -86,8 +86,8 @@ void GenomicAlignAdaptor_store(GenomicAlignAdaptor *gaa, Vector *genomicAligns) 
             GenomicAlign_getQueryStrand(ga),
             methodLinkId,
             GenomicAlign_getScore(ga),
-            GenomicAlign_getPercIdScore(ga),
-            GenomicAlign_getCigarLine(ga));
+            GenomicAlign_getPercentId(ga),
+            GenomicAlign_getCigarString(ga));
 
     qStr = StrUtil_appendString(qStr, tmpStr);
     commaStr[0] = ','; 
@@ -172,7 +172,7 @@ Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect( GenomicAlignAdaptor
     qStr = StrUtil_appendString(qStr, tmpStr);
 
     if (startP && endP) {
-      int lowerBound = *startP - GenomicAlignAdaptor_getMaxAlignmentLength(gaa);
+      int lowerBound = *startP - gaa->maxAlignmentLength;
       sprintf(tmpStr,
                " AND gab.consensus_start <= %d"
                " AND gab.consensus_start >= %d"
@@ -205,7 +205,7 @@ Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect( GenomicAlignAdaptor
     qStr = StrUtil_appendString(qStr, tmpStr);
 
     if (startP && endP) {
-      int lowerBound = *startP - GenomicAlignAdaptor_getMaxAlignmentLength(gaa);
+      int lowerBound = *startP - gaa->maxAlignmentLength;
       sprintf(tmpStr,
                " AND gab.query_start <= %d"
                " AND gab.query_start >= %d"

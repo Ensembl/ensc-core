@@ -24,3 +24,15 @@ char *FeaturePair_setHitSeqName(FeaturePair *fp, char *str) {
   return fp->hitId;
 }
 
+char *FeaturePair_setHitSpecies(FeaturePair *fp, char *str) {
+  fp->hitSpecies = StrUtil_copyString(&(fp->hitSpecies),str,0);
+
+  return fp->hitSpecies;
+}
+
+char *FeaturePair_setSpecies(FeaturePair *fp, char *str) {
+  fp->species = StrUtil_copyString(&(fp->species),str,0);
+
+  return fp->species;
+}
+

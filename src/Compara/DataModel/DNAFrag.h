@@ -41,6 +41,9 @@ struct DNAFragStruct {
 #define DNAFrag_setAdaptor(df,a) Storable_setAdaptor(&((df)->st),(a))
 #define DNAFrag_getAdaptor(df) Storable_getAdaptor(&((df)->st))
 
+char *DNAFrag_setName(DNAFrag *df, char *name);
+#define DNAFrag_getName(df) (df)->name
+
 DNAFrag *DNAFrag_new();
 
 #endif

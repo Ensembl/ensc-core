@@ -605,3 +605,82 @@ char *StrUtil_substr(char *from, int start, int length) {
   }
   return StrUtil_copyNString(&toString, from, start, end-start+1);
 }
+
+/******************************************************************************/
+/* Routine    :                                                               */
+/*             StrUtil_rmspace()                                              */
+/* Role       :                                                               */
+/*             to remove all white spaces from a string                       */
+/* Arguments  :                                                               */
+/*             string - the string to remove spaces from                      */
+/* Returns    :                                                               */
+/*             the length of the stripped string                              */
+/******************************************************************************/
+int StrUtil_rmspace(char *string) {
+  char *chP1 = string;
+  char *chP2 = string;
+  char ch;
+  int inDoubleQuotes = 0;
+  int inSingleQuotes = 0;
+   
+  while ((ch = *chP1) != '\0') {
+    if (ch == '\'') inSingleQuotes = (inSingleQuotes) ? 0 : 1;
+    if (ch == '"') inDoubleQuotes = (inDoubleQuotes) ? 0 : 1;
+
+    if (inSingleQuotes || inDoubleQuotes || (ch!=' ' && ch!='\t' && ch!='\n')) {
+      *chP2=ch;
+      chP2++;
+    }
+    chP1++;
+  }
+  *chP2='\0';
+
+  return(chP2-string);
+}
+
+int StrUtil_truncateAtChar(char *string, char truncCh) {
+  char *chP = string;
+  char ch;
+  int inDoubleQuotes = 0;
+  int inSingleQuotes = 0;
+
+  while ((ch = *chP) != '\0') {
+    if (ch == '\'') inSingleQuotes = (inSingleQuotes) ? 0 : 1;
+    if (ch == '"') inDoubleQuotes = (inDoubleQuotes) ? 0 : 1;
+
+    if (ch==truncCh && !inDoubleQuotes && !inSingleQuotes) {
+      break;
+    }
+    chP++;
+  }
+  *chP='\0';
+
+  return(chP-string);
+}
+
+/******************************************************************************/
+/* Routine    :                                                               */
+/*             RmQuotes()                                                     */
+/* Role       :                                                               */
+/*             To remove quotes (if any) from around a string. It is not an   */
+/*             error for there to be no quotes.                               */
+/* Arguments  :                                                               */
+/*             Str - the string to remove quotes from around.                 */
+/* Returns    :                                                               */
+/*             The length of the new string.                                  */
+/* History    :                                                               */
+/*             22/03/98 SMJS  Initial implementation                          */
+/******************************************************************************/
+int StrUtil_rmQuotes(char *str) {
+  int len = strlen(str);
+
+  if (str[0]=='\"' || str[0]=='\'') {
+    len--;
+    memmove(str,&(str[1]),len);
+    if (str[len-1] == '\"' || str[len-1] == '\'') {
+      str[len-1] = '\0';
+      len--;
+    }
+  }
+  return len;
+}

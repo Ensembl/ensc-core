@@ -95,7 +95,7 @@ Vector *ComparaDNAAlignFeatureAdaptor_fetchAllBySpeciesRegion(ComparaDNAAlignFea
       DNAAlignFeature_setStrand(f, 1);
       DNAAlignFeature_setSpecies(f, csSpecies);
       DNAAlignFeature_setScore(f, GenomicAlign_getScore(ga));
-      DNAAlignFeature_setPercId(f, GenomicAlign_getPercId(ga));
+      DNAAlignFeature_setPercId(f, GenomicAlign_getPercentId(ga));
 
       DNAAlignFeature_setHitStart(f, DNAFrag_getStart(qdf) + GenomicAlign_getQueryStart(ga) - 1);
       DNAAlignFeature_setHitEnd(f, DNAFrag_getStart(qdf) + GenomicAlign_getQueryEnd(ga) - 1);

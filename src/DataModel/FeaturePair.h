@@ -21,7 +21,9 @@ typedef struct FeaturePairFuncsStruct {
   signed char hitStrand; \
   signed char hitPhase; \
   signed char hitEndPhase; \
-  char       *hitId;
+  char       *hitId; \
+  char       *species; \
+  char       *hitSpecies;
 
 
 #define FUNCSTRUCTTYPE FeaturePairFuncs
@@ -37,6 +39,12 @@ char *FeaturePair_setHitSeqName(FeaturePair *fp, char *str);
 
 #define FeaturePair_getSeqName(fp)  SeqFeature_getSeqName((fp))
 #define FeaturePair_setSeqName(fp,str)  SeqFeature_setSeqName((fp),(str))
+
+char *FeaturePair_setSpecies(FeaturePair *fp, char *str);
+#define FeaturePair_getSpecies(fp)  (fp)->species
+
+char *FeaturePair_setHitSpecies(FeaturePair *fp, char *str);
+#define FeaturePair_getHitSpecies(fp)  (fp)->hitSpecies
 
 #define FeaturePair_setStart(fp,start) SeqFeature_setStart((fp),(start))
 #define FeaturePair_getStart(fp) SeqFeature_getStart((fp))

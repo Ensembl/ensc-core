@@ -14,7 +14,7 @@ GenomeDB *GenomeDB_new() {
 }
 
 int GenomeDB_hasConsensus(GenomeDB *gdb, GenomeDB *conGdb, IDType methodLinkId) {
-  GenomeDBAdaptor *gda = GenomeDB_getAdaptor(gdb);
+  GenomeDBAdaptor *gda = (GenomeDBAdaptor *)GenomeDB_getAdaptor(gdb);
 
   // sanity check on the GenomeDB passed in
   if (!conGdb) {
@@ -28,11 +28,11 @@ int GenomeDB_hasConsensus(GenomeDB *gdb, GenomeDB *conGdb, IDType methodLinkId) 
     exit(1);
   }
 
-  return GenomeDBAdaptor_checkForConsensusDB(gda, gdb, consensusGdb, methodLinkId);
+  return GenomeDBAdaptor_checkForConsensusDb(gda, gdb, conGdb, methodLinkId);
 }
 
 int GenomeDB_hasQuery(GenomeDB *gdb, GenomeDB *queryGdb, IDType methodLinkId) {
-  GenomeDBAdaptor *gda = GenomeDB_getAdaptor(gdb);
+  GenomeDBAdaptor *gda = (GenomeDBAdaptor *)GenomeDB_getAdaptor(gdb);
 
   // sanity check on the GenomeDB passed in
   if (!queryGdb) {
@@ -46,11 +46,23 @@ int GenomeDB_hasQuery(GenomeDB *gdb, GenomeDB *queryGdb, IDType methodLinkId) {
     exit(1);
   }
 
-  return GenomeDBAdaptor_checkForQueryDB(gda, gdb, queryGdb, methodLinkId);
+  return GenomeDBAdaptor_checkForQueryDb(gda, gdb, queryGdb, methodLinkId);
 }
 
 Vector *GenomeDB_linkedGenomesByMethodLinkId(GenomeDB *gdb, IDType methodLinkId) {
-  GenomeDBAdaptor *gda = GenomeDB_getAdaptor(gdb);
+  GenomeDBAdaptor *gda = (GenomeDBAdaptor *)GenomeDB_getAdaptor(gdb);
 
-  return GenomeDBAdaptor_getAllDBLinks(gda, gdb, methodLinkId);
+  return GenomeDBAdaptor_getAllDbLinks(gda, gdb, methodLinkId);
+}
+
+char *GenomeDB_setAssembly(GenomeDB *gdb, char *assembly) {
+  StrUtil_copyString(&(gdb->assembly), assembly, 0);
+
+  return gdb->assembly;
+}
+
+char *GenomeDB_setName(GenomeDB *gdb, char *name) {
+  StrUtil_copyString(&(gdb->name), name, 0);
+
+  return gdb->name;
 }

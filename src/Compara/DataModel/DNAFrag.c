@@ -1,4 +1,5 @@
 #include "DNAFrag.h"
+#include "StrUtil.h"
 
 DNAFrag *DNAFrag_new() {
   DNAFrag *df;
@@ -12,3 +13,8 @@ DNAFrag *DNAFrag_new() {
   return df;
 }
 
+char *DNAFrag_setName(DNAFrag *df, char *name) {
+  StrUtil_copyString(&(df->name),name,0);
+
+  return df->name;
+}

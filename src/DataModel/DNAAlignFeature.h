@@ -64,6 +64,14 @@ DNAAlignFeature *DNAAlignFeature_new(void);
 #define DNAAlignFeature_setPercId(fp,pid) BaseAlignFeature_setPercId((fp),(pid))
 #define DNAAlignFeature_getPercId(fp) BaseAlignFeature_getPercId((fp))
 
+#define DNAAlignFeature_setSeqName(fp,name) BaseAlignFeature_setSeqName((fp),(name))
+
+#define DNAAlignFeature_setSpecies(fp,sp) BaseAlignFeature_setSpecies((fp),(sp))
+#define DNAAlignFeature_getSpecies(fp) BaseAlignFeature_getSpecies((fp))
+
+#define DNAAlignFeature_setHitSpecies(fp,sp) BaseAlignFeature_setHitSpecies((fp),(sp))
+#define DNAAlignFeature_getHitSpecies(fp) BaseAlignFeature_getHitSpecies((fp))
+
 int DNAAlignFeature_getHitUnit(void);
 int DNAAlignFeature_getQueryUnit(void);
 

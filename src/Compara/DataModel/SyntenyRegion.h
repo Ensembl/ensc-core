@@ -17,6 +17,8 @@ struct SyntenyRegionStruct {
   int chrStart;
   int chrEnd;
   char *hitChrName;
+  char *seqType;
+  char *hitSeqType;
   int hitChrStart;
   int hitChrEnd;
   int relOri;
@@ -31,6 +33,9 @@ SyntenyRegion *SyntenyRegion_new();
 #define SyntenyRegion_setStart(sr,s) (sr)->start = (s)
 #define SyntenyRegion_getStart(sr) (sr)->start
 
+#define SyntenyRegion_setRelOri(sr,ro) (sr)->relOri = (ro)
+#define SyntenyRegion_getRelOri(sr) (sr)->relOri
+
 #define SyntenyRegion_setClusterId(sr,cid) (sr)->clusterId = (cid)
 #define SyntenyRegion_getClusterId(sr) (sr)->clusterId
 
@@ -42,5 +47,17 @@ SyntenyRegion *SyntenyRegion_new();
 
 #define SyntenyRegion_setAdaptor(sr,ad) Storable_setAdaptor((sr),(ad))
 #define SyntenyRegion_getAdaptor(sr) Storable_getAdaptor((sr))
+
+#define SyntenyRegion_setChrEnd(sr,e) (sr)->chrEnd = (e)
+#define SyntenyRegion_getChrEnd(sr) (sr)->chrEnd
+
+#define SyntenyRegion_setChrStart(sr,s) (sr)->chrStart = (s)
+#define SyntenyRegion_getChrStart(sr) (sr)->chrStart
+
+#define SyntenyRegion_setHitChrEnd(sr,e) (sr)->hitChrEnd = (e)
+#define SyntenyRegion_getHitChrEnd(sr) (sr)->hitChrEnd
+
+#define SyntenyRegion_setHitChrStart(sr,s) (sr)->hitChrStart = (s)
+#define SyntenyRegion_getHitChrStart(sr) (sr)->hitChrStart
 
 #endif

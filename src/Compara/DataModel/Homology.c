@@ -1,4 +1,5 @@
 #include "Homology.h"
+#include <stdio.h>
 
 Homology *Homology_new() {
   Homology *hm;
@@ -12,3 +13,20 @@ Homology *Homology_new() {
   return hm;
 }
 
+char *Homology_setSpecies(Homology *homol, char *species) {
+  StrUtil_copyString(&(homol->species),species,0);
+ 
+  return homol->species;
+}
+
+char *Homology_setStableId(Homology *homol, char *sid) {
+  StrUtil_copyString(&(homol->stableId),sid,0);
+ 
+  return homol->stableId;
+}
+
+char *Homology_setChromosome(Homology *homol, char *chr) {
+  StrUtil_copyString(&(homol->chrName),chr,0);
+ 
+  return homol->chrName;
+}

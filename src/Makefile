@@ -17,6 +17,7 @@ all	: directories \
           Tests/CacheTest \
           Tests/CigarStrUtilTest \
           Tests/ClassTest \
+          Tests/ComparaDBAdaptorTest \
           Tests/DBAdaptorTest \
           Tests/DNAAlignFeatureTest \
           Tests/DNAPepAlignFeatureTest \
@@ -54,6 +55,11 @@ libensc.a	: \
 	objectfiles/Compara/DataAdaptors/GenomicAlignAdaptor.o \
 	objectfiles/Compara/DataAdaptors/HomologyAdaptor.o \
 	objectfiles/Compara/DataAdaptors/SyntenyAdaptor.o \
+	objectfiles/Compara/DataModel/DNAFrag.o \
+	objectfiles/Compara/DataModel/GenomeDB.o \
+	objectfiles/Compara/DataModel/GenomicAlign.o \
+	objectfiles/Compara/DataModel/Homology.o \
+	objectfiles/Compara/DataModel/SyntenyRegion.o \
 	objectfiles/DataAdaptors/AnalysisAdaptor.o \
 	objectfiles/DataAdaptors/AssemblyMapperAdaptor.o \
 	objectfiles/DataAdaptors/BaseAdaptor.o \
@@ -135,7 +141,8 @@ libensc.a	: \
 	objectfiles/Util/StringHash.o \
 	objectfiles/Util/translate.o
 	ar rcv libensc.a objectfiles/DataModel/*.o objectfiles/DataAdaptors/*.o objectfiles/Util/*.o \
-               objectfiles/DataModel/Basic/*.o objectfiles/DataModel/Mapper/*.o
+               objectfiles/DataModel/Basic/*.o objectfiles/DataModel/Mapper/*.o \
+               objectfiles/Compara/DataAdaptors/*.o objectfiles/Compara/DataModel/*.o
 	ranlib libensc.a
 
 Programs/testdbc: \
@@ -162,6 +169,11 @@ Tests/CigarStrUtilTest: \
 	libensc.a \
 	Tests/CigarStrUtilTest.c
 	$(CC) $(CFLAGS) -o Tests/CigarStrUtilTest Tests/CigarStrUtilTest.c -L. -lensc $(LDFLAGS)
+
+Tests/ComparaDBAdaptorTest: \
+	libensc.a \
+	Tests/ComparaDBAdaptorTest.c
+	$(CC) $(CFLAGS) -o Tests/ComparaDBAdaptorTest Tests/ComparaDBAdaptorTest.c -L. -lensc $(LDFLAGS)
 
 Tests/DBAdaptorTest: \
 	libensc.a \

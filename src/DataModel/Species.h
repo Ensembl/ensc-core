@@ -24,5 +24,7 @@ char *Species_setCommonName(Species *species, char *commonName);
 
 char *Species_getBinomialName(Species *species);
 
+void Species_free(Species *species);
+
 
 #endif

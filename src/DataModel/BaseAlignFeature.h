@@ -55,17 +55,23 @@ char *BaseAlignFeature_setCigarString(BaseAlignFeature *fp, char *ciggy);
 #define BaseAlignFeature_setHitEnd(fp,end) FeaturePair_setHitEnd((fp),(end))
 #define BaseAlignFeature_getHitEnd(fp) FeaturePair_getHitEnd((fp))
 
-#define BaseAlignFeature_setStrand(fp,strand) FeaturePair_setStrand((fp),(strand))
-#define BaseAlignFeature_getStrand(fp) FeaturePair_getStrand((fp))
-
 #define BaseAlignFeature_setEndPhase(fp,end) FeaturePair_setEndPhase((fp),(end))
 #define BaseAlignFeature_getEndPhase(fp) FeaturePair_getEndPhase((fp))
 
 #define BaseAlignFeature_setPhase(fp,end) FeaturePair_setPhase((fp),(end))
 #define BaseAlignFeature_getPhase(fp) FeaturePair_getPhase((fp))
 
+#define BaseAlignFeature_setStrand(fp,strand) FeaturePair_setStrand((fp),(strand))
+#define BaseAlignFeature_getStrand(fp) FeaturePair_getStrand((fp))
+
 #define BaseAlignFeature_setHitStrand(fp,strand) FeaturePair_setHitStrand((fp),(strand))
 #define BaseAlignFeature_getHitStrand(fp) FeaturePair_getHitStrand((fp))
+
+#define BaseAlignFeature_setSpecies(fp,species) FeaturePair_setSpecies((fp),(species))
+#define BaseAlignFeature_getSpecies(fp) FeaturePair_getSpecies((fp))
+
+#define BaseAlignFeature_setHitSpecies(fp,species) FeaturePair_setHitSpecies((fp),(species))
+#define BaseAlignFeature_getHitSpecies(fp) FeaturePair_getHitSpecies((fp))
 
 #define BaseAlignFeature_setDbID(fp,dbID) FeaturePair_setDbID((fp),(dbID))
 #define BaseAlignFeature_getDbID(fp) FeaturePair_getDbID((fp))
