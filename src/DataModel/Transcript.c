@@ -16,17 +16,26 @@ Transcript *Transcript_new() {
 
 Set *Transcript_getAllDBLinks(Transcript *t) {
   if (!t->dbLinks) {
-    TranscriptAdaptor *ta = Transcript_getAdaptor(t);
+    TranscriptAdaptor *ta = (TranscriptAdaptor *)Transcript_getAdaptor(t);
 
     if (ta) {
       DBEntryAdaptor *dbea = DBAdaptor_getDBEntryAdaptor(ta->dba);
-      t->dbLinks = DBEntryAdaptor_fetchAllByTranscript(dbea,t);
+      DBEntryAdaptor_fetchAllByTranscript(dbea,t);
     } else {
       t->dbLinks = emptySet;
     }
   }
 
   return t->dbLinks;
+}
+
+int Transcript_addDBLink(Transcript *t, DBEntry *dbe) {
+  if (!t->dbLinks) {
+    t->dbLinks = Set_new();
+  }
+
+  Set_addElement(t->dbLinks, dbe); 
+  return 1;
 }
 
 char *Transcript_setType(Transcript *t, char *type) {

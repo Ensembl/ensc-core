@@ -17,6 +17,30 @@ Gene *Gene_new() {
   return gene;
 }
 
+Set *Gene_getAllDBLinks(Gene *g) {
+  if (!g->dbLinks) {
+    GeneAdaptor *ga = (GeneAdaptor *)Gene_getAdaptor(g);
+
+    if (ga) {
+      DBEntryAdaptor *dbea = DBAdaptor_getDBEntryAdaptor(ga->dba);
+      DBEntryAdaptor_fetchAllByGene(dbea,g);
+    } else {
+      g->dbLinks = emptySet;
+    }
+  }
+
+  return g->dbLinks;
+}
+
+int Gene_addDBLink(Gene *g, DBEntry *dbe) {
+  if (!g->dbLinks) {
+    g->dbLinks = Set_new();
+  }
+
+  Set_addElement(g->dbLinks, dbe); 
+  return 1;
+}
+
 char *Gene_getStableId(Gene *gene) {
   GeneAdaptor *ga = (GeneAdaptor *)Gene_getAdaptor(gene);
 

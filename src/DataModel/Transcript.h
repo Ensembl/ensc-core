@@ -8,6 +8,7 @@
 #include "Storable.h"
 #include "Translation.h"
 #include "IDHash.h"
+#include "Set.h"
 
 struct TranscriptStruct {
   SeqFeature sf;

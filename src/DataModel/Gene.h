@@ -17,6 +17,7 @@ struct GeneStruct {
   char startIsSet;
   char endIsSet;
   char strandIsSet;
+  Set *dbLinks;
 };
 
 Gene *Gene_new(void);
@@ -74,6 +75,9 @@ int Gene_getStart(Gene *gene);
 
 Gene *Gene_transformToSlice(Gene *gene, Slice *slice);
 Set *Gene_getAllExons(Gene *gene);
+
+Set *Gene_getAllDBLinks(Gene *g);
+
 
 
 

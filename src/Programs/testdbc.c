@@ -17,6 +17,7 @@
 #include "SliceAdaptor.h"
 #include "TranscriptAdaptor.h"
 
+#include "DBEntry.h"
 #include "DNAAlignFeature.h"
 #include "DNAPepAlignFeature.h"
 #include "PredictionTranscript.h"
@@ -37,6 +38,7 @@ int main(int argc, char *argv[]) {
 
   printf("Assembly type %s\n",DBAdaptor_getAssemblyType(dba));
 
+/*
   {
     SimpleFeatureAdaptor *sfa = DBAdaptor_getSimpleFeatureAdaptor(dba);
     SimpleFeature *sf = (SimpleFeature *)SimpleFeatureAdaptor_fetchByDbID(sfa,1);
@@ -171,6 +173,7 @@ int main(int argc, char *argv[]) {
              DNAPepAlignFeature_getEnd(dpaf), DNAPepAlignFeature_getDbID(dpaf));
     }
   }
+*/
   {
     GeneAdaptor *ga = DBAdaptor_getGeneAdaptor(dba);
     IDType *geneIds;
@@ -184,7 +187,15 @@ int main(int argc, char *argv[]) {
 
     for (i=1;i<5;i++) {
       gene = GeneAdaptor_fetchByDbID(ga,i,FALSE);
-      if (gene) printf("Gene %s " IDFMTSTR "\n",Gene_getStableId(gene), Gene_getDbID(gene));
+      if (gene) {
+        Set *dblinks = Gene_getAllDBLinks(gene);
+        int j;
+        printf("Gene %s " IDFMTSTR "\n",Gene_getStableId(gene), Gene_getDbID(gene));
+        for (j=0;j<Set_getNumElement(dblinks);j++) {
+          DBEntry *dbe = Set_getElementAt(dblinks,j);
+          printf("  dblink = %s\n",DBEntry_getDisplayId(dbe));
+        }
+      }
     }
   }
   {

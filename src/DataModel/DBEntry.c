@@ -8,6 +8,7 @@ DBEntry *DBEntry_new() {
     return NULL;
   }
 
+  dbe->objectType = CLASS_DBENTRY;
   return dbe;
 }
 
@@ -33,6 +34,17 @@ char *DBEntry_setPrimaryId(DBEntry *dbe, char *primaryId) {
   return dbe->primaryId;
 }
 
+char *DBEntry_setDescription(DBEntry *dbe, char *description) {
+  if ((dbe->description = (char *)malloc(strlen(description)+1)) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for description\n");
+    return NULL;
+  }
+
+  strcpy(dbe->description,description);
+
+  return dbe->description;
+}
+
 ECOSTRING DBEntry_setDbName(DBEntry *dbe, char *dbName) {
   EcoString_copyStr(ecoSTable, &(dbe->dbName),dbName,0); 
 
@@ -42,4 +54,23 @@ ECOSTRING DBEntry_setDbName(DBEntry *dbe, char *dbName) {
   }
 
   return dbe->dbName;
+}
+
+int DBEntry_addSynonym(DBEntry *dbe, char *syn) {
+  if (!dbe->synonyms) {
+    dbe->synonyms = Set_new();
+  }
+  Set_addElement(dbe->synonyms, syn);
+  return 1;
+}
+
+ECOSTRING DBEntry_setStatus(DBEntry *dbe, char *status) {
+  EcoString_copyStr(ecoSTable, &(dbe->status),status,0); 
+
+  if (dbe->status == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for status\n");
+    return NULL;
+  }
+
+  return dbe->status;
 }

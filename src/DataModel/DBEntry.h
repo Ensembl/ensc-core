@@ -13,10 +13,12 @@ struct DBEntryStruct {
   Storable  st;
   char     *primaryId;
   ECOSTRING dbName;
+  ECOSTRING status;
   int       version;
   char     *displayId;
   int       release;
   Set      *synonyms;
+  char     *description;
   IdentityXref *idXref;
 };
 
@@ -46,6 +48,14 @@ char *setPrimaryId(DBEntry *dbe, char *id);
 char *setDisplayId(DBEntry *dbe, char *id);
 #define DBEntry_getDisplayId(d) (d)->displayId
 
+char *setDescription(DBEntry *dbe, char *desc);
+#define DBEntry_getDescription(d) (d)->description
+
+
+int DBEntry_addSynonym(DBEntry *dbe, char *syn);
 #define DBEntry_getAllSynonyms(d) (d)->synonyms
+
+ECOSTRING DBEntry_setStatus(DBEntry *dbe, char *status);
+
 
 #endif
