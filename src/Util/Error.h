@@ -373,6 +373,9 @@ void     Error_trace(char *Routine, char *Info);
 /* MySQL errors */
 #define EMYSQLCONN     430
 
+/* OBDA errors */
+#define EOBDA          440
+
 /* !!You must remember to add the error message to Message.h and increase the */
 /*   total number of errors set in Message.h */
 

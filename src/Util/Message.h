@@ -2,7 +2,7 @@
 #define __MESSAGE_H__
 
 /* General defines */
-#define NUMERROR       431
+#define NUMERROR       441
 
 
 char *message[NUMERROR] = {
@@ -483,6 +483,17 @@ char *message[NUMERROR] = {
 	"",
 	"",
 /* 430 */
-        "Error: Failed connecting to mysql database"
+        "Error: Failed connecting to mysql database",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+/* 440 */
+        "Error: OBDA error"
 };
 #endif /* __MESSAGE_H__ */
