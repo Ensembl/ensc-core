@@ -12,7 +12,11 @@ long MysqlUtil_getLong(MYSQL_ROW row, int col) {
 int64 MysqlUtil_getLongLong(MYSQL_ROW row, int col) {
   long long val;
 
+#ifdef __osf__
+  if (sscanf(row[col],"%Ld",&val) == 0) {
+#else
   if (sscanf(row[col],"%qd",&val) == 0) {
+#endif
     fprintf(stderr,"Error: Failed to decode a long long from %s\n",row[col]);
   }
 

@@ -19,8 +19,14 @@ all	: directories \
           Tests/DBAdaptorTest
 
 directories	:
-	mkdir -p objectfiles/{DataAdaptors,DataModel,Util,Programs,Tests}
-	mkdir -p objectfiles/DataModel/{Basic,Mapper}
+	mkdir -p objectfiles
+	mkdir -p objectfiles/DataAdaptors
+	mkdir -p objectfiles/DataModel
+	mkdir -p objectfiles/Util
+	mkdir -p objectfiles/Programs
+	mkdir -p objectfiles/Tests
+	mkdir -p objectfiles/DataModel/Basic
+	mkdir -p objectfiles/DataModel/Mapper
 
 objectfiles/%.o: %.c
 	$(CC) -c $(CFLAGS) -o $@ $<
@@ -88,27 +94,27 @@ libensc.a	: \
 Programs/testdbc: \
 	libensc.a \
 	Programs/testdbc.c
-	cc $(CFLAGS) $(LDFLAGS) -o Programs/testdbc Programs/testdbc.c -L. -lensc
+	cc $(CFLAGS) -o Programs/testdbc Programs/testdbc.c -L. -lensc $(LDFLAGS)
 
 Tests/ClassTest: \
 	libensc.a \
 	Tests/ClassTest.c
-	cc $(CFLAGS) $(LDFLAGS) -o Tests/ClassTest Tests/ClassTest.c -L. -lensc
+	cc $(CFLAGS) -o Tests/ClassTest Tests/ClassTest.c -L. -lensc $(LDFLAGS)
 
 Tests/DBAdaptorTest: \
 	libensc.a \
 	Tests/DBAdaptorTest.c
-	cc $(CFLAGS) $(LDFLAGS) -o Tests/DBAdaptorTest Tests/DBAdaptorTest.c -L. -lensc
+	cc $(CFLAGS) -o Tests/DBAdaptorTest Tests/DBAdaptorTest.c -L. -lensc $(LDFLAGS)
 
 Tests/EcoStringTest: \
 	libensc.a \
 	Tests/EcoStringTest.c
-	cc $(CFLAGS) $(LDFLAGS) -o Tests/EcoStringTest Tests/EcoStringTest.c -L. -lensc
+	cc $(CFLAGS) -o Tests/EcoStringTest Tests/EcoStringTest.c -L. -lensc $(LDFLAGS)
 
 Tests/StreamTest: \
 	libensc.a \
 	Tests/StreamTest.c
-	cc $(CFLAGS) $(LDFLAGS) -o Tests/StreamTest Tests/StreamTest.c -L. -lensc
+	cc $(CFLAGS) -o Tests/StreamTest Tests/StreamTest.c -L. -lensc $(LDFLAGS)
 
 # deletes compiled class files
 clean	:	
