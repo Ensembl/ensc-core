@@ -13,6 +13,7 @@ BINDIR=../bin
 all	: directories \
           libensc.a \
           Programs/testdbc \
+          Programs/countsnps \
           Tests/CacheTest \
           Tests/ClassTest \
           Tests/DBAdaptorTest \
@@ -117,6 +118,11 @@ Programs/testdbc: \
 	Programs/testdbc.c
 	$(CC) $(CFLAGS) -o Programs/testdbc Programs/testdbc.c -L. -lensc $(LDFLAGS)
 
+Programs/countsnps: \
+	libensc.a \
+	Programs/countsnps.c
+	$(CC) $(CFLAGS) -o Programs/countsnps Programs/countsnps.c -L. -lensc $(LDFLAGS)
+
 Tests/CacheTest: \
 	libensc.a \
 	Tests/CacheTest.c
@@ -156,6 +162,7 @@ Tests/StrUtilTest: \
 clean	:	
 	rm -f libensc.a
 	rm -f Programs/testdbc
+	rm -f Programs/countsnps
 	find ./ -name "*.o" -exec rm {} \;
 	find ./Tests ! -name "*.c" ! -name "*.h" -type f -perm -0700 -exec rm {} \;
 

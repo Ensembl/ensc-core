@@ -51,9 +51,10 @@ struct SeqFeatureStruct {
                                                                    ((sf)->funcs->setStart((SeqFeature *)(sf),(s))))
 #define SeqFeature_getStart(sf) ((sf)->funcs->getStart == NULL ? ((sf)->start) : \
                                                                  ((sf)->funcs->getStart((SeqFeature *)(sf))))
-
-#define SeqFeature_setEnd(sf,e) (sf)->end = (e)
-#define SeqFeature_getEnd(sf) (sf)->end
+#define SeqFeature_setEnd(sf,s) ((sf)->funcs->setEnd == NULL ? ((sf)->end = (s)) : \
+                                                                   ((sf)->funcs->setEnd((SeqFeature *)(sf),(s))))
+#define SeqFeature_getEnd(sf) ((sf)->funcs->getEnd == NULL ? ((sf)->end) : \
+                                                                 ((sf)->funcs->getEnd((SeqFeature *)(sf))))
 
 #define SeqFeature_setScore(sf,s) (sf)->score = (s)
 #define SeqFeature_getScore(sf) (sf)->score

@@ -29,5 +29,7 @@ void    StringHash_free(StringHash *stringHash, void *freeFunc());
 int     StringHash_getNumValues(StringHash *stringHash);
 void *  StringHash_getValue(StringHash *stringHash, char *string);
 void *  StringHash_getValues(StringHash *stringHash);
+char ** StringHash_getKeys(StringHash *stringHash);
+
 
 #endif

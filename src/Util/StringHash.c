@@ -51,6 +51,34 @@ StringHash *StringHash_new(StringHashSizes size) {
   return stringHash;
 }
 
+char **StringHash_getKeys(StringHash *stringHash) {
+  int i;
+  int j;
+  char **keys;
+  int keyCnt = 0;
+
+  if (!stringHash->nValue) {
+    return NULL;
+  }
+
+  if ((keys = (char **)calloc(stringHash->nValue,sizeof(char *))) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for keys\n");
+    return NULL;
+  }
+
+  for (i=0; i<stringHash->size; i++) {
+    if (stringHash->bucketCounts[i]) {
+      for (j=0; j<stringHash->bucketCounts[i]; j++) {
+        StrUtil_copyString(&(keys[keyCnt++]),stringHash->buckets[i][j].key,0);
+      }
+    }
+  }
+  if (keyCnt != stringHash->nValue) {
+    fprintf(stderr,"ERROR: Internal StringHash error - keyCnt != stringHash->nValue\n");
+  }
+  return keys;
+}
+
 int StringHash_getNumValues(StringHash *stringHash) {
   return stringHash->nValue;
 }
