@@ -267,7 +267,7 @@ char *Transcript_getTranslateableSeq(Transcript *trans) {
   int i;
   int lastPhase = 0;
   int first = 1;
-  char *mrna;
+  char *mrna = StrUtil_copyString(&mrna,"",0);
   Vector *translateableExons;
 
   translateableExons = Transcript_getAllTranslateableExons(trans);

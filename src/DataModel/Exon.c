@@ -217,6 +217,7 @@ Exon *Exon_copy(Exon *copy, Exon *orig, CopyDepth depth) {
   Exon_setPhase(copy,Exon_getPhase(orig));  
   Exon_setEndPhase(copy,Exon_getEndPhase(orig));  
   Exon_setAnalysis(copy,Exon_getAnalysis(orig));  
+  Exon_setContig(copy,Exon_getContig(orig));  
 
   return copy;
 }
@@ -379,7 +380,7 @@ char  *Exon_getSeqStringImpl(Exon *exon) {
   }
 
   if (!Exon_getContig(exon)) {
-    fprintf(stderr, "Warning: this exon doesn't have a contig you won't get a seq\n");
+    fprintf(stderr, "Warning: this exon %s doesn't have a contig you won't get a seq\n", Exon_getStableId(exon));
     return NULL;
   } else {
 
