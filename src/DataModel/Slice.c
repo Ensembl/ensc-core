@@ -5,6 +5,7 @@
 #include "ChromosomeAdaptor.h"
 #include "DNAAlignFeatureAdaptor.h"
 #include "GeneAdaptor.h"
+#include "PredictionTranscriptAdaptor.h"
 #include "ProteinAlignFeatureAdaptor.h"
 #include "RepeatFeatureAdaptor.h"
 #include "SimpleFeatureAdaptor.h"
@@ -85,29 +86,31 @@ Set *Slice_getAllGenes(Slice *slice, char *logicName) {
 Set *Slice_getAllSimpleFeatures(Slice *slice, char *logicName, double *score) {
 
   SimpleFeatureAdaptor *sfa = DBAdaptor_getSimpleFeatureAdaptor(Slice_getAdaptor(slice)->dba);
-
   return SimpleFeatureAdaptor_fetchAllBySliceAndScore(sfa, slice, score, logicName);
 }
 
 Set *Slice_getAllDNAAlignFeatures(Slice *slice, char *logicName, double *score) {
 
   DNAAlignFeatureAdaptor *dafa = DBAdaptor_getDNAAlignFeatureAdaptor(Slice_getAdaptor(slice)->dba);
-
   return DNAAlignFeatureAdaptor_fetchAllBySliceAndScore(dafa, slice, score, logicName);
 }
 
 Set *Slice_getAllDNAPepAlignFeatures(Slice *slice, char *logicName, double *score) {
 
   ProteinAlignFeatureAdaptor *pafa = DBAdaptor_getProteinAlignFeatureAdaptor(Slice_getAdaptor(slice)->dba);
-
   return ProteinAlignFeatureAdaptor_fetchAllBySliceAndScore(pafa, slice, score, logicName);
 }
 
 Set *Slice_getAllRepeatFeatures(Slice *slice, char *logicName) {
 
   RepeatFeatureAdaptor *rfa = DBAdaptor_getRepeatFeatureAdaptor(Slice_getAdaptor(slice)->dba);
-
   return RepeatFeatureAdaptor_fetchAllBySlice(rfa, slice, logicName);
+}
+
+Set *Slice_getAllPredictionTranscripts(Slice *slice, char *logicName) {
+
+  PredictionTranscriptAdaptor *pta = DBAdaptor_getPredictionTranscriptAdaptor(Slice_getAdaptor(slice)->dba);
+  return PredictionTranscriptAdaptor_fetchAllBySlice(pta, slice);
 }
 
 

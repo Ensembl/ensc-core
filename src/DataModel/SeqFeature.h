@@ -5,7 +5,6 @@
 #include "DataModelTypes.h"
 #include "EnsC.h"
 #include "Storable.h"
-#include "Sequence.h"
 #include "Analysis.h"
 #include "BaseContig.h"
 

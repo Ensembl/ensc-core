@@ -92,7 +92,6 @@ ProteinAlignFeatureAdaptor *DBAdaptor_getProteinAlignFeatureAdaptor(DBAdaptor *d
   return (ProteinAlignFeatureAdaptor *)DBConnection_getAdaptor(dba->dbc,PROTEINALIGNFEATURE_ADAPTOR);
 }
 
-#ifdef DONE
 PredictionTranscriptAdaptor *DBAdaptor_getPredictionTranscriptAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,PREDICTIONTRANSCRIPT_ADAPTOR)) {
     DBConnection_addAdaptor(dba->dbc,
@@ -100,7 +99,6 @@ PredictionTranscriptAdaptor *DBAdaptor_getPredictionTranscriptAdaptor(DBAdaptor 
   }
   return (PredictionTranscriptAdaptor *)DBConnection_getAdaptor(dba->dbc,PREDICTIONTRANSCRIPT_ADAPTOR);
 }
-#endif
 
 RepeatFeatureAdaptor *DBAdaptor_getRepeatFeatureAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,REPEATFEATURE_ADAPTOR)) {

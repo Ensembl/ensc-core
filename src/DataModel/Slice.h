@@ -49,6 +49,8 @@ Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
 #define Slice_setStrand(sl,s) (sl)->strand = (s)
 #define Slice_getStrand(sl) (sl)->strand
 
+#define Slice_getLength(sl) ((sl)->end - (sl)->start + 1)
+
 char *Slice_setAssemblyType(Slice *sl,char *type);
 #define Slice_getAssemblyType(sl) (sl)->assemblyType
 
@@ -60,6 +62,7 @@ Set *Slice_getAllGenes(Slice *slice, char *logicName);
 Set *Slice_getAllSimpleFeatures(Slice *slice, char *logicName, double *score);
 Set *Slice_getAllDNAAlignFeatures(Slice *slice, char *logicName, double *score);
 Set *Slice_getAllDNAPepAlignFeatures(Slice *slice, char *logicName, double *score);
+Set *Slice_getAllPredictionTranscripts(Slice *slice, char *logicName);
 Set *Slice_getAllRepeatFeatures(Slice *slice, char *logicName);
 
 

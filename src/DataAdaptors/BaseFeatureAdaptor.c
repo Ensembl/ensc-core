@@ -284,8 +284,9 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice
   
   if (Set_getNumElement(features)) {
 // Can't easily do this in C     && (!$features->[0]->can('contig') || 
+// Its for the PredictionTranscriptAdaptor so HACK HACK HACK
     SeqFeature *sf = (SeqFeature *)Set_getElementAt(features,0);
-    if (SeqFeature_getContig(sf) == (BaseContig *)slice) {
+    if (bfa->adaptorType == PREDICTIONTRANSCRIPT_ADAPTOR || SeqFeature_getContig(sf) == (BaseContig *)slice) {
       // features have been converted to slice coords already, cache and return
       Cache_addElement(bfa->sliceFeatureCache, out);
       return features;

@@ -4,7 +4,6 @@
 #include "BaseAdaptor.h"
 #include "AdaptorTypes.h"
 #include "RawContig.h"
-#include "Sequence.h"
 
 struct SequenceAdaptorStruct {
   BASEADAPTOR_DATA

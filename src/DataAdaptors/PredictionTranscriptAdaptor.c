@@ -1,5 +1,8 @@
 #include "PredictionTranscriptAdaptor.h"
 
+#include "PredictionTranscript.h"
+#include "AnalysisAdaptor.h"
+#include "RawContigAdaptor.h"
 
 NameTableType PredictionTranscriptAdaptor_tableNames = {{"prediction_transcript","p"},
                                                         {NULL,NULL}};
@@ -92,13 +95,14 @@ int PredictionTranscriptAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
 }
 
 
-NameTableType *PredictionTranscriptAdaptor_getTables() {
+NameTableType *PredictionTranscriptAdaptor_getTables(void) {
   return &PredictionTranscriptAdaptor_tableNames;
 }
 
-char *PredictionTranscriptAdaptor_getColumns() {
+char *PredictionTranscriptAdaptor_getColumns(void) {
   return "p.prediction_transcript_id,"
          "p.contig_id,"
+         "p.analysis_id,"
          "p.contig_start,"
          "p.contig_end,"
          "p.contig_strand,"
@@ -106,168 +110,188 @@ char *PredictionTranscriptAdaptor_getColumns() {
          "p.exon_rank,"
          "p.score,"
          "p.p_value,"
-         "p.analysis_id,"
          "p.exon_count";
 }
 
 Set *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
                                                        StatementHandle *sth,
-                                                       AssemblyMapper *mapper,
+                                                       AssemblyMapper *assMapper,
                                                        Slice *slice) {
-  my ($self, $sth, $mapper, $slice) = @_;
+  AnalysisAdaptor *aa;
+  RawContigAdaptor *rca;
+  Set *out;
+  ResultRow *row;
+  int i;
+  int sliceChrId;
+  int sliceEnd;
+  int sliceStart;
+  int sliceStrand;
+  int sliceLen;
+  int64 ptId = -1;
+  PredictionTranscript *predTrans = NULL;
+  int transcriptSliceStart;
+  int transcriptSliceEnd;
+  int nExon = 0;
+  int stableStart;
+  int stableEnd;
+  char *stableCtg;
+  Analysis *analysis;
+  RawContig *contig;
 
-  my @out = ();
+  out = Set_new();
 
-  my ($prediction_transcript_id,
-      $contig_id, $contig_start, $contig_end, $contig_strand,
-      $start_phase, $exon_rank, $score, $p_value, $analysis_id,
-      $exon_count );
+  aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
+  rca = DBAdaptor_getRawContigAdaptor(bfa->dba);
 
-  $sth->bind_columns(\$prediction_transcript_id,
-                    \$contig_id, \$contig_start, \$contig_end, \$contig_strand,
-                    \$start_phase, \$exon_rank, \$score, \$p_value,
-                    \$analysis_id,\$exon_count);
-
-  my $rca = $self->db->get_RawContigAdaptor;
-  my $aa  = $self->db->get_AnalysisAdaptor;
-
-  my ($analysis, $contig, $pre_trans, $ptid, $on_slice_flag, $last_end,
-      $chr, $start, $end, $strand,
-      $slice_start, $slice_end, $slice_strand,
-      $exon, $exon_start, $exon_end, $exon_strand,
-      $stable_start, $stable_end, $stable_ctg,
-      $transcript_slice_start, $transcript_slice_end );
-  my (%analysis_hash, %contig_hash);
-
-  if($slice) {
-    $slice_start  = $slice->chr_start;
-    $slice_end    = $slice->chr_end;
-    $slice_strand = $slice->strand;
+  if (slice) {
+    sliceChrId = Slice_getChrId(slice);
+    sliceStart = Slice_getChrStart(slice);
+    sliceEnd   = Slice_getChrEnd(slice);
+    sliceStrand= Slice_getStrand(slice);
+    sliceLen   = Slice_getLength(slice);
   }
 
-  $on_slice_flag = 0;
-
-
-  while($sth->fetch) {
-    #create a new transcript for each new prediction transcript id
-    unless(defined $pre_trans && $ptid == $prediction_transcript_id) {
-      $pre_trans = Bio::EnsEMBL::PredictionTranscript->new;
-
-      $ptid = $prediction_transcript_id;
-      $pre_trans->dbID($ptid);
-
-      unless($analysis = $analysis_hash{$analysis_id}) {
-        $analysis = $aa->fetch_by_dbID($analysis_id);
-        $analysis_hash{$analysis_id} = $analysis;
-      }
-
-      $pre_trans->analysis($analysis);
-      $pre_trans->set_exon_count($exon_count);
-
-      if(@out) {
-        #throw away last pt if no exons or introns were on the slice
-        if($slice && ( $transcript_slice_end < 1 ||
-                       $transcript_slice_start > $slice->length() )) {
-          pop @out;
-        } else {
-          #set the stable_id of the previous prediction
-          $out[$#out]->stable_id("$stable_ctg.$stable_start.$stable_end");
-        }
-      }
-
-      push( @out, $pre_trans );
-
-      #reset values used for last predtrans
-      $stable_start = -1;
-      $stable_end   = -1;
-      $stable_ctg = '';
-
-      $transcript_slice_end = undef;
-      $transcript_slice_start = undef;
-    }
-
-    #recalculate stable id values
-    if($stable_start == -1 || $contig_start < $stable_start) {
-      $stable_start = $contig_start;
-    }
-    if($contig_end > $stable_end) {
-      $stable_end = $contig_end;
-    }
-    unless($contig = $contig_hash{$contig_id}) {
-      $contig = $rca->fetch_by_dbID($contig_id);
-      $contig_hash{$contig_id} = $contig;
-    }
-    $stable_ctg = $contig->name;
-
-    if($slice) {
-      #a slice was passed in so we want slice coords
-
-      #convert contig coords to assembly coords
-      ($chr, $start, $end, $strand) =
-        $mapper->fast_to_assembly($contig_id, $contig_start,
-                                  $contig_end, $contig_strand);
-
-      #if mapped to gap skip
-      next unless(defined $start);
-
-
-      #convert to slice coordinates
-      if($slice_strand == -1) {
-        $exon_start  = $slice_end - $end   + 1;
-        $exon_end    = $slice_end - $start + 1;
-        $exon_strand = $strand * -1;
+  while(row = sth->fetchRow(sth)) {
+    int64 predictionTranscriptId = row->getLongLongAt(row,0);
+    int contigId    = row->getLongLongAt(row,1);
+    int64 analysisId= row->getLongLongAt(row,2);
+    int contigStart = row->getIntAt(row,3);
+    int contigEnd   = row->getIntAt(row,4);
+    int contigStrand= row->getIntAt(row,5);
+    int startPhase  = row->getIntAt(row,6);
+    int exonRank    = row->getIntAt(row,7);
+    double score    = row->getDoubleAt(row,8);
+    double pValue   = row->getDoubleAt(row,9);
+    int exonCount   = row->getIntAt(row,10);
+    Exon *exon = NULL;
+    int exonStart;
+    int exonEnd;
+    int exonStrand;
+    
+    //create a new transcript for each new prediction transcript id
+    if (!predTrans || !(ptId == predictionTranscriptId)) {
+ 
+      // throw away last pt if no exons or introns were on the slice
+      if (slice && (transcriptSliceEnd < 1 ||
+                    transcriptSliceStart > sliceLen)) {
+        PredictionTranscript_free(predTrans);
       } else {
-        $exon_start  = $start - $slice_start + 1;
-        $exon_end    = $end   - $slice_start   + 1;
-        $exon_strand = $strand;
-      }  
-
-      if( !defined $transcript_slice_start ||
-          $transcript_slice_start > $exon_start ) {
-        $transcript_slice_start = $exon_start;
+        // set the stable_id of the previous prediction
+        char tmpStr[256]; 
+        sprintf(tmpStr,"%s.%d.%d\n",stableCtg,stableStart,stableEnd);
+        PredictionTranscript_setStableId(predTrans,tmpStr);
+        Set_addElement(out,predTrans);
       }
 
-      if( ! defined $transcript_slice_end ||
-          $transcript_slice_end < $exon_end ) {
-        $transcript_slice_end = $exon_end;
+      // Now we've stored the old (if it was any good) start a new prediction transcript
+      predTrans = PredictionTranscript_new();
+
+      ptId = predictionTranscriptId;
+      PredictionTranscript_setDbID(predTrans,ptId);
+
+      analysis = AnalysisAdaptor_fetchByDbID(aa, analysisId);
+
+      PredictionTranscript_setAnalysis(predTrans,analysis);
+      PredictionTranscript_setExonCount(predTrans,exonCount);
+
+      //reset values used for last predtrans
+      stableStart = -1;
+      stableEnd   = -1;
+      stableCtg   = NULL;
+
+      nExon = 0;
+    }
+
+    //recalculate stable id values
+    if(stableStart == -1 || contigStart < stableStart) {
+      stableStart = contigStart;
+    }
+    if(contigEnd > stableEnd) {
+      stableEnd = contigEnd;
+    }
+
+    contig = RawContigAdaptor_fetchByDbID(rca, contigId);
+
+    stableCtg = RawContig_getName(contig);
+
+    if (slice) {
+      //a slice was passed in so we want slice coords
+      MapperCoordinate fRange;
+
+      //convert contig coordinates to assembly coordinates
+      int mapSucceeded = AssemblyMapper_fastToAssembly(assMapper, contigId, 
+                                               contigStart, 
+                                               contigEnd, 
+                                               contigStrand, 
+                                               &fRange);
+
+      // undefined start means gap
+      if (!mapSucceeded) continue;
+  
+      // convert assembly coordinates to slice coordinates
+      if(sliceStrand == -1) {
+        exonStart  = sliceEnd - fRange.end + 1;
+        exonEnd    = sliceEnd - fRange.start + 1;
+        exonStrand = fRange.strand * -1 ;
+      } else {
+        exonStart  = fRange.start - sliceStart + 1;
+        exonEnd    = fRange.end - sliceStart + 1;
+        exonStrand = fRange.strand;
       }
-      #use slice as the contig instead of the raw contig
-      $contig = $slice;
+
+      if( !nExon || transcriptSliceStart > exonStart ) {
+        transcriptSliceStart = exonStart;
+      }
+
+      if( !nExon || transcriptSliceEnd < exonEnd ) {
+        transcriptSliceEnd = exonEnd;
+      }
     } else {
-      #we just want plain old contig coords
-      $exon_start =  $contig_start;
-      $exon_end   =  $contig_end;
-      $exon_strand = $contig_strand;
+      // we just want plain old contig coords
+      exonStart =  contigStart;
+      exonEnd   =  contigEnd;
+      exonStrand = contigStrand;
     }
 
-    #create an exon and add it to the prediction transcript
-    $exon = Bio::EnsEMBL::Exon->new_fast($contig,
-                                         $exon_start,
-                                         $exon_end,
-                                         $exon_strand);
-    $exon->phase( $start_phase );
-    $exon->end_phase( ($exon_end - $exon_start + 1 + $start_phase) % 3 );
-    $exon->score( $score );
-    $exon->p_value( $p_value );
+    // create an exon and add it to the prediction transcript
+    exon = Exon_new();
 
-    $pre_trans->add_Exon($exon, $exon_rank);
+    Exon_setStart(exon, exonStart);
+    Exon_setEnd(exon, exonEnd);
+    Exon_setStrand(exon, exonStrand);
+    if (slice) {
+      Exon_setContig(exon, slice);
+    } else {
+      Exon_setContig(exon, contig);
+    }
+    Exon_setPhase(exon, startPhase);
+    Exon_setEndPhase(exon, (exonEnd - exonStart + 1 + startPhase) % 3 );
+    Exon_setScore(exon, score);
+    Exon_setpValue(exon, pValue);
+
+    //PredictionTranscript_addExon(predTrans, exon, exonRank);
+    PredictionTranscript_addExon(predTrans, exon);
+    nExon++;
   }
 
-  #throw away last  pred_transcript if it had no exons overlapping the slice
-  if(@out) {
-    if($slice && ( $transcript_slice_end < 1 ||
-                   $transcript_slice_start > $slice->length() )) {
-      pop @out;
+  // throw away last pt if no exons or introns were on the slice
+  if(predTrans) {
+    if (slice && (transcriptSliceEnd < 1 ||
+                  transcriptSliceStart > sliceLen)) {
+      PredictionTranscript_free(predTrans);
     } else {
-      #set the stable id of the last prediction transcript
-      $out[$#out]->stable_id("$stable_ctg.$stable_start.$stable_end");
+      // set the stable_id of the previous prediction
+      char tmpStr[256]; 
+      sprintf(tmpStr,"%s.%d.%d\n",stableCtg,stableStart,stableEnd);
+      PredictionTranscript_setStableId(predTrans,tmpStr);
+      Set_addElement(out,predTrans);
     }
   }
 
-  return \@out;
+  return out;
 }
 
 char *PredictionTranscriptAdaptor_finalClause(void) {
-  return  "order by p.prediction_transcript_id, p.exon_rank";
+  return  " order by p.prediction_transcript_id, p.exon_rank";
 }
 

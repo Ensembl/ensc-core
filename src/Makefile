@@ -49,6 +49,7 @@ libensc.a	: \
 	objectfiles/DataAdaptors/MetaContainer.o \
 	objectfiles/DataAdaptors/MysqlResultRow.o \
 	objectfiles/DataAdaptors/MysqlStatementHandle.o \
+	objectfiles/DataAdaptors/PredictionTranscriptAdaptor.o \
 	objectfiles/DataAdaptors/ProteinAlignFeatureAdaptor.o \
 	objectfiles/DataAdaptors/RawContigAdaptor.o \
 	objectfiles/DataAdaptors/RepeatConsensusAdaptor.o \
@@ -81,6 +82,7 @@ libensc.a	: \
 	objectfiles/DataModel/Mapper/MapperPairSet.o \
 	objectfiles/DataModel/Mapper/MapperRangeSet.o \
 	objectfiles/DataModel/Mapper/MapperUnit.o \
+	objectfiles/DataModel/PredictionTranscript.o \
 	objectfiles/DataModel/RawContig.o \
 	objectfiles/DataModel/RepeatConsensus.o \
 	objectfiles/DataModel/RepeatFeature.o \

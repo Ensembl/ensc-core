@@ -16,11 +16,12 @@
 #include "SliceAdaptor.h"
 #include "TranscriptAdaptor.h"
 
-#include "RawContig.h"
-#include "SimpleFeature.h"
 #include "DNAAlignFeature.h"
 #include "DNAPepAlignFeature.h"
+#include "PredictionTranscript.h"
+#include "RawContig.h"
 #include "RepeatFeature.h"
+#include "SimpleFeature.h"
 
 int main(int argc, char *argv[]) {
   DBAdaptor *dba;
@@ -40,6 +41,20 @@ int main(int argc, char *argv[]) {
     SimpleFeature *sf = (SimpleFeature *)SimpleFeatureAdaptor_fetchByDbID(sfa,1);
     printf("Simple feature: %d-%d id " INT64FMTSTR "\n", SimpleFeature_getStart(sf), 
            SimpleFeature_getEnd(sf), SimpleFeature_getDbID(sf));
+  }
+  {
+    SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
+    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);
+    Set *ptSet = Slice_getAllPredictionTranscripts(slice,"");
+    int i;
+
+    for (i=0;i<Set_getNumElement(ptSet);i++) {
+      PredictionTranscript *pt = Set_getElementAt(ptSet,i);
+      printf("PredictionTranscript feature: %s %d-%d id " INT64FMTSTR "\n", 
+             PredictionTranscript_getStableId(pt), 
+             PredictionTranscript_getStart(pt), PredictionTranscript_getEnd(pt), 
+             PredictionTranscript_getDbID(pt));
+    }
   }
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);

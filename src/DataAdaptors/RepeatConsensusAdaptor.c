@@ -18,44 +18,56 @@ RepeatConsensusAdaptor *RepeatConsensusAdaptor_new(DBAdaptor *dba) {
 }
 
 RepeatConsensus *RepeatConsensusAdaptor_fetchByDbID(RepeatConsensusAdaptor *rca, int64 dbID) {
+  char constraintStr[256];
+  Set *rcSet;
+  RepeatConsensus *rc;
+  
+  sprintf(constraintStr,"repeat_consensus_id = " INT64FMTSTR, dbID);
+  rcSet = RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
 
-/*
-    my ($rc) = @{$self->_generic_fetch("repeat_consensus_id = $db_id")}; 
+  rc = Set_getElementAt(rcSet,1);
 
-    return $rc;   
-*/
+  Set_free(rcSet,NULL);
+
+  return rc;   
 }
 
 RepeatConsensus *RepeatConsensusAdaptor_fetchByName(RepeatConsensusAdaptor *rca, char *name) {
+  char constraintStr[256];
+  Set *rcSet;
+  RepeatConsensus *rc;
+  
+  sprintf(constraintStr,"repeat_name = \'%s\'", name);
+  rcSet = RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
 
-/*
-    my ($rc) = @{$self->_generic_fetch("repeat_name = '$name'")};   
+  rc = Set_getElementAt(rcSet,1);
 
-    return $rc;
-*/
+  Set_free(rcSet,NULL);
+
+  return rc;   
 }
 
 RepeatConsensus *RepeatConsensusAdaptor_fetchByNameAndClass(RepeatConsensusAdaptor *rca, char *name, char *class) {
+  char constraintStr[256];
+  Set *rcSet;
+  RepeatConsensus *rc;
+  
+  sprintf(constraintStr,"repeat_name = \'%s\' AND repeat_class = \'%s\'", name,class);
+  rcSet = RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
 
-/*
-    my ($rc) = @{$self->_generic_fetch(qq{
-      repeat_name  = '$name'
-      AND repeat_class = '$class'
-    })};
+  rc = Set_getElementAt(rcSet,1);
 
-    return $rc;
-*/
+  Set_free(rcSet,NULL);
+
+  return rc;   
 }
 
 
 Set *RepeatConsensusAdaptor_fetchByClassAndSeq(RepeatConsensusAdaptor *rca, char *class, char *seq) {
-
-/*
-    return $self->_generic_fetch(qq{
-            repeat_class     = '$class'
-        AND repeat_consensus = '$seq'
-    });
-*/
+  char constraintStr[256];
+  
+  sprintf(constraintStr,"repeat_class = \'%s\' AND repeat_consensus = \'%s\'", class, seq);
+  return RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
 }
 
 Set *RepeatConsensusAdaptor_genericFetch(RepeatConsensusAdaptor *rca, char *whereClause) {
@@ -81,7 +93,7 @@ Set *RepeatConsensusAdaptor_genericFetch(RepeatConsensusAdaptor *rca, char *wher
     RepeatConsensus_setName(rc, row->getStringAt(row,1));
     RepeatConsensus_setRepeatClass(rc, row->getStringAt(row,2));
     // Do I really need to do this???? RepeatConsensus_setLength(rc, row->getIntAt(row,3));
-    RepeatConsensus_setAdaptor(rc, rca);
+    RepeatConsensus_setAdaptor(rc, (BaseAdaptor *)rca);
 
     Set_addElement(consensi, rc);
   }

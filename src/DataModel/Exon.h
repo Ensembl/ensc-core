@@ -15,6 +15,7 @@ struct ExonStruct {
   StableIdInfo si;
   FeatureSet components;
   int stickyRank;
+
 };
 
 #define Exon_setStart(exon,start) SeqFeature_setStart(&((exon)->sf),start)
@@ -22,6 +23,12 @@ struct ExonStruct {
 
 #define Exon_setEnd(exon,end) SeqFeature_setEnd(&((exon)->sf),end)
 #define Exon_getEnd(exon) SeqFeature_getEnd(&((exon)->sf))
+
+#define Exon_setScore(exon,score) SeqFeature_setScore(&((exon)->sf),score)
+#define Exon_getScore(exon) SeqFeature_getScore(&((exon)->sf))
+
+#define Exon_setpValue(exon,pValue) SeqFeature_setEValue(&((exon)->sf),pValue)
+#define Exon_getpValue(exon) SeqFeature_getEValue(&((exon)->sf))
 
 #define Exon_setPhase(exon,p) SeqFeature_setPhase(&((exon)->sf),(p))
 #define Exon_getPhase(exon) SeqFeature_getPhase(&((exon)->sf))

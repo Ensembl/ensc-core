@@ -30,6 +30,7 @@ RawContig *RawContigAdaptor_fetchByDbID(RawContigAdaptor *rca, int64 dbID) {
   } else {
     rawContig = RawContig_new();
     RawContig_setDbID(rawContig,dbID);
+    RawContig_setAdaptor(rawContig,(BaseAdaptor *)rca);
     IDHash_add(rca->rawContigCache,dbID,rawContig);
   }
 
@@ -57,6 +58,7 @@ void RawContigAdaptor_fetchAttributes(RawContigAdaptor *rca, RawContig *rc) {
   }
 
   RawContigAdaptor_fillRawContigWithRow(rca, rc, row);
+  sth->finish(sth);
 
   return;
 }
