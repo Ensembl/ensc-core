@@ -55,7 +55,9 @@ void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama,
     "    assembly ass,"
     "    chromosome chr"
     " where"
-    "    chr.chromosome_id= %d and"
+    "    chr.chromosome_id = "
+    INT64FMTSTR
+    " and "
     "    ass.chromosome_id = chr.chromosome_id and"
     "    %d <= ass.chr_end  and"
     "    %d >= ass.chr_start  and"
@@ -108,7 +110,9 @@ GenomicRange *AssemblyMapperAdaptor_registerContig(AssemblyMapperAdaptor *ama,
     "  assembly a,"
     "  chromosome c"
     " where"
-    "   contig_id = %d and"
+    "   contig_id = "
+    INT64FMTSTR
+    " and"
     "   type = '%s' and"
     "   c.chromosome_id = a.chromosome_id",
     contigId, assemblyType);

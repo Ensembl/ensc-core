@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
 
     printf("Exon %d %d %d\n",Exon_getStart(e), Exon_getEnd(e), Exon_getStrand(e));
 
-    nExon = ExonAdaptor_fetchAllByGeneId(ea,53,&exons);
+    nExon = ExonAdaptor_fetchAllByGeneId(ea,53LL,&exons);
 
     printf("NExon = %d\n",nExon);
     for (i=0;i<nExon;i++) {
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
   }
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
-    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,250000000);
+    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);
     Set *geneSet = Slice_getAllGenes(slice,NULL);
     int i;
 

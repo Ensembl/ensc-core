@@ -41,7 +41,7 @@ Translation *TranslationAdaptor_fetchByDbID(TranslationAdaptor *ta, int64 dbID, 
     "SELECT translation_id tlid, seq_start,"
     "       start_exon_id, seq_end, end_exon_id"
     " FROM   translation"
-    " WHERE  translation_id = %d", dbID);
+    " WHERE  translation_id = " INT64FMTSTR, dbID);
 
   sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
   sth->execute(sth);
@@ -98,7 +98,7 @@ int TranslationAdaptor_getStableEntryInfo(TranslationAdaptor *ta, Translation *t
   sprintf(qStr,
           "SELECT stable_id, version"
           " FROM translation_stable_id"
-          " WHERE translation_id = %d",Translation_getDbID(translation));
+          " WHERE translation_id = " INT64FMTSTR,Translation_getDbID(translation));
 
   sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
   sth->execute(sth);

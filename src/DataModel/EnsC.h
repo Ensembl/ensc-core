@@ -21,6 +21,7 @@ typedef enum CopyDepthEnum {
 } CopyDepth;
 
 typedef long long int64;
+#define INT64FMTSTR "%qd"
 
 #define EXTREMELEN 65536
 

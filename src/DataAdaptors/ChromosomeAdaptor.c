@@ -34,7 +34,8 @@ Chromosome *ChromosomeAdaptor_fetchByDbID(ChromosomeAdaptor *ca, int64 dbID) {
   } else {
     sprintf(qStr,"SELECT chromosome_id, name, length"
       " FROM chromosome"
-      " WHERE  chromosome_id = %d", dbID);
+      " WHERE  chromosome_id = "
+      INT64FMTSTR, dbID);
   
     sth = ca->prepare((BaseAdaptor *)ca,qStr,strlen(qStr));
     sth->execute(sth);

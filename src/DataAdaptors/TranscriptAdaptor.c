@@ -32,7 +32,8 @@ Transcript *TranscriptAdaptor_fetchByDbID(TranscriptAdaptor *ta, int64 dbID) {
   sprintf(qStr,
     "SELECT exon_id"
     " FROM   exon_transcript"
-    " WHERE  transcript_id = %d"
+    " WHERE  transcript_id = "
+    INT64FMTSTR
     " ORDER BY rank",dbID);
 
   sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
@@ -46,7 +47,7 @@ Transcript *TranscriptAdaptor_fetchByDbID(TranscriptAdaptor *ta, int64 dbID) {
   sth->finish(sth);
 
   if (!seen) {
-    fprintf(stderr,"ERROR: transcript %d is not present in db",dbID);
+    fprintf(stderr,"ERROR: transcript " INT64FMTSTR "is not present in db",dbID);
     return NULL;
   }
   Transcript_setDbID(trans, dbID);
@@ -55,7 +56,7 @@ Transcript *TranscriptAdaptor_fetchByDbID(TranscriptAdaptor *ta, int64 dbID) {
   sprintf(qStr,
     "SELECT translation_id"
     " FROM  transcript"
-    " WHERE  transcript_id = %d",dbID);
+    " WHERE  transcript_id = " INT64FMTSTR,dbID);
 
   sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
   sth->execute(sth);
@@ -82,7 +83,7 @@ int TranscriptAdaptor_getStableEntryInfo(TranscriptAdaptor *ta, Transcript *tran
   sprintf(qStr,
           "SELECT stable_id, version"
           " FROM transcript_stable_id"
-          " WHERE transcript_id = %d",Transcript_getDbID(transcript));
+          " WHERE transcript_id = " INT64FMTSTR, Transcript_getDbID(transcript));
 
   sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
   sth->execute(sth);

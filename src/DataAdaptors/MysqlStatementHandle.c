@@ -53,6 +53,8 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
 
   Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);
 
+  printf("Statement = %s\n",sth->statementFormat);
+
   m_sth = (MysqlStatementHandle *)sth;
 
   va_start(args, sth);
@@ -98,12 +100,19 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
 
 ResultRow *MysqlStatementHandle_fetchRow(StatementHandle *sth) {
   MysqlStatementHandle *m_sth;
-  MysqlResultRow *m_row = MysqlResultRow_new();
+  MysqlResultRow *m_row;
+  MYSQL_ROW mysql_row;
 
   Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);
 
   m_sth = (MysqlStatementHandle *)sth;
-  m_row->mysql_row = mysql_fetch_row(m_sth->results);
+  mysql_row = mysql_fetch_row(m_sth->results);
+
+  if (mysql_row == NULL) {
+    return NULL;
+  }
+  m_row = MysqlResultRow_new();
+  m_row->mysql_row = mysql_row;
 
   return (ResultRow *)m_row;
 }

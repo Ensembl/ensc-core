@@ -38,11 +38,13 @@ Exon *ExonAdaptor_fetchByDbID(ExonAdaptor *ea, int64 dbID) {
     " , end_phase"
     " , sticky_rank"
     " FROM   exon"
-    " WHERE  exon_id = %d"
+    " WHERE  exon_id = "
+    INT64FMTSTR
     " ORDER BY sticky_rank DESC", 
     dbID);
 
   sth = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
+  sth->execute(sth);
 
   row = sth->fetchRow(sth);
   if( row == NULL ) {
@@ -153,7 +155,8 @@ int ExonAdaptor_fetchAllByGeneId(ExonAdaptor *ea, int64 geneId, Exon ***retExons
     " FROM exon e"
     "  , exon_transcript et"
     "  , transcript t"
-    " WHERE t.gene_id = %d"
+    " WHERE t.gene_id = "
+    INT64FMTSTR
     "  AND et.transcript_id = t.transcript_id"
     "  AND e.exon_id = et.exon_id"
     " ORDER BY t.transcript_id,e.exon_id"

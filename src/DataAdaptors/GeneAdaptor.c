@@ -46,6 +46,7 @@ int GeneAdaptor_listGeneIds(GeneAdaptor *ga, int64 **geneIds) {
     (*geneIds)[idCount++] = row->getLongLongAt(row,0);
   }
   sth->finish(sth);
+  printf("Finished\n");
   return idCount;
 }
 
@@ -106,7 +107,8 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, int64 geneId, int chrCoords) {
     "  , exon_transcript e_t"
     " WHERE gene.gene_id = tscript.gene_id"
     "  AND tscript.transcript_id = e_t.transcript_id"
-    "  AND gene.gene_id = %d"
+    "  AND gene.gene_id = "
+    INT64FMTSTR
     " ORDER BY tscript.gene_id"
     "  , tscript.transcript_id"
     "  , e_t.rank",geneId);
@@ -239,7 +241,8 @@ int GeneAdaptor_getStableEntryInfo(GeneAdaptor *ga, Gene *gene) {
           "SELECT stable_id, UNIX_TIMESTAMP(created),"
           "                  UNIX_TIMESTAMP(modified), version"
           " FROM gene_stable_id"
-          " WHERE gene_id = %d",Gene_getDbID(gene));
+          " WHERE gene_id = "
+          INT64FMTSTR, Gene_getDbID(gene));
 
   sth = ga->prepare((BaseAdaptor *)ga,qStr,strlen(qStr));
   sth->execute(sth);
@@ -314,9 +317,9 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
   for (i=0; i<nContigId; i++) {
     char numStr[256];
     if (i!=(nContigId-1)) {
-      sprintf(numStr,"%d,",contigIds[i]);
+      sprintf(numStr,INT64FMTSTR ",",contigIds[i]);
     } else {
-      sprintf(numStr,"%d",contigIds[i]);
+      sprintf(numStr,INT64FMTSTR,contigIds[i]);
     }
     qStr = StrUtil_appendString(qStr, numStr);
   }
@@ -337,7 +340,7 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
       return emptySet;
     }
 
-    sprintf(analStr," AND g.analysis_id = %d", Analysis_getDbID(analysis));
+    sprintf(analStr," AND g.analysis_id = " INT64FMTSTR , Analysis_getDbID(analysis));
    
     qStr = StrUtil_appendString(qStr,analStr); 
   }

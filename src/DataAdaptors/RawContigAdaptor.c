@@ -45,7 +45,7 @@ void RawContigAdaptor_fetchAttributes(RawContigAdaptor *rca, RawContig *rc) {
           "SELECT contig_id, name, clone_id, length,"
           " embl_offset, dna_id "
           "FROM contig "
-          "WHERE contig_id = %d", RawContig_getDbID(rc));
+          "WHERE contig_id = " INT64FMTSTR, RawContig_getDbID(rc));
 
   sth = rca->prepare((BaseAdaptor *)rca,qStr,strlen(qStr));
   sth->execute(sth);

@@ -70,7 +70,8 @@ Analysis *AnalysisAdaptor_fetchByDbID(AnalysisAdaptor *aa, int64 dbID) {
       "       gff_source, gff_feature,"
       "       created, parameters"
       " FROM   analysis"
-      " WHERE  analysis_id = %d", dbID);
+      " WHERE  analysis_id = "
+      INT64FMTSTR, dbID);
   
     
     sth = aa->prepare((BaseAdaptor *)aa,qStr,strlen(qStr));

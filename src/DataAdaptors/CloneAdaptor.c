@@ -32,7 +32,8 @@ Clone *CloneAdaptor_fetchByDbID(CloneAdaptor *ca, int64 dbID) {
     "       gff_source, gff_feature,"
     "       created, parameters"
     " FROM   clone"
-    " WHERE  clone_id = %d", dbID);
+    " WHERE  clone_id = "
+    INT64FMTSTR, dbID);
 
   sth = ca->prepare((BaseAdaptor *)ca,qStr,strlen(qStr));
   sth->execute(sth);
