@@ -46,6 +46,8 @@ static void *xcalloc(int size, int nelem) {
 
   if ((ptr = calloc(size,nelem)) == NULL) {
     
+    printf("Error:Failed in xcalloc\n");
+    exit(1);
   }
   return ptr;
 }
@@ -55,6 +57,8 @@ static void *xrealloc(void *ptr, int size) {
 
   if ((tmp_ptr = realloc(ptr,size)) == NULL) {
 
+    printf("Error:Failed in xrealloc\n");
+    exit(1);
   }
   return tmp_ptr;
 }
@@ -123,11 +127,13 @@ static void BioIndex_addLocation(BioIndex *bi, BioIndex_Location **locationsP,
   bi->primary_index->num_record++;
   if (!(bi->primary_index->num_record % 1000000)) {
     *locationsP = xrealloc((*locationsP), 
-                           sizeof(BioIndex_Location) *bi->primary_index->num_record + 1000000);
+                           sizeof(BioIndex_Location) *(bi->primary_index->num_record + 1000000));
   }
   location = &(*locationsP)[bi->primary_index->num_record-1];
 
   if ((id = parser(header)) != NULL) {
+    //printf("id = %s\n",id);
+    //fflush(stdout);
     location->fileIndex = index;
     location->start = start;
     location->length= end-start+1;
@@ -583,6 +589,10 @@ static void BioIndex_write_secondaries(BioIndex *bi, Vector *secondary_data,
   int  maxKeyLen;
   int  rec_len;
 
+  if (!Vector_getNumElement(secondary_data)) {
+    return;
+  }
+
   bi->secondary_indices = xcalloc(sizeof(BioIndex_IndexFile *),Vector_getNumElement(secondary_data));
 
   for (i=0;i<Vector_getNumElement(secondary_data);i++) {
@@ -721,14 +731,14 @@ static void BioIndex_add_file(BioIndex *bi, char *fname,
       } 
       if (!first) {
         BioIndex_addLocation(bi, locationsP, header, lastPos, filePos-1, index,
-                            primary_def->parser);
+                             primary_def->parser);
         for (i=0;i<Vector_getNumElement(secondary_data);i++) {
           BioIndex_Index_Data *bid = Vector_getElementAt(secondary_data,i);
           for (j=Vector_getNumElement(bid->ids)-1;j>=0; j--) {
             Vector_addElement(bid->final_data,
                               BioIndex_Secondary_Pair_create(Vector_getElementAt(bid->ids,j),
                                                              (*locationsP)[bi->primary_index->num_record-1].entry));
-            // TODO g_ptr_array_remove_index(bid->ids,j);
+            Vector_removeElementAt(bid->ids,j);
           }
         } 
       } else {

@@ -55,6 +55,31 @@ void *Vector_setElementAt(Vector *v, int ind, void *elem) {
   return v->elements[ind];
 }
 
+void *Vector_removeElementAt(Vector *v, int ind) {
+  void *removed;
+  int i;
+
+  if (ind < 0) {
+    fprintf(stderr,"ERROR: Invalid element index %d\n",ind);
+    exit(1);
+  } else if (ind >= v->nElement) {
+    fprintf(stderr,"ERROR: Invalid element index %d\n",ind);
+    exit(1);
+  }
+/* NIY free old one
+*/
+  
+  removed = v->elements[ind];
+  
+  for (i=ind+1; i<v->nElement; i++) {
+    v->elements[i-1] = v->elements[i];
+  }
+
+  v->nElement--;
+
+  return removed;
+}
+
 void Vector_reverse(Vector *v) {
   int up =0;
   int down = v->nElement-1;
