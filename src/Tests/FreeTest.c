@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
   Slice *slice;
   Vector *features;
   int i;
-  int failed;
+  int failed = 0;
   
   initEnsC();
 
@@ -50,5 +50,6 @@ int main(int argc, char *argv[]) {
   printf("Calling Vector_free on features\n");
   Vector_free(features);
 
+  sleep(500);
   return 0;
 }

@@ -12,7 +12,8 @@ DBAdaptor *Test_initROEnsDB() {
 //  dba = DBAdaptor_new("ecs2b.internal.sanger.ac.uk","ensro",NULL,"human_NCBI33_raw",3306,NULL);
 //  dba = DBAdaptor_new("127.0.0.1","ensro",NULL,"human_NCBI33_raw",13302,NULL);
 //  dba = DBAdaptor_new("127.0.0.1","root",NULL,"test_core",3306,NULL);
-  dba = DBAdaptor_new("127.0.0.1","root",NULL,"homo_sapiens_core_18_34",3306,NULL);
+//  dba = DBAdaptor_new("127.0.0.1","root",NULL,"homo_sapiens_core_18_34",3306,NULL);
+  dba = DBAdaptor_new("127.0.0.1","root",NULL,"steve_feb04_comp",3306,NULL);
 
   return dba;
 }
