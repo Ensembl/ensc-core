@@ -10,6 +10,7 @@
 #include "ExonAdaptor.h"
 #include "GeneAdaptor.h"
 #include "ProteinAlignFeatureAdaptor.h"
+#include "RepeatFeatureAdaptor.h"
 #include "SequenceAdaptor.h"
 #include "SimpleFeatureAdaptor.h"
 #include "SliceAdaptor.h"
@@ -19,6 +20,7 @@
 #include "SimpleFeature.h"
 #include "DNAAlignFeature.h"
 #include "DNAPepAlignFeature.h"
+#include "RepeatFeature.h"
 
 int main(int argc, char *argv[]) {
   DBAdaptor *dba;
@@ -38,6 +40,18 @@ int main(int argc, char *argv[]) {
     SimpleFeature *sf = (SimpleFeature *)SimpleFeatureAdaptor_fetchByDbID(sfa,1);
     printf("Simple feature: %d-%d id " INT64FMTSTR "\n", SimpleFeature_getStart(sf), 
            SimpleFeature_getEnd(sf), SimpleFeature_getDbID(sf));
+  }
+  {
+    SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
+    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);
+    Set *rfSet = Slice_getAllRepeatFeatures(slice,"");
+    int i;
+
+    for (i=0;i<Set_getNumElement(rfSet);i++) {
+      RepeatFeature *rf = Set_getElementAt(rfSet,i);
+      printf("Repeat feature: %d-%d id " INT64FMTSTR "\n", RepeatFeature_getStart(rf), 
+             RepeatFeature_getEnd(rf), RepeatFeature_getDbID(rf));
+    }
   }
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);

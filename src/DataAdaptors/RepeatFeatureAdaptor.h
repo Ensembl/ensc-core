@@ -10,4 +10,18 @@ struct RepeatFeatureAdaptorStruct {
 
 RepeatFeatureAdaptor *RepeatFeatureAdaptor_new(DBAdaptor *dba);
 
+int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features);
+char *RepeatFeatureAdaptor_defaultWhereClause();
+NameTableType *RepeatFeatureAdaptor_getTables();
+char *RepeatFeatureAdaptor_getColumns();
+Set *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
+                                                     StatementHandle *sth,
+                                                     AssemblyMapper *mapper,
+                                                     Slice *slice);
+
+
+#define RepeatFeatureAdaptor_fetchByDbID(rfa, id) BaseFeatureAdaptor_fetchByDbID((BaseFeatureAdaptor *)(rfa), (id))
+#define RepeatFeatureAdaptor_fetchAllBySlice(rfa, slice, lname) \
+          BaseFeatureAdaptor_fetchAllBySlice((BaseFeatureAdaptor *)(rfa), (slice), (lname))
+
 #endif

@@ -100,6 +100,7 @@ PredictionTranscriptAdaptor *DBAdaptor_getPredictionTranscriptAdaptor(DBAdaptor 
   }
   return (PredictionTranscriptAdaptor *)DBConnection_getAdaptor(dba->dbc,PREDICTIONTRANSCRIPT_ADAPTOR);
 }
+#endif
 
 RepeatFeatureAdaptor *DBAdaptor_getRepeatFeatureAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,REPEATFEATURE_ADAPTOR)) {
@@ -116,7 +117,6 @@ RepeatConsensusAdaptor *DBAdaptor_getRepeatConsensusAdaptor(DBAdaptor *dba) {
   }
   return (RepeatConsensusAdaptor *)DBConnection_getAdaptor(dba->dbc,REPEATCONSENSUS_ADAPTOR);
 }
-#endif
 
 TranscriptAdaptor *DBAdaptor_getTranscriptAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,TRANSCRIPT_ADAPTOR)) {

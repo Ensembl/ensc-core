@@ -18,33 +18,104 @@ RepeatConsensusAdaptor *RepeatConsensusAdaptor_new(DBAdaptor *dba) {
 }
 
 RepeatConsensus *RepeatConsensusAdaptor_fetchByDbID(RepeatConsensusAdaptor *rca, int64 dbID) {
-  RepeatConsensus *repeatConsensus;
-  char qStr[256];
+
+/*
+    my ($rc) = @{$self->_generic_fetch("repeat_consensus_id = $db_id")}; 
+
+    return $rc;   
+*/
+}
+
+RepeatConsensus *RepeatConsensusAdaptor_fetchByName(RepeatConsensusAdaptor *rca, char *name) {
+
+/*
+    my ($rc) = @{$self->_generic_fetch("repeat_name = '$name'")};   
+
+    return $rc;
+*/
+}
+
+RepeatConsensus *RepeatConsensusAdaptor_fetchByNameAndClass(RepeatConsensusAdaptor *rca, char *name, char *class) {
+
+/*
+    my ($rc) = @{$self->_generic_fetch(qq{
+      repeat_name  = '$name'
+      AND repeat_class = '$class'
+    })};
+
+    return $rc;
+*/
+}
+
+
+Set *RepeatConsensusAdaptor_fetchByClassAndSeq(RepeatConsensusAdaptor *rca, char *class, char *seq) {
+
+/*
+    return $self->_generic_fetch(qq{
+            repeat_class     = '$class'
+        AND repeat_consensus = '$seq'
+    });
+*/
+}
+
+Set *RepeatConsensusAdaptor_genericFetch(RepeatConsensusAdaptor *rca, char *whereClause) {
   StatementHandle *sth;
   ResultRow *row;
+  char qStr[1024];
+  Set *consensi;
+    
+  sprintf(qStr,"SELECT repeat_consensus_id, repeat_name,"
+               "       repeat_class, LENGTH(repeat_consensus)"
+               " FROM repeat_consensus"
+               " WHERE %s", whereClause);
 
-  if (IDHash_contains(ca->chrCache,dbID)) {
+  rca->prepare((BaseAdaptor *)rca,qStr,strlen(qStr));
+  sth->execute(sth);
 
-    repeatConsensus = IDHash_getValue(ca->chrCache, dbID);
+  consensi = Set_new();
+  
+  while (row = sth->fetchRow(sth)) {
+    RepeatConsensus *rc = RepeatConsensus_new();
 
-  } else {
-    sprintf(qStr,"SELECT repeat_consensus_id, name, length"
-      " FROM repeat_consensus"
-      " WHERE  repeat_consensus_id = "
-      INT64FMTSTR, dbID);
-  
-    sth = ca->prepare((BaseAdaptor *)ca,qStr,strlen(qStr));
-    sth->execute(sth);
-  
-    row = sth->fetchRow(sth);
-    if( row == NULL ) {
-      sth->finish(sth);
-      return NULL;
-    }
-  
-    repeatConsensus = RepeatConsensusAdaptor_repeatConsensusFromRow(ca, row);
-    sth->finish(sth);
+    RepeatConsensus_setDbID(rc, row->getLongLongAt(row,0));
+    RepeatConsensus_setName(rc, row->getStringAt(row,1));
+    RepeatConsensus_setRepeatClass(rc, row->getStringAt(row,2));
+    // Do I really need to do this???? RepeatConsensus_setLength(rc, row->getIntAt(row,3));
+    RepeatConsensus_setAdaptor(rc, rca);
+
+    Set_addElement(consensi, rc);
   }
-
-  return repeatConsensus;
+  return consensi;
 }
+
+int RepeatConsensusAdaptor_store(RepeatConsensusAdaptor *rca, Set *consensi) {
+/*
+  my( $self, @consensi ) = @_;
+  
+  my $sth = $self->prepare(q{
+    INSERT into repeat_consensus( repeat_consensus_id
+          , repeat_name
+          , repeat_class
+          , repeat_consensus )
+      VALUES (NULL, ?,?,?)
+    });
+    
+  foreach my $rc (@consensi) {
+    my $name  = $rc->name
+      or $self->throw("name not set");
+    my $class = $rc->repeat_class
+      or $self->throw("repeat_class not set");
+    my $seq   = $rc->repeat_consensus
+      or $self->throw("repeat_consensus not set");
+    
+    $sth->execute($name, $class, $seq);
+    
+    my $db_id = $sth->{'mysql_insertid'}
+    or $self->throw("Didn't get an insertid from the INSERT statement");
+    
+    $rc->dbID($db_id);
+    $rc->adaptor($self);
+  }
+*/
+}
+

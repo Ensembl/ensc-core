@@ -6,6 +6,7 @@
 #include "DNAAlignFeatureAdaptor.h"
 #include "GeneAdaptor.h"
 #include "ProteinAlignFeatureAdaptor.h"
+#include "RepeatFeatureAdaptor.h"
 #include "SimpleFeatureAdaptor.h"
 #include "SliceAdaptor.h"
 
@@ -100,6 +101,13 @@ Set *Slice_getAllDNAPepAlignFeatures(Slice *slice, char *logicName, double *scor
   ProteinAlignFeatureAdaptor *pafa = DBAdaptor_getProteinAlignFeatureAdaptor(Slice_getAdaptor(slice)->dba);
 
   return ProteinAlignFeatureAdaptor_fetchAllBySliceAndScore(pafa, slice, score, logicName);
+}
+
+Set *Slice_getAllRepeatFeatures(Slice *slice, char *logicName) {
+
+  RepeatFeatureAdaptor *rfa = DBAdaptor_getRepeatFeatureAdaptor(Slice_getAdaptor(slice)->dba);
+
+  return RepeatFeatureAdaptor_fetchAllBySlice(rfa, slice, logicName);
 }
 
 

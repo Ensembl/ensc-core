@@ -51,6 +51,8 @@ libensc.a	: \
 	objectfiles/DataAdaptors/MysqlStatementHandle.o \
 	objectfiles/DataAdaptors/ProteinAlignFeatureAdaptor.o \
 	objectfiles/DataAdaptors/RawContigAdaptor.o \
+	objectfiles/DataAdaptors/RepeatConsensusAdaptor.o \
+	objectfiles/DataAdaptors/RepeatFeatureAdaptor.o \
 	objectfiles/DataAdaptors/SequenceAdaptor.o \
 	objectfiles/DataAdaptors/SimpleFeatureAdaptor.o \
 	objectfiles/DataAdaptors/SliceAdaptor.o \
@@ -80,6 +82,8 @@ libensc.a	: \
 	objectfiles/DataModel/Mapper/MapperRangeSet.o \
 	objectfiles/DataModel/Mapper/MapperUnit.o \
 	objectfiles/DataModel/RawContig.o \
+	objectfiles/DataModel/RepeatConsensus.o \
+	objectfiles/DataModel/RepeatFeature.o \
 	objectfiles/DataModel/SeqFeature.o \
 	objectfiles/DataModel/SimpleFeature.o \
 	objectfiles/DataModel/Slice.o \
@@ -87,7 +91,6 @@ libensc.a	: \
 	objectfiles/DataModel/StickyExon.o \
 	objectfiles/DataModel/Transcript.o \
 	objectfiles/DataModel/Translation.o \
-	objectfiles/Programs/testdbc.o \
 	objectfiles/Util/CHash.o \
 	objectfiles/Util/Cache.o \
 	objectfiles/Util/EcoString.o \

@@ -29,6 +29,7 @@ MetaContainer               *DBAdaptor_getMetaContainer(DBAdaptor *dba);
 PredictionTranscriptAdaptor *DBAdaptor_getPredictionTranscriptAdaptor(DBAdaptor *dba);
 ProteinAlignFeatureAdaptor  *DBAdaptor_getProteinAlignFeatureAdaptor(DBAdaptor *dba);
 RawContigAdaptor            *DBAdaptor_getRawContigAdaptor(DBAdaptor *dba);
+RepeatConsensusAdaptor      *DBAdaptor_getRepeatConsensusAdaptor(DBAdaptor *dba);
 RepeatFeatureAdaptor        *DBAdaptor_getRepeatFeatureAdaptor(DBAdaptor *dba);
 SliceAdaptor                *DBAdaptor_getSliceAdaptor(DBAdaptor *dba); 
 SimpleFeatureAdaptor        *DBAdaptor_getSimpleFeatureAdaptor(DBAdaptor *dba); 

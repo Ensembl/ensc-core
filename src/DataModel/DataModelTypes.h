@@ -16,6 +16,7 @@ typedef struct GenomicRangeStruct GenomicRange;
 typedef struct MapperStruct Mapper;
 typedef struct RawContigStruct RawContig;
 typedef struct RepeatConsensusStruct RepeatConsensus;
+typedef struct RepeatFeatureStruct RepeatFeature;
 typedef struct SeqFeatureStruct SeqFeature;
 typedef struct SimpleFeatureStruct SimpleFeature;
 typedef struct SliceStruct Slice;

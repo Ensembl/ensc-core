@@ -5,7 +5,7 @@
 #include "AnalysisAdaptor.h"
 #include "RawContigAdaptor.h"
 
-#include "Repeat.h"
+#include "RepeatFeature.h"
 #include "RepeatConsensus.h"
 
 NameTableType RepeatFeatureAdaptor_tableNames = {{"repeat_feature","r"},
@@ -30,7 +30,7 @@ RepeatFeatureAdaptor *RepeatFeatureAdaptor_new(DBAdaptor *dba) {
   return rfa;
 }
 
-int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *baf, Set *features) {
+int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
 /*
   my( $self, @repeats ) = @_;
   
@@ -158,7 +158,7 @@ char *RepeatFeatureAdaptor_getColumns() {
          "rc.repeat_consensus";
 }
 
-Set *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf,
+Set *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
                                                      StatementHandle *sth,
                                                      AssemblyMapper *mapper,
                                                      Slice *slice) {
@@ -178,11 +178,6 @@ Set *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf,
   features = Set_new();
   rcHash = IDHash_new(IDHASH_SMALL);
 
-
-  my $rc;
-  my $contig;
-  my $analysis;
-
   while (row = sth->fetchRow(sth)) {
     RepeatFeature *rf;
     Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,2));
@@ -190,43 +185,38 @@ Set *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf,
     int64 repeatConsensusId = row->getLongLongAt(row,6);
     RepeatConsensus *rc;
 
-  $sth->bind_columns( \$repeat_feature_id, \$contig_id, \$analysis_id, \$contig_start, 
-                      \$contig_end, \$contig_strand, \$repeat_consensus_id, 
-                      \$repeat_start,\$repeat_end, \$score, 
-                      \$repeat_name, \$repeat_class,
-                      \$repeat_consensus );
-
     //create a repeat consensus object
-    if (!IDHash_constains(rcHash, repeatConsensusId)) {
+    if (!IDHash_contains(rcHash, repeatConsensusId)) {
       rc = RepeatConsensus_new();
       RepeatConsensus_setDbID(rc, repeatConsensusId);
-      RepeatConsensus_setName(rc, row->getStringAt(10));
-      RepeatConsensus_setRepeatClass(rc, row->getStringAt(11));
-      RepeatConsensus_setConsensus(rc, row->getStringAt(12));
-      RepeatConsensus_setAdaptor(rpca);
+      RepeatConsensus_setName(rc, row->getStringAt(row,10));
+      RepeatConsensus_setRepeatClass(rc, row->getStringAt(row,11));
+      RepeatConsensus_setConsensus(rc, row->getStringAt(row,12));
+      RepeatConsensus_setAdaptor(rc,(BaseAdaptor *)rpca);
 
-      IDHash_add(rcHash,repeatConsensusId);
+      IDHash_add(rcHash,repeatConsensusId,rc);
     } else {
-      rc = IDHash_get(rcHash,repeatConsensusId);
+      rc = IDHash_getValue(rcHash,repeatConsensusId);
     }
     
     //create the new repeat feature
-    push @features, Bio::EnsEMBL::RepeatFeature->new_fast(
-                      '_analysis'      =>  $analysis,
-                      '_gsf_start'         =>  $contig_start,
-                      '_gsf_end'           =>  $contig_end,
-                      '_gsf_strand'        =>  $contig_strand,
-                      '_gsf_score'         =>  $score,
-                      '_hstart'        =>  $repeat_start,
-                      '_hend'          =>  $repeat_end,
-                      '_repeat_consensus' => $rc,
-                      '_adaptor'       =>  $self,
-                      '_gsf_seq'       =>  $contig,
-                      '_db_id'         =>  $repeat_feature_id } );
+    rf = RepeatFeature_new();
+    RepeatFeature_setDbID(rf,row->getLongLongAt(row,0));
+    RepeatFeature_setStart(rf,row->getIntAt(row,3));
+    RepeatFeature_setEnd(rf,row->getIntAt(row,4));
+    RepeatFeature_setStrand(rf,row->getIntAt(row,5));
+    RepeatFeature_setHitStart(rf,row->getIntAt(row,7));
+    RepeatFeature_setHitEnd(rf,row->getIntAt(row,8));
+    RepeatFeature_setContig(rf,contig); 
+    RepeatFeature_setAnalysis(rf,analysis); 
+    RepeatFeature_setConsensus(rf,rc); 
+
+    if (row->col(row,9)) RepeatFeature_setScore(rf,row->getDoubleAt(row,9));
+
     Set_addElement(features,rf);
   }
 
-  IDHash_free(rcHash);
+  IDHash_free(rcHash,NULL);
 
   return features;
 }

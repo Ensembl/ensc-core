@@ -60,6 +60,7 @@ Set *Slice_getAllGenes(Slice *slice, char *logicName);
 Set *Slice_getAllSimpleFeatures(Slice *slice, char *logicName, double *score);
 Set *Slice_getAllDNAAlignFeatures(Slice *slice, char *logicName, double *score);
 Set *Slice_getAllDNAPepAlignFeatures(Slice *slice, char *logicName, double *score);
+Set *Slice_getAllRepeatFeatures(Slice *slice, char *logicName);
 
 
 

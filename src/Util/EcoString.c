@@ -424,7 +424,7 @@ int EcoString_getPointer(ECOSTRTABLE *EcoSTabP, ECOSTRING *To, char *From) {
       return 0;
     }
   } else {
-    printf("Old string %s\n",From);
+    //printf("Old string %s\n",From);
     (EcoSTabP->UseCount[StrInd])++;
     free(From);
   }
