@@ -33,9 +33,9 @@ int main(int argc, char *argv[]) {
 
   printf("Opening connection ...");
   //dba = DBAdaptor_new("localhost","root",NULL,"test_ensembl",3306,NULL);
-  //dba = DBAdaptor_new("kaka.sanger.ac.uk","anonymous",NULL,"homo_sapiens_core_12_31",3306,NULL);
+  dba = DBAdaptor_new("kaka.sanger.ac.uk","anonymous",NULL,"homo_sapiens_core_12_31",3306,NULL);
   //dba = DBAdaptor_new("ecs2d.internal.sanger.ac.uk","ensro",NULL,"homo_sapiens_core_14_31",3306,NULL);
-  dba = DBAdaptor_new("ecs2d.internal.sanger.ac.uk","ensro",NULL,"rattus_norvegicus_core_15_2",3306,NULL);
+  //dba = DBAdaptor_new("ecs2d.internal.sanger.ac.uk","ensro",NULL,"rattus_norvegicus_core_15_2",3306,NULL);
   printf(" Done\n");
 
   printf("Assembly type %s\n",DBAdaptor_getAssemblyType(dba));
@@ -235,7 +235,7 @@ int main(int argc, char *argv[]) {
 */
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
-    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,230000000);
+    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);
     Vector *geneVector = Slice_getAllGenes(slice,NULL);
     int i;
 

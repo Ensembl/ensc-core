@@ -392,57 +392,74 @@ char *StickyExon_getSeqString(StickyExon *stickyExon) {
   return seqString;
 }
 
+char *StickyExon_getPeptide(StickyExon *stickyExon, Transcript *trans) {
+  char *peptide;
+  int pepStart = -1;
+  int pepEnd = -1; 
+  int i;
 
-#ifdef DONE
-sub peptide {
-  my $self = shift;
-  my $tr   = shift;
-
-  unless($tr && ref($tr) && $tr->isa('Bio::EnsEMBL::Transcript')) {
-    $self->throw("transcript arg must be Bio::EnsEMBL:::Transcript not [$tr]");
+  if (!trans) {
+    fprintf(stderr,"Error: transcript arg must not be null\n");
+    exit(1);
   }
 
-  my $pep_start = undef;
-  my $pep_end   = undef;
+  for (i=0;i<StickyExon_getComponentExonCount(stickyExon); i++) {
+    Exon *exon = StickyExon_getComponentExonAt(stickyExon,i);
+    int j;
+    MapperRangeSet *mapped;
+    Vector *coords;
 
-  foreach my $exon (@{$self->get_all_component_Exons}) {
-    // convert exons coordinates to peptide coordinates
-    my @coords =
-      $tr->genomic2pep($exon->start, $exon->end, $exon->strand, $exon->contig);
-
+    mapped = Transcript_genomic2Pep(trans, Exon_getStart(exon), Exon_getEnd(exon),
+                                    Exon_getStrand(exon),Exon_getContig(exon));
+  
+    coords = Vector_new();
+  
     // filter out gaps
-    @coords = grep {$_->isa('Bio::EnsEMBL::Mapper::Coordinate')} @coords;
-
-    if(scalar(@coords) > 1) {
-      $self->throw("Error. Exon maps to multiple locations in peptide." .
-                   " Is this exon [$self] a member of this transcript [$tr]?");
-      // if this is UTR then the peptide will be empty string
-    } elsif(scalar(@coords) == 1) {
-      my $c = $coords[0];
+    for (j=0;i<mapped->nRange;i++) {
+      MapperRange *mr = MapperRangeSet_getRangeAt(mapped,i);
+      if (mr->rangeType == MAPPERRANGE_COORD) {
+        Vector_addElement(coords,mr);
+      }
+    }
+  
+    // if this is UTR then the peptide will be empty string
+    if (Vector_getNumElement(coords) > 1) {
+      fprintf(stderr, "Error. Exon maps to multiple locations in peptide."
+                      " Is this exon [%p] a member of this transcript [%p]?",
+                      exon,trans);
+      exit(1);
+  
+    } else if (Vector_getNumElement(coords) == 1) {
+      MapperCoordinate *c = Vector_getElementAt(coords,0);
+      int start,end;
+  
       // set the pep start to the minimum of all coords
-      if(!defined $pep_start || $c->start < $pep_start) {
-        $pep_start = $c->start;
+      if(pepStart == -1 || c->start < pepStart) {
+        pepStart = c->start;
       }
 
       // set the pep end to the maximum of all coords
-      if(!defined $pep_end || $c->end > $pep_end) {
-        $pep_end = $c->end;
+      if(pepEnd == -1 || c->end > pepEnd) {
+        pepEnd = c->end;
       }
     }
+  
+    Vector_free(coords,NULL);
+    MapperRangeSet_free(mapped);
   }
 
   // the peptide of this sticky is the region spanned by the component exons
-  my $pep_str = '';
-  if($pep_start && $pep_end) {
-    $pep_str = $tr->translate->subseq($pep_start, $pep_end);
+  if (pepStart != -1 && pepEnd != -1) {
+    char *wholePeptide = Transcript_translate(trans); 
+// NIYshould be $tr->translate->subseq($pep_start, $pep_end);
+// NIY check for off by one
+// NIY free wholePeptide
+    peptide = StrUtil_substr(wholePeptide, pepStart, (pepEnd-pepStart+1));
+    
   }
 
-  return Bio::Seq->new(-seq => $pep_str,
-                       -moltype => 'protein',
-                       -alphabet => 'protein',
-                       -id => $self->stable_id);
+  return peptide;
 }
-#endif
 
 Vector *StickyExon_getAllSupportingFeatures(StickyExon *stickyExon) {
   Vector *out = Vector_new();

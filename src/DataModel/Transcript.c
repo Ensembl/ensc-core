@@ -543,7 +543,100 @@ char *Transcript_seq(Transcript *trans) {
 }
 #endif
 
+MapperRangeSet *Transcript_pep2Genomic(Transcript *trans, int start, int end) {
 
+  // move start end into translate cDNA coordinates now.
+  // much easier!
+  start = 3*start-2 + (Transcript_getcDNACodingStart(trans) - 1);
+  end   = 3*end + (Transcript_getcDNACodingStart(trans) - 1);
+
+  return Transcript_cDNA2Genomic(trans, start, end);
+}
+
+
+MapperRangeSet *Transcript_genomic2Pep(Transcript *trans, int start, int end, int strand, BaseContig *contig) {
+  MapperRangeSet *mapped;
+  MapperRangeSet *out;
+  int startPhase;
+  int i;
+
+  mapped = Transcript_genomic2cDNA(trans, start, end, strand, contig);
+
+  out = MapperRangeSet_new();
+
+  if(Transcript_getExonCount(trans)) {
+    Exon *exon = Transcript_getExonAt(trans,0);
+    startPhase = Exon_getPhase(exon);
+  } else {
+    startPhase = -1;
+  }
+
+  for (i=0;i<mapped->nRange;i++) {
+    MapperRange *mr = MapperRangeSet_getRangeAt(mapped,i);
+    if (mr->rangeType == MAPPERRANGE_GAP) {
+      MapperRangeSet_addRange(out, mr);
+    } else {
+      MapperCoordinate *coord = (MapperCoordinate *)mr;
+      int start = coord->start;
+      int end   = coord->end;
+      int cdnaCStart = Transcript_getcDNACodingStart(trans);
+      int cdnaCEnd   = Transcript_getcDNACodingEnd(trans);
+      
+      if (coord->strand == -1 || end < cdnaCStart || start > cdnaCEnd) {
+	// is all gap - does not map to peptide
+	MapperGap *gap = MapperGap_new(start,end);
+        MapperRangeSet_addRange(out, (MapperRange *)gap);
+      } else {
+	// we know area is at least partially overlapping CDS
+	int cdsStart = start - cdnaCStart + 1;
+	int cdsEnd   = end   - cdnaCStart + 1;
+	MapperGap *endGap = NULL;
+        int shift;
+        int pepStart;
+        int pepEnd;
+        MapperCoordinate *newCoord;
+
+	if (start < cdnaCStart) {
+	  // start of coordinates are in the 5prime UTR
+	  MapperGap *gap = MapperGap_new(start,cdnaCStart-1);
+	  // start is now relative to start of CDS
+	  cdsStart = 1;
+          MapperRangeSet_addRange(out, (MapperRange *)gap);
+	} 
+	
+	if (end > cdnaCEnd) {
+	  // end of coordinates are in the 3prime UTR
+	  endGap = MapperGap_new(cdnaCEnd+1, end);
+	  // adjust end to relative to CDS start
+	  cdsEnd = cdnaCEnd - cdnaCStart + 1;
+	}
+
+	// start and end are now entirely in CDS and relative to CDS start
+
+	// take into account possible N padding at beginning of CDS
+	shift = (startPhase > 0) ? startPhase : 0;
+	
+	// convert to peptide coordinates
+        // NOTE Don't use same coord unlike perl so can easily free mapped
+	pepStart = (cdsStart + shift + 2) / 3;
+	pepEnd   = (cdsEnd   + shift + 2) / 3;
+        newCoord = MapperCoordinate_new(coord->id, pepStart, pepEnd, coord->strand);
+	
+        MapperRangeSet_addRange(out, (MapperRange *)newCoord);
+
+	if (endGap) {
+	  // push out the region which was in the 3prime utr
+          MapperRangeSet_addRange(out, (MapperRange *)endGap);
+	}
+      }	
+    }
+  }
+
+// NIY Free mapped, but remember bits have been used 
+  MapperRangeSet_free(mapped);
+
+  return out;
+}
 
 MapperRangeSet *Transcript_cDNA2Genomic(Transcript *trans, int start, int end) {
   Mapper *mapper;

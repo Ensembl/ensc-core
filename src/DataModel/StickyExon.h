@@ -110,6 +110,7 @@ Exon *StickyExon_adjustStartEnd(StickyExon *stickyExon, int startAdjust, int end
 char *StickyExon_getSeqString(StickyExon *stickyExon);
 void StickyExon_addSupportingFeatures(StickyExon *stickyExon, Vector *features);
 
+char *StickyExon_getPeptide(StickyExon *stickyExon, Transcript *trans);
 
 StickyExon *StickyExon_new();
 
@@ -133,7 +134,7 @@ StickyExon *StickyExon_new();
                        NULL, // transformSliceToSlice - OR ONE OF THESE
                        StickyExon_loadGenomicMapper,
                        StickyExon_adjustStartEnd,
-                       NULL, // getPeptide
+                       StickyExon_getPeptide,
                        StickyExon_addSupportingFeatures,
                        StickyExon_getAllSupportingFeatures,
                        StickyExon_getSeqString

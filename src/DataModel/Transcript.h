@@ -124,6 +124,8 @@ int Transcript_getcDNACodingEnd(Transcript *trans);
 
 MapperRangeSet *Transcript_cDNA2Genomic(Transcript *trans, int start, int end);
 MapperRangeSet *Transcript_genomic2cDNA(Transcript *trans, int start, int end, int strand, BaseContig *contig);
+MapperRangeSet *Transcript_genomic2Pep(Transcript *trans, int start, int end, int strand, BaseContig *contig);
+
 
 Mapper *Transcript_getcDNACoordMapper(Transcript *trans);
 

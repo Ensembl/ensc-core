@@ -9,6 +9,7 @@
 #include "ChromosomeAdaptor.h"
 #include "StickyExon.h"
 #include "RawContigAdaptor.h"
+#include "StrUtil.h"
 
 Exon *Exon_new() {
   Exon *exon;
@@ -99,13 +100,6 @@ Exon *Exon_transformRawContigToSliceImpl(Exon *exon, Slice *slice) {
   AssemblyMapper *assMapper;
   MapperRangeSet *mapped;
   MapperCoordinate *mc;
-
-// HACK HACK HACK
-/* Should not be needed now
-  if (Exon_isSticky(exon)) {
-    return StickyExon_transformToSlice(exon,slice);
-  }
-*/
 
   if (!Exon_getContig(exon)) {
     fprintf(stderr,"ERROR: Exon's contig must be defined to transform to Slice coords");
@@ -289,46 +283,59 @@ Exon *Exon_adjustStartEndImpl(Exon *exon, int startAdjust, int endAdjust) {
   return newExon;
 }
 
-#ifdef DONE
-sub peptide {
-  my $self = shift;
-  my $tr = shift;
+char *Exon_getPeptideImpl(Exon *exon, Transcript *trans) {
+  char *peptide;
+  MapperRangeSet *mapped;
+  Vector *coords;
+  int i;
 
-  unless($tr && ref($tr) && $tr->isa('Bio::EnsEMBL::Transcript')) {
-    $self->throw("transcript arg must be Bio::EnsEMBL:::Transcript not [$tr]");
+  if (!trans) {
+    fprintf(stderr, "Error: transcript arg non null in getPeptide\n");
+    exit(1);
   }
 
   // convert exons coordinates to peptide coordinates
-  my @coords =
-    $tr->genomic2pep($self->start, $self->end, $self->strand, $self->contig);
+  mapped = Transcript_genomic2Pep(trans, Exon_getStart(exon), Exon_getEnd(exon),
+                                  Exon_getStrand(exon),Exon_getContig(exon));
+
+  coords = Vector_new();
 
   // filter out gaps
-  @coords = grep {$_->isa('Bio::EnsEMBL::Mapper::Coordinate')} @coords;
+  for (i=0;i<mapped->nRange;i++) {
+    MapperRange *mr = MapperRangeSet_getRangeAt(mapped,i);
+    if (mr->rangeType == MAPPERRANGE_COORD) {
+      Vector_addElement(coords,mr);
+    }
+  }
 
   // if this is UTR then the peptide will be empty string
-  my $pep_str = '';
+  if (Vector_getNumElement(coords) > 1) {
+    fprintf(stderr, "Error. Exon maps to multiple locations in peptide."
+                    " Is this exon [%p] a member of this transcript [%p]?",
+                    exon,trans);
+    exit(1);
 
-  if(scalar(@coords) > 1) {
-    $self->throw("Error. Exon maps to multiple locations in peptide." .
-                 " Is this exon [$self] a member of this transcript [$tr]?");
-  } elsif(scalar(@coords) == 1) {
-    my $c = $coords[0];
-    my $pep = $tr->translate;
+  } else if (Vector_getNumElement(coords) == 1) {
+    MapperCoordinate *c = Vector_getElementAt(coords,0);
+    int start,end;
+    char *wholePeptide = Transcript_translate(trans);
+    int lenPeptide = strlen(wholePeptide);
 
     // bioperl doesn't give back residues for incomplete codons
     // make sure we don't subseq too far...
-    my ($start, $end);
-    $end = ($c->end > $pep->length) ? $pep->length : $c->end;
-    $start = ($c->start < $end) ? $c->start : $end;
-    $pep_str = $tr->translate->subseq($start, $end);
+
+    end = (c->end > lenPeptide) ? lenPeptide : c->end;
+    start = (c->start < end) ? c->start : end;
+// NIY free
+// NIY check for off by one
+    peptide = StrUtil_substr(wholePeptide,start,(end-start+1));
   }
 
-  return Bio::Seq->new(-seq => $pep_str,
-                       -moltype => 'protein',
-                       -alphabet => 'protein',
-                       -id => $self->stable_id);
+  Vector_free(coords,NULL);
+  MapperRangeSet_free(mapped);
+
+  return peptide;
 }
-#endif
 
 #ifdef DONE
 void Exon_setSeq(Exon *exon, Sequence *seq) {
