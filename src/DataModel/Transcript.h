@@ -127,6 +127,9 @@ MapperRangeSet *Transcript_genomic2cDNA(Transcript *trans, int start, int end, i
 
 Mapper *Transcript_getcDNACoordMapper(Transcript *trans);
 
+char *Transcript_translate(Transcript *trans);
+
+
 #ifdef __TRANSCRIPT_MAIN__
   TranscriptFuncs 
     transcriptFuncs = {

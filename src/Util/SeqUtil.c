@@ -76,8 +76,11 @@ char *SeqUtil_addNs(char *seq, int length) {
   char *chP;
   int i;
 
-  if ((seq = (char *)realloc(seq,(strlen(seq)+1+length)*sizeof(char))) == NULL) {
-    fprintf(stderr, "ERROR: Failed reallocating sequence string\n");
+  //printf("Seqlen = %d length = %d\n",seqlen,length);
+  if (length == -1) return seq;
+
+  if ((seq = (char *)realloc(seq,(seqlen+1+length)*sizeof(char))) == NULL) {
+    fprintf(stderr, "ERROR: Failed reallocating sequence string for length %d pointer %p\n",seqlen+1+length, seq);
     exit(1);
   }
   chP = &(seq[seqlen]);
