@@ -49,3 +49,4 @@ int PredictionTranscript_getLength(PredictionTranscript *trans) {
     return length;
 }
 
+

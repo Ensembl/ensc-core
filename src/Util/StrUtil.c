@@ -440,6 +440,17 @@ int StrUtil_stripnewline(char *str) {
   return 1;
 }
 
+char *StrUtil_strReplChr(char *str, char fromCh, char toCh) {
+  char *ChP;
+
+  for (ChP=str;*ChP!='\0';ChP++) {
+    if (*ChP==fromCh) {
+      *ChP = toCh;
+    }
+  }
+  return str;
+}
+
 /******************************************************************************/
 /* Routine   :                                                                */
 /*            gettok()                                                        */
