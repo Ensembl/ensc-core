@@ -48,11 +48,39 @@ DNAAlignFeature *DNAAlignFeature_new(void);
 #define DNAAlignFeature_setScore(fp,score) BaseAlignFeature_setScore((fp),(score))
 #define DNAAlignFeature_getScore(fp) BaseAlignFeature_getScore((fp))
 
-#define DNAAlignFeature_setEValue(fp,ev) BaseAlignFeature_setEValue((fp),(ev))
-#define DNAAlignFeature_getEValue(fp) BaseAlignFeature_getEValue((fp))
+#define DNAAlignFeature_setpValue(fp,ev) BaseAlignFeature_setpValue((fp),(ev))
+#define DNAAlignFeature_getpValue(fp) BaseAlignFeature_getpValue((fp))
 
 #define DNAAlignFeature_setPercId(fp,pid) BaseAlignFeature_setPercId((fp),(pid))
 #define DNAAlignFeature_getPercId(fp) BaseAlignFeature_getPercId((fp))
 
+int DNAAlignFeature_getHitUnit(void);
+int DNAAlignFeature_getQueryUnit(void);
+
+
+#ifdef __DNAALIGNFEATURE_MAIN__
+  BaseAlignFeatureFuncs 
+    dnaAlignFeatureFuncs = {
+                             NULL, // getStart
+                             NULL, // setStart
+                             NULL, // getEnd
+                             NULL, // setEnd
+                             NULL, // getStrand
+                             NULL, // setStrand
+                             NULL, // getSeq
+                             NULL, // setSeq
+                             NULL, // getLength
+                             BaseAlignFeature_reverseComplement,
+                             SeqFeature_transformToRawContig,
+                             SeqFeature_transformToSlice,
+                             SeqFeature_transformRawContigToSlice,
+                             BaseAlignFeature_transformSliceToRawContig,
+                             NULL, // transformSliceToSlice
+                             DNAAlignFeature_getHitUnit,
+                             DNAAlignFeature_getQueryUnit
+                            };
+#else 
+  extern BaseAlignFeatureFuncs dnaAlignFeatureFuncs;
+#endif
 
 #endif

@@ -20,14 +20,16 @@ char * hierarchyString =
   "  ANALYSIS\n"
   "  CLONE\n"
   "  CHROMOSOME\n"
-  "  PRIMARYSEQ\n"
-  "   RAWCONTIG\n"
-  "   SLICE\n"
+  "  SEQUENCE\n"
+  "   BASECONTIG\n"
+  "    RAWCONTIG\n"
+  "    SLICE\n"
   "  REPEATCONSENSUS\n"
   "  TRANSLATION\n"
   "  SEQFEATURE\n"
   "   ANNOTATEDSEQFEATURE\n"
   "    EXON\n"
+  "     STICKYEXON\n"
   "    TRANSCRIPT\n"
   "    GENE\n"
   "   PREDICTIONTRANSCRIPT\n"
@@ -54,6 +56,7 @@ Class classArray[CLASS_NUMCLASS] =
   {CLASS_DNADNAALIGNFEATURE, "DNADNAALIGNFEATURE"},
   {CLASS_DNAPEPALIGNFEATURE, "DNAPEPALIGNFEATURE"},
   {CLASS_EXON, "EXON"},
+  {CLASS_STICKYEXON, "STICKYEXON"},
   {CLASS_GENE, "GENE"},
   {CLASS_TRANSCRIPT, "TRANSCRIPT"},
   {CLASS_TRANSLATION, "TRANSLATION"},
@@ -61,8 +64,9 @@ Class classArray[CLASS_NUMCLASS] =
   {CLASS_ENSROOT, "ENSROOT"},
   {CLASS_DBENTRY, "DBENTRY"},
   {CLASS_ANALYSIS, "ANALYSIS"},
-  {CLASS_PRIMARYSEQ, "PRIMARYSEQ"},
   {CLASS_RAWCONTIG, "RAWCONTIG"},
+  {CLASS_BASECONTIG, "BASECONTIG"},
+  {CLASS_SEQUENCE, "SEQUENCE"},
   {CLASS_SLICE, "SLICE"},
   {CLASS_CHROMOSOME, "CHROMOSOME"},
   {CLASS_CLONE, "CLONE"},
@@ -126,7 +130,7 @@ int Class_isDescendent(ClassType parentType, ClassType descType) {
 int Class_searchHierarchyForParentChildPair(ClassHierarchyNode *chn, ClassType parentType, 
                                              ClassType descType, int belowParent, int *depth) {
   int i;
-  int isParent;
+  int isParent = 0;
 
   (*depth)++;
 

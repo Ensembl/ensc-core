@@ -29,7 +29,7 @@ Vector *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, E
   ProteinAlignFeatureAdaptor *pafa;
 
   // throw if this is a sticky exon
-  if (Exon_isSticky(exon)) {
+  if (exon->objectType == CLASS_STICKYEXON) {
     fprintf(stderr,"Expected Exon but got StickyExon. Call get_all_component_Exons first\n");
     exit(1);
   }
@@ -53,7 +53,7 @@ Vector *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, E
 
   
   while ((row = sth->fetchRow(sth))) {      
-    BaseAlignFeature *baf;
+    BaseAlignFeature *baf = NULL;
     char *type = row->getStringAt(row,0);
 
 // baf is HACK HACK HACK
@@ -62,7 +62,8 @@ Vector *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, E
     } else if (!strcmp(type,"dna_align_feature")) {
       baf = (BaseAlignFeature *)DNAAlignFeatureAdaptor_fetchByDbID(dafa, row->getLongLongAt(row,1));
     } else {
-      fprintf(stderr,"Unknown feature type [%s]\n",type);
+      fprintf(stderr,"Error: Unknown feature type [%s]\n",type);
+      exit(1);
     }
 
 //NIY transforming

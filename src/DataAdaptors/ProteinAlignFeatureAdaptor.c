@@ -83,7 +83,7 @@ int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) 
                       DNAPepAlignFeature_getCigarString(sf),
                       (IDType)Analysis_getDbID(analysis),
                       DNAPepAlignFeature_getScore(sf), 
-                      DNAPepAlignFeature_getEValue(sf), 
+                      DNAPepAlignFeature_getpValue(sf), 
                       DNAPepAlignFeature_getPercId(sf));
      
     DNAPepAlignFeature_setDbID(sf,sth->getInsertId(sth));
@@ -200,7 +200,7 @@ Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor
 
       DNAPepAlignFeature_setCigarString(dpaf,row->getStringAt(row,9));
   
-      if (row->col(row,10)) DNAPepAlignFeature_setEValue(dpaf,row->getDoubleAt(row,10));
+      if (row->col(row,10)) DNAPepAlignFeature_setpValue(dpaf,row->getDoubleAt(row,10));
       if (row->col(row,11)) DNAPepAlignFeature_setPercId(dpaf,row->getDoubleAt(row,11));
       if (row->col(row,12)) DNAPepAlignFeature_setScore(dpaf,row->getDoubleAt(row,12));
 
@@ -233,7 +233,7 @@ Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor
 
       DNAPepAlignFeature_setCigarString(dpaf,row->getStringAt(row,9));
   
-      if (row->col(row,10)) DNAPepAlignFeature_setEValue(dpaf,row->getDoubleAt(row,10));
+      if (row->col(row,10)) DNAPepAlignFeature_setpValue(dpaf,row->getDoubleAt(row,10));
       if (row->col(row,11)) DNAPepAlignFeature_setPercId(dpaf,row->getDoubleAt(row,11));
       if (row->col(row,12)) DNAPepAlignFeature_setScore(dpaf,row->getDoubleAt(row,12));
 

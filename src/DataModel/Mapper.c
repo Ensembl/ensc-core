@@ -44,7 +44,7 @@ Mapper *Mapper_new(CoordSystem from, CoordSystem to) {
 
 MapperRangeSet *Mapper_mapCoordinates(Mapper *m, IDType id, int start, int end, int strand, CoordSystem type) {
   IDHash *hash;
-  MapperPair *lastUsedPair;
+  MapperPair *lastUsedPair = NULL;
   MapperRangeSet *results;
   MapperPairSet *pairs;
   int i;
@@ -85,7 +85,7 @@ MapperRangeSet *Mapper_mapCoordinates(Mapper *m, IDType id, int start, int end, 
     MapperUnit *selfCoord   = MapperPair_getUnit(pair, from);
     MapperUnit *targetCoord = MapperPair_getUnit(pair, to);
     MapperRange *range;
-    int targetStart,targetEnd;
+    int targetStart = 0,targetEnd = 0;
 
     // if we haven't even reached the start, move on
     if (selfCoord->end < start) {
@@ -190,7 +190,6 @@ MapperRangeSet *Mapper_mapCoordinates(Mapper *m, IDType id, int start, int end, 
 */
 
 int Mapper_fastMap(Mapper *m, IDType id, int start, int end, int strand, CoordSystem type, MapperCoordinate *retRange) {
-  MapperRangeSet *results;
   MapperPairSet *pairs;
   int i;
   IDHash *hash;
@@ -226,7 +225,6 @@ int Mapper_fastMap(Mapper *m, IDType id, int start, int end, int strand, CoordSy
     MapperPair *pair = MapperPairSet_getPairAt(pairs,i);
     MapperUnit *selfCoord   = MapperPair_getUnit(pair, from);
     MapperUnit *targetCoord = MapperPair_getUnit(pair, to);
-    int targetStart,targetEnd;
 
     // only super easy mapping is done 
     if(start < selfCoord->start ||

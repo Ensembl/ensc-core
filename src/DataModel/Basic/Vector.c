@@ -1,6 +1,6 @@
-#define __MAIN_C__
+#define __VECTOR_MAIN__
 #include "Vector.h"
-#undef __MAIN_C__
+#undef __VECTOR_MAIN__
 #include "EnsC.h"
 
 Vector *Vector_new() {
@@ -19,6 +19,14 @@ void *Vector_getElementAt(Vector *v, int ind) {
     exit(1);
   }
   return v->elements[ind];
+}
+
+void *Vector_getLastElement(Vector *v) {
+  if (!v->nElement) {
+    fprintf(stderr,"ERROR: No elements in vector\n");
+    exit(1);
+  }
+  return v->elements[v->nElement-1];
 }
 
 void *Vector_setElementAt(Vector *v, int ind, void *elem) {

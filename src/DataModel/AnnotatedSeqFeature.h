@@ -34,8 +34,8 @@ struct AnnotatedSeqFeatureStruct {
 #define AnnotatedSeqFeature_setScore(asf,score) SeqFeature_setScore((asf),score)
 #define AnnotatedSeqFeature_getScore(asf) SeqFeature_getScore((asf))
 
-#define AnnotatedSeqFeature_setEValue(asf,pValue) SeqFeature_setEValue((asf),pValue)
-#define AnnotatedSeqFeature_getEValue(asf) SeqFeature_getEValue((asf))
+#define AnnotatedSeqFeature_setpValue(asf,pValue) SeqFeature_setpValue((asf),pValue)
+#define AnnotatedSeqFeature_getpValue(asf) SeqFeature_getpValue((asf))
 
 #define AnnotatedSeqFeature_setPhase(asf,p) SeqFeature_setPhase((asf),(p))
 #define AnnotatedSeqFeature_getPhase(asf) SeqFeature_getPhase((asf))
@@ -73,7 +73,13 @@ time_t AnnotatedSeqFeature_getModified(AnnotatedSeqFeature *asf);
 #define AnnotatedSeqFeature_getContig(asf) SeqFeature_getContig((asf))
 
 #ifdef __ANNOTATEDSEQFEATURE_MAIN__
-  AnnotatedSeqFeatureFuncs annotatedSeqFeatureFuncs = {NULL,NULL};
+  AnnotatedSeqFeatureFuncs 
+       annotatedSeqFeatureFuncs = {
+                                   NULL, // getStart
+                                   NULL, // setStart
+                                   NULL, // getEnd
+                                   NULL  // setEnd
+                                  };
 #else
   extern AnnotatedSeqFeatureFuncs annotatedSeqFeatureFuncs;
 #endif

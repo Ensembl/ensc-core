@@ -39,6 +39,8 @@ txmatrix matrix = {
 
 txmatrix revmatrix;
 
+static int initDone = 0;
+
 /* make_revmatrix() creates the reverse complemented matrix by
    swapping bits 4 and 5 with bits 0 and 1, inverting the bits, and
    then keeping only bits 0-5 */
@@ -117,9 +119,7 @@ int compilemx(char *filename) {
 
 int basebits[256];
 
-#ifdef NVSN
 int comphash[256];
-#endif
 
 void initbasebits(void)
 {
@@ -138,7 +138,6 @@ void initbasebits(void)
   basebits['t'] = 3;
   basebits['u'] = 3;
 
-#ifdef NVSN
   /* And now the hash for reverse complementation */
   memset(comphash, 'x', sizeof(int)*256);
   comphash['A'] = 'T';
@@ -159,7 +158,6 @@ void initbasebits(void)
   comphash['Y'] = 'Y';
   comphash['.'] = '.';
   comphash['~'] = '~';
-#endif
 
 }
 
@@ -177,6 +175,11 @@ void translate(char *in, char **out, int *l) {
   char *r0 = out[0];
   char *r1 = out[1];
   char *r2 = out[2];
+
+  if (!initDone) {
+    initbasebits();
+    make_revmatrix();
+  }
 
   n = strlen(in);
   end = &in[n]-5;
@@ -214,13 +217,13 @@ void translate(char *in, char **out, int *l) {
   *r3 = *r4 = *r5 = '\0';
   r3--; r4--; r5--;
 
-  index = (basebits[in[0]] << 2) | basebits[in[1]];
+  index = (basebits[(int)in[0]] << 2) | basebits[(int)in[1]];
 
   for (p = in; p<=end; p+=3) {
       
     /* Frame 0/3 */
 
-    index = ((index << 2) & 0x3C) | basebits[p[2]];
+    index = ((index << 2) & 0x3C) | basebits[(int)p[2]];
 
     if (index & 0x80) {
       *r0++ = 'X';
@@ -231,7 +234,7 @@ void translate(char *in, char **out, int *l) {
     }
     /* Frame 1/4 */
 
-    index = ((index << 2) & 0x3C) | basebits[p[3]];
+    index = ((index << 2) & 0x3C) | basebits[(int)p[3]];
 
     if (index & 0x80) {
       *r1++ = 'X';
@@ -243,7 +246,7 @@ void translate(char *in, char **out, int *l) {
 
     /* Frame 2/5 */
 
-    index = ((index << 2) & 0x3C) | basebits[p[4]];
+    index = ((index << 2) & 0x3C) | basebits[(int)p[4]];
 
     if (index & 0x80) {
       *r2++ = 'X';
@@ -258,7 +261,7 @@ void translate(char *in, char **out, int *l) {
      so we need to deal with those */
 
   if (rem<2) {
-    index = ((index << 2) & 0x3C) | basebits[p[2]];
+    index = ((index << 2) & 0x3C) | basebits[(int)p[2]];
 
     if (index & 0x80) {
       *r0++ = 'X';
@@ -269,7 +272,7 @@ void translate(char *in, char **out, int *l) {
     }
 
     if (rem==1) {
-      index = ((index << 2) & 0x3C) | basebits[p[3]];
+      index = ((index << 2) & 0x3C) | basebits[(int)p[3]];
 
       if (index & 0x80) {
         *r1++ = 'X';
@@ -284,7 +287,6 @@ void translate(char *in, char **out, int *l) {
   *r0 = *r1 = *r2 = '\0';
 }
 
-#ifdef NVSN
 /* rev_comp() produces the reverse complement of a nucleic acid
    sequence.  It is only used when comparing a nucleotide pattern
    against a nucleotide db */
@@ -299,4 +301,3 @@ void rev_comp(char *in, char *out) {
   while (q>=out)
     *q-- = comphash[*p++];
 }
-#endif

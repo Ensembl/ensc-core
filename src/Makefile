@@ -5,7 +5,7 @@ CC = cc
 MYSQLCFLAGS=${shell mysql_config --cflags}
 MYSQLLIBS=${shell mysql_config --libs}
 
-CFLAGS = -Wall -O2 -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic $(MYSQLCFLAGS)
+CFLAGS = -Wall -g -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS)
 
 BINDIR=../bin
@@ -77,6 +77,7 @@ libensc.a	: \
 	objectfiles/DataModel/DNAPepAlignFeature.o \
 	objectfiles/DataModel/EnsC.o \
 	objectfiles/DataModel/Exon.o \
+	objectfiles/DataModel/FeaturePair.o \
 	objectfiles/DataModel/FeatureSet.o \
 	objectfiles/DataModel/Gene.o \
 	objectfiles/DataModel/GenomicRange.o \
@@ -93,6 +94,8 @@ libensc.a	: \
 	objectfiles/DataModel/RepeatConsensus.o \
 	objectfiles/DataModel/RepeatFeature.o \
 	objectfiles/DataModel/SeqFeature.o \
+	objectfiles/DataModel/SeqFeatureFactory.o \
+	objectfiles/DataModel/Sequence.o \
 	objectfiles/DataModel/SimpleFeature.o \
 	objectfiles/DataModel/Slice.o \
 	objectfiles/DataModel/StableIdInfo.o \

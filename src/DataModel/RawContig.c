@@ -23,6 +23,15 @@ RawContig *RawContig_new() {
   return rc;
 }
 
+char *RawContig_getName(RawContig *rc) {
+  RawContigAdaptor *rca = (RawContigAdaptor *)RawContig_getAdaptor(rc);
+
+  if (rc->name == NULL && rca) {
+    RawContigAdaptor_fetchAttributes(rca,rc);
+  }
+  return rc->name;
+}
+
 char *RawContig_setName(RawContig *rc, char *name) {
   if ((rc->name = (char *)malloc(strlen(name)+1)) == NULL) {
     fprintf(stderr,"ERROR: Failed allocating space for seqfeature name\n");
@@ -59,15 +68,6 @@ long RawContig_getCloneID(RawContig *rc) {
     RawContigAdaptor_fetchAttributes(rca,rc);
   }
   return rc->cloneId;
-}
-
-char *RawContig_getName(RawContig *rc) {
-  RawContigAdaptor *rca = (RawContigAdaptor *)RawContig_getAdaptor(rc);
-
-  if (rc->name == NULL && rca) {
-    RawContigAdaptor_fetchAttributes(rca,rc);
-  }
-  return rc->name;
 }
 
 Vector *RawContig_getAllSimpleFeatures(RawContig *rc, char *logicName, double *scoreP) {

@@ -63,14 +63,14 @@ typedef struct TranscriptExonsStruct {
 } TranscriptExons;
 
 Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
-  Gene *gene;
+  Gene *gene = NULL;
   ExonAdaptor *ea;
   TranscriptAdaptor *ta;
   AnalysisAdaptor *aa;
   Exon **exons;
   int nExon;
   int first = 1;
-  Analysis *ana;
+  Analysis *ana = NULL;
   IDHash *exonHash;
   IDHash *translationHash;
   IDHash *transcriptExonsHash;

@@ -10,13 +10,27 @@
 #include "FeatureSet.h"
 #include "Slice.h"
 
+typedef void (*Exon_LoadGenomicMapperFunc)(Exon *exon, Mapper *mapper, IDType id, int start);
+typedef Exon * (*Exon_AdjustStartEndFunc)(Exon *exon, int startAdjust, int endAdjust);
+typedef char * (*Exon_GetPeptideFunc)(Exon *exon);
+typedef void (*Exon_AddSupportingFeatureFunc)(Exon *exon, SeqFeature *sf);
+typedef Vector * (*Exon_GetAllSupportingFeaturesFunc)(Exon *exon);
+
+
+#define EXONFUNCS_DATA \
+  ANNOTATEDSEQFEATUREFUNCS_DATA \
+  Exon_LoadGenomicMapperFunc loadGenomicMapper; \
+  Exon_AdjustStartEndFunc adjustStartEnd; \
+  Exon_GetPeptideFunc getPeptide; \
+  Exon_AddSupportingFeatureFunc addSupportingFeature; \
+  Exon_GetAllSupportingFeaturesFunc getAllSupportingFeatures;
+
 typedef struct ExonFuncsStruct {
-  ANNOTATEDSEQFEATUREFUNCS_DATA
+  EXONFUNCS_DATA
 } ExonFuncs;
 
 #define EXON_DATA \
   ANNOTATEDSEQFEATURE_DATA \
-  FeatureSet components; \
   int stickyRank; \
   FeatureSet supportingFeatures;
 
@@ -26,17 +40,17 @@ struct ExonStruct {
 };
 #undef FUNCSTRUCTTYPE
 
-#define Exon_setStart(exon,start) AnnotatedSeqFeature_setStart((exon),start)
+#define Exon_setStart(exon,start) AnnotatedSeqFeature_setStart((exon),(start))
 #define Exon_getStart(exon) AnnotatedSeqFeature_getStart((exon))
 
-#define Exon_setEnd(exon,end) AnnotatedSeqFeature_setEnd((exon),end)
+#define Exon_setEnd(exon,end) AnnotatedSeqFeature_setEnd((exon),(end))
 #define Exon_getEnd(exon) AnnotatedSeqFeature_getEnd((exon))
 
-#define Exon_setScore(exon,score) AnnotatedSeqFeature_setScore((exon),score)
+#define Exon_setScore(exon,score) AnnotatedSeqFeature_setScore((exon),(score))
 #define Exon_getScore(exon) AnnotatedSeqFeature_getScore((exon))
 
-#define Exon_setpValue(exon,pValue) AnnotatedSeqFeature_setEValue((exon),pValue)
-#define Exon_getpValue(exon) AnnotatedSeqFeature_getEValue((exon))
+#define Exon_setpValue(exon,pValue) AnnotatedSeqFeature_setpValue((exon),(pValue))
+#define Exon_getpValue(exon) AnnotatedSeqFeature_getpValue((exon))
 
 #define Exon_setPhase(exon,p) AnnotatedSeqFeature_setPhase((exon),(p))
 #define Exon_getPhase(exon) AnnotatedSeqFeature_getPhase((exon))
@@ -73,19 +87,10 @@ time_t Exon_getModified(Exon *exon);
 
 #define Exon_getLength(exon) AnnotatedSeqFeature_getLength((exon))
 
-#define Exon_addComponentExon(exon, comp) FeatureSet_addFeature(&((exon)->components),(comp))
-
-#define Exon_isSticky(exon) FeatureSet_getNumFeature(&((exon)->components))
-#define Exon_getComponentExonAt(exon,ind) FeatureSet_getFeatureAt(&((exon)->components),(ind))
-#define Exon_getComponents(exon) FeatureSet_getFeatures(&((exon)->components))
-#define Exon_getNumComponentExon(exon) FeatureSet_getNumFeature(&((exon)->components))
-
-#define Exon_addSupportingFeature(exon, sf) FeatureSet_addFeature(&((exon)->supportingFeatures),(sf))
 #define Exon_getSupportingFeatureAt(exon,ind) FeatureSet_getFeatureAt(&((exon)->supportingFeatures),(ind))
-#define Exon_getSupportingFeatures(exon) FeatureSet_getFeatures(&((exon)->supportingFeatures))
-#define Exon_getNumSupportingFeature(exon) FeatureSet_getNumFeature(&((exon)->supportingFeatures))
-
-void Exon_sortByStickyRank(Exon *exon);
+#define Exon_addSupportingFeature(exon, sf) FeatureSet_addFeature(&((exon)->supportingFeatures),(sf))
+#define Exon_getAllSupportingFeatures(exon) FeatureSet_getFeatures(&((exon)->supportingFeatures))
+#define Exon_getSupportingFeatureCount(exon) FeatureSet_getNumFeature(&((exon)->supportingFeatures))
 
 
 #define Exon_setContig(exon,c) AnnotatedSeqFeature_setContig((exon),(c))
@@ -95,13 +100,25 @@ Exon *Exon_transformToSlice(Exon *exon, Slice *slice);
 
 
 Exon *Exon_new();
-Exon *Exon_copy(Exon *orig, CopyDepth depth);
+Exon *Exon_copy(Exon *copy, Exon *orig, CopyDepth depth);
+char *Exon_getSeqString(Exon *exon);
 
 int Exon_reverseStrandCompFunc(const void *a, const void *b);
 int Exon_forwardStrandCompFunc(const void *a, const void *b);
 
+void Exon_loadGenomicMapper(Exon *exon, Mapper *mapper, IDType id, int start);
+Exon *Exon_adjustStartEnd(Exon *exon, int startAdjust, int endAdjust);
+
+
+
 #ifdef __EXON_MAIN__
-  ExonFuncs exonFuncs = {NULL,NULL};
+  ExonFuncs 
+    exonFuncs = {
+                 NULL, // getStart
+                 NULL, // setStart
+                 NULL, // getEnd
+                 NULL  // setEnd
+                };
 #else
   extern ExonFuncs exonFuncs;
 #endif

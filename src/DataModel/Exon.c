@@ -8,6 +8,7 @@
 #include "SliceAdaptor.h"
 #include "ChromosomeAdaptor.h"
 #include "StickyExon.h"
+#include "RawContigAdaptor.h"
 
 Exon *Exon_new() {
   Exon *exon;
@@ -65,19 +66,6 @@ int Exon_getVersion(Exon *exon) {
   return StableIdInfo_getVersion(&(exon->si));
 }
 
-int ExonStickyRankCompFunc(const void *a, const void *b) {
-  Exon **e1 = (Exon **)a;
-  Exon **e2 = (Exon **)b;
-
-  if (Exon_getStickyRank(*e1) > Exon_getStickyRank(*e2)) {
-    return 1;
-  } else if (Exon_getStickyRank(*e1) < Exon_getStickyRank(*e2)) {
-    return -1;
-  } else {
-    return 0;
-  }
-}
-
 int Exon_forwardStrandCompFunc(const void *a, const void *b) {
   Exon **e1 = (Exon **)a;
   Exon **e2 = (Exon **)b;
@@ -104,15 +92,7 @@ int Exon_reverseStrandCompFunc(const void *a, const void *b) {
   }
 }
 
-void Exon_sortByStickyRank(Exon *exon) {
-  if (Exon_isSticky(exon)) {
-    qsort(Exon_getComponents(exon), Exon_getNumComponentExon(exon), sizeof(void *), 
-          ExonStickyRankCompFunc);
-  }
-  return; 
-}
-
-Exon *Exon_transformToSlice(Exon *exon, Slice *slice) {
+Exon *Exon_transformRawContigToSlice(Exon *exon, Slice *slice) {
   Exon *newExon;
   BaseAdaptor *adaptor;
   AssemblyMapperAdaptor *ama;
@@ -121,9 +101,11 @@ Exon *Exon_transformToSlice(Exon *exon, Slice *slice) {
   MapperCoordinate *mc;
 
 // HACK HACK HACK
+/* Should not be needed now
   if (Exon_isSticky(exon)) {
     return StickyExon_transformToSlice(exon,slice);
   }
+*/
 
   if (!Exon_getContig(exon)) {
     fprintf(stderr,"ERROR: Exon's contig must be defined to transform to Slice coords");
@@ -156,7 +138,7 @@ Exon *Exon_transformToSlice(Exon *exon, Slice *slice) {
   // exons should always transform so in theory no error check necessary
   // actually we could have exons inside and outside the Slice 
   // because of db design and the query that produces them
-  if( !mapped || mapped->nRange == 0) {
+  if (!mapped || mapped->nRange == 0) {
     fprintf(stderr, "ERROR: Exon couldnt map dbID = " IDFMTSTR "\n",Exon_getDbID(exon));
     exit(1);
   }
@@ -185,7 +167,9 @@ Exon *Exon_transformToSlice(Exon *exon, Slice *slice) {
 // NIY free old slice (or have special empty one)???
   } 
 
-  newExon = Exon_copy(exon, SHALLOW_DEPTH);
+  newExon = Exon_new();
+
+  newExon = Exon_copy(newExon, exon, SHALLOW_DEPTH);
 
   if (Slice_getStrand(slice) == 1) {
     Exon_setStart(newExon,mc->start - Slice_getChrStart(slice) + 1);
@@ -220,21 +204,358 @@ Exon *Exon_transformToSlice(Exon *exon, Slice *slice) {
   return newExon;
 }
 
-Exon *Exon_copy(Exon *orig, CopyDepth depth) {
-  Exon *newEx = Exon_new();
-
+Exon *Exon_copy(Exon *copy, Exon *orig, CopyDepth depth) {
   if (depth != SHALLOW_DEPTH) {
     fprintf(stderr, "ERROR: Only SHALLOW copy implemented in Exon\n");
     exit(1);
   }
-  Exon_setStart(newEx,Exon_getStart(orig));  
-  Exon_setEnd(newEx,Exon_getEnd(orig));  
-  Exon_setDbID(newEx,Exon_getDbID(orig));  
-  Exon_setAdaptor(newEx,Exon_getAdaptor(orig));  
-  Exon_setStrand(newEx,Exon_getStrand(orig));  
-  Exon_setPhase(newEx,Exon_getPhase(orig));  
-  Exon_setEndPhase(newEx,Exon_getEndPhase(orig));  
-  Exon_setAnalysis(newEx,Exon_getAnalysis(orig));  
+  Exon_setStart(copy,Exon_getStart(orig));  
+  Exon_setEnd(copy,Exon_getEnd(orig));  
+  Exon_setDbID(copy,Exon_getDbID(orig));  
+  Exon_setAdaptor(copy,Exon_getAdaptor(orig));  
+  Exon_setStrand(copy,Exon_getStrand(orig));  
+  Exon_setPhase(copy,Exon_getPhase(orig));  
+  Exon_setEndPhase(copy,Exon_getEndPhase(orig));  
+  Exon_setAnalysis(copy,Exon_getAnalysis(orig));  
 
-  return newEx;
+  return copy;
 }
+
+void Exon_findSupportingEvidence(Exon *exon, Vector *features, int isSorted) {
+  int i;
+
+  for (i=0; i<Vector_getNumElement(features); i++) {
+    SeqFeature *f = Vector_getElementAt(features,i);
+
+    // return if we have a sorted feature array
+    if (isSorted == 1 && SeqFeature_getStart(f) > Exon_getEnd(exon)) {
+      return;
+    }
+/* NIY subfeatures
+    if ($f->sub_SeqFeature) {
+      my @subf = $f->sub_SeqFeature;
+
+      $self->find_supporting_evidence(\@subf);
+    } else {
+*/
+/* NIY Speedup */
+      if (!strcmp(BaseContig_getName(SeqFeature_getContig(f)), 
+                  BaseContig_getName(Exon_getContig(exon)))) {
+        if (SeqFeature_getEnd(f) >= Exon_getStart(exon) && 
+            SeqFeature_getStart(f) <= Exon_getEnd(exon) && 
+            SeqFeature_getStrand(f) == Exon_getStrand(exon)) {
+          Exon_addSupportingFeature(exon, f);
+        }
+      }
+/* NIY subfeatures
+    }
+*/
+  }
+}
+
+Exon *Exon_adjustStartEnd(Exon *exon, int startAdjust, int endAdjust) {
+
+  Exon *newExon = Exon_new();
+
+// Copy - NIY won't copy support
+  Exon_copy(newExon, exon, SHALLOW_DEPTH);
+
+  // invalidate the sequence cache
+  // NIY delete $new_exon->{'_seq_cache'};
+
+  if (Exon_getStrand(exon) == 1 ) {
+    Exon_setStart(newExon, Exon_getStart(exon) + startAdjust );
+    Exon_setEnd(newExon, Exon_getEnd(exon) + endAdjust );
+  } else {
+    Exon_setStart(newExon, Exon_getStart(exon) - endAdjust );
+    Exon_setEnd(newExon, Exon_getEnd(exon) - startAdjust );
+  }
+
+// NIY Delete old exon
+
+  return newExon;
+}
+
+#ifdef DONE
+sub peptide {
+  my $self = shift;
+  my $tr = shift;
+
+  unless($tr && ref($tr) && $tr->isa('Bio::EnsEMBL::Transcript')) {
+    $self->throw("transcript arg must be Bio::EnsEMBL:::Transcript not [$tr]");
+  }
+
+  // convert exons coordinates to peptide coordinates
+  my @coords =
+    $tr->genomic2pep($self->start, $self->end, $self->strand, $self->contig);
+
+  // filter out gaps
+  @coords = grep {$_->isa('Bio::EnsEMBL::Mapper::Coordinate')} @coords;
+
+  // if this is UTR then the peptide will be empty string
+  my $pep_str = '';
+
+  if(scalar(@coords) > 1) {
+    $self->throw("Error. Exon maps to multiple locations in peptide." .
+                 " Is this exon [$self] a member of this transcript [$tr]?");
+  } elsif(scalar(@coords) == 1) {
+    my $c = $coords[0];
+    my $pep = $tr->translate;
+
+    // bioperl doesn't give back residues for incomplete codons
+    // make sure we don't subseq too far...
+    my ($start, $end);
+    $end = ($c->end > $pep->length) ? $pep->length : $c->end;
+    $start = ($c->start < $end) ? $c->start : $end;
+    $pep_str = $tr->translate->subseq($start, $end);
+  }
+
+  return Bio::Seq->new(-seq => $pep_str,
+                       -moltype => 'protein',
+                       -alphabet => 'protein',
+                       -id => $self->stable_id);
+}
+#endif
+
+#ifdef DONE
+void Exon_setSeq(Exon *exon, Sequence *seq) {
+  fprintf(stderr, "Warning: Exon seq setting not supported\n");
+  return;
+}
+
+sub Exon_getSeq(Exon *exon) {
+  my $self = shift;
+  my $arg = shift;
+
+  if( defined $arg ) {
+    $self->warn( "seq setting on Exon not supported currently" );
+    $self->{'_seq_cache'} = $arg->seq();
+  }
+
+  if( defined $self->{'_seq_cache'} ) {
+    return Bio::Seq->new(-seq=> $self->{'_seq_cache'});
+  }
+
+  my $seq;
+
+  if ( ! defined $self->contig ) {
+    $self->warn(" this exon doesn't have a contig you won't get a seq \n");
+    return undef;
+  }
+  else {
+
+    $seq = $self->contig()->subseq($self->start, $self->end);
+
+    if($self->strand == -1){
+      $seq =~ tr/ATGCatgc/TACGtacg/;
+      $seq = reverse($seq);
+    }
+
+   }
+  $self->{'_seq_cache'} = $seq;
+
+  return Bio::Seq->new(-seq     => $self->{'_seq_cache'},
+                       -id      => $self->stable_id,
+                       -moltype => 'dna');
+}
+#endif
+
+Exon *Exon_transformSliceToRawContig(Exon *exon) {
+  SliceAdaptor *sa;
+  Slice *slice;
+  AssemblyMapperAdaptor *ama;
+  AssemblyMapper *assMapper;
+  int sliceChrStart;
+  int sliceChrEnd;
+  int exonChrStart;
+  int exonChrEnd;
+  RawContigAdaptor *rca;
+  MapperRangeSet *mapped;
+
+  slice = (Slice *)Exon_getContig(exon);
+
+  if (!slice) {
+    fprintf(stderr,"Error: Cannot transform exon to raw contig unless it has an attached slice\n");
+    exit(1);
+  }
+
+  sa = (SliceAdaptor *)Slice_getAdaptor(slice);
+
+  if (!sa) {
+    fprintf(stderr,"Error: Cannot transform exon to raw contig unless attached slice"
+                   " has adaptor defined. (i.e. exon->contig->adaptor)\n");
+    exit(1);
+  }
+
+  ama = DBAdaptor_getAssemblyMapperAdaptor(sa->dba);
+
+  assMapper     = AssemblyMapperAdaptor_fetchByType(ama, Slice_getAssemblyType(slice));
+  rca           = DBAdaptor_getRawContigAdaptor(sa->dba);
+  sliceChrStart = Slice_getChrStart(slice);
+  sliceChrEnd   = Slice_getChrEnd(slice);
+
+
+  if (Slice_getStrand(slice) == 1) {
+    exonChrStart = Exon_getStart(exon) + sliceChrStart - 1;
+    exonChrEnd   = Exon_getEnd(exon)   + sliceChrStart - 1;
+  }
+  else {
+    exonChrEnd   = sliceChrEnd - Exon_getStart(exon) + 1;
+    exonChrStart = sliceChrEnd - Exon_getEnd(exon)   + 1;
+  }
+
+  mapped = AssemblyMapper_mapCoordinatesToRawContig(assMapper,
+     Slice_getChrId(slice),
+     exonChrStart,
+     exonChrEnd,
+     Exon_getStrand(exon)*Slice_getStrand(slice)
+    );
+
+  if (!mapped || !mapped->nRange) {
+    fprintf(stderr, "Error: Exon couldnt map" );
+    return exon;
+  }
+
+  // transform the supporting features to raw contig coords (hashed on contig)
+#ifdef DONE
+  my %sf_hash;
+
+  if( exists $self->{_supporting_evidence} ) {
+    my $sfs = $self->get_all_supporting_features();
+  SUPPORTING:foreach my $sf (@$sfs) {
+      my @mapped_feats;
+      eval{
+        @mapped_feats = $sf->transform;
+      };
+      if($@){
+        $self->warn("Supporting feature didn't mapped ignoring $@");
+        next SUPPORTING;
+      }
+      foreach my $mapped_feat (@mapped_feats) {
+        unless(exists $sf_hash{$mapped_feat->contig->name}) {
+          $sf_hash{$mapped_feat->contig->name} = [];
+        }
+        push @{$sf_hash{$mapped_feat->contig->name}}, $mapped_feat;
+      }
+    }
+  }
+#endif
+
+  if (mapped->nRange > 1 ) {
+    int stickyLength = 0;
+    int i;
+
+    StickyExon *stickyExon = StickyExon_new();
+    StickyExon_setPhase(stickyExon,Exon_getPhase(exon));
+    StickyExon_setEndPhase(stickyExon, Exon_getEndPhase(exon));
+    StickyExon_setAdaptor(stickyExon, Exon_getAdaptor(exon));
+    StickyExon_setStart(stickyExon, 1);
+    if (Exon_getDbID(exon)) {
+      StickyExon_setDbID(stickyExon, Exon_getDbID(exon));
+    }
+
+    // and then all the component exons ...
+    for (i=0; i < mapped->nRange; i++ ) {
+      Exon *componentExon;
+      RawContig *rawContig;
+      MapperRange *mr;
+      MapperCoordinate *mc;
+     
+      mr = MapperRangeSet_getRangeAt(mapped, i);
+
+      if( mr->rangeType == MAPPERRANGE_GAP) {
+        fprintf(stderr,"Error: exon lies on a gap cannot be mapped\n");
+        exit(1);
+      }
+
+      mc = (MapperCoordinate *)mr;
+
+      componentExon = Exon_new();
+
+      Exon_setStart(componentExon, mc->start );
+      Exon_setEnd(componentExon, mc->end );
+      Exon_setStrand(componentExon, mc->strand);
+
+      rawContig = RawContigAdaptor_fetchByDbID(rca, mc->id);
+      Exon_setContig(componentExon, rawContig);
+
+      Exon_setStickyRank(componentExon, i+1 );
+      Exon_setPhase(componentExon, Exon_getPhase(exon));
+      Exon_setEndPhase(componentExon, Exon_getEndPhase(exon));
+      Exon_setDbID(componentExon, Exon_getDbID(exon));
+      Exon_setAdaptor(componentExon, Exon_getAdaptor(exon));
+
+      // add the supporting features on this contig to the component exon
+#ifdef DONE
+      if(exists $sf_hash{$rawContig->name}) {
+        $componentExon->add_supporting_features(@{$sf_hash{$rawContig->name}});
+      }
+#endif
+
+      StickyExon_addComponentExon(stickyExon, componentExon);
+      stickyLength += ( mc->end - mc->start + 1 );
+    }
+    StickyExon_setEnd(stickyExon, stickyLength);
+    StickyExon_setStrand(stickyExon, 1);
+    if (Exon_getStableId(exon)) {
+      StickyExon_setStableId(Exon_getStableId(exon));
+    }
+    if (Exon_getVersion(exon)) {
+      StickyExon_setVersion(Exon_getVersion(exon));
+    }
+    if (Exon_getModified(exon)) {
+      StickyExon_setModified(Exon_getModified(exon));
+    }
+    if (Exon_getCreated(exon)) {
+      StickyExon_setCreated(Exon_getCreated(exon));
+    }
+    return (Exon *)stickyExon;
+
+  } else {
+    // thats a simple exon
+
+    RawContig *rawContig;
+    Exon *newExon;
+    MapperRange *mr;
+    MapperCoordinate *mc;
+     
+    mr = MapperRangeSet_getRangeAt(mapped, 0);
+
+    if (mr->rangeType == MAPPERRANGE_GAP) {
+      fprintf(stderr,"Error: exon lies on a gap cannot be mapped\n");
+      exit(1);
+    }
+
+    mc = (MapperCoordinate *)mr;
+
+    rawContig = RawContigAdaptor_fetchByDbID(rca, mc->id);
+    newExon = Exon_new();
+
+    // copy this exon
+    Exon_copy(newExon, exon, SHALLOW_DEPTH);
+
+    Exon_setStart(newExon, mc->start);
+    Exon_setEnd(newExon, mc->end);
+    Exon_setStrand(newExon, mc->strand);
+    // attach raw contig
+    Exon_setContig(newExon, rawContig);
+
+    // replace old supporting feats with transformed supporting feats
+#ifdef DONE
+    $newExon->add_supporting_features(@{$sf_hash{$rawContig->name}});
+#endif
+
+    return newExon;
+  }
+}
+
+void Exon_loadGenomicMapper(Exon *exon, Mapper *mapper, IDType id, int start) {
+
+// NIY Make the Exon_getContig consistent
+  Mapper_addMapCoordinates( mapper, id, start, start+Exon_getLength(exon)-1,
+                            Exon_getStrand(exon), Exon_getContig(exon),
+                            Exon_getStart(exon),  Exon_getEnd(exon) );
+}
+
+
+

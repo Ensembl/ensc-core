@@ -1,4 +1,6 @@
+#defeine __DNAPEPALIGNFEATURE_MAIN__
 #include "DNAPepAlignFeature.h"
+#undef __DNAPEPALIGNFEATURE_MAIN__
 
 DNAPepAlignFeature *DNAPepAlignFeature_new() {
   DNAPepAlignFeature *dpaf;
@@ -10,6 +12,14 @@ DNAPepAlignFeature *DNAPepAlignFeature_new() {
 
   dpaf->objectType = CLASS_DNAPEPALIGNFEATURE;
 
-  dpaf->funcs = &baseAlignFeatureFuncs;
+  dpaf->funcs = &dnaPepAlignFeatureFuncs;
   return dpaf;
+}
+
+int DNAPepAlignFeature_getHitUnit(void) {
+  return 1; 
+}
+
+int DNAPepAlignFeature_getQueryUnit(void) {
+  return 3;
 }

@@ -83,7 +83,7 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
                       DNAAlignFeature_getCigarString(sf),
                       (IDType)Analysis_getDbID(analysis),
                       DNAAlignFeature_getScore(sf), 
-                      DNAAlignFeature_getEValue(sf), 
+                      DNAAlignFeature_getpValue(sf), 
                       DNAAlignFeature_getPercId(sf));
      
     DNAAlignFeature_setDbID(sf,sth->getInsertId(sth));
@@ -200,7 +200,7 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
 
       DNAAlignFeature_setCigarString(daf,row->getStringAt(row,10));
   
-      if (row->col(row,11)) DNAAlignFeature_setEValue(daf,row->getDoubleAt(row,11));
+      if (row->col(row,11)) DNAAlignFeature_setpValue(daf,row->getDoubleAt(row,11));
       if (row->col(row,12)) DNAAlignFeature_setPercId(daf,row->getDoubleAt(row,12));
       if (row->col(row,13)) DNAAlignFeature_setScore(daf,row->getDoubleAt(row,13));
 
@@ -233,7 +233,7 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
 
       DNAAlignFeature_setCigarString(daf,row->getStringAt(row,10));
   
-      if (row->col(row,11)) DNAAlignFeature_setEValue(daf,row->getDoubleAt(row,11));
+      if (row->col(row,11)) DNAAlignFeature_setpValue(daf,row->getDoubleAt(row,11));
       if (row->col(row,12)) DNAAlignFeature_setPercId(daf,row->getDoubleAt(row,12));
       if (row->col(row,13)) DNAAlignFeature_setScore(daf,row->getDoubleAt(row,13));
 

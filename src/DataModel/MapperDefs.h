@@ -6,7 +6,9 @@
 
 typedef enum CoordSystemEnum {
   ASSEMBLY_COORDS,
-  RAWCONTIG_COORDS
+  RAWCONTIG_COORDS,
+  CDNA_COORDS,
+  GENOMIC_COORDS
 } CoordSystem;
 
 #endif

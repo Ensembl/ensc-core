@@ -28,5 +28,7 @@ char *GenomicRange_setChrName(GenomicRange *gr, char *chrName);
 
 void GenomicRange_free(GenomicRange *range);
 
+void GenomicRange_expand(GenomicRange *range, int pad);
+
 
 #endif

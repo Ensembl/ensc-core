@@ -1,4 +1,6 @@
+#define __DNAALIGNFEATURE_MAIN__
 #include "DNAAlignFeature.h"
+#undef __DNAALIGNFEATURE_MAIN__
 
 DNAAlignFeature *DNAAlignFeature_new() {
   DNAAlignFeature *daf;
@@ -10,7 +12,16 @@ DNAAlignFeature *DNAAlignFeature_new() {
 
   daf->objectType = CLASS_DNADNAALIGNFEATURE;
 
-  daf->funcs = &baseAlignFeatureFuncs;
+  daf->funcs = &dnaAlignFeatureFuncs;
 
   return daf;
 }
+
+int DNAAlignFeature_getHitUnit(void) {
+  return 1;
+}
+
+int DNAAlignFeature_getQueryUnit(void) {
+  return 1;
+}
+

@@ -4,8 +4,50 @@
 #include "SliceAdaptor.h"
 #include "BaseContig.h"
 #include "Mapper.h"
+#include "RawContigAdaptor.h"
 
-Exon *StickyExon_transformToSlice(Exon *exon, Slice *slice)  {
+StickyExon *StickyExon_new(void) {
+  StickyExon *stickyExon;
+
+  if ((stickyExon = (StickyExon *)calloc(1,sizeof(StickyExon))) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for stickyExon\n");
+    return NULL;
+  }
+
+/* Set to empty values */
+  StickyExon_setModified(stickyExon,0);
+  StickyExon_setCreated(stickyExon,0);
+  StickyExon_setVersion(stickyExon,-1);
+
+  stickyExon->objectType = CLASS_STICKYEXON;
+
+  stickyExon->funcs = &stickyExonFuncs;
+
+  return stickyExon;
+}
+
+void StickyExon_sortByStickyRank(StickyExon *exon) {
+  qsort(StickyExon_getComponents(exon), StickyExon_getComponentExonCount(exon), sizeof(void *),
+        StickyExon_stickyRankCompFunc);
+  return;
+}
+
+int StickyExon_stickyRankCompFunc(const void *a, const void *b) {
+  Exon **e1 = (Exon **)a;
+  Exon **e2 = (Exon **)b;
+
+  if (Exon_getStickyRank(*e1) > Exon_getStickyRank(*e2)) {
+    return 1;
+  } else if (Exon_getStickyRank(*e1) < Exon_getStickyRank(*e2)) {
+    return -1;
+  } else {
+    return 0;
+  }
+}
+
+
+
+Exon *StickyExon_transformRawContigToSlice(StickyExon *exon, Slice *slice)  {
   BaseContig *contig;
 
   contig = Exon_getContig(exon);
@@ -16,10 +58,10 @@ Exon *StickyExon_transformToSlice(Exon *exon, Slice *slice)  {
     int mappedStart = 0;
     int mappedEnd = -1;
     int compositeExonStrand = 0;
-    int compositeExonPhase;
-    int compositeExonEndPhase;
+    int compositeExonPhase = 0;
+    int compositeExonEndPhase = 0;
     int i;
-    Exon *firstCompEx; // Used for setting storable info on new exon
+    Exon *firstCompEx = NULL; // Used for setting storable info on new exon
     BaseAdaptor *adaptor;
     Exon *newExon;
 
@@ -34,10 +76,10 @@ Exon *StickyExon_transformToSlice(Exon *exon, Slice *slice)  {
 #endif
     
     // sort the component exons
-    Exon_sortByStickyRank(exon); 
+    StickyExon_sortByStickyRank(exon); 
     
-    for (i=0; i<Exon_getNumComponentExon(exon); i++) {
-      Exon *compExon = Exon_getComponentExonAt(exon,i); 
+    for (i=0; i<StickyExon_getComponentExonCount(exon); i++) {
+      Exon *compExon = StickyExon_getComponentExonAt(exon,i); 
       MapperRangeSet *mapped;
       MapperRange *mrange;
       MapperCoordinate *mcoord;
@@ -73,7 +115,7 @@ Exon *StickyExon_transformToSlice(Exon *exon, Slice *slice)  {
       // contig attached to it and not a slice.
       if( mrange->rangeType == MAPPERRANGE_GAP) {
         fprintf(stderr, "sticky exon mapped to gap\n");
-	return exon;
+	return (Exon *)exon;
       }
 
       mcoord = (MapperCoordinate *)mrange;
@@ -111,7 +153,6 @@ Exon *StickyExon_transformToSlice(Exon *exon, Slice *slice)  {
           char *chrName = Chromosome_getName(ChromosomeAdaptor_fetchByDbID(ca,mcoord->id));
 
           slice = SliceAdaptor_fetchByChrName(sa, chrName);
-// NIY free old slice (or have special empty one)???
         }
 
 
@@ -150,12 +191,11 @@ Exon *StickyExon_transformToSlice(Exon *exon, Slice *slice)  {
     newExon = Exon_new();
 // NIY free old exons
 
-    if(Slice_getStrand(slice) == 1) {
+    if (Slice_getStrand(slice) == 1) {
       Exon_setStart(newExon, mappedStart - Slice_getChrStart(slice) + 1);
       Exon_setEnd(newExon, mappedEnd   - Slice_getChrStart(slice) + 1);
       Exon_setStrand(newExon, compositeExonStrand);
-    } 
-    else {
+    } else {
       Exon_setStart(newExon, Slice_getChrEnd(slice) - mappedEnd   + 1);
       Exon_setEnd(newExon, Slice_getChrEnd(slice) - mappedStart + 1);
       Exon_setStrand(newExon, compositeExonStrand * -1);
@@ -184,6 +224,247 @@ Exon *StickyExon_transformToSlice(Exon *exon, Slice *slice)  {
   } else {
     fprintf(stderr, "ERROR: Unexpected StickyExon in Assembly coords ...\n");
     exit(1);
+  }
+}
+
+void StickyExon_loadGenomicMapper(StickyExon *stickyExon, Mapper *mapper, IDType id, int start) {
+  int i;
+  
+  for (i=0; i<StickyExon_getComponentExonCount(stickyExon); i++) {
+    Exon *exon = StickyExon_getComponentExonAt(stickyExon, i);
+    Mapper_addMapCoordinates(mapper, id, start, start+Exon_getLength(exon)-1,
+                                  Exon_getStrand(exon), (IDType)Exon_getContig(exon),
+                                  Exon_getStart(exon), Exon_getEnd(exon) );
+    start += Exon_getLength(exon);
+  }
+}
+
+Exon *StickyExon_adjustStartEnd(StickyExon *stickyExon, int startAdjust, int endAdjust) {
+  Exon *newExon;
+  int start;
+  int end;
+  Mapper *mapper;
+  int currentStart = 1;
+  int i;
+  MapperRangeSet *mapped;
+  RawContigAdaptor *rca = NULL;
+  Exon *firstComponent;
+  RawContig *firstContig;
+
+  if (startAdjust == 0 && endAdjust == 0 ) {
+    return (Exon *)stickyExon;
+  }
+
+  start = 1 + startAdjust;
+  end = StickyExon_getLength(stickyExon) + endAdjust;
+
+  mapper = Mapper_new( CDNA_COORDS, GENOMIC_COORDS );
+
+  for (i=0; i<StickyExon_getComponentExonCount(stickyExon); i++) {
+    Exon *exon = StickyExon_getComponentExonAt(stickyExon, i);
+    Mapper_addMapCoordinates(mapper, (IDType)stickyExon, currentStart, currentStart+Exon_getLength(exon)-1,
+                             Exon_getStrand(exon), (IDType)Exon_getContig(exon), 
+                             Exon_getStart(exon), Exon_getEnd(exon) );
+    currentStart += Exon_getLength(exon);
+  }
+
+  firstComponent = StickyExon_getComponentExonAt(stickyExon, 0);
+  firstContig    = (RawContig *)Exon_getContig(firstComponent);
+
+  Class_assertType(CLASS_RAWCONTIG, firstContig->objectType);
+
+  rca = (RawContigAdaptor *)RawContig_getAdaptor(firstContig);
+  
+  if (!rca) {
+    fprintf(stderr, "Error: No RawContigAdaptor - cannot adjust sticky exon\n");
+    exit(1);
+  }
+
+  mapped = Mapper_mapCoordinates(mapper, (IDType)stickyExon, start, end, 1, CDNA_COORDS );
+
+  if (mapped->nRange == 1 ) {
+    MapperCoordinate *coord;
+    RawContig *rc;
+
+    // we can return a normal exon
+    newExon = Exon_new();
+    coord = (MapperCoordinate *)MapperRangeSet_getRangeAt(mapped,0);
+
+// Copy
+    Exon_copy(newExon, (Exon *)stickyExon, SHALLOW_DEPTH);
+
+    Exon_setStart(newExon, coord->start);
+    Exon_setEnd(newExon,   coord->end);
+    Exon_setStrand(newExon,coord->strand);
+
+//Is just pointer to contig
+    //rc = RawContigAdaptor_fetchByDbID(rca, coord->id);
+    Exon_setContig(newExon, (BaseContig *)coord->id);
+
+  } else {
+    MapperCoordinate *coord;
+    int i;
+    RawContig *rc;
+
+    // make a new sticky Exon
+    // cast to Exon to stop compiler complaining
+    newExon = (Exon *)StickyExon_new();
+
+// Copy
+    Exon_copy(newExon, (Exon *)stickyExon, SHALLOW_DEPTH);
+
+    StickyExon_setStart(newExon, 1);
+    StickyExon_setEnd(newExon, end - start + 1);
+    StickyExon_setStrand(newExon, 1);
+
+    for (i=0; i<mapped->nRange; i++) {
+      Exon *cex = Exon_new();
+
+      coord = (MapperCoordinate *)MapperRangeSet_getRangeAt(mapped,i);
+
+// Copy
+      Exon_copy(cex, (Exon *)stickyExon, SHALLOW_DEPTH);
+
+      Exon_setStart(cex,  coord->start);
+      Exon_setEnd(cex,    coord->end);
+      Exon_setStrand(cex, coord->strand);
+// Is just pointer to contig
+      //rc = RawContigAdaptor_fetchByDbID(rca, coord->id);
+      Exon_setContig(cex, (BaseContig *)coord->id);
+
+      StickyExon_addComponentExon((StickyExon *)newExon, cex);
+    }
+  }
+
+  return newExon;
+}
+
+int StickyExon_getLength(StickyExon *stickyExon) {
+  int i;
+  int len = 0;
+
+  for (i=0; i<StickyExon_getComponentExonCount(stickyExon); i++) {
+    Exon *subExon = StickyExon_getComponentExonAt(stickyExon, i);
+    len += Exon_getLength(subExon);
+  }
+  return len;
+}
+
+/* deliberately char */
+#ifdef DONE
+void StickyExon_setSeq(StickyExon *stickyExon, char *seq) {
+  stickyExon->seq = seq;
+}
+
+sub StickyExon_getSeq(StickyExon *stickyExon) {
+  int i;
+  char *seqString = NULL;
+
+  my $seqString = "";
+
+  for (i=0; i<StickyExon_getComponentExonCount(stickyExon); i++) {
+    Exon *cExon = StickyExon_getComponentExonAt(stickyExon, i);
+    StrUtil_appendString(&seqString, Exon_getSeqString(cExon);
+  }
+  $self->{'_seq'} = $seqString;
+
+  return Bio::Seq->new( -seq => $self->{'_seq'} );
+}
+#endif
+
+
+#ifdef DONE
+sub peptide {
+  my $self = shift;
+  my $tr   = shift;
+
+  unless($tr && ref($tr) && $tr->isa('Bio::EnsEMBL::Transcript')) {
+    $self->throw("transcript arg must be Bio::EnsEMBL:::Transcript not [$tr]");
+  }
+
+  my $pep_start = undef;
+  my $pep_end   = undef;
+
+  foreach my $exon (@{$self->get_all_component_Exons}) {
+    // convert exons coordinates to peptide coordinates
+    my @coords =
+      $tr->genomic2pep($exon->start, $exon->end, $exon->strand, $exon->contig);
+
+    // filter out gaps
+    @coords = grep {$_->isa('Bio::EnsEMBL::Mapper::Coordinate')} @coords;
+
+    if(scalar(@coords) > 1) {
+      $self->throw("Error. Exon maps to multiple locations in peptide." .
+                   " Is this exon [$self] a member of this transcript [$tr]?");
+      // if this is UTR then the peptide will be empty string
+    } elsif(scalar(@coords) == 1) {
+      my $c = $coords[0];
+      // set the pep start to the minimum of all coords
+      if(!defined $pep_start || $c->start < $pep_start) {
+        $pep_start = $c->start;
+      }
+
+      // set the pep end to the maximum of all coords
+      if(!defined $pep_end || $c->end > $pep_end) {
+        $pep_end = $c->end;
+      }
+    }
+  }
+
+  // the peptide of this sticky is the region spanned by the component exons
+  my $pep_str = '';
+  if($pep_start && $pep_end) {
+    $pep_str = $tr->translate->subseq($pep_start, $pep_end);
+  }
+
+  return Bio::Seq->new(-seq => $pep_str,
+                       -moltype => 'protein',
+                       -alphabet => 'protein',
+                       -id => $self->stable_id);
+}
+#endif
+
+Vector *StickyExon_getAllSupportingFeatures(StickyExon *stickyExon) {
+  Vector *out = Vector_new();
+  int i;
+
+  for (i=0; i<StickyExon_getComponentExonCount(stickyExon); i++) {
+    Exon *subExon = StickyExon_getComponentExonAt(stickyExon, i);
+
+    Vector_append(out, Exon_getAllSupportingFeatures(subExon));
+  }
+
+  return out;
+}
+
+
+
+void StickyExon_addSupportingFeatures(StickyExon *stickyExon, Vector *features) {
+  int beenAdded = 0;
+  int i;
+
+
+ // check whether this feature object has been added already
+  for (i=0; i<Vector_getNumElement(features); i++) {
+    SeqFeature *feature = Vector_getElementAt(features,i);
+    int j;
+
+    beenAdded = 0;
+    for (j=0; j<StickyExon_getComponentExonCount(stickyExon); j++) {
+      Exon *cexon = StickyExon_getComponentExonAt(stickyExon,j);
+      BaseContig *cexonContig = Exon_getContig(cexon);
+      BaseContig *featContig = SeqFeature_getContig(feature);
+      if (cexonContig && featContig &&
+          EcoString_strcmp(BaseContig_getName(cexonContig), BaseContig_getName(featContig))) {
+        Exon_addSupportingFeature(cexon, feature);
+        beenAdded = 1;
+      }
+    }
+
+    if (!beenAdded) {
+      fprintf(stderr, "Warning: SupportingFeature could not be added, not on same contig "
+                      "as component exons.\n");
+    }
   }
 }
 

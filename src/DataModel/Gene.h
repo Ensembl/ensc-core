@@ -66,8 +66,8 @@ int Gene_getStart(SeqFeature *gene);
 int Gene_setEnd(SeqFeature *gene,int end);
 int Gene_getEnd(SeqFeature *gene);
 
-#define Gene_setStrand(gene,strand) AnnotatedSeqFeature_setStrand((gene),strand)
-#define Gene_getStrand(gene) AnnotatedSeqFeature_getStrand((gene))
+int Gene_setStrand(SeqFeature *gene,int strand);
+int Gene_getStrand(SeqFeature *gene);
 
 #define Gene_addTranscript(gene,trans) FeatureSet_addFeature(&((gene)->fs),trans)
 #define Gene_getTranscriptAt(gene,ind) (Transcript *)FeatureSet_getFeatureAt(&((gene)->fs),ind)
@@ -81,11 +81,30 @@ int Gene_getEnd(SeqFeature *gene);
 Gene *Gene_transformToSlice(Gene *gene, Slice *slice);
 Vector *Gene_getAllExons(Gene *gene);
 
+Gene *Gene_transformToRawContig(Gene *gene);
+
+
 Vector *Gene_getAllDBLinks(Gene *g);
 int Gene_addDBLink(Gene *gene, DBEntry *dbe);
 
 #ifdef __GENE_MAIN__
-  GeneFuncs geneFuncs = {Gene_getStart, Gene_setStart};
+  GeneFuncs 
+    geneFuncs = {
+                 Gene_getStart, 
+                 Gene_setStart,
+                 Gene_getEnd,
+                 Gene_setEnd,
+                 Gene_getStrand,
+                 Gene_setStrand,
+                 NULL, // getSeq
+                 NULL, // setSeq
+                 NULL, // getLength,
+                 Gene_transformToRawContig,
+                 Gene_transformToSlice,
+                 NULL, // transformRawContigToSlice
+                 NULL, // transformSliceToRawContig
+                 NULL  // transformSliceToSlice
+                };
 #else 
   extern GeneFuncs geneFuncs;
 #endif

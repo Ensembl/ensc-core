@@ -51,14 +51,4 @@ int AssemblyMapper_getChunkSize(AssemblyMapper *am);
 void AssemblyMapper_chunkRegisterRegion(AssemblyMapper *am, IDType chrId,
                      int firstChunk, int lastChunk);
 
-
-
-
-
-
-
-
-
-
-
 #endif

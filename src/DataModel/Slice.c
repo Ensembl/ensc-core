@@ -84,7 +84,6 @@ Vector *Slice_getAllGenes(Slice *slice, char *logicName) {
 }
 
 Vector *Slice_getAllGenesByType(Slice *slice, char *type) {
-  GeneAdaptor *ga = DBAdaptor_getGeneAdaptor(Slice_getAdaptor(slice)->dba);
   Vector *allGenes = Slice_getAllGenes(slice, NULL);
   Vector *typedGenes = Vector_new();
   int i;

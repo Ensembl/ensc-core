@@ -105,7 +105,6 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
 
 ResultRow *MysqlStatementHandle_fetchRow(StatementHandle *sth) {
   MysqlStatementHandle *m_sth;
-  MysqlResultRow *m_row;
   MYSQL_ROW mysql_row;
 
   Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);

@@ -9,6 +9,7 @@
 #include "Translation.h"
 #include "IDHash.h"
 #include "Vector.h"
+#include "Mapper.h"
 
 typedef struct TranscriptFuncsStruct {
   ANNOTATEDSEQFEATUREFUNCS_DATA
@@ -17,17 +18,22 @@ typedef struct TranscriptFuncsStruct {
 #define FUNCSTRUCTTYPE TranscriptFuncs
 struct TranscriptStruct {
   ANNOTATEDSEQFEATURE_DATA
-  FeatureSet fs;
-  Vector *dbLinks;
+  FeatureSet   fs;
+  Vector      *dbLinks;
   Translation *translation;
-  IDType translationId;
-  char startIsSet;
-  char endIsSet;
-  char codingRegionStartIsSet;
-  char codingRegionEndIsSet;
-  int codingRegionStart;
-  int codingRegionEnd;
-  char *type;
+  IDType       translationId;
+  char         startIsSet;
+  char         endIsSet;
+  char         codingRegionStartIsSet;
+  char         codingRegionEndIsSet;
+  char         cDNACodingStartIsSet;
+  char         cDNACodingEndIsSet;
+  int          codingRegionStart;
+  int          codingRegionEnd;
+  int          cDNACodingStart;
+  int          cDNACodingEnd;
+  Mapper      *exonCoordMapper;
+  char        *type;
 };
 #undef FUNCSTRUCTTYPE
 
@@ -59,7 +65,6 @@ Transcript *Transcript_new(void);
 #define Transcript_setTranslation(transcript,tn) (transcript)->translation = (tn)
 Translation *Transcript_getTranslation(Transcript *trans);
 
-
 #define Transcript_setDbID(transcript,id) AnnotatedSeqFeature_setDbID((transcript),(id))
 #define Transcript_getDbID(transcript) AnnotatedSeqFeature_getDbID((transcript))
 
@@ -77,6 +82,12 @@ Translation *Transcript_getTranslation(Transcript *trans);
 
 #define Transcript_setCodingRegionEndIsSet(transcript, flag)  (transcript)->codingRegionEndIsSet = (flag)
 #define Transcript_getCodingRegionEndIsSet(transcript)  (transcript)->codingRegionEndIsSet
+
+#define Transcript_setcDNACodingStartIsSet(transcript, flag)  (transcript)->cDNACodingStartIsSet = (flag)
+#define Transcript_getcDNACodingStartIsSet(transcript)  (transcript)->cDNACodingStartIsSet
+
+#define Transcript_setcDNACodingEndIsSet(transcript, flag)  (transcript)->cDNACodingEndIsSet = (flag)
+#define Transcript_getcDNACodingEndIsSet(transcript)  (transcript)->cDNACodingEndIsSet
 
 Exon *Transcript_getStartExon(Transcript *trans);
 Exon *Transcript_getEndExon(Transcript *trans);
@@ -101,12 +112,37 @@ int Transcript_setCodingRegionEnd(Transcript *trans, int end);
 int Transcript_setCodingRegionStart(Transcript *trans, int start);
 int Transcript_getCodingRegionStart(Transcript *trans); 
 
+Vector *Transcript_getAllTranslateableExons(Transcript *trans);
+
+int Transcript_setcDNACodingStart(Transcript *trans, int start);
+int Transcript_getcDNACodingStart(Transcript *trans);
+
+int Transcript_setcDNACodingEnd(Transcript *trans, int end);
+int Transcript_getcDNACodingEnd(Transcript *trans);
+
+MapperRangeSet *Transcript_cDNA2Genomic(Transcript *trans, int start, int end);
+MapperRangeSet *Transcript_genomic2cDNA(Transcript *trans, int start, int end, int strand, BaseContig *contig);
+
+Mapper *Transcript_getcDNACoordMapper(Transcript *trans);
 
 #ifdef __TRANSCRIPT_MAIN__
-  TranscriptFuncs transcriptFuncs = {Transcript_getStart,
-                                     Transcript_setStart,
-                                     Transcript_getEnd,
-                                     Transcript_setEnd};
+  TranscriptFuncs 
+    transcriptFuncs = {
+                       Transcript_getStart,
+                       Transcript_setStart,
+                       Transcript_getEnd,
+                       Transcript_setEnd,
+                       NULL, // getStrand
+                       NULL, // setStrand
+                       NULL, // getSeq
+                       NULL, // setSeq
+                       Transcript_getLength,
+                       NULL, // transformToRawContig
+                       NULL, // transformToSlice
+                       NULL, // transformRawContigToSlice
+                       NULL, // transformSliceToRawContig
+                       NULL  // transformSliceToSlice
+                      };
 #else
   extern TranscriptFuncs transcriptFuncs;
 #endif

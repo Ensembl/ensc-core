@@ -74,7 +74,8 @@ Translation *TranslationAdaptor_fetchByDbID(TranslationAdaptor *ta, IDType dbID,
     }
   }
   if (!startExon || !endExon) {
-    fprintf(stderr,"ERROR: Could not find start (id = " IDFMTSTR ") or end exon (id = " IDFMTSTR ") in transcript (id = %d)\n",
+    fprintf(stderr,
+            "ERROR: Could not find start (id = " IDFMTSTR ") or end exon (id = " IDFMTSTR ") in transcript (id = "IDFMTSTR")\n",
             startExonId,endExonId,Transcript_getDbID(transcript));
     exit(1);
   }
