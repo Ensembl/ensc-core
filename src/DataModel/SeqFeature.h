@@ -128,11 +128,11 @@ int SeqFeature_startCompFunc(const void *a, const void *b);
 int SeqFeature_reverseStartCompFunc(const void *a, const void *b);
 
 
-Vector *SeqFeature_transformToRawContig(SeqFeature *sf);
-Vector *SeqFeature_transformSliceToRawContig(SeqFeature *sf);
+Vector *SeqFeature_transformToRawContigImpl(SeqFeature *sf);
+Vector *SeqFeature_transformSliceToRawContigImpl(SeqFeature *sf);
 
-SeqFeature *SeqFeature_transformToSlice(SeqFeature *sf, Slice *slice);
-SeqFeature *SeqFeature_transformRawContigToSlice(SeqFeature *sf, Slice *slice);
+SeqFeature *SeqFeature_transformToSliceImpl(SeqFeature *sf, Slice *slice);
+SeqFeature *SeqFeature_transformRawContigToSliceImpl(SeqFeature *sf, Slice *slice);
 
 #ifdef __SEQFEATURE_MAIN__
  SeqFeatureFuncs 
@@ -147,10 +147,10 @@ SeqFeature *SeqFeature_transformRawContigToSlice(SeqFeature *sf, Slice *slice);
                       NULL, // setSeq
                       NULL, // getLength
                       NULL, // reverseComplement
-                      SeqFeature_transformToRawContig,
-                      SeqFeature_transformToSlice,
-                      SeqFeature_transformRawContigToSlice,
-                      SeqFeature_transformSliceToRawContig,
+                      SeqFeature_transformToRawContigImpl,
+                      SeqFeature_transformToSliceImpl,
+                      SeqFeature_transformRawContigToSliceImpl,
+                      SeqFeature_transformSliceToRawContigImpl,
                       NULL // transformSliceToSlice
                      };
 #else

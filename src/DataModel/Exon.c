@@ -92,7 +92,7 @@ int Exon_reverseStrandCompFunc(const void *a, const void *b) {
   }
 }
 
-Exon *Exon_transformRawContigToSlice(Exon *exon, Slice *slice) {
+Exon *Exon_transformRawContigToSliceImpl(Exon *exon, Slice *slice) {
   Exon *newExon;
   BaseAdaptor *adaptor;
   AssemblyMapperAdaptor *ama;
@@ -253,7 +253,7 @@ void Exon_findSupportingEvidence(Exon *exon, Vector *features, int isSorted) {
   }
 }
 
-Exon *Exon_adjustStartEnd(Exon *exon, int startAdjust, int endAdjust) {
+Exon *Exon_adjustStartEndImpl(Exon *exon, int startAdjust, int endAdjust) {
 
   Exon *newExon = Exon_new();
 
@@ -359,7 +359,7 @@ sub Exon_getSeq(Exon *exon) {
                        -moltype => 'dna');
 }
 #endif
-char  *Exon_getSeqString(Exon *exon) {
+char  *Exon_getSeqStringImpl(Exon *exon) {
   char *seq;
 
   if (Exon_getSeqCacheString(exon)) {
@@ -385,7 +385,7 @@ char  *Exon_getSeqString(Exon *exon) {
   return Exon_getSeqCacheString(exon);
 }
 
-Exon *Exon_transformSliceToRawContig(Exon *exon) {
+Exon *Exon_transformSliceToRawContigImpl(Exon *exon) {
   SliceAdaptor *sa;
   Slice *slice;
   AssemblyMapperAdaptor *ama;
@@ -574,7 +574,7 @@ Exon *Exon_transformSliceToRawContig(Exon *exon) {
   }
 }
 
-void Exon_loadGenomicMapper(Exon *exon, Mapper *mapper, IDType id, int start) {
+void Exon_loadGenomicMapperImpl(Exon *exon, Mapper *mapper, IDType id, int start) {
 
 // NIY Make the Exon_getContig consistent
   Mapper_addMapCoordinates( mapper, id, start, start+Exon_getLength(exon)-1,

@@ -77,10 +77,10 @@ RepeatFeature *RepeatFeature_new();
                       NULL, // setSeq
                       NULL, // getLength
                       NULL, // reverseComplement
-                      (RepeatFeature_TransformToRawContigFunc)SeqFeature_transformToRawContig,
-                      (RepeatFeature_TransformToSliceFunc)SeqFeature_transformToSlice,
-                      (RepeatFeature_TransformRawContigToSliceFunc)SeqFeature_transformRawContigToSlice,
-                      (RepeatFeature_TransformSliceToRawContigFunc)SeqFeature_transformSliceToRawContig,
+                      (RepeatFeature_TransformToRawContigFunc)SeqFeature_transformToRawContigImpl,
+                      (RepeatFeature_TransformToSliceFunc)SeqFeature_transformToSliceImpl,
+                      (RepeatFeature_TransformRawContigToSliceFunc)SeqFeature_transformRawContigToSliceImpl,
+                      (RepeatFeature_TransformSliceToRawContigFunc)SeqFeature_transformSliceToRawContigImpl,
                       NULL // transformSliceToSlice
                      };
 #else

@@ -16,7 +16,8 @@
   typedef CLASSTYPE *   (* CLASSTYPE ## _AdjustStartEndFunc)(CLASSTYPE *exon, int startAdjust, int endAdjust); \
   typedef char *   (* CLASSTYPE ## _GetPeptideFunc)(CLASSTYPE *exon); \
   typedef void     (* CLASSTYPE ## _AddSupportingFeatureFunc)(CLASSTYPE *exon, SeqFeature *sf); \
-  typedef Vector * (* CLASSTYPE ## _GetAllSupportingFeaturesFunc)(CLASSTYPE *exon);
+  typedef Vector * (* CLASSTYPE ## _GetAllSupportingFeaturesFunc)(CLASSTYPE *exon); \
+  typedef char *   (* CLASSTYPE ## _GetSeqStringFunc)(CLASSTYPE *exon); \
 
 EXONFUNC_TYPES(Exon)
 
@@ -26,7 +27,8 @@ EXONFUNC_TYPES(Exon)
   CLASSTYPE ## _AdjustStartEndFunc adjustStartEnd; \
   CLASSTYPE ## _GetPeptideFunc getPeptide; \
   CLASSTYPE ## _AddSupportingFeatureFunc addSupportingFeature; \
-  CLASSTYPE ## _GetAllSupportingFeaturesFunc getAllSupportingFeatures;
+  CLASSTYPE ## _GetAllSupportingFeaturesFunc getAllSupportingFeatures; \
+  CLASSTYPE ## _GetSeqStringFunc getSeqString;
 
 typedef struct ExonFuncsStruct {
   EXONFUNCS_DATA(Exon)
@@ -103,22 +105,21 @@ time_t Exon_getModified(Exon *exon);
 #define Exon_setContig(exon,c) AnnotatedSeqFeature_setContig((exon),(c))
 #define Exon_getContig(exon) AnnotatedSeqFeature_getContig((exon))
 
-Exon *Exon_transformRawContigToSlice(Exon *exon, Slice *slice);
-Exon *Exon_transformSliceToRawContig(Exon *exon);
+Exon *Exon_transformRawContigToSliceImpl(Exon *exon, Slice *slice);
+Exon *Exon_transformSliceToRawContigImpl(Exon *exon);
 
-#define Exon_transformToSlice(exon,slice) SeqFeature_transformToSlice((exon), (slice))
-
+#define Exon_transformToSlice(exon,slice) AnnotatedSeqFeature_transformToSlice((exon), (slice))
 
 
 Exon *Exon_new();
 Exon *Exon_copy(Exon *copy, Exon *orig, CopyDepth depth);
-char *Exon_getSeqString(Exon *exon);
+char *Exon_getSeqStringImpl(Exon *exon);
 
 int Exon_reverseStrandCompFunc(const void *a, const void *b);
 int Exon_forwardStrandCompFunc(const void *a, const void *b);
 
-void Exon_loadGenomicMapper(Exon *exon, Mapper *mapper, IDType id, int start);
-Exon *Exon_adjustStartEnd(Exon *exon, int startAdjust, int endAdjust);
+void Exon_loadGenomicMapperImpl(Exon *exon, Mapper *mapper, IDType id, int start);
+Exon *Exon_adjustStartEndImpl(Exon *exon, int startAdjust, int endAdjust);
 
 
 #ifdef __EXON_MAIN__
@@ -134,11 +135,17 @@ Exon *Exon_adjustStartEnd(Exon *exon, int startAdjust, int endAdjust);
                  NULL, // setSeq
                  NULL, // getLength
                  NULL, // reverseComplement
-                 (Exon_TransformToRawContigFunc)SeqFeature_transformToRawContig,
-                 (Exon_TransformToSliceFunc)SeqFeature_transformToSlice,
-                 Exon_transformRawContigToSlice,
-                 Exon_transformSliceToRawContig,
-                 NULL // transformSliceToSlice
+                 (Exon_TransformToRawContigFunc)SeqFeature_transformToRawContigImpl,
+                 (Exon_TransformToSliceFunc)SeqFeature_transformToSliceImpl,
+                 Exon_transformRawContigToSliceImpl,
+                 Exon_transformSliceToRawContigImpl,
+                 NULL, // transformSliceToSlice
+                 Exon_loadGenomicMapperImpl,
+                 Exon_adjustStartEndImpl,
+                 NULL, // getPeptide
+                 Exon_addSupportingFeatureImpl,
+                 Exon_getAllSupportingFeaturesImpl,
+                 Exon_getSeqStringImpl
                 };
 #else
   extern ExonFuncs exonFuncs;

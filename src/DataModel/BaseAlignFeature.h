@@ -86,9 +86,9 @@ char *BaseAlignFeature_setCigarString(BaseAlignFeature *fp, char *ciggy);
 #define BaseAlignFeature_getPercId(fp) FeaturePair_getPercId((fp))
 
 Vector *BaseAlignFeature_parseCigar(BaseAlignFeature *baf);
-Vector *BaseAlignFeature_transformSliceToRawContig(BaseAlignFeature *baf);
-int BaseAlignFeature_getHitUnit(void);
-int BaseAlignFeature_getQueryUnit(void);
+Vector *BaseAlignFeature_transformSliceToRawContigImpl(BaseAlignFeature *baf);
+int BaseAlignFeature_getHitUnitImpl(void);
+int BaseAlignFeature_getQueryUnitImpl(void);
 Vector *BaseAlignFeature_transformFeatureSliceToRawContig(BaseAlignFeature *baf, FeaturePair *fp);
 Vector *BaseAlignFeature_getUngappedFeatures(BaseAlignFeature *baf);
 void BaseAlignFeature_reverseComplement(BaseAlignFeature *baf);
@@ -109,13 +109,13 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features);
                              NULL, // setSeq
                              NULL, // getLength
                              BaseAlignFeature_reverseComplement,
-                             (BaseAlignFeature_TransformToRawContigFunc)SeqFeature_transformToRawContig,
-                             (BaseAlignFeature_TransformToSliceFunc)SeqFeature_transformToSlice,
-                             (BaseAlignFeature_TransformRawContigToSliceFunc)SeqFeature_transformRawContigToSlice, // Que???
-                             BaseAlignFeature_transformSliceToRawContig,
+                             (BaseAlignFeature_TransformToRawContigFunc)SeqFeature_transformToRawContigImpl,
+                             (BaseAlignFeature_TransformToSliceFunc)SeqFeature_transformToSliceImpl,
+                             (BaseAlignFeature_TransformRawContigToSliceFunc)SeqFeature_transformRawContigToSliceImpl, // Que???
+                             BaseAlignFeature_transformSliceToRawContigImpl,
                              NULL, // transformSliceToSlice
-                             BaseAlignFeature_getHitUnit,
-                             BaseAlignFeature_getQueryUnit
+                             BaseAlignFeature_getHitUnitImpl,
+                             BaseAlignFeature_getQueryUnitImpl
                             };
 #else 
   extern BaseAlignFeatureFuncs baseAlignFeatureFuncs;

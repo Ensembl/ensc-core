@@ -76,10 +76,10 @@ char *SimpleFeature_setDisplayLabel(SimpleFeature *sf, char *label);
                       NULL, // setSeq
                       NULL, // getLength
                       NULL, // reverseComplement
-                      (SimpleFeature_TransformToRawContigFunc)SeqFeature_transformToRawContig,
-                      (SimpleFeature_TransformToSliceFunc)SeqFeature_transformToSlice,
-                      (SimpleFeature_TransformRawContigToSliceFunc)SeqFeature_transformRawContigToSlice,
-                      (SimpleFeature_TransformSliceToRawContigFunc)SeqFeature_transformSliceToRawContig,
+                      (SimpleFeature_TransformToRawContigFunc)SeqFeature_transformToRawContigImpl,
+                      (SimpleFeature_TransformToSliceFunc)SeqFeature_transformToSliceImpl,
+                      (SimpleFeature_TransformRawContigToSliceFunc)SeqFeature_transformRawContigToSliceImpl,
+                      (SimpleFeature_TransformSliceToRawContigFunc)SeqFeature_transformSliceToRawContigImpl,
                       NULL // transformSliceToSlice
                      };
 #else

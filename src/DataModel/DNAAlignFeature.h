@@ -78,11 +78,11 @@ int DNAAlignFeature_getQueryUnit(void);
                              NULL, // getSeq
                              NULL, // setSeq
                              NULL, // getLength
-                             (DNAAlignFeature_ReverseComplementFunc)BaseAlignFeature_reverseComplement,
-                             (DNAAlignFeature_TransformToRawContigFunc)SeqFeature_transformToRawContig,
-                             (DNAAlignFeature_TransformToSliceFunc)SeqFeature_transformToSlice,
-                             (DNAAlignFeature_TransformRawContigToSliceFunc)SeqFeature_transformRawContigToSlice,
-                             (DNAAlignFeature_TransformSliceToRawContigFunc)BaseAlignFeature_transformSliceToRawContig,
+                             (DNAAlignFeature_ReverseComplementFunc)BaseAlignFeature_reverseComplementImpl,
+                             (DNAAlignFeature_TransformToRawContigFunc)SeqFeature_transformToRawContigImpl,
+                             (DNAAlignFeature_TransformToSliceFunc)SeqFeature_transformToSliceImpl,
+                             (DNAAlignFeature_TransformRawContigToSliceFunc)SeqFeature_transformRawContigToSliceImpl,
+                             (DNAAlignFeature_TransformSliceToRawContigFunc)BaseAlignFeature_transformSliceToRawContigImpl,
                              NULL, // transformSliceToSlice
                              DNAAlignFeature_getHitUnit,
                              DNAAlignFeature_getQueryUnit

@@ -103,9 +103,11 @@ void StickyExon_sortByStickyRank(StickyExon *exon);
 
 int StickyExon_stickyRankCompFunc(const void *a, const void *b);
 
-
-
-Exon *StickyExon_transformToSlice(Exon *exon, Slice *slice);
+Exon *StickyExon_transformRawContigToSlice(StickyExon *exon, Slice *slice);
+void StickyExon_loadGenomicMapper(StickyExon *stickyExon, Mapper *mapper, IDType id, int start);
+Exon *StickyExon_adjustStartEnd(StickyExon *stickyExon, int startAdjust, int endAdjust);
+char *StickyExon_getSeqString(StickyExon *stickyExon);
+void StickyExon_addSupportingFeatures(StickyExon *stickyExon, Vector *features);
 
 
 StickyExon *StickyExon_new();
@@ -116,7 +118,24 @@ StickyExon *StickyExon_new();
                        NULL, // getStart
                        NULL, // setStart
                        NULL, // getEnd
-                       NULL  // setEnd
+                       NULL,  // setEnd
+                       NULL, // getStrand
+                       NULL, // setStrand
+                       NULL, // getSeq
+                       NULL, // setSeq
+                       NULL, // getLength
+                       NULL, // reverseComplement
+                       (StickyExon_TransformToRawContigFunc)SeqFeature_transformToRawContigImpl,
+                       (StickyExon_TransformToSliceFunc)SeqFeature_transformToSliceImpl,
+                       StickyExon_transformRawContigToSlice,
+                       NULL, // transformSliceToRawContig - SHOULD NOT HAVE ONE OF THESE FOR STICKIES BECAUSE THEY SHOULD NEVER BE ON SLICES
+                       NULL, // transformSliceToSlice - OR ONE OF THESE
+                       StickyExon_loadGenomicMapper,
+                       StickyExon_adjustStartEnd,
+                       NULL, // getPeptide
+                       StickyExon_addSupportingFeature,
+                       StickyExon_getAllSupportingFeatures,
+                       StickyExon_getSeqString
                       };
 #else
   extern StickyExonFuncs stickyExonFuncs;

@@ -602,7 +602,7 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
 }
 
 
-Vector *BaseAlignFeature_transformSliceToRawContig(BaseAlignFeature *baf) {
+Vector *BaseAlignFeature_transformSliceToRawContigImpl(BaseAlignFeature *baf) {
   Slice *slice = (Slice *)BaseAlignFeature_getContig(baf);
   SliceAdaptor *sa;
   RawContigAdaptor *rca;
@@ -683,14 +683,14 @@ Vector *BaseAlignFeature_transformSliceToRawContig(BaseAlignFeature *baf) {
   return out;
 }
 
-int BaseAlignFeature_getHitUnit(void) {
+int BaseAlignFeature_getHitUnitImpl(void) {
   fprintf(stderr, "Error: Abstract method call!" );
   exit(1);
   return 0;
 }
 
 
-int BaseAlignFeature_getQueryUnit(void) {
+int BaseAlignFeature_getQueryUnitImpl(void) {
   fprintf(stderr, "Error: Abstract method call!" );
   exit(1);
   return 0;

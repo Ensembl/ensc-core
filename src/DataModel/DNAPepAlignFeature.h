@@ -21,8 +21,8 @@ DNAPepAlignFeature *DNAPepAlignFeature_new(void);
 #define DNAPepAlignFeature_setCigarString(fp, ciggy) BaseAlignFeature_setCigarString((BaseAlignFeature *)(fp), (ciggy))
 #define DNAPepAlignFeature_getCigarString(fp) BaseAlignFeature_getCigarString((fp))
 
-#define DNAPepAlignFeature_setHitId(fp,stableId)  BaseAlignFeature_setHitId((BaseAlignFeature *)(fp),(stableId))
-#define DNAPepAlignFeature_getHitId(fp)  BaseAlignFeature_getHitId((fp))
+#define DNAPepAlignFeature_setHitSeqName(fp,hname)  BaseAlignFeature_setHitSeqName((BaseAlignFeature *)(fp),(hname))
+#define DNAPepAlignFeature_getHitSeqName(fp)  BaseAlignFeature_getHitSeqName((fp))
 
 #define DNAPepAlignFeature_setStart(fp,start) BaseAlignFeature_setStart((fp),(start))
 #define DNAPepAlignFeature_getStart(fp) BaseAlignFeature_getStart((fp))
@@ -76,11 +76,11 @@ int DNAPepAlignFeature_getQueryUnit(void);
                              NULL, // getSeq
                              NULL, // setSeq
                              NULL, // getLength
-                             (DNAPepAlignFeature_ReverseComplementFunc)BaseAlignFeature_reverseComplement,
-                             (DNAPepAlignFeature_TransformToRawContigFunc)SeqFeature_transformToRawContig,
-                             (DNAPepAlignFeature_TransformToSliceFunc)SeqFeature_transformToSlice,
-                             (DNAPepAlignFeature_TransformRawContigToSliceFunc)SeqFeature_transformRawContigToSlice,
-                             (DNAPepAlignFeature_TransformSliceToRawContigFunc)BaseAlignFeature_transformSliceToRawContig,
+                             (DNAPepAlignFeature_ReverseComplementFunc)BaseAlignFeature_reverseComplementImpl,
+                             (DNAPepAlignFeature_TransformToRawContigFunc)SeqFeature_transformToRawContigImpl,
+                             (DNAPepAlignFeature_TransformToSliceFunc)SeqFeature_transformToSliceImpl,
+                             (DNAPepAlignFeature_TransformRawContigToSliceFunc)SeqFeature_transformRawContigToSliceImpl,
+                             (DNAPepAlignFeature_TransformSliceToRawContigFunc)BaseAlignFeature_transformSliceToRawContigImpl,
                              NULL, // transformSliceToSlice
                              DNAPepAlignFeature_getHitUnit,
                              DNAPepAlignFeature_getQueryUnit

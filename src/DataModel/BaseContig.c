@@ -1,4 +1,6 @@
+#define __BASECONTIG_MAIN__
 #include "BaseContig.h"
+#undef __BASECONTIG_MAIN__
 #include "Slice.h"
 #include "RawContig.h"
 

@@ -58,7 +58,7 @@ int SeqFeature_reverseStartCompFunc(const void *a, const void *b) {
   }
 }
 
-Vector *SeqFeature_transformToRawContig(SeqFeature *sf) {
+Vector *SeqFeature_transformToRawContigImpl(SeqFeature *sf) {
   BaseContig *featContig = SeqFeature_getContig(sf);
 
   if (featContig) {
@@ -81,7 +81,7 @@ Vector *SeqFeature_transformToRawContig(SeqFeature *sf) {
   }
 }
 
-SeqFeature *SeqFeature_transformToSlice(SeqFeature *sf, Slice *slice) {
+SeqFeature *SeqFeature_transformToSliceImpl(SeqFeature *sf, Slice *slice) {
   BaseContig *featContig = SeqFeature_getContig(sf);
 
   if (featContig) {
@@ -104,7 +104,7 @@ SeqFeature *SeqFeature_transformToSlice(SeqFeature *sf, Slice *slice) {
   }
 }
 
-SeqFeature *SeqFeature_transformRawContigToSlice(SeqFeature *sf, Slice *slice) {
+SeqFeature *SeqFeature_transformRawContigToSliceImpl(SeqFeature *sf, Slice *slice) {
   DBAdaptor *dba;
   RawContigAdaptor *rca;
   AssemblyMapperAdaptor *ama;
@@ -187,7 +187,7 @@ SeqFeature *SeqFeature_transformRawContigToSlice(SeqFeature *sf, Slice *slice) {
   return sf;
 }
 
-Vector *SeqFeature_transformSliceToRawContig(SeqFeature *sf) {
+Vector *SeqFeature_transformSliceToRawContigImpl(SeqFeature *sf) {
   Slice *slice;
   DBAdaptor *dba;
   RawContigAdaptor *rca;
