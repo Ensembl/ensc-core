@@ -77,4 +77,10 @@ char *BaseAlignFeature_setHitId(BaseAlignFeature *baf, char *str);
 #define BaseAlignFeature_setPercId(fp,pid) SeqFeature_setPercId((fp),(pid))
 #define BaseAlignFeature_getPercId(fp) SeqFeature_getPercId((fp))
 
+#ifdef __BASEALIGNFEATURE_MAIN__
+  BaseAlignFeatureFuncs baseAlignFeatureFuncs = {NULL,NULL};
+#else 
+  extern BaseAlignFeatureFuncs baseAlignFeatureFuncs;
+#endif
+
 #endif

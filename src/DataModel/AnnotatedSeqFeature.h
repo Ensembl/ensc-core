@@ -72,4 +72,10 @@ time_t AnnotatedSeqFeature_getModified(AnnotatedSeqFeature *asf);
 #define AnnotatedSeqFeature_setContig(asf,c) SeqFeature_setContig((asf),(c))
 #define AnnotatedSeqFeature_getContig(asf) SeqFeature_getContig((asf))
 
+#ifdef __ANNOTATEDSEQFEATURE_MAIN__
+  AnnotatedSeqFeatureFuncs annotatedSeqFeatureFuncs = {NULL,NULL};
+#else
+  extern AnnotatedSeqFeatureFuncs annotatedSeqFeatureFuncs;
+#endif
+
 #endif

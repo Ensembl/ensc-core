@@ -1,4 +1,6 @@
+#define __EXON_MAIN__
 #include "Exon.h"
+#undef __EXON_MAIN__
 #include "ExonAdaptor.h"
 #include "AssemblyMapperAdaptor.h"
 #include "AssemblyMapper.h"
@@ -21,6 +23,8 @@ Exon *Exon_new() {
   Exon_setVersion(exon,-1);
 
   exon->objectType = CLASS_EXON;
+
+  exon->funcs = &exonFuncs;
 
   return exon;
 }

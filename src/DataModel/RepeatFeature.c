@@ -10,5 +10,7 @@ RepeatFeature *RepeatFeature_new() {
 
   rf->objectType = CLASS_REPEATFEATURE;
 
+  rf->funcs = &seqFeatureFuncs;
+
   return rf;
 }

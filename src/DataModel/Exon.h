@@ -97,5 +97,10 @@ Exon *Exon_transformToSlice(Exon *exon, Slice *slice);
 Exon *Exon_new();
 Exon *Exon_copy(Exon *orig, CopyDepth depth);
 
+#ifdef __EXON_MAIN__
+  ExonFuncs exonFuncs = {NULL,NULL};
+#else
+  extern ExonFuncs exonFuncs;
+#endif
 
 #endif

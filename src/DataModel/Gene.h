@@ -57,8 +57,8 @@ char *Gene_setType(Gene *gene, char *type);
 #define Gene_setVersion(gene,ver)  StableIdInfo_setVersion(&((gene)->si),ver)
 #define Gene_getVersion(gene)  StableIdInfo_getVersion(&((gene)->si))
 
-int Gene_setStart(Gene *gene,int start);
-int Gene_getStart(Gene *gene);
+int Gene_setStart(SeqFeature *gene,int start);
+int Gene_getStart(SeqFeature *gene);
 
 #define Gene_setAnalysis(gene,ana) AnnotatedSeqFeature_setAnalysis((gene),ana)
 #define Gene_getAnalysis(gene) AnnotatedSeqFeature_getAnalysis((gene))
@@ -83,5 +83,11 @@ Vector *Gene_getAllExons(Gene *gene);
 
 Vector *Gene_getAllDBLinks(Gene *g);
 int Gene_addDBLink(Gene *gene, DBEntry *dbe);
+
+#ifdef __GENE_MAIN__
+  GeneFuncs geneFuncs = {Gene_getStart, Gene_setStart};
+#else 
+  extern GeneFuncs geneFuncs;
+#endif
 
 #endif

@@ -1,4 +1,6 @@
+#define __BASEALIGNFEATURE_MAIN__
 #include "BaseAlignFeature.h"
+#undef __BASEALIGNFEATURE_MAIN__
 #include "StrUtil.h"
 
 BaseAlignFeature *BaseAlignFeature_new() {

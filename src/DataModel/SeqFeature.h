@@ -11,11 +11,11 @@
 #include "EnsRoot.h"
 
 typedef int (*SeqFeature_GetStartFunc)(SeqFeature *);
-typedef int (*SeqFeature_GetEndFunc)(SeqFeature *);
+typedef int (*SeqFeature_SetStartFunc)(SeqFeature *, int start);
 
 #define SEQFEATUREFUNCS_DATA \
   SeqFeature_GetStartFunc getStart; \
-  SeqFeature_GetEndFunc   getEnd;
+  SeqFeature_SetStartFunc setStart;
 
 typedef struct SeqFeatureFuncsStruct {
   SEQFEATUREFUNCS_DATA
@@ -43,8 +43,10 @@ struct SeqFeatureStruct {
 };
 #undef FUNCSTRUCTTYPE
 
-#define SeqFeature_setStart(sf,s) (sf)->start = (s)
-#define SeqFeature_getStart(sf) (sf)->start
+#define SeqFeature_setStart(sf,s) ((sf)->funcs->setStart == NULL ? ((sf)->start = (s)) : \
+                                                                   ((sf)->funcs->setStart((SeqFeature *)(sf),(s))))
+#define SeqFeature_getStart(sf) ((sf)->funcs->getStart == NULL ? ((sf)->start) : \
+                                                                 ((sf)->funcs->getStart((SeqFeature *)(sf))))
 
 #define SeqFeature_setEnd(sf,e) (sf)->end = (e)
 #define SeqFeature_getEnd(sf) (sf)->end
@@ -83,5 +85,11 @@ char *SeqFeature_setStableId(SeqFeature *sf, char *stableId);
 #define SeqFeature_getContig(sf) (sf)->contig
 
 #define SeqFeature_getLength(sf) ((sf)->end - (sf)->start + 1)
+
+#ifdef __SEQFEATURE_MAIN__
+ SeqFeatureFuncs seqFeatureFuncs = {NULL, NULL};
+#else
+ extern SeqFeatureFuncs seqFeatureFuncs;
+#endif
 
 #endif

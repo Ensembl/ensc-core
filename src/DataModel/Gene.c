@@ -1,4 +1,6 @@
+#define __GENE_MAIN__
 #include "Gene.h"
+#undef __GENE_MAIN__
 #include "GeneAdaptor.h"
 #include "IDHash.h"
 
@@ -17,6 +19,8 @@ Gene *Gene_new() {
   Gene_setVersion(gene,-1);
 
   gene->objectType = CLASS_GENE;
+
+  gene->funcs = &geneFuncs;
 
   return gene;
 }
@@ -65,13 +69,14 @@ char *Gene_setType(Gene *g, char *type) {
   return g->type;
 }
 
-int Gene_setStart(Gene *gene, int start) {
+int Gene_setStart(SeqFeature *sf, int start) {
+  Gene *gene = (Gene *)sf;
   gene->start = start;
-  Gene_setStartIsSet(gene,TRUE);
   return gene->start;
 }
 
-int Gene_getStart(Gene *gene) {
+int Gene_getStart(SeqFeature *sf) {
+  Gene *gene = (Gene *)sf;
   int multiFlag = 0;
 
   if (Gene_getStartIsSet(gene) == FALSE) {
@@ -85,6 +90,7 @@ int Gene_getStart(Gene *gene) {
       if (!Gene_getStartIsSet(gene) || 
           Exon_getStart(exon) < gene->start) {
         gene->start = Exon_getStart(exon);
+        Gene_setStartIsSet(gene,TRUE);
       }
       if (multiFlag || 
           (lastContig && strcmp(lastContig, BaseContig_getName(Exon_getContig(exon))))) {
@@ -92,7 +98,6 @@ int Gene_getStart(Gene *gene) {
       }
       lastContig =  BaseContig_getName(Exon_getContig(exon));
     }
-    Gene_setStartIsSet(gene,TRUE);
     Vector_free(exonVector,NULL);
   }
 

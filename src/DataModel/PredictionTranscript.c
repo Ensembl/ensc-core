@@ -9,6 +9,7 @@ PredictionTranscript *PredictionTranscript_new() {
   }
 
   transcript->objectType = CLASS_PREDICTIONTRANSCRIPT;
+  transcript->funcs = &annotatedSeqFeatureFuncs;
   return transcript;
 }
 

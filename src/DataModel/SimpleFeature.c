@@ -10,6 +10,8 @@ SimpleFeature *SimpleFeature_new() {
   }
 
   sf->objectType = CLASS_SIMPLEFEATURE;
+
+  sf->funcs = &seqFeatureFuncs;
  
   return sf;
 }

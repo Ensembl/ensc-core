@@ -62,6 +62,7 @@ libensc.a	: \
 	objectfiles/DataAdaptors/TranscriptAdaptor.o \
 	objectfiles/DataAdaptors/TranslationAdaptor.o \
 	objectfiles/DataModel/Analysis.o \
+	objectfiles/DataModel/AnnotatedSeqFeature.o \
 	objectfiles/DataModel/AssemblyMapper.o \
 	objectfiles/DataModel/BaseAlignFeature.o \
 	objectfiles/DataModel/BaseContig.o \

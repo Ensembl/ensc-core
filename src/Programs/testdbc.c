@@ -240,7 +240,10 @@ int main(int argc, char *argv[]) {
       Gene *gene = Vector_getElementAt(geneVector,i);
       int j;
 
-      fprintf(stderr,"Gene %s\n",Gene_getStableId(gene));
+      fprintf(stderr,"Gene %s from %d to %d\n",
+              Gene_getStableId(gene),
+              Gene_getStart((SeqFeature *)gene),
+              Gene_getEnd(gene));
       for (j=0;j<Gene_getTranscriptCount(gene);j++) {
         Transcript *trans = Gene_getTranscriptAt(gene,j);
         int k;
