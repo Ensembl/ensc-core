@@ -286,6 +286,7 @@ Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDB(GenomicAlignAdaptor *gaa,
     // there are not many genomes, square effort is cheap
     Vector *linked = Vector_new();
     Vector *set1 = Vector_new();
+    mergedAligns = Vector_new();
     int i;
 
     for (i=0; i<Vector_getNumElement(linkedCons); i++) {

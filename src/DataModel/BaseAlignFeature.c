@@ -10,6 +10,7 @@
 #include "IDHash.h"
 #include "StrUtil.h"
 #include "SeqFeatureFactory.h"
+#include "CigarStrUtil.h"
 
 #define MAXCIGARPIECELEN 1024
 
