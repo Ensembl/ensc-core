@@ -101,33 +101,50 @@ Set *RepeatConsensusAdaptor_genericFetch(RepeatConsensusAdaptor *rca, char *wher
 }
 
 int RepeatConsensusAdaptor_store(RepeatConsensusAdaptor *rca, Set *consensi) {
-/*
-  my( $self, @consensi ) = @_;
+  StatementHandle *sth;
+  char qStr[1024];
+  int i;
+
   
-  my $sth = $self->prepare(q{
-    INSERT into repeat_consensus( repeat_consensus_id
-          , repeat_name
-          , repeat_class
-          , repeat_consensus )
-      VALUES (NULL, ?,?,?)
-    });
+  sprintf(qStr,
+    "INSERT into repeat_consensus( repeat_consensus_id"
+          ", repeat_name"
+          ", repeat_class"
+          ", repeat_consensus )"
+      "VALUES (NULL, %%s,%%s,%%s)");
+
+  sth = rca->prepare((BaseAdaptor *)rca,qStr,strlen(qStr));
     
-  foreach my $rc (@consensi) {
-    my $name  = $rc->name
-      or $self->throw("name not set");
-    my $class = $rc->repeat_class
-      or $self->throw("repeat_class not set");
-    my $seq   = $rc->repeat_consensus
-      or $self->throw("repeat_consensus not set");
+  for (i=0; i<Set_getNumElement(consensi); i++) {
+    RepeatConsensus *rc = Set_getElementAt(consensi,i);
+    int64 dbID; 
+    char *name;
+    char *class;
+    char *seq;
+
+    if (!(name  = RepeatConsensus_getName(rc))) {
+      fprintf(stderr,"Error: Name not set for repeat consensus\n");
+      exit(1);
+    }
+    if (!(class  = RepeatConsensus_getRepeatClass(rc))) {
+      fprintf(stderr,"Error: Class not set for repeat consensus\n");
+      exit(1);
+    }
+    if (!(seq  = RepeatConsensus_getConsensus(rc))) {
+      fprintf(stderr,"Error: Consensus seq not set for repeat consensus\n");
+      exit(1);
+    }
+  
+    sth->execute(sth, name, class, seq);
     
-    $sth->execute($name, $class, $seq);
+    dbID = sth->getInsertId(sth);
     
-    my $db_id = $sth->{'mysql_insertid'}
-    or $self->throw("Didn't get an insertid from the INSERT statement");
-    
-    $rc->dbID($db_id);
-    $rc->adaptor($self);
+    RepeatConsensus_setDbID(rc, dbID);
+    RepeatConsensus_setAdaptor(rc, (BaseAdaptor *)rca);
   }
-*/
+  sth->finish(sth);
 }
 
+int RepeatConsensus_free(RepeatConsensus *rc) {
+  fprintf(stderr,"RepeatConsensus_free not implemented\n");
+}

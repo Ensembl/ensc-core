@@ -34,8 +34,6 @@ int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
     return 0;
   }
   
-
-
   sprintf(qStr,"INSERT INTO protein_align_feature(contig_id, contig_start, contig_end,"
                        "contig_strand, hit_start, hit_end,hit_name," 
                        "cigar_line, analysis_id,score, evalue, perc_ident) "
@@ -64,7 +62,7 @@ int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
     }
 
     // will only store if object is not already stored in this database
-    //AnalysisAdaptor_store(analysis);
+    AnalysisAdaptor_store(aa,analysis);
 
     contig = DNAPepAlignFeature_getContig(sf);
 
@@ -88,7 +86,8 @@ int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
                       DNAPepAlignFeature_getEValue(sf), 
                       DNAPepAlignFeature_getPercId(sf));
      
-    //DNAPepAlignFeature_setDbID(sth->getInsertId());
+    DNAPepAlignFeature_setDbID(sf,sth->getInsertId(sth));
+    sth->finish(sth);
   }
   return 1;
 }

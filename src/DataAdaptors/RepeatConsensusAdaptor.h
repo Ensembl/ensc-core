@@ -13,6 +13,11 @@ struct RepeatConsensusAdaptorStruct {
 RepeatConsensusAdaptor *RepeatConsensusAdaptor_new(DBAdaptor *dba);
 RepeatConsensus *RepeatConsensusAdaptor_fetchByDbID(RepeatConsensusAdaptor *ca, int64 dbID);
 Set *RepeatConsensusAdaptor_genericFetch(RepeatConsensusAdaptor *rca, char *whereClause);
+RepeatConsensus *RepeatConsensusAdaptor_fetchByName(RepeatConsensusAdaptor *rca, char *name);
+RepeatConsensus *RepeatConsensusAdaptor_fetchByNameAndClass(RepeatConsensusAdaptor *rca, char *name, char *class);
+Set *RepeatConsensusAdaptor_fetchByClassAndSeq(RepeatConsensusAdaptor *rca, char *class, char *seq);
+int RepeatConsensus_free(RepeatConsensus *rc);
+
 
 
 #endif

@@ -155,3 +155,161 @@ Analysis *AnalysisAdaptor_analysisFromRow(AnalysisAdaptor *aa, ResultRow *row) {
 
   return anal;
 }
+
+int64 AnalysisAdaptor_store(AnalysisAdaptor *aa, Analysis *analysis) {
+  int64 dbID = Analysis_getDbID(analysis);
+  StatementHandle *sth;
+  char qStr[1024];
+  
+  if (dbID && (AnalysisAdaptor *)Analysis_getAdaptor(analysis) == aa) 
+    return dbID;
+
+
+  dbID = 0;
+
+  if (dbID = AnalysisAdaptor_analysisExists(aa, analysis)) {
+    Analysis_setAdaptor(analysis,(BaseAdaptor *)aa);
+    Analysis_setDbID(analysis,dbID);
+    return dbID;
+  }
+ 
+  if (Analysis_getLogicName(analysis)) {
+    fprintf(stderr,"Must have a logic name on the analysis object");
+    exit(1);
+  }
+
+  if (Analysis_getCreated(analysis)) {
+    sprintf(qStr,
+      "INSERT INTO analysis"
+      " SET created = %%d,"
+      "     logic_name = %%s,"
+      "     db = %%s,"
+      "     db_version = %%d,"
+      "     db_file = %%s,"
+      "     program = %%s,"
+      "     program_version = %%d,"
+      "     program_file = %%s,"
+      "     parameters = %%s,"
+      "     module = %%s,"
+      "     module_version = %%d,"
+      "     gff_source = %%s,"
+      "     gff_feature = %%s");
+    sth = aa->prepare((BaseAdaptor *)aa,qStr,strlen(qStr));
+    sth->execute(sth,
+        Analysis_getCreated(analysis),
+	Analysis_getLogicName(analysis),
+	Analysis_getDb(analysis),
+	Analysis_getDbVersion(analysis),
+	Analysis_getDbFile(analysis),
+	Analysis_getProgram(analysis),
+	Analysis_getProgramVersion(analysis),
+	Analysis_getProgramFile(analysis),
+	Analysis_getParameters(analysis),
+	Analysis_getModule(analysis),
+	Analysis_getModuleVersion(analysis),
+	Analysis_getGFFSource(analysis),
+	Analysis_getGFFFeature(analysis)
+      );
+    dbID = sth->getInsertId(sth);
+    sth->finish(sth);
+  } else {
+    sprintf(qStr,
+      "INSERT INTO analysis"
+      " SET created = now(),"
+      "     logic_name = %%s,"
+      "     db = %%s,"
+      "     db_version = %%d,"
+      "     db_file = %%s,"
+      "     program = %%s,"
+      "     program_version = %%d,"
+      "     program_file = %%s,"
+      "     parameters = %%s,"
+      "     module = %%s,"
+      "     module_version = %%d,"
+      "     gff_source = %%s,"
+      "     gff_feature = %%s");
+    sth = aa->prepare((BaseAdaptor *)aa,qStr,strlen(qStr));
+    sth->execute(sth,
+        Analysis_getCreated(analysis),
+	Analysis_getLogicName(analysis),
+	Analysis_getDb(analysis),
+	Analysis_getDbVersion(analysis),
+	Analysis_getDbFile(analysis),
+	Analysis_getProgram(analysis),
+	Analysis_getProgramVersion(analysis),
+	Analysis_getProgramFile(analysis),
+	Analysis_getParameters(analysis),
+	Analysis_getModule(analysis),
+	Analysis_getModuleVersion(analysis),
+	Analysis_getGFFSource(analysis),
+	Analysis_getGFFFeature(analysis)
+      );
+    dbID = sth->getInsertId(sth);
+    sth->finish(sth);
+
+    if (dbID) {
+      ResultRow *row;
+
+      sprintf(qStr,"SELECT created FROM analysis WHERE analysis_id = " INT64FMTSTR, dbID); 
+      sth = aa->prepare((BaseAdaptor *)aa,qStr,strlen(qStr));
+      sth->execute(sth);
+      row = sth->fetchRow(sth);
+      Analysis_setCreated(analysis, row->getStringAt(row,0));
+      sth->finish(sth);
+    }
+  }
+  IDHash_add(aa->analCache, dbID, analysis);
+  StringHash_add(aa->logicNameCache, Analysis_getLogicName(analysis), analysis);
+
+  Analysis_setAdaptor(analysis,(BaseAdaptor *)aa);
+  Analysis_setDbID(analysis,dbID);
+
+  return dbID;
+}
+
+/*
+sub remove {
+  my ($self, $analysis) = @_;
+  my $dbID;
+  
+  if (!defined $analysis || !ref $analysis) {
+    $self->throw("called remove on AnalysisAdaptor with a [$analysis]");
+  }
+
+  unless ($dbID = $self->exists($analysis)) {
+    return undef;
+  }
+
+  my $res = $self->db->db_handle->do(qq{
+    DELETE from analysis
+    WHERE  analysis_id = $dbID
+  });
+}
+*/
+
+int64 AnalysisAdaptor_analysisExists(AnalysisAdaptor *aa, Analysis *anal) {
+  int64 *keys;
+  int i;
+  int64 cacheId = 0;
+
+
+  // objects with already have this adaptor are store here.
+  if ((AnalysisAdaptor *)Analysis_getAdaptor(anal) == aa) {
+    if (Analysis_getDbID(anal)) {
+      return Analysis_getDbID(anal);
+    } else {
+      fprintf(stderr,"analysis does not have an analysisId");
+      exit(1);
+    }
+  }
+  
+  keys = IDHash_getKeys(aa->analCache);
+  for (i=0;i<IDHash_getNumValues(aa->analCache);i++) {
+    if (Analysis_compare((Analysis *)IDHash_getValue(aa->analCache, keys[i]) , anal) >= 0) {
+      cacheId = keys[i];
+      break;
+    }
+  }
+  free(keys);
+  return cacheId;
+}

@@ -15,9 +15,10 @@ StatementHandle *MysqlStatementHandle_new(DBConnection *dbc, char *query) {
 
   sth->objectType = CLASS_MYSQLSTATEMENTHANDLE;
 
-  sth->execute  = MysqlStatementHandle_execute;
-  sth->fetchRow = MysqlStatementHandle_fetchRow;
-  sth->finish   = MysqlStatementHandle_finish;
+  sth->execute     = MysqlStatementHandle_execute;
+  sth->fetchRow    = MysqlStatementHandle_fetchRow;
+  sth->finish      = MysqlStatementHandle_finish;
+  sth->getInsertId = MysqlStatementHandle_getInsertId;
 
   sth->dbc = dbc;
 
@@ -122,6 +123,23 @@ ResultRow *MysqlStatementHandle_fetchRow(StatementHandle *sth) {
   m_row->mysql_row = mysql_row;
 
   return (ResultRow *)m_row;
+}
+
+int64 MysqlStatementHandle_getInsertId(StatementHandle *sth) {
+  MysqlStatementHandle *m_sth;
+  int64 insertId;
+
+  Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);
+
+  m_sth = (MysqlStatementHandle *)sth;
+
+  insertId = mysql_insert_id(m_sth->dbc->mysql);
+
+  if (insertId == 0) {
+    fprintf(stderr, "Warning: Insert id was 0\n");
+  }
+
+  return insertId;
 }
 
 void MysqlStatementHandle_finish(StatementHandle *sth) {

@@ -24,51 +24,73 @@ DNAAlignFeatureAdaptor *DNAAlignFeatureAdaptor_new(DBAdaptor *dba) {
 }
 
 int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
-/*
-  my ($self, @sf) = @_;
-
-  my @tabs = $self->_tables;
-  my ($tablename) = @{$tabs[0]};
+  char qStr[512];
+  StatementHandle *sth;
+  int i;
   
-  if( scalar(@sf) == 0 ) {
-    $self->throw("Must call store with sequence features");
+  if (!Set_getNumElement(features)) {
+    fprintf(stderr, "Warning: ProteinAlignFeatureAdaptor_store called with no features\n");
+    return 0;
   }
   
-  my $sth = $self->prepare("
-     INSERT INTO $tablename (contig_id, contig_start, contig_end,
-                             contig_strand, hit_start, hit_end,
-                             hit_strand, hit_name, cigar_line,
-                             analysis_id, score, evalue, perc_ident) 
-     VALUES (?,?,?,?,?,?,?,?,?,?,?, ?, ?)");
+  sprintf(qStr,"INSERT INTO dna_align_feature(contig_id, contig_start, contig_end,"
+                       "contig_strand, hit_start, hit_end, hit_strand, hit_name," 
+                       "cigar_line, analysis_id,score, evalue, perc_ident) "
+                       "VALUES (%" INT64FMTSTR ",%%d,%%d,%%d,%%d,%%d,%%d,'%%s','%%s',%" 
+                                INT64FMTSTR ",%%f,%%f,%%f)");
 
-  foreach my $sf ( @sf ) {
-    if( !ref $sf || !$sf->isa("Bio::EnsEMBL::DnaDnaAlignFeature") ) {
-      $self->throw("feature must be a Bio::EnsEMBL::DnaDnaAlignFeature," 
-                    . " not a [$sf]");
+  sth = bfa->prepare((BaseAdaptor *)bfa, qStr,strlen(qStr));
+  printf("%s\n",qStr);
+
+  for (i=0; i<Set_getNumElement(features); i++) {
+    DNAAlignFeature *sf = Set_getElementAt(features, i);
+    Analysis *analysis = DNAAlignFeature_getAnalysis(sf);
+    AnalysisAdaptor *aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
+    RawContig *contig;
+
+/* NIY
+    if( !ref $sf || !$sf->isa("Bio::EnsEMBL::DNADnaAlignFeature") ) {
+      $self->throw("Feature must be a Bio::EnsEMBL::DNAAlignFeature, " .
+                   "not a [$sf]");
     }
-    
-    my $contig = $sf->entire_seq();
-    unless(defined $contig && $contig->isa("Bio::EnsEMBL::RawContig")) {
-      $self->throw("A contig must be attached to the features to be " .
-                   "stored via the attach seq method\n");
-    }
-
-    if( !defined $sf->analysis ) {
-      $self->throw("Cannot store sequence features without analysis");
-    }
-
-     # will only store if object is not already stored in this database
-    $self->db()->get_AnalysisAdaptor()->store( $sf->analysis() );
-
-    $sth->execute( $contig->dbID(), $sf->start, $sf->end, $sf->strand,
-                   $sf->hstart, $sf->hend, $sf->hstrand, $sf->hseqname,
-                   $sf->cigar_string, $sf->analysis->dbID, $sf->score, 
-                   $sf->p_value, $sf->percent_id);
-    $sf->dbID($sth->{'mysql_insertid'});
-  }
 */
-}
+     
+    if (!analysis) {
+      fprintf(stderr,"Cannot store sequence features without analysis");
+      exit(1);
+    }
 
+    // will only store if object is not already stored in this database
+    AnalysisAdaptor_store(aa,analysis);
+
+    contig = DNAAlignFeature_getContig(sf);
+
+/* NIY
+     unless(defined $contig && $contig->isa("Bio::EnsEMBL::RawContig")) { 
+       $self->throw("Cannot store feature without Contig attached via " .
+                    "attach_seq\n");
+     }   
+*/
+     
+    sth->execute(sth, (long long)RawContig_getDbID(contig), 
+                      DNAAlignFeature_getStart(sf), 
+                      DNAAlignFeature_getEnd(sf), 
+                      DNAAlignFeature_getStrand(sf), 
+                      DNAAlignFeature_getHitStart(sf), 
+                      DNAAlignFeature_getHitEnd(sf),
+                      DNAAlignFeature_getHitStrand(sf),
+                      DNAAlignFeature_getHitId(sf), 
+                      DNAAlignFeature_getCigarString(sf),
+                      (long long)Analysis_getDbID(analysis),
+                      DNAAlignFeature_getScore(sf), 
+                      DNAAlignFeature_getEValue(sf), 
+                      DNAAlignFeature_getPercId(sf));
+     
+    DNAAlignFeature_setDbID(sf,sth->getInsertId(sth));
+    sth->finish(sth);
+  }
+  return 1;
+}
 
 NameTableType *DNAAlignFeatureAdaptor_getTables(void) {
   return &DNAAlignFeatureAdaptor_tableNames;

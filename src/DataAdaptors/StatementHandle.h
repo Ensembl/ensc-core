@@ -9,6 +9,7 @@
 typedef void (*StatementHandle_ExecuteFunc)(StatementHandle *sth, ...);
 typedef ResultRow *(*StatementHandle_FetchRowFunc)(StatementHandle *sth);
 typedef void (*StatementHandle_FinishFunc)(StatementHandle *sth);
+typedef int64 (*StatementHandle_GetInsertIdFunc)(StatementHandle *sth);
 
 #define STATEMENTHANDLE_DATA \
   OBJECT_DATA \
@@ -17,7 +18,8 @@ typedef void (*StatementHandle_FinishFunc)(StatementHandle *sth);
   DBConnection *dbc; \
   StatementHandle_ExecuteFunc execute; \
   StatementHandle_FetchRowFunc fetchRow; \
-  StatementHandle_FinishFunc finish;
+  StatementHandle_FinishFunc finish; \
+  StatementHandle_GetInsertIdFunc getInsertId;
   
 struct StatementHandleStruct {
   STATEMENTHANDLE_DATA

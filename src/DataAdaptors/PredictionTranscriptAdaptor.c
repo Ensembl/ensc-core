@@ -26,72 +26,86 @@ PredictionTranscriptAdaptor *PredictionTranscriptAdaptor_new(DBAdaptor *dba) {
 }
 
 int PredictionTranscriptAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
-/*
-  my ( $self, @pre_transcripts ) = @_;
+  StatementHandle *sth;
+  char qStr[1024];
+  int i;
 
-  my $exon_sql = q{
-      INSERT INTO prediction_transcript ( prediction_transcript_id, exon_rank,
-                                          contig_id, contig_start, contig_end,
-                                          contig_strand, start_phase, score,
-                                          p_value, analysis_id, exon_count )
-        VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )
-      };
+  sprintf(qStr,
+      "INSERT INTO prediction_transcript ( prediction_transcript_id, exon_rank, "
+                                         "contig_id, contig_start, contig_end, "
+                                         "contig_strand, start_phase, score, "
+                                         "p_value, analysis_id, exon_count ) "
+        " VALUES ( %" INT64FMTSTR ", %%d, %" INT64FMTSTR 
+                  ", %%d, %%d, %%d, %%d, %%f, %%f, %" INT64FMTSTR ", %%d)"); 
 
-  my $exonst = $self->prepare($exon_sql);
+  sth = bfa->prepare((BaseAdaptor *)bfa,qStr,strlen(qStr));
 
-  foreach my $pre_trans (@pre_transcripts) {
+  for (i=0; i<Set_getNumElement(features); i++) {
+    PredictionTranscript *predTrans = Set_getElementAt(features, i);
+    int j;
+    int64 exonId = 0;
+    int64 dbID = 0;
+    int rank = 1;
+    int64 analysisId = Analysis_getDbID(PredictionTranscript_getAnalysis(predTrans));
+    int nExon = PredictionTranscript_getExonCount(predTrans);
+
+/* NIY
     if( ! $pre_trans->isa('Bio::EnsEMBL::PredictionTranscript') ) {
       $self->throw("$pre_trans is not a EnsEMBL PredictionTranscript "
                    . "- not dumping!");
     }
+*/
 
-    if( $pre_trans->dbID && $pre_trans->adaptor == $self ) {
-      $self->warn("Already stored");
+    if (PredictionTranscript_getDbID(predTrans) && 
+        (BaseFeatureAdaptor *)PredictionTranscript_getAdaptor(predTrans) == bfa ) {
+      fprintf(stderr,"PT already stored\n");
     }
 
-    my $exonId = undef;
-    my $exons = $pre_trans->get_all_Exons();
-    my $dbID = undef;
-    my $rank = 1;
 
-    for my $exon ( @$exons ) {
-      if( ! defined $exon ) { $rank++; next; }
+    for (j=0; j<nExon; j++) {
+      Exon *exon = PredictionTranscript_getExonAt(predTrans, j);
+      int64 contigId;
+      int contigStart;
+      int contigEnd;
+      int contigStrand;
+      int startPhase;
+      int endPhase;
+      double score;
+      double pValue;
 
-      my $contig_id = $exon->contig->dbID();
-      my $contig_start = $exon->start();
-      my $contig_end = $exon->end();
-      my $contig_strand = $exon->strand();
+      if (!exon) { rank++; continue; }
 
-      my $start_phase = $exon->phase();
-      my $end_phase = $exon->end_phase();
+      contigId = RawContig_getDbID(Exon_getContig(exon));
+      contigStart = Exon_getStart(exon);
+      contigEnd = Exon_getEnd(exon);
+      contigStrand = Exon_getStrand(exon);
 
-      # this is only in PredictionExon
-      my $score = $exon->score();
-      my $p_value = $exon->p_value();
+      startPhase = Exon_getPhase(exon);
+      endPhase = Exon_getEndPhase(exon);
 
-      my $analysis = $pre_trans->analysis->dbID;
+      score = Exon_getScore(exon);
+      pValue = Exon_getpValue(exon);
 
-      if( $rank == 1 ) {
-        $exonst->execute( undef, 1, $contig_id, $contig_start,
-                          $contig_end, $contig_strand,
-                          $start_phase, $score, $p_value, $analysis,
-                          scalar( @{$exons} ));
-        $dbID = $exonst->{'mysql_insertid'};
+      if (rank == 1) {
+        sth->execute(sth, NULL, 1, contigId, contigStart,
+                          contigEnd, contigStrand,
+                          startPhase, score, pValue, analysisId,
+                          nExon);
+        dbID = sth->getInsertId(sth);
       } else {
-        $exonst->execute( $dbID, $rank, $contig_id, $contig_start,
-                          $contig_end, $contig_strand,
-                          $start_phase, $score, $p_value, $analysis,
-                         scalar( @{$exons} ) );
+        sth->execute(sth, dbID, rank, contigId, contigStart,
+                      contigEnd, contigStrand,
+                      startPhase, score, pValue, analysisId,
+                      nExon);
       }
-      $rank++;
+      rank++;
     }
 
-    $pre_trans->dbID( $dbID );
-    $pre_trans->adaptor( $self );
+    PredictionTranscript_setDbID(predTrans, dbID);
+    PredictionTranscript_setAdaptor(predTrans,(BaseAdaptor *)bfa);
   }
 
-  $exonst->finish;
-*/
+  sth->finish(sth);
 }
 
 

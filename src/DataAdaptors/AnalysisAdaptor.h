@@ -13,11 +13,14 @@ struct AnalysisAdaptorStruct {
   StringHash *logicNameCache;
 };
 
+int64 AnalysisAdaptor_analysisExists(AnalysisAdaptor *aa, Analysis *anal);
 AnalysisAdaptor *AnalysisAdaptor_new(DBAdaptor *dba);
 Analysis *AnalysisAdaptor_fetchByDbID(AnalysisAdaptor *aa, int64 dbID);
 Analysis *AnalysisAdaptor_fetchByLogicName(AnalysisAdaptor *aa, char *logicName);
 Analysis *AnalysisAdaptor_analysisFromRow(AnalysisAdaptor *aa, ResultRow *row);
 Analysis **AnalysisAdaptor_fetchAll(AnalysisAdaptor *aa);
+int64 AnalysisAdaptor_store(AnalysisAdaptor *aa, Analysis *analysis);
+
 
 
 

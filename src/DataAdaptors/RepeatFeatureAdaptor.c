@@ -31,86 +31,104 @@ RepeatFeatureAdaptor *RepeatFeatureAdaptor_new(DBAdaptor *dba) {
 }
 
 int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
-/*
-  my( $self, @repeats ) = @_;
-  
-  my $rca = $self->db->get_RepeatConsensusAdaptor;
-  my ($cons, $db_id);
+  RepeatConsensus *cons;
+  RepeatConsensusAdaptor *rca = DBAdaptor_getRepeatConsensusAdaptor(bfa->dba);
+  StatementHandle *sth;
+  int i;
+  char qStr[1024];
 
-  my $sth = $self->prepare(qq{
-    INSERT into repeat_feature( repeat_feature_id
-                        , contig_id
-                        , contig_start
-                        , contig_end
-                        , contig_strand
-                        , repeat_consensus_id
-                        , repeat_start
-                        , repeat_end
-                        , score
-                        , analysis_id )
-      VALUES(NULL, ?,?,?,?,?,?,?,?,?)
-    });
+  sprintf(qStr,
+    "INSERT into repeat_feature( repeat_feature_id"
+                        ", contig_id"
+                        ", contig_start"
+                        ", contig_end"
+                        ", contig_strand"
+                        ", repeat_consensus_id"
+                        ", repeat_start"
+                        ", repeat_end"
+                        ", score"
+                        ", analysis_id )"
+      " VALUES(NULL, %" INT64FMTSTR ",%%d,%%d,%%d,%" INT64FMTSTR ",%%d,%%d,%%f,%" INT64FMTSTR ")");
 
-  foreach my $rf (@repeats) {
-    $self->throw("Must have a RepeatConsensus attached")
-      unless defined ($cons = $rf->repeat_consensus);
-      
-    # for tandem repeats - simply store consensus and repeat
-    # one pair per hit. don't need to check consensi stored
-    # already. consensus has name and class set to 'trf'
+  for (i=0; i<Set_getNumElement(features); i++) {
+    RepeatFeature *rf = Set_getElementAt(features,i);
+    int64 dbID;
+    int64 analId;
+    int64 consId;
+    RawContig *contig;
 
-    if ($cons->repeat_class eq 'trf') {
-
-      # Look for matches already stored
-      my @match = @{$rca->fetch_by_class_seq('trf', $cons->repeat_consensus)}; 
-      if (@match) {
-      $cons->dbID($match[0]->dbID());
-      }
-      else {
-      $rca->store($cons);
-      }
-
-    } elsif ($cons->repeat_class eq 'Simple_repeat') {
-
-      my $rcon = $cons->name;
-      $rcon =~ s/\((\S+)\)n/$1/;   # get repeat element
-      $cons->repeat_consensus($rcon);
-
-      # Look for matches already stored
-      my $match = $rca->fetch_by_name_class($cons->name, 'Simple_repeat'); 
-      if ($match) {
-      $cons->dbID($match->dbID());
-      }
-      else {
-      $rca->store($cons);
-      }
-    } else {
-
-      # for other repeats - need to see if a consensus is stored already
-      unless ($cons->dbID) {
-    my $match = ($rca->fetch_by_name($cons->name));
-
-    if($match) {
-      #set the consensus dbID to be the same as the database one
-      $cons->dbID($match->dbID());
-    } else {
-      # if we don't match a consensus already stored create a fake one 
-      # and set consensus to 'N' as null seq not allowed
-      # FIXME: not happy with this, but ho hum ...
-      $self->warn("Can't find " . $cons->name . "\n");
-      $cons->repeat_consensus("N");
-      $rca->store($cons);
+    if (!RepeatFeature_getConsensus(rf)) {
+      fprintf(stderr,"Error: Must have a RepeatConsensus attached\n");
+      exit(1);
     }
+      
+    // for tandem repeats - simply store consensus and repeat
+    // one pair per hit. don't need to check consensi stored
+    // already. consensus has name and class set to 'trf'
 
-    #if (@match > 1) {
-      #multiple consensi were matched
-    #  $self->warn(@match . " consensi for " . $cons->name . "\n");
-    #}
+    if (!strcmp(RepeatConsensus_getRepeatClass(cons),"trf")) {
+
+      // Look for matches already stored
+
+// NIY This is a terribly slow way to do this - f**king consensi
+
+      Set *match = RepeatConsensusAdaptor_fetchByClassAndSeq(rca, "trf", RepeatConsensus_getConsensus(cons)); 
+      if (Set_getNumElement(match)) {
+        RepeatConsensus *matchedCons = Set_getElementAt(match,0);
+        RepeatConsensus_setDbID(cons,RepeatConsensus_getDbID(matchedCons));
+        Set_free(match,RepeatConsensus_free);
+      } else {
+        RepeatConsensusAdaptor_store(rca,cons);
+        Set_free(match,NULL);
+      }
+
+    } else if (!strcmp(RepeatConsensus_getRepeatClass(cons),"Simple_repeat")) {
+      char tmpStr[EXTREMELEN];
+      int len;
+      // Look for matches already stored
+      RepeatConsensus *match = RepeatConsensusAdaptor_fetchByNameAndClass(rca,RepeatConsensus_getName(cons),"Simple_repeat");
+
+      strcpy(tmpStr,RepeatConsensus_getName(cons));
+      len = strlen(tmpStr);
+
+      if (tmpStr[0]=='(' &&
+          tmpStr[len-2]==')' &&
+          tmpStr[len-1]=='n') {
+        memmove(tmpStr,&tmpStr[1],len);
+        tmpStr[len-2] = '\0';
+      }
+      RepeatConsensus_setConsensus(cons,tmpStr);
+
+      if (match) {
+        RepeatConsensus_setDbID(cons,RepeatConsensus_getDbID(match));
+        RepeatConsensus_free(match);
+      } else {
+        RepeatConsensusAdaptor_store(rca,cons);
+      }
+    } else {
+
+      // for other repeats - need to see if a consensus is stored already
+      if (!RepeatConsensus_getDbID(cons)) {
+        RepeatConsensus *match = RepeatConsensusAdaptor_fetchByName(rca,RepeatConsensus_getName(cons));
+    
+        if (match) {
+          //set the consensus dbID to be the same as the database one
+          RepeatConsensus_setDbID(cons,RepeatConsensus_getDbID(match));
+          RepeatConsensus_free(match);
+        } else {
+          // if we don't match a consensus already stored create a fake one 
+          // and set consensus to 'N' as null seq not allowed
+          // FIXME: not happy with this, but ho hum ...
+          fprintf(stderr, "Warning: Can't find %s repeat consensus\n", RepeatConsensus_getName(cons));
+          RepeatConsensus_setConsensus(cons,"N");
+          RepeatConsensusAdaptor_store(rca,cons);
+        }
       }
     }
     
-    my $contig = $rf->entire_seq();
+    contig = RepeatFeature_getContig(rf);
 
+/* NIY
     unless(defined $contig && $contig->isa("Bio::EnsEMBL::RawContig")) {
       $self->throw("RepeatFeature cannot be stored without a contig " .
            "attached via the attach_seq method");
@@ -118,24 +136,28 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
       $self->throw("RepeatFeature cannot be stored because attached contig " .
            "does not have a dbID");
     }
+*/
     
-    $sth->execute(
-          $contig->dbID(),
-          $rf->start,
-          $rf->end,
-          $rf->strand,
-          $rf->repeat_consensus->dbID(),
-          $rf->hstart,
-          $rf->hend,
-          $rf->score,
-          $rf->analysis->dbID,
+    consId = RepeatConsensus_getDbID(RepeatFeature_getConsensus(rf));
+    analId = Analysis_getDbID(RepeatFeature_getAnalysis(rf));
+    sth->execute(sth,
+          (long long)RawContig_getDbID(contig),
+          RepeatFeature_getStart(rf),
+          RepeatFeature_getEnd(rf),
+          RepeatFeature_getStrand(rf),
+          (long long)consId,
+          RepeatFeature_getHitStart(rf),
+          RepeatFeature_getHitEnd(rf),
+          RepeatFeature_getScore(rf),
+          (long long)analId
          );
 
-    my $db_id = $sth->{'mysql_insertid'}
-    or $self->throw("Didn't get an insertid from the INSERT statement");
-    $rf->dbID($db_id);
+    dbID = sth->getInsertId(sth);
+
+    RepeatFeature_setDbID(rf, dbID);
+    RepeatFeature_setAdaptor(rf, (BaseAdaptor *)bfa);
   }
-*/
+  sth->finish(sth);
 }
 
 NameTableType *RepeatFeatureAdaptor_getTables() {
