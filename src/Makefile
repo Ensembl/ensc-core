@@ -29,6 +29,7 @@ all	: directories \
           Tests/SliceAdaptorTest \
           Tests/StreamTest \
           Tests/StrUtilTest \
+          Tests/SyntenyTest \
           Tests/TranslateTest \
           Tests/VectorTest
 
@@ -230,6 +231,11 @@ Tests/StrUtilTest: \
 	libensc.a \
 	Tests/StrUtilTest.c
 	$(CC) $(CFLAGS) -o Tests/StrUtilTest Tests/StrUtilTest.c -L. -lensc $(LDFLAGS)
+
+Tests/SyntenyTest: \
+	libensc.a \
+	Tests/SyntenyTest.c
+	$(CC) $(CFLAGS) -o Tests/SyntenyTest Tests/SyntenyTest.c -L. -lensc $(LDFLAGS)
 
 Tests/TranslateTest: \
 	libensc.a \

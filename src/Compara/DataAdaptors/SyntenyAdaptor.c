@@ -23,7 +23,7 @@ void SyntenyAdaptor_setSpecies(SyntenyAdaptor *sa, char *species1, char *species
 }
 
 // if chr = NULL return all synteny pairs
-Vector *SyntenyApdaptor_getSyntenyForChromosome(SyntenyAdaptor *sa, char *chr, int *startP, int *endP) {
+Vector *SyntenyAdaptor_getSyntenyForChromosome(SyntenyAdaptor *sa, char *chr, int *startP, int *endP) {
   Vector *data;
   char extraSql[128] = "";
   char qStr[2048];
@@ -37,7 +37,7 @@ Vector *SyntenyApdaptor_getSyntenyForChromosome(SyntenyAdaptor *sa, char *chr, i
 
   if (chr) {
     sprintf(extraSql, " and df.name = '%s'",chr);
-    if (*startP) {
+    if (startP) {
       char tmpStr[128];
       sprintf(tmpStr," and dfr.seq_start <= %d and dfr.seq_end >= %d",*endP,*startP);
       strcat(extraSql,tmpStr);
@@ -69,6 +69,8 @@ Vector *SyntenyApdaptor_getSyntenyForChromosome(SyntenyAdaptor *sa, char *chr, i
   sth = sa->prepare((BaseAdaptor *)sa, qStr, strlen(qStr));
   sth->execute(sth);
 
+  data = Vector_new();
+
   while ((row = sth->fetchRow(sth))) {
     SyntenyRegion *sr = SyntenyRegion_new();
 
@@ -77,7 +79,7 @@ Vector *SyntenyApdaptor_getSyntenyForChromosome(SyntenyAdaptor *sa, char *chr, i
     SyntenyRegion_setChrName(sr, row->getStringAt(row,2));
     SyntenyRegion_setChrStart(sr, row->getIntAt(row,3));
     SyntenyRegion_setChrEnd(sr, row->getIntAt(row,4));
-    if (*startP && *endP) {
+    if (startP && endP) {
       SyntenyRegion_setStart(sr, row->getIntAt(row,3)- *startP +1);
       SyntenyRegion_setEnd(sr, row->getIntAt(row,4)- *startP +1);
     } else {

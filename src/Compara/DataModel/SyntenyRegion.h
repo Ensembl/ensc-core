@@ -54,10 +54,14 @@ SyntenyRegion *SyntenyRegion_new();
 #define SyntenyRegion_setChrStart(sr,s) (sr)->chrStart = (s)
 #define SyntenyRegion_getChrStart(sr) (sr)->chrStart
 
+#define SyntenyRegion_getChrName(sr) (sr)->chrName
+
 #define SyntenyRegion_setHitChrEnd(sr,e) (sr)->hitChrEnd = (e)
 #define SyntenyRegion_getHitChrEnd(sr) (sr)->hitChrEnd
 
 #define SyntenyRegion_setHitChrStart(sr,s) (sr)->hitChrStart = (s)
 #define SyntenyRegion_getHitChrStart(sr) (sr)->hitChrStart
+
+#define SyntenyRegion_getHitChrName(sr) (sr)->hitChrName
 
 #endif

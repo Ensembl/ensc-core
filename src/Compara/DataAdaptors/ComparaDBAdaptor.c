@@ -137,10 +137,8 @@ Vector *ComparaDBAdaptor_readConfFile(ComparaDBAdaptor *cdba, char *fileName) {
             }
             *fillP = '\0';
 
-            //printf("Before key = %s value = %s\n",key,value);
             StrUtil_rmQuotes(key);
             StrUtil_rmQuotes(value);
-            //printf("After  key = %s value = %s\n",key,value);
             if (!strcmp(key,"host")) {
               strcpy(host, value);
             } else if (!strcmp(key,"user")) {
