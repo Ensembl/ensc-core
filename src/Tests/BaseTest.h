@@ -1,6 +1,8 @@
 #ifndef __BASETEST_H__
 #define __BASETEST_H__
 
+#include <stdio.h>
+
 /* Unusually for me I'm including the complete code so the tests compile easier */
 
 void failAndDie(char *message) {

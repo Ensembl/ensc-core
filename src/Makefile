@@ -16,6 +16,7 @@ all	: directories \
           Tests/ClassTest \
           Tests/DBAdaptorTest \
           Tests/EcoStringTest \
+          Tests/SeqUtilTest \
           Tests/StreamTest \
           Tests/StrUtilTest
 
@@ -111,6 +112,11 @@ Tests/EcoStringTest: \
 	libensc.a \
 	Tests/EcoStringTest.c
 	$(CC) $(CFLAGS) -o Tests/EcoStringTest Tests/EcoStringTest.c -L. -lensc $(LDFLAGS)
+
+Tests/SeqUtilTest: \
+	libensc.a \
+	Tests/SeqUtilTest.c
+	$(CC) $(CFLAGS) -o Tests/SeqUtilTest Tests/SeqUtilTest.c -L. -lensc $(LDFLAGS)
 
 Tests/StreamTest: \
 	libensc.a \

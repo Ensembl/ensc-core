@@ -1,4 +1,6 @@
+#define __SEQUTIL_MAIN__
 #include "SeqUtil.h"
+#undef __SEQUTIL_MAIN__
 #include "StrUtil.h"
 #include "Error.h"
 #include "Stream.h"
@@ -153,8 +155,9 @@ int SeqUtil_readTransTab(char *fName, char TransTab[4][4][4]) {
         return 0;
       }
       for (i=0;i<3;i++) {
-        if (!NucToInt(Token[i],&(Inds[i]))) {
-          Error_trace("ReadTransTab",NULL);
+        if ((Inds[i] = nucToIntArray[Token[i]]) == -1) {
+          Error_trace("ReadTransTab",Token);
+          SeqUtil_printConvTable(nucToIntArray);
           return 0;
         }
       }
@@ -177,30 +180,11 @@ int SeqUtil_readTransTab(char *fName, char TransTab[4][4][4]) {
   }
   return 1;
 }
-int NucToInt(char Nuc, int *NucInt) {
-   switch (Nuc)
-   {
-      case 'A':
-      case 'a':
-         *NucInt = 0;
-         break;
-      case 'C':
-      case 'c':
-         *NucInt = 1;
-         break;
-      case 'G':
-      case 'g':
-         *NucInt = 2;
-         break;
-      case 'T':
-      case 't':
-         *NucInt = 3;
-         break;
-      default:
-         Error_write(EFALLTHRU,"NucToInt",ERR_SEVERE,
-                     "Nucleotide = %c (not A,C,G or T)",Nuc);
-         return 0;
-   }
-   return 1;
+
+void SeqUtil_printConvTable(int *convTable) {
+  int i;
+  for (i=0; i<256; i++) {
+    printf("%d %c %d\n",i, i,convTable[i]);
+  }
 }
 
