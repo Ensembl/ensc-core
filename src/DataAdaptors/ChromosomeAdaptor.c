@@ -2,6 +2,9 @@
 #include "BaseAdaptor.h"
 #include "MysqlUtil.h"
 
+#include "StatementHandle.h"
+#include "ResultRow.h"
+
 
 ChromosomeAdaptor *ChromosomeAdaptor_new(DBAdaptor *dba) {
   ChromosomeAdaptor *ca;
@@ -18,11 +21,11 @@ ChromosomeAdaptor *ChromosomeAdaptor_new(DBAdaptor *dba) {
   return ca;
 }
 
-Chromosome *ChromosomeAdaptor_fetchByDbID(ChromosomeAdaptor *ca, long dbID) {
+Chromosome *ChromosomeAdaptor_fetchByDbID(ChromosomeAdaptor *ca, int64 dbID) {
   Chromosome *chromosome;
   char qStr[256];
-  MYSQL_RES *results;
-  MYSQL_ROW row;
+  StatementHandle *sth;
+  ResultRow *row;
 
   if (IDHash_contains(ca->chrCache,dbID)) {
 
@@ -33,14 +36,17 @@ Chromosome *ChromosomeAdaptor_fetchByDbID(ChromosomeAdaptor *ca, long dbID) {
       " FROM chromosome"
       " WHERE  chromosome_id = %d", dbID);
   
-    results = ca->prepare((BaseAdaptor *)ca,qStr,strlen(qStr));
+    sth = ca->prepare((BaseAdaptor *)ca,qStr,strlen(qStr));
+    sth->execute(sth);
   
-    row = mysql_fetch_row(results);
+    row = sth->fetchRow(sth);
     if( row == NULL ) {
+      sth->finish(sth);
       return NULL;
     }
   
     chromosome = ChromosomeAdaptor_chromosomeFromRow(ca, row);
+    sth->finish(sth);
   }
 
   return chromosome;
@@ -49,8 +55,8 @@ Chromosome *ChromosomeAdaptor_fetchByDbID(ChromosomeAdaptor *ca, long dbID) {
 Chromosome *ChromosomeAdaptor_fetchByChrName(ChromosomeAdaptor *ca, char *chrName) {
   Chromosome *chromosome;
   char qStr[256];
-  MYSQL_RES *results;
-  MYSQL_ROW row;
+  StatementHandle *sth;
+  ResultRow *row;
 
   if (StringHash_contains(ca->chrNameCache,chrName)) {
 
@@ -61,28 +67,31 @@ Chromosome *ChromosomeAdaptor_fetchByChrName(ChromosomeAdaptor *ca, char *chrNam
       " FROM chromosome"
       " WHERE  name = '%s'", chrName);
   
-    results = ca->prepare((BaseAdaptor *)ca,qStr,strlen(qStr));
+    sth = ca->prepare((BaseAdaptor *)ca,qStr,strlen(qStr));
+    sth->execute(sth);
   
-    row = mysql_fetch_row(results);
+    row = sth->fetchRow(sth);
     if( row == NULL ) {
+      sth->finish(sth);
       fprintf(stderr, "ERROR: Do not recognise chromosome %s\n",chrName);
       exit(1);
     }
   
     chromosome = ChromosomeAdaptor_chromosomeFromRow(ca, row);
+    sth->finish(sth);
   }
 
   return chromosome;
 }
 
 Chromosome *ChromosomeAdaptor_chromosomeFromRow(ChromosomeAdaptor *ca, 
-                                                MYSQL_ROW row) {
+                                                ResultRow *row) {
   Chromosome *chromosome = Chromosome_new();
 
   Chromosome_setAdaptor(chromosome,(BaseAdaptor *)ca);
-  Chromosome_setDbID(chromosome,MysqlUtil_getLong(row,0));
-  Chromosome_setName(chromosome,MysqlUtil_getString(row,1));
-  Chromosome_setLength(chromosome,MysqlUtil_getInt(row,2));
+  Chromosome_setDbID(chromosome,row->getLongLongAt(row,0));
+  Chromosome_setName(chromosome,row->getStringAt(row,1));
+  Chromosome_setLength(chromosome,row->getIntAt(row,2));
 
   IDHash_add(ca->chrCache, Chromosome_getDbID(chromosome), chromosome);
   StringHash_add(ca->chrNameCache, Chromosome_getName(chromosome), chromosome);

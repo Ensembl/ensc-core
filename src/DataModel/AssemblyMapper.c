@@ -36,7 +36,7 @@ char *AssemblyMapper_setType(AssemblyMapper *am, char *type) {
   return am->type;
 }
 
-MapperRangeSet *AssemblyMapper_mapCoordinatesToAssembly(AssemblyMapper *am, long contigId, 
+MapperRangeSet *AssemblyMapper_mapCoordinatesToAssembly(AssemblyMapper *am, int64 contigId, 
                                                         int start, int end, int strand) {
   if( !IDHash_contains(AssemblyMapper_getContigRegister(am), contigId)) {
     AssemblyMapper_registerRegionAroundContig(am,contigId, 0, 0 );
@@ -47,7 +47,7 @@ MapperRangeSet *AssemblyMapper_mapCoordinatesToAssembly(AssemblyMapper *am, long
 }
 
 
-int AssemblyMapper_fastToAssembly(AssemblyMapper *am, long contigId, 
+int AssemblyMapper_fastToAssembly(AssemblyMapper *am, int64 contigId, 
                                   int start, int end, int strand, MapperCoordinate *retRange) {
   if (!IDHash_contains(AssemblyMapper_getContigRegister(am), contigId)) {
     AssemblyMapper_registerRegionAroundContig(am,contigId, 0, 0 );
@@ -58,7 +58,7 @@ int AssemblyMapper_fastToAssembly(AssemblyMapper *am, long contigId,
 }
 
 
-MapperRangeSet *AssemblyMapper_mapCoordinatesToRawContig(AssemblyMapper *am, long chrId, 
+MapperRangeSet *AssemblyMapper_mapCoordinatesToRawContig(AssemblyMapper *am, int64 chrId, 
                               int start, int end, int strand) {
   AssemblyMapper_registerRegion(am,chrId, start, end);
   
@@ -67,7 +67,7 @@ MapperRangeSet *AssemblyMapper_mapCoordinatesToRawContig(AssemblyMapper *am, lon
 }
 
 
-int AssemblyMapper_listContigIds(AssemblyMapper *am, long chrId, int start, int end, long  **ids) {
+int AssemblyMapper_listContigIds(AssemblyMapper *am, int64 chrId, int start, int end, int64  **ids) {
   MapperPairSet *pairs;
   int nPair;
   int i;
@@ -77,7 +77,7 @@ int AssemblyMapper_listContigIds(AssemblyMapper *am, long chrId, int start, int 
   pairs = Mapper_listPairs(AssemblyMapper_getMapper(am), chrId, 
                            start, end, ASSEMBLY_COORDS);
   
-  if ((*ids = (long *)calloc(MapperPairSet_getNumPair(pairs),sizeof(long))) == NULL) {
+  if ((*ids = (int64 *)calloc(MapperPairSet_getNumPair(pairs),sizeof(int64))) == NULL) {
     fprintf(stderr,"ERROR: Failed allocating ids array\n");
     exit(1);
   }
@@ -93,7 +93,7 @@ int AssemblyMapper_listContigIds(AssemblyMapper *am, long chrId, int start, int 
 }
 
 
-void AssemblyMapper_registerRegion(AssemblyMapper *am, long chrId, int start, int end) {
+void AssemblyMapper_registerRegion(AssemblyMapper *am, int64 chrId, int start, int end) {
   int firstChunk = (int)(start / AssemblyMapper_getChunkSize(am));
   int lastChunk  = (int)(end / AssemblyMapper_getChunkSize(am));
   
@@ -102,7 +102,7 @@ void AssemblyMapper_registerRegion(AssemblyMapper *am, long chrId, int start, in
 
 
 
-int AssemblyMapper_registerRegionAroundContig(AssemblyMapper *am, long contigId, int left, int right) {
+int AssemblyMapper_registerRegionAroundContig(AssemblyMapper *am, int64 contigId, int left, int right) {
   GenomicRange *range; 
 
   if (AssemblyMapper_haveRegisteredContig(am, contigId) && 
@@ -129,7 +129,7 @@ int AssemblyMapper_registerRegionAroundContig(AssemblyMapper *am, long contigId,
 
 
 
-int AssemblyMapper_haveRegisteredContig(AssemblyMapper *am, long id) {
+int AssemblyMapper_haveRegisteredContig(AssemblyMapper *am, int64 id) {
 
   if( IDHash_contains(AssemblyMapper_getContigRegister(am),id)) {
     return 1;
@@ -139,7 +139,7 @@ int AssemblyMapper_haveRegisteredContig(AssemblyMapper *am, long id) {
 }
 
 
-void AssemblyMapper_registerContig(AssemblyMapper *am, long id) {
+void AssemblyMapper_registerContig(AssemblyMapper *am, int64 id) {
   IDHash_add(AssemblyMapper_getContigRegister(am),id,DEFINED);
 }
 
@@ -147,7 +147,7 @@ int AssemblyMapper_getChunkSize(AssemblyMapper *am) {
   return 1000000;
 }
 
-void AssemblyMapper_chunkRegisterRegion(AssemblyMapper *am,long chrId,
+void AssemblyMapper_chunkRegisterRegion(AssemblyMapper *am,int64 chrId,
                      int firstChunk, int lastChunk) {
   int i;
   IDHash *chunkHash = AssemblyMapper_getChrChunkHash(am);

@@ -5,6 +5,7 @@
 
 #include "AdaptorTypes.h"
 #include "DBAdaptor.h"
+#include "StatementHandle.h"
 
 
 #ifdef __MAIN_C__
@@ -46,7 +47,7 @@ enum Adaptor_Types {
   ASSEMBLYMAPPER_ADAPTOR
 };
 
-typedef MYSQL_RES *(*BaseAdaptor_PrepareFunc)(BaseAdaptor *ba, char *qStr, int len);
+typedef StatementHandle *(*BaseAdaptor_PrepareFunc)(BaseAdaptor *ba, char *qStr, int len);
 
 #define BASEADAPTOR_DATA \
   DBAdaptor *dba; \
@@ -58,6 +59,6 @@ struct BaseAdaptorStruct {
 };
 
 void BaseAdaptor_init(BaseAdaptor *ba, DBAdaptor *dba, int adaptorType);
-MYSQL_RES *BaseAdaptor_prepare(BaseAdaptor *ba, char *qStr, int len);
+StatementHandle *BaseAdaptor_prepare(BaseAdaptor *ba, char *qStr, int len);
 
 #endif

@@ -21,13 +21,13 @@ AssemblyMapper *AssemblyMapperAdaptor_fetchByType(AssemblyMapperAdaptor *ama, ch
 void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama,
                                           AssemblyMapper *assMapper,
                                           char *assemblyType,
-                                          long chrId,
+                                          int64 chrId,
                                           int chrStart,
                                           int chrEnd);
 
 GenomicRange *AssemblyMapperAdaptor_registerContig(AssemblyMapperAdaptor *ama,
                                           AssemblyMapper *assMapper,
                                           char *assemblyType,
-                                          long contigId);
+                                          int64 contigId);
 
 #endif

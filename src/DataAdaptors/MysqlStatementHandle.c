@@ -1,4 +1,5 @@
 #include "MysqlStatementHandle.h"
+#include "MysqlResultRow.h"
 #include "StrUtil.h"
 #include "mysql.h"
 #include "EnsC.h"
@@ -97,10 +98,14 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
 
 ResultRow *MysqlStatementHandle_fetchRow(StatementHandle *sth) {
   MysqlStatementHandle *m_sth;
+  MysqlResultRow *m_row = MysqlResultRow_new();
 
   Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);
 
   m_sth = (MysqlStatementHandle *)sth;
+  m_row->mysql_row = mysql_fetch_row(m_sth->results);
+
+  return (ResultRow *)m_row;
 }
 
 void MysqlStatementHandle_finish(StatementHandle *sth) {

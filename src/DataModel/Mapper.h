@@ -35,16 +35,16 @@ struct MapperStruct {
 
 Mapper *Mapper_new(CoordSystem from, CoordSystem to);
 
-MapperRangeSet *Mapper_mapCoordinates(Mapper *m, long id, int start, int end, 
+MapperRangeSet *Mapper_mapCoordinates(Mapper *m, int64 id, int start, int end, 
                                       int strand, CoordSystem type);
 
-int Mapper_fastMap(Mapper *m, long id, int start, int end, int strand, 
+int Mapper_fastMap(Mapper *m, int64 id, int start, int end, int strand, 
                    CoordSystem type, MapperCoordinate *retRange);
 
-void Mapper_addMapCoordinates(Mapper *m, long contigId, int contigStart, int contigEnd,
-                              int contigOri, long chrId, int chrStart, int chrEnd);
+void Mapper_addMapCoordinates(Mapper *m, int64 contigId, int contigStart, int contigEnd,
+                              int contigOri, int64 chrId, int chrStart, int chrEnd);
 
-MapperPairSet *Mapper_listPairs(Mapper *m, long id, int start, int end, CoordSystem type);
+MapperPairSet *Mapper_listPairs(Mapper *m, int64 id, int start, int end, CoordSystem type);
 
 void Mapper_dump(Mapper *m, FILE *fp);
 

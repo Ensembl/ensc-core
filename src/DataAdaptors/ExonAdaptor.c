@@ -4,8 +4,11 @@
 #include "RawContigAdaptor.h"
 #include "IDHash.h"
 
+#include "StatementHandle.h"
+#include "ResultRow.h"
 
-Exon *ExonAdaptor_exonFromRow(ExonAdaptor *ea, MYSQL_ROW row);
+
+Exon *ExonAdaptor_exonFromRow(ExonAdaptor *ea, ResultRow *row);
 
 ExonAdaptor *ExonAdaptor_new(DBAdaptor *dba) {
   ExonAdaptor *ea;
@@ -19,11 +22,11 @@ ExonAdaptor *ExonAdaptor_new(DBAdaptor *dba) {
   return ea;
 }
 
-Exon *ExonAdaptor_fetchByDbID(ExonAdaptor *ea, long dbID) {
+Exon *ExonAdaptor_fetchByDbID(ExonAdaptor *ea, int64 dbID) {
   Exon *exon;
   char qStr[256];
-  MYSQL_RES *results;
-  MYSQL_ROW row;
+  StatementHandle *sth;
+  ResultRow *row;
 
   sprintf(qStr,
     "SELECT exon_id"
@@ -39,21 +42,23 @@ Exon *ExonAdaptor_fetchByDbID(ExonAdaptor *ea, long dbID) {
     " ORDER BY sticky_rank DESC", 
     dbID);
 
-  results = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
+  sth = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
 
-  row = mysql_fetch_row(results);
+  row = sth->fetchRow(sth);
   if( row == NULL ) {
+    sth->finish(sth);
     return NULL;
   }
 
-  exon = ExonAdaptor_exonFromResults(ea, results, row);
+  exon = ExonAdaptor_exonFromResults(ea, sth, row);
+  sth->finish(sth);
 
   return exon;
 }
 
-Exon *ExonAdaptor_exonFromResults(ExonAdaptor *ea, MYSQL_RES *results, MYSQL_ROW row) {
+Exon *ExonAdaptor_exonFromResults(ExonAdaptor *ea, StatementHandle *sth, ResultRow *row) {
   Exon *exon;
-  int maxRank = MysqlUtil_getInt(row,7);
+  int maxRank = row->getIntAt(row,7);
 
   if (maxRank > 1) {
     int stickyLength = 0;
@@ -63,7 +68,7 @@ Exon *ExonAdaptor_exonFromResults(ExonAdaptor *ea, MYSQL_RES *results, MYSQL_ROW
 
     // sticky exon
     exon = Exon_new();
-    Exon_setDbID(exon, MysqlUtil_getLong(row,0));
+    Exon_setDbID(exon, row->getLongLongAt(row,0));
 
     // make first component exon
     component = ExonAdaptor_exonFromRow(ea, row);
@@ -76,7 +81,7 @@ Exon *ExonAdaptor_exonFromResults(ExonAdaptor *ea, MYSQL_RES *results, MYSQL_ROW
     Exon_setAdaptor(exon,(BaseAdaptor *)ea);
 
     // continue while loop until we hit sticky_rank 1
-    while( row = mysql_fetch_row(results)) {
+    while( row = sth->fetchRow(sth)) {
       component = ExonAdaptor_exonFromRow(ea, row);
   
       Exon_addComponentExon(exon,component);
@@ -101,33 +106,34 @@ Exon *ExonAdaptor_exonFromResults(ExonAdaptor *ea, MYSQL_RES *results, MYSQL_ROW
   return exon;
 }
 
-Exon *ExonAdaptor_exonFromRow(ExonAdaptor *ea, MYSQL_ROW row) {
+Exon *ExonAdaptor_exonFromRow(ExonAdaptor *ea, ResultRow *row) {
   Exon *exon = Exon_new();
   RawContigAdaptor *rca;
   RawContig *rc;
 
-  Exon_setDbID(exon,MysqlUtil_getLong(row,0));
-  Exon_setStart(exon,MysqlUtil_getLong(row,2));
-  Exon_setEnd(exon,MysqlUtil_getLong(row,3));
-  Exon_setStrand(exon,MysqlUtil_getInt(row,4));
-  Exon_setPhase(exon,MysqlUtil_getInt(row,5));
-  Exon_setEndPhase(exon,MysqlUtil_getInt(row,6));
-  Exon_setStickyRank(exon,MysqlUtil_getInt(row,7));
+  Exon_setDbID(exon,row->getLongLongAt(row,0));
+  Exon_setStart(exon,row->getLongAt(row,2));
+  Exon_setEnd(exon,row->getLongAt(row,3));
+  Exon_setStrand(exon,row->getIntAt(row,4));
+  Exon_setPhase(exon,row->getIntAt(row,5));
+  Exon_setEndPhase(exon,row->getIntAt(row,6));
+  Exon_setStickyRank(exon,row->getIntAt(row,7));
+
   Exon_setAdaptor(exon,(BaseAdaptor *)ea);
 
   rca = DBAdaptor_getRawContigAdaptor(ea->dba);
-  rc = RawContigAdaptor_fetchByDbID(rca,MysqlUtil_getLong(row,1));
+  rc = RawContigAdaptor_fetchByDbID(rca,row->getLongLongAt(row,1));
 
   Exon_setContig(exon,rc);
 
   return exon; 
 }
 
-int ExonAdaptor_fetchAllByGeneId(ExonAdaptor *ea, long geneId, Exon ***retExons) {
+int ExonAdaptor_fetchAllByGeneId(ExonAdaptor *ea, int64 geneId, Exon ***retExons) {
   Exon **exons;
   char qStr[512];
-  MYSQL_RES *results;
-  MYSQL_ROW row;
+  StatementHandle *sth;
+  ResultRow *row;
   IDHash *exonHash = IDHash_new(IDHASH_SMALL);
   int nExon;
 
@@ -153,15 +159,17 @@ int ExonAdaptor_fetchAllByGeneId(ExonAdaptor *ea, long geneId, Exon ***retExons)
     " ORDER BY t.transcript_id,e.exon_id"
     "  , e.sticky_rank DESC",geneId);
 
-  results = ea->prepare((BaseAdaptor *)ea, qStr, strlen(qStr));
+  sth = ea->prepare((BaseAdaptor *)ea, qStr, strlen(qStr));
+  sth->execute(sth);
 
-  while( row = mysql_fetch_row(results)) {
-    if( ! IDHash_contains(exonHash,MysqlUtil_getLong(row,0))) {
-      Exon *exon = ExonAdaptor_exonFromResults(ea,results,row);
+  while( row = sth->fetchRow(sth)) {
+    if( ! IDHash_contains(exonHash,row->getLongLongAt(row,0))) {
+      Exon *exon = ExonAdaptor_exonFromResults(ea,sth,row);
 
       IDHash_add(exonHash,Exon_getDbID(exon),exon);
     }
   }
+  sth->finish(sth);
 
   *retExons = (Exon **)IDHash_getValues(exonHash);
 
@@ -175,8 +183,8 @@ int ExonAdaptor_fetchAllByGeneId(ExonAdaptor *ea, long geneId, Exon ***retExons)
 
 int ExonAdaptor_getStableEntryInfo(ExonAdaptor *ea, Exon *exon) {
   char qStr[256];
-  MYSQL_RES *results;
-  MYSQL_ROW row;
+  StatementHandle *sth;
+  ResultRow *row;
 
   if( !exon ) {
     fprintf(stderr, "ERROR: ExonAdaptor_getStableEntryInfo needs a exon object\n");
@@ -189,18 +197,21 @@ int ExonAdaptor_getStableEntryInfo(ExonAdaptor *ea, Exon *exon) {
           " FROM exon_stable_id"
           " WHERE exon_id = %d",Exon_getDbID(exon));
 
-  results = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
+  sth = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
 
-  row = mysql_fetch_row(results);
+  row = sth->fetchRow(sth);
   if( row == NULL ) {
+    sth->finish(sth);
     fprintf(stderr,"WARNING: Failed fetching stable id info\n");
     return 0;
   }
 
-  Exon_setStableId(exon,MysqlUtil_getString(row,0));
-  Exon_setCreated(exon,MysqlUtil_getInt(row,1));
-  Exon_setModified(exon,MysqlUtil_getInt(row,2));
-  Exon_setVersion(exon,MysqlUtil_getInt(row,3));
+  Exon_setStableId(exon,row->getStringAt(row,0));
+  Exon_setCreated(exon,row->getIntAt(row,1));
+  Exon_setModified(exon,row->getIntAt(row,2));
+  Exon_setVersion(exon,row->getIntAt(row,3));
+
+  sth->finish(sth);
 
   return 1;
 }

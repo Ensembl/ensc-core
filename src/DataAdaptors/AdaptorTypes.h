@@ -1,6 +1,8 @@
 #ifndef __ADAPTORTYPES_H__
 #define __ADAPTORTYPES_H__
 
+typedef struct StatementHandleStruct StatementHandle;
+
 typedef struct AnalysisAdaptorStruct AnalysisAdaptor;
 typedef struct AssemblyMapperAdaptorStruct AssemblyMapperAdaptor;
 typedef struct BaseAdaptorStruct BaseAdaptor;

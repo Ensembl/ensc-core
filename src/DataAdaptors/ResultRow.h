@@ -11,6 +11,7 @@ typedef int       (*ResultRow_getIntAtFunc)(ResultRow *row, int ind);
 typedef long      (*ResultRow_getLongAtFunc)(ResultRow *row, int ind);
 typedef int64     (*ResultRow_getLongLongAtFunc)(ResultRow *row, int ind);
 typedef double    (*ResultRow_getDoubleAtFunc)(ResultRow *row, int ind);
+typedef char *    (*ResultRow_colFunc)(ResultRow *row,int ind);
 
 #define RESULTROW_DATA \
   OBJECT_DATA \
@@ -18,7 +19,8 @@ typedef double    (*ResultRow_getDoubleAtFunc)(ResultRow *row, int ind);
   ResultRow_getIntAtFunc      getIntAt; \
   ResultRow_getLongAtFunc     getLongAt; \
   ResultRow_getLongLongAtFunc getLongLongAt; \
-  ResultRow_getDoubleAtFunc   getDoubleAt;
+  ResultRow_getDoubleAtFunc   getDoubleAt; \
+  ResultRow_colFunc           col;
 
 struct ResultRowStruct {
   RESULTROW_DATA

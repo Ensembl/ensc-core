@@ -4,6 +4,9 @@
 #include "AssemblyMapper.h"
 #include "GenomicRange.h"
 
+#include "StatementHandle.h"
+#include "ResultRow.h"
+
 
 
 AssemblyMapperAdaptor *AssemblyMapperAdaptor_new(DBAdaptor *dba) {
@@ -32,12 +35,12 @@ AssemblyMapper *AssemblyMapperAdaptor_fetchByType(AssemblyMapperAdaptor *ama, ch
 void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama, 
                                           AssemblyMapper *assMapper,
                                           char *assemblyType,
-                                          long chrId,
+                                          int64 chrId,
                                           int chrStart,
                                           int chrEnd) {
   char qStr[512];
-  MYSQL_RES *results;
-  MYSQL_ROW row;
+  StatementHandle *sth;
+  ResultRow *row;
 
   sprintf(qStr,
     "select"
@@ -59,10 +62,11 @@ void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama,
     "    ass.type = '%s'",
     chrId,chrStart,chrEnd,assemblyType);
 
-  results = ama->prepare((BaseAdaptor *)ama,qStr,strlen(qStr));
+  sth = ama->prepare((BaseAdaptor *)ama,qStr,strlen(qStr));
+  sth->execute(sth);
 
-  while (row = mysql_fetch_row(results)) {
-    long contigId = MysqlUtil_getLong(row,2);
+  while (row = sth->fetchRow(sth)) {
+    int64 contigId = row->getLongLongAt(row,2);
 
     if (!AssemblyMapper_haveRegisteredContig(assMapper,contigId)) {
       Mapper *mapper = AssemblyMapper_getMapper(assMapper);
@@ -70,14 +74,15 @@ void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama,
       AssemblyMapper_registerContig(assMapper,contigId);
       
       Mapper_addMapCoordinates(mapper,contigId,
-                               MysqlUtil_getInt(row,0),
-                               MysqlUtil_getInt(row,1),
-                               MysqlUtil_getInt(row,3),
-                               MysqlUtil_getLong(row,4),
-                               MysqlUtil_getInt(row,5),
-                               MysqlUtil_getInt(row,6));
+                               row->getIntAt(row,0),
+                               row->getIntAt(row,1),
+                               row->getIntAt(row,3),
+                               row->getLongLongAt(row,4),
+                               row->getIntAt(row,5),
+                               row->getIntAt(row,6));
     }
   }
+  sth->finish(sth);
 
   return;
 }
@@ -86,10 +91,10 @@ void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama,
 GenomicRange *AssemblyMapperAdaptor_registerContig(AssemblyMapperAdaptor *ama, 
                                           AssemblyMapper *assMapper,
                                           char *assemblyType,
-                                          long contigId) {
+                                          int64 contigId) {
   char qStr[512];
-  MYSQL_RES *results;
-  MYSQL_ROW row;
+  StatementHandle *sth;
+  ResultRow *row;
   int extraRows = 0;
   GenomicRange *range;
 
@@ -108,24 +113,28 @@ GenomicRange *AssemblyMapperAdaptor_registerContig(AssemblyMapperAdaptor *ama,
     "   c.chromosome_id = a.chromosome_id",
     contigId, assemblyType);
 
-  results = ama->prepare((BaseAdaptor *)ama,qStr,strlen(qStr));
+  sth = ama->prepare((BaseAdaptor *)ama,qStr,strlen(qStr));
+  sth->execute(sth);
 
-  row = mysql_fetch_row(results);
+  row = sth->fetchRow(sth);
 
   if (row == NULL) {
+    sth->finish(sth);
     return NULL;
   }
 
   range = GenomicRange_new();
 
-  GenomicRange_setChrName(range,MysqlUtil_getString(row,0));
-  GenomicRange_setChrStart(range,MysqlUtil_getInt(row,1));
-  GenomicRange_setChrEnd(range,MysqlUtil_getInt(row,2));
-  GenomicRange_setChrId(range,MysqlUtil_getLong(row,3));
+  GenomicRange_setChrName(range,row->getStringAt(row,0));
+  GenomicRange_setChrStart(range,row->getIntAt(row,1));
+  GenomicRange_setChrEnd(range,row->getIntAt(row,2));
+  GenomicRange_setChrId(range,row->getLongAt(row,3));
 
-  while (row = mysql_fetch_row(results)) {
+  while (row = sth->fetchRow(sth)) {
     extraRows++;
   }
+
+  sth->finish(sth);
 
   if (extraRows) {
     fprintf(stderr,"WARNING: Contig %d is ambiguous in assembly type %s\n",contigId, assemblyType);

@@ -2,6 +2,9 @@
 #include "BaseAdaptor.h"
 #include "MysqlUtil.h"
 
+#include "StatementHandle.h"
+#include "ResultRow.h"
+
 
 CloneAdaptor *CloneAdaptor_new(DBAdaptor *dba) {
   CloneAdaptor *ca;
@@ -15,11 +18,11 @@ CloneAdaptor *CloneAdaptor_new(DBAdaptor *dba) {
   return ca;
 }
 
-Clone *CloneAdaptor_fetchByDbID(CloneAdaptor *ca, long dbID) {
+Clone *CloneAdaptor_fetchByDbID(CloneAdaptor *ca, int64 dbID) {
   Clone *clone;
   char qStr[256];
-  MYSQL_RES *results;
-  MYSQL_ROW row;
+  StatementHandle *sth;
+  ResultRow *row;
 
   sprintf(qStr,
     "SELECT clone_id, logic_name,"
@@ -31,19 +34,22 @@ Clone *CloneAdaptor_fetchByDbID(CloneAdaptor *ca, long dbID) {
     " FROM   clone"
     " WHERE  clone_id = %d", dbID);
 
-  results = ca->prepare((BaseAdaptor *)ca,qStr,strlen(qStr));
+  sth = ca->prepare((BaseAdaptor *)ca,qStr,strlen(qStr));
+  sth->execute(sth);
 
-  row = mysql_fetch_row(results);
+  row = sth->fetchRow(sth);
   if( row == NULL ) {
+    sth->finish(sth);
     return NULL;
   }
 
   clone = CloneAdaptor_cloneFromRow(ca, row);
+  sth->finish(sth);
 
   return clone;
 }
 
-Clone *CloneAdaptor_cloneFromRow(CloneAdaptor *ca, MYSQL_ROW row) {
+Clone *CloneAdaptor_cloneFromRow(CloneAdaptor *ca, ResultRow  *row) {
   Clone *clone = Clone_new();
 
   return clone;

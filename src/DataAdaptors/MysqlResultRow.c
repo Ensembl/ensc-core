@@ -18,6 +18,7 @@ MysqlResultRow *MysqlResultRow_new() {
   rr->getLongAt     = MysqlResultRow_getLongAt;
   rr->getLongLongAt = MysqlResultRow_getLongLongAt;
   rr->getDoubleAt   = MysqlResultRow_getDoubleAt;
+  rr->col           = MysqlResultRow_col;
 
   return rr;
 }
@@ -30,6 +31,16 @@ char * MysqlResultRow_getStringAt(ResultRow *row, int ind) {
   m_row = (MysqlResultRow *)row;
 
   return MysqlUtil_getString(m_row->mysql_row, ind);
+}
+
+char * MysqlResultRow_col(ResultRow *row, int ind) {
+  MysqlResultRow *m_row;
+
+  Class_assertType(CLASS_MYSQLRESULTROW, row->objectType);
+
+  m_row = (MysqlResultRow *)row;
+
+  return m_row->mysql_row[ind];
 }
 
 int MysqlResultRow_getIntAt(ResultRow *row, int ind) {

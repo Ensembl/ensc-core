@@ -128,7 +128,7 @@ void Class_initHierarchy(ClassHierarchyNode *chn, char **chPP,int *depth) {
   char *chP = *chPP;
 
   while (*chP != '\0') {
-    printf("%c",*chP);
+    //printf("%c",*chP);
     if (*chP == '\n') {
       clsName[len] = '\0';
       chP++;
@@ -139,24 +139,24 @@ void Class_initHierarchy(ClassHierarchyNode *chn, char **chPP,int *depth) {
         curDepth++;
       }
 
-      printf("depth = %d curDepth = %d\n",*depth, curDepth);
+      //printf("depth = %d curDepth = %d\n",*depth, curDepth);
       if (*depth == curDepth) { /* If its same - add */
 
         *chPP = chP;
         ClassHierarchyNode *newNode = ClassHierarchyNode_new(&clsName[curDepth]);
 
         ClassHierarchyNode_addSubClass(chn, newNode);
-        printf(" same depth %s\n",clsName);
+        //printf(" same depth %s\n",clsName);
 
       } else if (*depth < curDepth) { /* If its greater - start new sub classes (recurse) */
 
         (*depth)++;
-        printf("descending...\n");
+        //printf("descending...\n");
         Class_initHierarchy(chn->subClasses[chn->nSubClass-1], chPP, depth);
         chP = *chPP;
       } else { /* If its less - return */
         (*depth)--;
-        printf("returning ...\n");
+        //printf("returning ...\n");
         return;
       }
       len=0;

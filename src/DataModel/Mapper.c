@@ -42,7 +42,7 @@ Mapper *Mapper_new(CoordSystem from, CoordSystem to) {
 =cut
 */
 
-MapperRangeSet *Mapper_mapCoordinates(Mapper *m, long id, int start, int end, int strand, CoordSystem type) {
+MapperRangeSet *Mapper_mapCoordinates(Mapper *m, int64 id, int start, int end, int strand, CoordSystem type) {
   IDHash *hash;
   MapperPair *lastUsedPair;
   MapperRangeSet *results;
@@ -189,7 +189,7 @@ MapperRangeSet *Mapper_mapCoordinates(Mapper *m, long id, int start, int end, in
 =cut
 */
 
-int Mapper_fastMap(Mapper *m, long id, int start, int end, int strand, CoordSystem type, MapperCoordinate *retRange) {
+int Mapper_fastMap(Mapper *m, int64 id, int start, int end, int strand, CoordSystem type, MapperCoordinate *retRange) {
   MapperRangeSet *results;
   MapperPairSet *pairs;
   int i;
@@ -278,8 +278,8 @@ int Mapper_fastMap(Mapper *m, long id, int start, int end, int strand, CoordSyst
 =cut
 */
 
-void Mapper_addMapCoordinates(Mapper *m, long contigId, int contigStart, int contigEnd,
-                              int contigOri, long chrId, int chrStart, int chrEnd) {
+void Mapper_addMapCoordinates(Mapper *m, int64 contigId, int contigStart, int contigEnd,
+                              int contigOri, int64 chrId, int chrStart, int chrEnd) {
   MapperPair *pair;
   MapperUnit *from;
   MapperUnit *to;
@@ -352,7 +352,7 @@ void Mapper_addMapCoordinates(Mapper *m, long contigId, int contigStart, int con
 =cut
 */
 
-MapperPairSet *Mapper_listPairs(Mapper *m, long id, int start, int end, CoordSystem type) {
+MapperPairSet *Mapper_listPairs(Mapper *m, int64 id, int start, int end, CoordSystem type) {
   MapperPairSet *pairs;
   IDHash *hash;
   int from, to;
@@ -431,7 +431,7 @@ MapperPairSet *Mapper_listPairs(Mapper *m, long id, int start, int end, CoordSys
 
 void Mapper_dump(Mapper *m, FILE *fp) {
   IDHash *fromHash;
-  long *keys;
+  int64 *keys;
   int   nKey;
   int   i;
   MapperPairSet *pairs;
@@ -446,7 +446,7 @@ void Mapper_dump(Mapper *m, FILE *fp) {
   nKey = IDHash_getNumValues(fromHash);
 
   for (i=0;i<nKey;i++) {
-    long id = keys[i];
+    int64 id = keys[i];
     MapperPairSet *set = IDHash_getValue(fromHash,id);
     int j;
 

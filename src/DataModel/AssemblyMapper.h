@@ -36,19 +36,19 @@ char *AssemblyMapper_setType(AssemblyMapper *am, char *type);
 
 AssemblyMapper *AssemblyMapper_new(AssemblyMapperAdaptor *ama, char *type);
 char *AssemblyMapper_setType(AssemblyMapper *am, char *type);
-MapperRangeSet *AssemblyMapper_mapCoordinatesToAssembly(AssemblyMapper *am, long contigId,
+MapperRangeSet *AssemblyMapper_mapCoordinatesToAssembly(AssemblyMapper *am, int64 contigId,
                                                         int start, int end, int strand);
-int AssemblyMapper_fastToAssembly(AssemblyMapper *am, long contigId,
+int AssemblyMapper_fastToAssembly(AssemblyMapper *am, int64 contigId,
                                   int start, int end, int strand, MapperCoordinate *retRange);
-MapperRangeSet *AssemblyMapper_mapCoordinatesToRawContig(AssemblyMapper *am, long chrId,
+MapperRangeSet *AssemblyMapper_mapCoordinatesToRawContig(AssemblyMapper *am, int64 chrId,
                               int start, int end, int strand);
-int AssemblyMapper_listContigIds(AssemblyMapper *am, long chrId, int start, int end, long **ids);
-void AssemblyMapper_registerRegion(AssemblyMapper *am, long chrId, int start, int end);
-int AssemblyMapper_registerRegionAroundContig(AssemblyMapper *am, long contigId, int left, int right);
-int AssemblyMapper_haveRegisteredContig(AssemblyMapper *am, long id);
-void AssemblyMapper_registerContig(AssemblyMapper *am, long id);
+int AssemblyMapper_listContigIds(AssemblyMapper *am, int64 chrId, int start, int end, int64 **ids);
+void AssemblyMapper_registerRegion(AssemblyMapper *am, int64 chrId, int start, int end);
+int AssemblyMapper_registerRegionAroundContig(AssemblyMapper *am, int64 contigId, int left, int right);
+int AssemblyMapper_haveRegisteredContig(AssemblyMapper *am, int64 id);
+void AssemblyMapper_registerContig(AssemblyMapper *am, int64 id);
 int AssemblyMapper_getChunkSize(AssemblyMapper *am);
-void AssemblyMapper_chunkRegisterRegion(AssemblyMapper *am,long chrId,
+void AssemblyMapper_chunkRegisterRegion(AssemblyMapper *am, int64 chrId,
                      int firstChunk, int lastChunk);
 
 

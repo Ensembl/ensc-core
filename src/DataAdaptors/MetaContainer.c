@@ -2,6 +2,7 @@
 #include "StrUtil.h"
 #include "BaseAdaptor.h"
 #include "MysqlUtil.h"
+#include "StatementHandle.h"
 
 MetaContainer *MetaContainer_new(DBAdaptor *dba) {
   MetaContainer *mc;
@@ -17,13 +18,17 @@ MetaContainer *MetaContainer_new(DBAdaptor *dba) {
 
 char *MetaContainer_getDefaultAssembly(MetaContainer *mc) {
   char *qStr = "SELECT meta_value from meta where meta_key = 'assembly.default'";
-  MYSQL_RES *results = mc->prepare((BaseAdaptor *)mc,qStr,strlen(qStr));
-  MYSQL_ROW row = mysql_fetch_row(results);
+  StatementHandle *sth = mc->prepare((BaseAdaptor *)mc,qStr,strlen(qStr));
+  sth->execute(sth);
+  ResultRow *row = sth->fetchRow(sth);
+  char *assStr;
 
-  if( row ) {
-    mysql_free_result(results);
-    return MysqlUtil_getString(row,0);
+  if (row) {
+    assStr = row->getStringAt(row,0);
+    sth->finish(sth);
+    return assStr;
   } else {
+    sth->finish(sth);
     return NULL;
   }
 }

@@ -5,7 +5,6 @@
 #include "ResultRow.h"
 #include "DBConnection.h"
 
-typedef struct StatementHandleStruct StatementHandle;
 
 typedef void (*StatementHandle_ExecuteFunc)(StatementHandle *sth, ...);
 typedef ResultRow *(*StatementHandle_FetchRowFunc)(StatementHandle *sth);

@@ -14,9 +14,9 @@ struct AnalysisAdaptorStruct {
 };
 
 AnalysisAdaptor *AnalysisAdaptor_new(DBAdaptor *dba);
-Analysis *AnalysisAdaptor_fetchByDbID(AnalysisAdaptor *aa, long dbID);
+Analysis *AnalysisAdaptor_fetchByDbID(AnalysisAdaptor *aa, int64 dbID);
 Analysis *AnalysisAdaptor_fetchByLogicName(AnalysisAdaptor *aa, char *logicName);
-Analysis *AnalysisAdaptor_analysisFromRow(AnalysisAdaptor *aa, MYSQL_ROW row);
+Analysis *AnalysisAdaptor_analysisFromRow(AnalysisAdaptor *aa, ResultRow *row);
 Analysis **AnalysisAdaptor_fetchAll(AnalysisAdaptor *aa);
 
 

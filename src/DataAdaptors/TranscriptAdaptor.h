@@ -11,6 +11,6 @@ struct TranscriptAdaptorStruct {
 
 TranscriptAdaptor *TranscriptAdaptor_new(DBAdaptor *dba);
 int TranscriptAdaptor_getStableEntryInfo(TranscriptAdaptor *ta, Transcript *transcript);
-Transcript *TranscriptAdaptor_fetchByDbID(TranscriptAdaptor *ta, long dbID);
+Transcript *TranscriptAdaptor_fetchByDbID(TranscriptAdaptor *ta, int64 dbID);
 
 #endif

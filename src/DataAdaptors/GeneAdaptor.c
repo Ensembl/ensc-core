@@ -10,6 +10,8 @@
 #include "Slice.h"
 #include "AssemblyMapper.h"
 
+#include "StatementHandle.h"
+#include "ResultRow.h"
 
 GeneAdaptor *GeneAdaptor_new(DBAdaptor *dba) {
   GeneAdaptor *ga;
@@ -24,23 +26,26 @@ GeneAdaptor *GeneAdaptor_new(DBAdaptor *dba) {
   return ga;
 }
 
-int GeneAdaptor_listGeneIds(GeneAdaptor *ga, long **geneIds) {
+int GeneAdaptor_listGeneIds(GeneAdaptor *ga, int64 **geneIds) {
   char *qStr = "SELECT gene_id from gene";
-  MYSQL_RES *results = ga->prepare((BaseAdaptor *)ga,qStr,strlen(qStr));
-  MYSQL_ROW row;
+  StatementHandle *sth = ga->prepare((BaseAdaptor *)ga,qStr,strlen(qStr));
+  ResultRow *row;
   int idCount = 0;
+
+  sth->execute(sth);
 
   *geneIds = NULL;
   
-  while ((row = mysql_fetch_row(results))) {
+  while ((row = sth->fetchRow(sth))) {
     if (!idCount || !(idCount%10)) {
-      if ((*geneIds = (long *)realloc(*geneIds,(idCount+10)*sizeof(long))) == NULL) {
+      if ((*geneIds = (int64 *)realloc(*geneIds,(idCount+10)*sizeof(int64))) == NULL) {
         fprintf(stderr,"ERROR: Failed allocating geneIds\n");
         return -1;
       }
     }
-    (*geneIds)[idCount++] = MysqlUtil_getLong(row,0);
+    (*geneIds)[idCount++] = row->getLongLongAt(row,0);
   }
+  sth->finish(sth);
   return idCount;
 }
 
@@ -48,10 +53,10 @@ int GeneAdaptor_listGeneIds(GeneAdaptor *ga, long **geneIds) {
 
 typedef struct TranscriptExonsStruct {
   int nExon;
-  long exonIds[MAXEXON];
+  int64 exonIds[MAXEXON];
 } TranscriptExons;
 
-Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, long geneId, int chrCoords) {
+Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, int64 geneId, int chrCoords) {
   Gene *gene;
   ExonAdaptor *ea;
   TranscriptAdaptor *ta;
@@ -63,12 +68,12 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, long geneId, int chrCoords) {
   IDHash *exonHash;
   IDHash *translationHash;
   IDHash *transcriptExonsHash;
-  long *transcriptIds;
+  int64 *transcriptIds;
   int nTranscriptId;
   int i;
   char qStr[512];
-  MYSQL_RES *results;
-  MYSQL_ROW row;
+  StatementHandle *sth;
+  ResultRow *row;
 
   ea = DBAdaptor_getExonAdaptor(ga->dba);
   ta = DBAdaptor_getTranscriptAdaptor(ga->dba);
@@ -106,29 +111,30 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, long geneId, int chrCoords) {
     "  , tscript.transcript_id"
     "  , e_t.rank",geneId);
 
-  results = ga->prepare((BaseAdaptor *)ga, qStr, strlen(qStr) );
+  sth = ga->prepare((BaseAdaptor *)ga, qStr, strlen(qStr) );
+  sth->execute(sth);
 
   transcriptExonsHash = IDHash_new(IDHASH_SMALL);
   translationHash = IDHash_new(IDHASH_SMALL);
 
-  while (row = mysql_fetch_row(results)) {
+  while (row = sth->fetchRow(sth)) {
     // building a gene
     TranscriptExons *tes = NULL;
-    long transcriptId;
+    int64 transcriptId;
 
     if( first ) {
       gene = Gene_new();
       Gene_setAdaptor(gene,(BaseAdaptor *)ga);
       Gene_setDbID(gene, geneId );
-      ana = AnalysisAdaptor_fetchByDbID(aa,MysqlUtil_getLong(row,4));
+      ana = AnalysisAdaptor_fetchByDbID(aa,row->getLongLongAt(row,4));
       Gene_setAnalysis(gene,ana);
 // Allocating twice???
-      Gene_setType(gene,MysqlUtil_getString(row,5));
+      Gene_setType(gene,row->getStringAt(row,5));
       first = 0;
     }
 
     // store an array of exon ids for each transcript
-    transcriptId = MysqlUtil_getLong(row,1);
+    transcriptId = row->getLongLongAt(row,1);
     if( !IDHash_contains(transcriptExonsHash,transcriptId)) {
 
       if ((tes = (TranscriptExons *)calloc(1,sizeof(TranscriptExons))) == NULL) {
@@ -144,13 +150,15 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, long geneId, int chrCoords) {
       exit(1);
     }
 
-    tes->exonIds[tes->nExon++] = MysqlUtil_getLong(row,2);
+    tes->exonIds[tes->nExon++] = row->getLongLongAt(row,2);
 
 // Note using string because its allocated
-    if (!IDHash_contains(translationHash,MysqlUtil_getLong(row,1))) {
-      IDHash_add(translationHash, MysqlUtil_getLong(row,1), MysqlUtil_getString(row,6));
+    if (!IDHash_contains(translationHash,row->getLongAt(row,1))) {
+      IDHash_add(translationHash, row->getLongAt(row,1), row->getStringAt(row,6));
     }
   }
+
+  sth->finish(sth);
 
   if ( first ) {
     fprintf(stderr,"ERROR: Weird no first error\n");
@@ -174,10 +182,11 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, long geneId, int chrCoords) {
   
   for (i=0;i<nTranscriptId;i++) {
     Transcript *transcript = Transcript_new();
-    long transcriptId = transcriptIds[i];
-    long translationId = atol((char *)IDHash_getValue(translationHash,transcriptId));
+    int64 transcriptId = transcriptIds[i];
+    int64 translationId;
     TranscriptExons *tes = IDHash_getValue(transcriptExonsHash,transcriptId);
     int i;
+    sscanf((char *)IDHash_getValue(translationHash,transcriptId),"%qd",&translationId);
 
     Transcript_setDbID( transcript, transcriptId );
     Transcript_setAdaptor(transcript, (BaseAdaptor *)ta);
@@ -218,8 +227,8 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, long geneId, int chrCoords) {
 
 int GeneAdaptor_getStableEntryInfo(GeneAdaptor *ga, Gene *gene) {
   char qStr[256];
-  MYSQL_RES *results;
-  MYSQL_ROW row;
+  StatementHandle *sth;
+  ResultRow *row;
 
   if( !gene ) {
     fprintf(stderr, "ERROR: GeneAdaptor_getStableEntryInfo needs a gene object\n");
@@ -232,18 +241,22 @@ int GeneAdaptor_getStableEntryInfo(GeneAdaptor *ga, Gene *gene) {
           " FROM gene_stable_id"
           " WHERE gene_id = %d",Gene_getDbID(gene));
 
-  results = ga->prepare((BaseAdaptor *)ga,qStr,strlen(qStr));
+  sth = ga->prepare((BaseAdaptor *)ga,qStr,strlen(qStr));
+  sth->execute(sth);
 
-  row = mysql_fetch_row(results);
+  row = sth->fetchRow(sth);
   if( row == NULL ) {
     fprintf(stderr,"WARNING: Failed fetching stable id info\n");
+    sth->finish(sth);
     return 0;
   }
 
-  Gene_setStableId(gene,MysqlUtil_getString(row,0));
-  Gene_setCreated(gene,MysqlUtil_getInt(row,1));
-  Gene_setModified(gene,MysqlUtil_getInt(row,2));
-  Gene_setVersion(gene,MysqlUtil_getInt(row,3));
+  Gene_setStableId(gene,row->getStringAt(row,0));
+  Gene_setCreated(gene,row->getIntAt(row,1));
+  Gene_setModified(gene,row->getIntAt(row,2));
+  Gene_setVersion(gene,row->getIntAt(row,3));
+
+  sth->finish(sth);
 
   return 1;
 }
@@ -254,12 +267,12 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
   char sliceCacheKey[512];
   AssemblyMapperAdaptor *ama;
   AssemblyMapper *assMapper;
-  long *contigIds;
+  int64 *contigIds;
   int nContigId;
   int i;
   char *qStr;
-  MYSQL_RES *results;
-  MYSQL_ROW row;
+  StatementHandle *sth;
+  ResultRow *row;
   Set *geneSet;
 
   if (logicName) {
@@ -331,10 +344,12 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
 
   geneSet = Set_new();
 
-  results = ga->prepare((BaseAdaptor *)ga, qStr, strlen(qStr) );
+  sth = ga->prepare((BaseAdaptor *)ga, qStr, strlen(qStr) );
 
-  while (row = mysql_fetch_row(results)) {
-    long geneId = MysqlUtil_getLong(row,0);
+  sth->execute(sth);
+
+  while (row = sth->fetchRow(sth)) {
+    int64 geneId = row->getLongLongAt(row,0);
     Gene *gene  = GeneAdaptor_fetchByDbID(ga, geneId, NULL );
     Gene *newGene = Gene_transformToSlice(gene, slice);
 
@@ -347,6 +362,7 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
 */
     Set_addElement(geneSet, newGene);
   }
+  sth->finish(sth);
 
   free(qStr);
 

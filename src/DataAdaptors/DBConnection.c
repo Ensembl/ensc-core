@@ -1,6 +1,7 @@
 #include "DBConnection.h"
 #include "StrUtil.h"
 #include "Error.h"
+#include "MysqlStatementHandle.h"
 
 DBConnection *DBConnection_new(char *host, char *user, char *pass, 
                                char *dbname, unsigned int port) {
@@ -40,10 +41,12 @@ DBConnection *DBConnection_new(char *host, char *user, char *pass,
   return dbc;
 }
 
-MYSQL_RES *DBConnection_prepare(DBConnection *dbc, char *queryStr, int queryLen) {
-  /*fprintf(stderr,"Query = %s\n",queryStr);*/
+StatementHandle *DBConnection_prepare(DBConnection *dbc, char *queryStr, int queryLen) {
+/*
   mysql_real_query(dbc->mysql, queryStr, queryLen);
   return mysql_store_result(dbc->mysql);
+*/
+  return (StatementHandle *)MysqlStatementHandle_new(dbc,queryStr);
 }
 
 BaseAdaptor *DBConnection_getAdaptor(DBConnection *dbc, int type) {

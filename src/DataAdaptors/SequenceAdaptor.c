@@ -9,6 +9,9 @@
 #include "Slice.h"
 #include "StrUtil.h"
 
+#include "StatementHandle.h"
+#include "ResultRow.h"
+
 
 SequenceAdaptor *SequenceAdaptor_new(DBAdaptor *dba) {
   SequenceAdaptor *sa;
@@ -28,8 +31,8 @@ char *SequenceAdaptor_fetchByRawContigStartEndStrand(SequenceAdaptor *sa,
                                                    int end,
                                                    char strand) {
   char qStr[256];
-  MYSQL_RES *results;
-  MYSQL_ROW row;
+  StatementHandle *sth;
+  ResultRow *row;
 
   if( start < 1 ) {
     fprintf(stderr,"ERROR: Wrong parameters to SequenceAdaptor fetch\n");
@@ -59,25 +62,29 @@ char *SequenceAdaptor_fetchByRawContigStartEndStrand(SequenceAdaptor *sa,
   }
 
   if(  DBAdaptor_getDNADBAdaptor(sa->dba) ) {
-    results = DBAdaptor_prepare(DBAdaptor_getDNADBAdaptor(sa->dba),qStr,
+    sth = DBAdaptor_prepare(DBAdaptor_getDNADBAdaptor(sa->dba),qStr,
                                                           strlen(qStr));
   } else {
-    results = sa->prepare( (BaseAdaptor *)sa, qStr, strlen(qStr) );
+    sth = sa->prepare( (BaseAdaptor *)sa, qStr, strlen(qStr) );
   }
 
-  row = mysql_fetch_row(results);
+  sth->execute(sth);
+
+  row = sth->fetchRow(sth);
 
   if( row != NULL) {
-    int length   = MysqlUtil_getInt(row,0);
-    char *seqStr = MysqlUtil_getString(row,1);
+    int length   = row->getIntAt(row,0);
+    char *seqStr = row->getStringAt(row,1);
 
     /* Is this necessary ????? $seq =~ s/\s//g; */
+    sth->finish(sth);
     if( strand == -1 ) {
       return SeqUtil_reverseComplement( seqStr, strlen(seqStr) );
     } else {
       return seqStr;
     }
   } else {
+    sth->finish(sth);
     return NULL;
   }
 }
@@ -127,7 +134,7 @@ char *SequenceAdaptor_fetchBySliceStartEndStrand(SequenceAdaptor *sa,
 }
 
 char *SequenceAdaptor_fetchByAssemblyLocation(SequenceAdaptor *sa,
-          int chrStart, int chrEnd, int strand, long chrId, char *assemblyType) {
+          int chrStart, int chrEnd, int strand, int64 chrId, char *assemblyType) {
 
   AssemblyMapperAdaptor *ama = DBAdaptor_getAssemblyMapperAdaptor(sa->dba);
   RawContigAdaptor *ra = DBAdaptor_getRawContigAdaptor(sa->dba);

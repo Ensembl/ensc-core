@@ -1,6 +1,8 @@
 #ifndef __IDHASH_H__
 #define __IDHASH_H__
 
+#include "EnsC.h"
+
 typedef enum IDHashSizesEnum {
   IDHASH_SMALL,
   IDHASH_MEDIUM,
@@ -8,7 +10,7 @@ typedef enum IDHashSizesEnum {
 } IDHashSizes;
 
 typedef struct IDKeyValuePairStruct {
-  long key;
+  int64 key;
   void *value;
 } IDKeyValuePair;
 
@@ -21,12 +23,12 @@ typedef struct IDHashStruct {
 
 
 IDHash *IDHash_new(IDHashSizes size);
-int     IDHash_add(IDHash *idHash, long id, void *val);
-int     IDHash_contains(IDHash *idHash, long id);
+int     IDHash_add(IDHash *idHash, int64 id, void *val);
+int     IDHash_contains(IDHash *idHash, int64 id);
 void    IDHash_free(IDHash *idHash, int freeFunc());
 int     IDHash_getNumValues(IDHash *idHash);
-long *  IDHash_getKeys(IDHash *idHash);
-void *  IDHash_getValue(IDHash *idHash, long id);
+int64 * IDHash_getKeys(IDHash *idHash);
+void *  IDHash_getValue(IDHash *idHash, int64 id);
 void *  IDHash_getValues(IDHash *idHash);
 
 #endif

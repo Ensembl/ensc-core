@@ -3,6 +3,8 @@
 #include "BaseAdaptor.h"
 #include "MysqlUtil.h"
 
+#include "StatementHandle.h"
+#include "ResultRow.h"
 
 TranscriptAdaptor *TranscriptAdaptor_new(DBAdaptor *dba) {
   TranscriptAdaptor *ta;
@@ -16,11 +18,11 @@ TranscriptAdaptor *TranscriptAdaptor_new(DBAdaptor *dba) {
   return ta;
 }
 
-Transcript *TranscriptAdaptor_fetchByDbID(TranscriptAdaptor *ta, long dbID) {
+Transcript *TranscriptAdaptor_fetchByDbID(TranscriptAdaptor *ta, int64 dbID) {
   Transcript *trans;
   char qStr[256];
-  MYSQL_RES *results;
-  MYSQL_ROW row;
+  StatementHandle *sth;
+  ResultRow *row;
   ExonAdaptor *ea;
   int seen = 0;
 
@@ -33,13 +35,15 @@ Transcript *TranscriptAdaptor_fetchByDbID(TranscriptAdaptor *ta, long dbID) {
     " WHERE  transcript_id = %d"
     " ORDER BY rank",dbID);
 
-  results = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
+  sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
+  sth->execute(sth);
 
-  while(row = mysql_fetch_row(results)) {
-    Exon *exon = ExonAdaptor_fetchByDbID(ea, MysqlUtil_getLong(row,0));
+  while(row = sth->fetchRow(sth)) {
+    Exon *exon = ExonAdaptor_fetchByDbID(ea, row->getLongLongAt(row,0));
     Transcript_addExon(trans,exon);
     seen = 1;
   }
+  sth->finish(sth);
 
   if (!seen) {
     fprintf(stderr,"ERROR: transcript %d is not present in db",dbID);
@@ -53,20 +57,22 @@ Transcript *TranscriptAdaptor_fetchByDbID(TranscriptAdaptor *ta, long dbID) {
     " FROM  transcript"
     " WHERE  transcript_id = %d",dbID);
 
-  results = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
+  sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
+  sth->execute(sth);
 
-  row = mysql_fetch_row(results);
+  row = sth->fetchRow(sth);
   if( row != NULL ) {
-    Transcript_setTranslationId(trans, MysqlUtil_getLong(row,0));
+    Transcript_setTranslationId(trans, row->getLongLongAt(row,0));
   }
+  sth->finish(sth);
 
   return trans;
 }
 
 int TranscriptAdaptor_getStableEntryInfo(TranscriptAdaptor *ta, Transcript *transcript) {
   char qStr[256];
-  MYSQL_RES *results;
-  MYSQL_ROW row;
+  StatementHandle *sth;
+  ResultRow *row;
 
   if( !transcript ) {
     fprintf(stderr, "ERROR: TranscriptAdaptor_getStableEntryInfo needs a transcript object\n");
@@ -78,16 +84,20 @@ int TranscriptAdaptor_getStableEntryInfo(TranscriptAdaptor *ta, Transcript *tran
           " FROM transcript_stable_id"
           " WHERE transcript_id = %d",Transcript_getDbID(transcript));
 
-  results = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
+  sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
+  sth->execute(sth);
 
-  row = mysql_fetch_row(results);
+  row = sth->fetchRow(sth);
   if( row == NULL ) {
     fprintf(stderr,"WARNING: Failed fetching stable id info\n");
+    sth->finish(sth);
     return 0;
   }
 
-  Transcript_setStableId(transcript,MysqlUtil_getString(row,0));
-  Transcript_setVersion(transcript,MysqlUtil_getInt(row,1));
+  Transcript_setStableId(transcript,row->getStringAt(row,0));
+  Transcript_setVersion(transcript,row->getIntAt(row,1));
+
+  sth->finish(sth);
 
   return 1;
 }

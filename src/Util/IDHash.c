@@ -68,17 +68,17 @@ void *IDHash_getValues(IDHash *idHash) {
   return values;
 }
 
-long *IDHash_getKeys(IDHash *idHash) {
+int64 *IDHash_getKeys(IDHash *idHash) {
   int i;
   int j;
-  long *keys;
+  int64 *keys;
   int keyCnt = 0;
   
   if (!idHash->nValue) {
     return NULL;
   }
 
-  if ((keys = (long *)calloc(idHash->nValue,sizeof(long))) == NULL) {
+  if ((keys = (int64 *)calloc(idHash->nValue,sizeof(int64))) == NULL) {
     fprintf(stderr,"ERROR: Failed allocating space for keys\n");
     return NULL;
   }
@@ -96,7 +96,7 @@ long *IDHash_getKeys(IDHash *idHash) {
   return keys;
 }
 
-void *IDHash_getValue(IDHash *idHash, long id) {
+void *IDHash_getValue(IDHash *idHash, int64 id) {
   int bucketNum = IDHash_getBucketNum(idHash,id);
   int i;
 
@@ -110,7 +110,7 @@ void *IDHash_getValue(IDHash *idHash, long id) {
   return NULL;
 }
 
-int IDHash_contains(IDHash *idHash, long id) {
+int IDHash_contains(IDHash *idHash, int64 id) {
   int bucketNum = IDHash_getBucketNum(idHash,id);
   int i;
 
@@ -123,7 +123,7 @@ int IDHash_contains(IDHash *idHash, long id) {
   return 0;
 }
 
-int IDHash_add(IDHash *idHash, long id, void *val) {
+int IDHash_add(IDHash *idHash, int64 id, void *val) {
   int bucketNum = IDHash_getBucketNum(idHash,id);
   int count = idHash->bucketCounts[bucketNum];
 

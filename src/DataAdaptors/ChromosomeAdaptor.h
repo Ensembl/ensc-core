@@ -14,9 +14,9 @@ struct ChromosomeAdaptorStruct {
 };
 
 ChromosomeAdaptor *ChromosomeAdaptor_new(DBAdaptor *dba);
-Chromosome *ChromosomeAdaptor_fetchByDbID(ChromosomeAdaptor *ca, long dbID);
+Chromosome *ChromosomeAdaptor_fetchByDbID(ChromosomeAdaptor *ca, int64 dbID);
 Chromosome *ChromosomeAdaptor_fetchByChrName(ChromosomeAdaptor *ca, char *chrName);
-Chromosome *ChromosomeAdaptor_chromosomeFromRow(ChromosomeAdaptor *ca, MYSQL_ROW row);
+Chromosome *ChromosomeAdaptor_chromosomeFromRow(ChromosomeAdaptor *ca, ResultRow  *row);
 
 
 #endif

@@ -12,9 +12,9 @@ struct RawContigAdaptorStruct {
 };
 
 RawContigAdaptor *RawContigAdaptor_new(DBAdaptor *dba);
-RawContig *RawContigAdaptor_fetchByDbID(RawContigAdaptor *rca, long dbID);
-RawContig *RawContigAdaptor_rawContigFromRow(RawContigAdaptor *rca, MYSQL_ROW row);
-void RawContigAdaptor_fillRawContigWithRow(RawContigAdaptor *rca, RawContig *rc, MYSQL_ROW row);
+RawContig *RawContigAdaptor_fetchByDbID(RawContigAdaptor *rca, int64 dbID);
+RawContig *RawContigAdaptor_rawContigFromRow(RawContigAdaptor *rca, ResultRow *row);
+void RawContigAdaptor_fillRawContigWithRow(RawContigAdaptor *rca, RawContig *rc, ResultRow *row);
 void RawContig_fetchAttributes(RawContigAdaptor *rca, RawContig *rc);
 
 

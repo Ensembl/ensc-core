@@ -3,6 +3,9 @@
 #include "MysqlUtil.h"
 #include "Exon.h"
 
+#include "StatementHandle.h"
+#include "ResultRow.h"
+
 
 TranslationAdaptor *TranslationAdaptor_new(DBAdaptor *dba) {
   TranslationAdaptor *ta;
@@ -16,16 +19,16 @@ TranslationAdaptor *TranslationAdaptor_new(DBAdaptor *dba) {
   return ta;
 }
 
-Translation *TranslationAdaptor_fetchByDbID(TranslationAdaptor *ta, long dbID, Transcript *transcript) {
+Translation *TranslationAdaptor_fetchByDbID(TranslationAdaptor *ta, int64 dbID, Transcript *transcript) {
   Translation *translation;
   char qStr[256];
-  MYSQL_RES *results;
-  MYSQL_ROW row;
+  StatementHandle *sth;
+  ResultRow *row;
   Exon *startExon = NULL;
   Exon *endExon = NULL;
   int i;
-  long startExonId;
-  long endExonId;
+  int64 startExonId;
+  int64 endExonId;
 
   if (!transcript) {
     fprintf(stderr, "ERROR: Translations make no sense outside of their " 
@@ -40,19 +43,24 @@ Translation *TranslationAdaptor_fetchByDbID(TranslationAdaptor *ta, long dbID, T
     " FROM   translation"
     " WHERE  translation_id = %d", dbID);
 
-  results = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
+  sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
+  sth->execute(sth);
 
-  row = mysql_fetch_row(results);
+  row = sth->fetchRow(sth);
   if( row == NULL ) {
+    printf("Can't find row\n");
+    sth->finish(sth); 
     return NULL;
   }
 
   translation = Translation_new();
 
-  Translation_setStart(translation, MysqlUtil_getInt(row,1));
-  startExonId = MysqlUtil_getLong(row,2);
-  Translation_setEnd(translation, MysqlUtil_getInt(row,3));
-  endExonId = MysqlUtil_getLong(row,4);
+  Translation_setStart(translation, row->getIntAt(row,1));
+  startExonId = row->getLongLongAt(row,2);
+  Translation_setEnd(translation, row->getIntAt(row,3));
+  endExonId = row->getLongLongAt(row,4);
+
+  sth->finish(sth);
 
   for (i=0; i<Transcript_getExonCount(transcript); i++) {
     Exon *exon = Transcript_getExonAt(transcript,i);
@@ -79,8 +87,8 @@ Translation *TranslationAdaptor_fetchByDbID(TranslationAdaptor *ta, long dbID, T
 
 int TranslationAdaptor_getStableEntryInfo(TranslationAdaptor *ta, Translation *translation) {
   char qStr[256];
-  MYSQL_RES *results;
-  MYSQL_ROW row;
+  StatementHandle *sth;
+  ResultRow *row;
 
   if( !translation ) {
     fprintf(stderr, "ERROR: TranslationAdaptor_getStableEntryInfo needs a translation object\n");
@@ -92,16 +100,19 @@ int TranslationAdaptor_getStableEntryInfo(TranslationAdaptor *ta, Translation *t
           " FROM translation_stable_id"
           " WHERE translation_id = %d",Translation_getDbID(translation));
 
-  results = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
+  sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
+  sth->execute(sth);
 
-  row = mysql_fetch_row(results);
+  row = sth->fetchRow(sth);
   if( row == NULL ) {
     fprintf(stderr,"WARNING: Failed fetching stable id info\n");
     return 0;
   }
 
-  Translation_setStableId(translation,MysqlUtil_getString(row,0));
-  Translation_setVersion(translation,MysqlUtil_getInt(row,1));
+  Translation_setStableId(translation,row->getStringAt(row,0));
+  Translation_setVersion(translation,row->getIntAt(row,1));
+
+  sth->finish(sth);
 
   return 1;
 }

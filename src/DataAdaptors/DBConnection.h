@@ -3,11 +3,12 @@
 
 #include "BaseAdaptor.h"
 #include "AdaptorTypes.h"
+#include "StatementHandle.h"
 
 #include <mysql.h>
 
 
-typedef MYSQL_RES *(*DBConnection_PrepareFunc)(DBConnection *dbc, char *queryStr, int queryLen);
+typedef StatementHandle *(*DBConnection_PrepareFunc)(DBConnection *dbc, char *queryStr, int queryLen);
 
 struct DBConnectionStruct {
   char *host;
@@ -21,9 +22,9 @@ struct DBConnectionStruct {
   int nAdaptor;
 };
 
-DBConnection *DBConnection_new(char *host, char *user, char *pass, char *dbname, unsigned int port);
-BaseAdaptor  *DBConnection_getAdaptor(DBConnection *dbc, int type);
-MYSQL_RES    *DBConnection_prepare(DBConnection *dbc, char *queryStr, int queryLen);
+DBConnection    *DBConnection_new(char *host, char *user, char *pass, char *dbname, unsigned int port);
+BaseAdaptor     *DBConnection_getAdaptor(DBConnection *dbc, int type);
+StatementHandle *DBConnection_prepare(DBConnection *dbc, char *queryStr, int queryLen);
 int DBConnection_addAdaptor(DBConnection *dbc, BaseAdaptor *ba);
 
 

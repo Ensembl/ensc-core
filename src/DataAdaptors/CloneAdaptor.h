@@ -10,7 +10,7 @@ struct CloneAdaptorStruct {
 };
 
 CloneAdaptor *CloneAdaptor_new(DBAdaptor *dba);
-Clone *CloneAdaptor_cloneFromRow(CloneAdaptor *sa, MYSQL_ROW row);
+Clone *CloneAdaptor_cloneFromRow(CloneAdaptor *sa, ResultRow *row);
 
 
 #endif

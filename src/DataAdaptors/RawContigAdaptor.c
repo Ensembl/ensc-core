@@ -3,6 +3,9 @@
 #include "MysqlUtil.h"
 #include "IDHash.h"
 
+#include "StatementHandle.h"
+#include "ResultRow.h"
+
 
 RawContigAdaptor *RawContigAdaptor_new(DBAdaptor *dba) {
   RawContigAdaptor *rca;
@@ -19,7 +22,7 @@ RawContigAdaptor *RawContigAdaptor_new(DBAdaptor *dba) {
 }
 
 /* Lazy filling */
-RawContig *RawContigAdaptor_fetchByDbID(RawContigAdaptor *rca, long dbID) {
+RawContig *RawContigAdaptor_fetchByDbID(RawContigAdaptor *rca, int64 dbID) {
   RawContig *rawContig;
 
   if (IDHash_contains(rca->rawContigCache,dbID)) {
@@ -35,8 +38,8 @@ RawContig *RawContigAdaptor_fetchByDbID(RawContigAdaptor *rca, long dbID) {
 
 void RawContigAdaptor_fetchAttributes(RawContigAdaptor *rca, RawContig *rc) {
   char qStr[256];
-  MYSQL_RES *results;
-  MYSQL_ROW row;
+  StatementHandle *sth;
+  ResultRow *row;
 
   sprintf(qStr,
           "SELECT contig_id, name, clone_id, length,"
@@ -44,9 +47,10 @@ void RawContigAdaptor_fetchAttributes(RawContigAdaptor *rca, RawContig *rc) {
           "FROM contig "
           "WHERE contig_id = %d", RawContig_getDbID(rc));
 
-  results = rca->prepare((BaseAdaptor *)rca,qStr,strlen(qStr));
+  sth = rca->prepare((BaseAdaptor *)rca,qStr,strlen(qStr));
+  sth->execute(sth);
 
-  row = mysql_fetch_row(results);
+  row = sth->fetchRow(sth);
   if( row == NULL ) {
     fprintf(stderr,"ERROR: Failed fetching contig attributes\n");
     return;
@@ -58,12 +62,12 @@ void RawContigAdaptor_fetchAttributes(RawContigAdaptor *rca, RawContig *rc) {
 }
 
 
-void RawContigAdaptor_fillRawContigWithRow(RawContigAdaptor *rca, RawContig *rc, MYSQL_ROW row) {
+void RawContigAdaptor_fillRawContigWithRow(RawContigAdaptor *rca, RawContig *rc, ResultRow *row) {
 
-  RawContig_setName(rc,MysqlUtil_getString(row,1));
-  RawContig_setCloneID(rc,MysqlUtil_getLong(row,2));
-  RawContig_setLength(rc,MysqlUtil_getInt(row,3));
-  RawContig_setEMBLOffset(rc,MysqlUtil_getInt(row,4));
+  RawContig_setName(rc,row->getStringAt(row,1));
+  RawContig_setCloneID(rc,row->getLongLongAt(row,2));
+  RawContig_setLength(rc,row->getIntAt(row,3));
+  RawContig_setEMBLOffset(rc,row->getIntAt(row,4));
 
   return;
 }
