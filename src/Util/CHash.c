@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
 
 #include "CHash.h"
 #include "Error.h"
@@ -227,7 +229,6 @@ void CHash_dump(CHASHTABLE *Table) {
 /*             No error is given if the string is not in the array            */
 /******************************************************************************/
 int CHash_find(char *String,CHASHTABLE *Table,int *StrInd) {
-  int i;
   int LetInd;
   int ArrayLoc = 0;
    
@@ -266,7 +267,6 @@ int CHash_find(char *String,CHASHTABLE *Table,int *StrInd) {
 int CHash_firstFour(char *String,int *LetInd) {
   int   i;
   char *ChP;
-  int   ArrayLoc;
    
   *LetInd=0;
   for (i=0,ChP=String;i<4 && *ChP!='\0';i++,ChP++) {
@@ -292,7 +292,6 @@ int CHash_firstFour(char *String,int *LetInd) {
 int CHash_fourLets(char *String,int *LetInd) {
   int   i;
   char *ChP;
-  int   ArrayLoc;
 
   *LetInd=0;
   for (i=0,ChP=String;i<10 && *ChP!='\0';i++,ChP++) {
@@ -349,8 +348,6 @@ void CHash_free(CHASHTABLE *Table) {
 /*             28/02/97 SMJS  Initial Implementation                          */
 /******************************************************************************/
 int CHash_getLetInd(char *String,int *LetInd) {
-  int i;
-  int ArrayLoc;
 
   *LetInd = String[0];
 
@@ -417,7 +414,6 @@ int CHash_getSorted(CHASHTABLE *Table,char ***Array,int *NArray) {
 /*             04/09/98 SMJS  Initial Implementation                          */
 /******************************************************************************/
 int CHash_init(CHASHTABLE **Table,int Func(),int NLetter) {
-  int i;
 
   if (!NLetter) {
     Error_write(ECHASH,"CHash_init",ERR_SEVERE,"Number of buckets is Zero");
@@ -458,7 +454,6 @@ int CHash_init(CHASHTABLE **Table,int Func(),int NLetter) {
 /*             25/02/97 SMJS  Initial Implementation                          */
 /******************************************************************************/
 int CHash_insert(char *String,CHASHTABLE *Table,int StrInd) {
-  int i;
   int LetInd;
   int ArrayLoc=0;
 

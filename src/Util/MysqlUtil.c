@@ -1,6 +1,8 @@
 #include "MysqlUtil.h"
 #include "StrUtil.h"
 
+#include <stdlib.h>
+
 int MysqlUtil_getInt(MYSQL_ROW row, int col) {
   return atol(row[col]);
 }

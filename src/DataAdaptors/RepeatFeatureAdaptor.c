@@ -31,7 +31,6 @@ RepeatFeatureAdaptor *RepeatFeatureAdaptor_new(DBAdaptor *dba) {
 }
 
 int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
-  RepeatConsensus *cons;
   RepeatConsensusAdaptor *rca = DBAdaptor_getRepeatConsensusAdaptor(bfa->dba);
   StatementHandle *sth;
   int i;
@@ -194,7 +193,6 @@ Set *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
   RepeatConsensusAdaptor *rpca;
   Set *features;
   ResultRow *row;
-  int i;
   IDHash *rcHash;
 
   aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
@@ -205,7 +203,7 @@ Set *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
   features = Set_new();
   rcHash = IDHash_new(IDHASH_SMALL);
 
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     RepeatFeature *rf;
     Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,2));
     RawContig *contig = RawContigAdaptor_fetchByDbID(rca, row->getLongLongAt(row,1));

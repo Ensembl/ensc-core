@@ -67,7 +67,7 @@ void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama,
   sth = ama->prepare((BaseAdaptor *)ama,qStr,strlen(qStr));
   sth->execute(sth);
 
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType contigId = row->getLongLongAt(row,2);
 
     if (!AssemblyMapper_haveRegisteredContig(assMapper,contigId)) {
@@ -134,14 +134,14 @@ GenomicRange *AssemblyMapperAdaptor_registerContig(AssemblyMapperAdaptor *ama,
   GenomicRange_setChrEnd(range,row->getIntAt(row,2));
   GenomicRange_setChrId(range,row->getLongAt(row,3));
 
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     extraRows++;
   }
 
   sth->finish(sth);
 
   if (extraRows) {
-    fprintf(stderr,"WARNING: Contig %d is ambiguous in assembly type %s\n",contigId, assemblyType);
+    fprintf(stderr,"WARNING: Contig " IDFMTSTR " is ambiguous in assembly type %s\n",contigId, assemblyType);
     GenomicRange_free(range);
     return NULL;
   }

@@ -122,7 +122,6 @@ Set *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *b
   RawContigAdaptor *rca;
   Set *features;
   ResultRow *row;
-  int i;
 
   aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
   rca = DBAdaptor_getRawContigAdaptor(bfa->dba);
@@ -145,7 +144,7 @@ Set *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *b
     // Does this really need to be set ??? my $slice_name   = $slice->name();
 
 
-    while (row = sth->fetchRow(sth)) {
+    while ((row = sth->fetchRow(sth))) {
       DNAPepAlignFeature *dpaf;
       int contigId    = row->getLongLongAt(row,1);
       int contigStart = row->getIntAt(row,3);
@@ -209,7 +208,7 @@ Set *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *b
     }
   } else { // No slice
 
-    while(row = sth->fetchRow(sth)) {
+    while ((row = sth->fetchRow(sth))) {
       DNAPepAlignFeature *dpaf;
       
 // Perl has a cache for analysis types but the analysis adaptor should have one

@@ -1,6 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
+
 #include "StringHash.h"
 #include "StrUtil.h"
+#include "Error.h"
 
 unsigned int StringHash_getBucketNum(StringHash *stringHash, char *key) {
   unsigned int hash, i;
@@ -90,7 +93,7 @@ void *StringHash_getValue(StringHash *stringHash, char *key) {
     }
   }
 
-  fprintf(stderr,"ERROR: Didn't find key %d in StringHash\n",key);
+  fprintf(stderr,"ERROR: Didn't find key %s in StringHash\n",key);
   return NULL;
 }
 

@@ -3,6 +3,7 @@
 
 #include <mysql.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "AdaptorTypes.h"
 #include "DBAdaptor.h"

@@ -1,6 +1,9 @@
 #include "Class.h"
 #include "EnsC.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 /* !!! Three !!! steps to adding an class */
 /* Step 1: Add to hierarchyString */
 /* Step 2: Add to classArray */
@@ -54,6 +57,9 @@ ClassHierarchyNode *root = NULL;
 
 void Class_initHierarchy(ClassHierarchyNode *ch,  char **chPP,int *depth);
 Class *Class_findByName(char *name);
+int Class_searchHierarchyForParentChildPair(ClassHierarchyNode *chn, ClassType parentType, 
+                                             ClassType descType, int belowParent, int *depth);
+
 ClassHierarchyNode *ClassHierarchyNode_new(char *className) {
   ClassHierarchyNode *chn;
   if ((chn = (ClassHierarchyNode *) calloc(1,sizeof(ClassHierarchyNode))) == NULL) {

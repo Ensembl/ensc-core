@@ -106,7 +106,7 @@ void *IDHash_getValue(IDHash *idHash, IDType id) {
     }
   }
 
-  fprintf(stderr,"ERROR: Didn't find key %d in IDHash\n",id);
+  fprintf(stderr,"ERROR: Didn't find key " IDFMTSTR " in IDHash\n",id);
   return NULL;
 }
 
@@ -130,7 +130,7 @@ int IDHash_add(IDHash *idHash, IDType id, void *val) {
   if (IDHash_contains(idHash,id)) {
     int i;
 
-    fprintf(stderr,"WARNING: Duplicate key %d - value will be overwritten\n",id);
+    fprintf(stderr,"WARNING: Duplicate key " IDFMTSTR " - value will be overwritten\n",id);
     for (i=0; i<idHash->bucketCounts[bucketNum]; i++) {
       if (id == idHash->buckets[bucketNum][i].key) {
         idHash->buckets[bucketNum][i].value = val;

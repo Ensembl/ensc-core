@@ -61,5 +61,8 @@ Transcript *Transcript_new(void);
 
 void Transcript_flushExons(Transcript *trans);
 
+int Transcript_addDBLink(Transcript *t, DBEntry *dbe);
+
+
 
 #endif

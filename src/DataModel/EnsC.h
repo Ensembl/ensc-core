@@ -2,6 +2,7 @@
 #define __ENSC_H__
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "EcoString.h"
 
 #ifdef TRUE
@@ -34,5 +35,8 @@ typedef long long IDType;
 #else
  extern ECOSTRTABLE *ecoSTable;
 #endif
+
+void initEnsC(void);
+
 
 #endif

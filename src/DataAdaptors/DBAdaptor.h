@@ -36,6 +36,7 @@ SliceAdaptor                *DBAdaptor_getSliceAdaptor(DBAdaptor *dba);
 SimpleFeatureAdaptor        *DBAdaptor_getSimpleFeatureAdaptor(DBAdaptor *dba); 
 SupportingFeatureAdaptor    *DBAdaptor_getSupportingFeatureAdaptor(DBAdaptor *dba);
 SequenceAdaptor             *DBAdaptor_getSequenceAdaptor(DBAdaptor *dba); 
+TranslationAdaptor          *DBAdaptor_getTranslationAdaptor(DBAdaptor *dba);
 TranscriptAdaptor           *DBAdaptor_getTranscriptAdaptor(DBAdaptor *dba);
 
 

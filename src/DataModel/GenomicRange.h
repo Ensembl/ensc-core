@@ -24,4 +24,9 @@ char *setChrName(GenomicRange *gr, char *chrName);
 #define GenomicRange_setChrId(gr,i) (gr)->chrId = (i)
 #define GenomicRange_getChrId(gr) (gr)->chrId
 
+char *GenomicRange_setChrName(GenomicRange *gr, char *chrName);
+
+void GenomicRange_free(GenomicRange *range);
+
+
 #endif

@@ -39,16 +39,16 @@ DBEntry *DBEntry_new(void);
 #define DBEntry_setIdentityXref(d,idx) (d)->idXref = (idx)
 #define DBEntry_getIdentityXref(d) (d)->idXref
 
-ECOSTRING setDbName(DBEntry *dbe, char *name);
+ECOSTRING DBEntry_setDbName(DBEntry *dbe, char *name);
 #define DBEntry_getDbName(d) (d)->dbName
 
-char *setPrimaryId(DBEntry *dbe, char *id);
+char *DBEntry_setPrimaryId(DBEntry *dbe, char *id);
 #define DBEntry_getPrimaryId(d) (d)->primaryId
 
-char *setDisplayId(DBEntry *dbe, char *id);
+char *DBEntry_setDisplayId(DBEntry *dbe, char *id);
 #define DBEntry_getDisplayId(d) (d)->displayId
 
-char *setDescription(DBEntry *dbe, char *desc);
+char *DBEntry_setDescription(DBEntry *dbe, char *desc);
 #define DBEntry_getDescription(d) (d)->description
 
 

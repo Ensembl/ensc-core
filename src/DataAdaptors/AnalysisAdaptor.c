@@ -39,7 +39,7 @@ Analysis **AnalysisAdaptor_fetchAll(AnalysisAdaptor *aa) {
   sth = aa->prepare((BaseAdaptor *)aa,qStr,strlen(qStr));
   sth->execute(sth);
 
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     Analysis *anal = AnalysisAdaptor_analysisFromRow(aa, row);
 
     IDHash_add(aa->analCache, Analysis_getDbID(anal), anal);
@@ -167,7 +167,7 @@ IDType AnalysisAdaptor_store(AnalysisAdaptor *aa, Analysis *analysis) {
 
   dbID = 0;
 
-  if (dbID = AnalysisAdaptor_analysisExists(aa, analysis)) {
+  if ((dbID = AnalysisAdaptor_analysisExists(aa, analysis))) {
     Analysis_setAdaptor(analysis,(BaseAdaptor *)aa);
     Analysis_setDbID(analysis,dbID);
     return dbID;

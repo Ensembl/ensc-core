@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define __STRUTIL_MAIN__
 #include "StrUtil.h"
@@ -284,7 +285,6 @@ char *StrUtil_fastCopyString(char **to, char *from,int length) {
 /*             30/08/98 SMJS  Initial Implementation                          */
 /******************************************************************************/
 char *StrUtil_copyNString(char **to, char *from,int Start,int length) {
-  int lenTo;
   int lenFrom = strlen(from);
 
   if (lenFrom-1 < Start) {
@@ -425,7 +425,6 @@ int StrUtil_stripnewline(char *str) {
   char *ChP;
   int j=0;
   int count=0;
-  int len=0;
 
 
   for (ChP=str;*ChP!='\0';ChP++) {

@@ -39,4 +39,8 @@ struct ClassStruct {
 };
 
 
+int Class_isDescendent(ClassType parentType, ClassType descType);
+int Class_assertType(ClassType wantedType, ClassType actualType);
+
+
 #endif

@@ -1,4 +1,5 @@
 #include "IdentityXref.h"
+#include <stdlib.h>
 #include <stdio.h>
 
 IdentityXref *IdentityXref_new() {

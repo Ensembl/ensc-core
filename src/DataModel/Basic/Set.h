@@ -2,6 +2,7 @@
 #define __SET_H__
 
 #include <stdio.h>
+#include <stdlib.h>
 
 typedef struct SetStruct {
   void **elements;

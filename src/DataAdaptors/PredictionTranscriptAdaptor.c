@@ -43,7 +43,6 @@ int PredictionTranscriptAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
   for (i=0; i<Set_getNumElement(features); i++) {
     PredictionTranscript *predTrans = Set_getElementAt(features, i);
     int j;
-    IDType exonId = 0;
     IDType dbID = 0;
     int rank = 1;
     IDType analysisId = Analysis_getDbID(PredictionTranscript_getAnalysis(predTrans));
@@ -136,7 +135,6 @@ Set *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *
   RawContigAdaptor *rca;
   Set *out;
   ResultRow *row;
-  int i;
   int sliceChrId;
   int sliceEnd;
   int sliceStart;
@@ -166,7 +164,7 @@ Set *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *
     sliceLen   = Slice_getLength(slice);
   }
 
-  while(row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType predictionTranscriptId = row->getLongLongAt(row,0);
     int contigId    = row->getLongLongAt(row,1);
     IDType analysisId= row->getLongLongAt(row,2);

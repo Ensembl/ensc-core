@@ -12,5 +12,7 @@ struct TranscriptAdaptorStruct {
 TranscriptAdaptor *TranscriptAdaptor_new(DBAdaptor *dba);
 int TranscriptAdaptor_getStableEntryInfo(TranscriptAdaptor *ta, Transcript *transcript);
 Transcript *TranscriptAdaptor_fetchByDbID(TranscriptAdaptor *ta, IDType dbID);
+IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, IDType geneId);
+
 
 #endif

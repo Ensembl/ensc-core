@@ -2,6 +2,7 @@
 #include "ExonAdaptor.h"
 #include "BaseAdaptor.h"
 #include "MysqlUtil.h"
+#include "TranslationAdaptor.h"
 
 #include "StatementHandle.h"
 #include "ResultRow.h"
@@ -39,7 +40,7 @@ Transcript *TranscriptAdaptor_fetchByDbID(TranscriptAdaptor *ta, IDType dbID) {
   sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
   sth->execute(sth);
 
-  while(row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     Exon *exon = ExonAdaptor_fetchByDbID(ea, row->getLongLongAt(row,0));
     Transcript_addExon(trans,exon);
     seen = 1;
@@ -129,7 +130,7 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
   translation = Transcript_getTranslation(transcript);
 
   ea = DBAdaptor_getExonAdaptor(ta->dba);
-  translAdaptor = DBAdaptor_getTranscriptAdaptor(ta->dba);
+  translAdaptor = DBAdaptor_getTranslationAdaptor(ta->dba);
 
   exonCount = Transcript_getExonCount(transcript);
 
@@ -191,7 +192,7 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
 */
 
 
-  sprintf(qStr, "insert into exon_transcript (exon_id,transcript_id,rank) values (%" IDFMTSTR ",%" IDFMTSTR ",%d)");
+  sprintf(qStr, "insert into exon_transcript (exon_id,transcript_id,rank) values (%" IDFMTSTR ",%" IDFMTSTR ",%%d)");
   sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
   rank = 1;
   for (i=0; i<exonCount; i++) {
@@ -218,7 +219,7 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
   }
 
   Transcript_setDbID(transcript, transcriptId);
-  Transcript_setAdaptor(transcript, ta);
+  Transcript_setAdaptor(transcript, (BaseAdaptor *)ta);
 
   return transcriptId;
 }

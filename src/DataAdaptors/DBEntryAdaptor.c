@@ -47,7 +47,7 @@ DBEntry *DBEntryAdaptor_fetchByDbID(DBEntryAdaptor *dbea, IDType dbID) {
 
   // Why???? my %duplicate;
 
-  while (row = sth->fetchRow(sth)){
+  while ((row = sth->fetchRow(sth))){
     if (!row->col(row,0)) {
       fprintf(stderr,"WARNING: Got xref with no refID\n");
       return NULL;
@@ -316,7 +316,7 @@ int DBEntryAdaptor_fetchAllByGene(DBEntryAdaptor *dbea, Gene *gene) {
   
   sth->execute(sth);
   
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType transcriptId = row->getLongLongAt(row,0);
     int i;
     Set *transLinks;
@@ -334,7 +334,7 @@ int DBEntryAdaptor_fetchAllByGene(DBEntryAdaptor *dbea, Gene *gene) {
     
     transLinks = DBEntryAdaptor_fetchByObjectType(dbea, transcriptId,"Transcript");
     for (i=0;i<Set_getNumElement(transLinks); i++) {
-      Gene_addDBLink(Set_getElementAt(transLinks,i));
+      Gene_addDBLink(gene, Set_getElementAt(transLinks,i));
     }
     Set_free(transLinks,NULL);
   }
@@ -347,6 +347,7 @@ int DBEntryAdaptor_fetchAllByGene(DBEntryAdaptor *dbea, Gene *gene) {
     }
   }
 */
+  return 1;
 }
 
 Set *DBEntryAdaptor_fetchAllByRawContig(DBEntryAdaptor *dbea, RawContig *contig) {
@@ -377,11 +378,11 @@ int DBEntryAdaptor_fetchAllByTranscript(DBEntryAdaptor *dbea, Transcript *trans)
   // be better. Oh well. EB
   //
   
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType translationId = row->getLongLongAt(row,0);
     Set *translatLinks = DBEntryAdaptor_fetchByObjectType(dbea, translationId,"Translation");
     for (i=0;i<Set_getNumElement(translatLinks); i++) {
-      Transcript_addDBLink(Set_getElementAt(translatLinks,i));
+      Transcript_addDBLink(trans,Set_getElementAt(translatLinks,i));
     }
     Set_free(translatLinks,NULL);
   }
@@ -391,7 +392,7 @@ int DBEntryAdaptor_fetchAllByTranscript(DBEntryAdaptor *dbea, Transcript *trans)
   transLinks = DBEntryAdaptor_fetchByObjectType(dbea, Transcript_getDbID(trans),"Transcript");
       fprintf(stderr,"transLinks\n");
   for (i=0;i<Set_getNumElement(transLinks); i++) {
-    Transcript_addDBLink(Set_getElementAt(transLinks,i));
+    Transcript_addDBLink(trans,Set_getElementAt(transLinks,i));
   }
   Set_free(transLinks,NULL);
 
@@ -444,7 +445,7 @@ Set *DBEntryAdaptor_fetchByObjectType(DBEntryAdaptor *dbea, IDType ensObj, char 
   seen = IDHash_new(IDHASH_SMALL);
   out = Set_new();
 
-  while ( row = sth->fetchRow(sth) ) {
+  while ((row = sth->fetchRow(sth))) {
     DBEntry *exDB;
     IDType refID = row->getLongLongAt(row,0);
 			    
@@ -455,8 +456,6 @@ Set *DBEntryAdaptor_fetchByObjectType(DBEntryAdaptor *dbea, IDType ensObj, char 
 
     if (!IDHash_contains(seen,refID))  {
       exDB = DBEntry_new();
-      fprintf(stderr,"Adding id %qd  to %d\n",refID, exDB);
-      
       DBEntry_setAdaptor(exDB,(BaseAdaptor *)dbea);
       DBEntry_setDbID(exDB, refID);
       DBEntry_setPrimaryId(exDB, row->getStringAt(row,1));
@@ -475,9 +474,7 @@ Set *DBEntryAdaptor_fetchByObjectType(DBEntryAdaptor *dbea, IDType ensObj, char 
       if (row->col(row,4)) DBEntry_setDescription(exDB, row->getStringAt(row,4));
       if (row->col(row,7)) DBEntry_setStatus(exDB, row->getStringAt(row,7));
       
-      fprintf(stderr," exDB now %d\n", exDB);
       Set_addElement(out, exDB);
-      fprintf(stderr," exDB now %d\n", exDB);
       IDHash_add(seen, refID, exDB);
     } 
 

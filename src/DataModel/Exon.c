@@ -125,7 +125,7 @@ Exon *Exon_transformToSlice(Exon *exon, Slice *slice) {
   // actually we could have exons inside and outside the Slice 
   // because of db design and the query that produces them
   if( !mapped || mapped->nRange == 0) {
-    fprintf(stderr, "ERROR: Exon couldnt map dbID = %d\n",Exon_getDbID(exon));
+    fprintf(stderr, "ERROR: Exon couldnt map dbID = " IDFMTSTR "\n",Exon_getDbID(exon));
     exit(1);
   }
 

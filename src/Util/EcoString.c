@@ -6,6 +6,7 @@
 #include "EcoString.h"
 #include "Error.h"
 #include "CHash.h"
+#include "StrUtil.h"
 /******************************************************************************/
 /* Routine    :                                                               */
 /*             EcoString_addStr()                                             */

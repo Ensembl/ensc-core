@@ -15,9 +15,6 @@ RawContigAdaptor *RawContigAdaptor_new(DBAdaptor *dba);
 RawContig *RawContigAdaptor_fetchByDbID(RawContigAdaptor *rca, IDType dbID);
 RawContig *RawContigAdaptor_rawContigFromRow(RawContigAdaptor *rca, ResultRow *row);
 void RawContigAdaptor_fillRawContigWithRow(RawContigAdaptor *rca, RawContig *rc, ResultRow *row);
-void RawContig_fetchAttributes(RawContigAdaptor *rca, RawContig *rc);
-
-
-
+void RawContigAdaptor_fetchAttributes(RawContigAdaptor *rca, RawContig *rc);
 
 #endif

@@ -1,5 +1,6 @@
 #include "Transcript.h"
 #include "TranscriptAdaptor.h"
+#include "DBEntryAdaptor.h"
 
 Transcript *Transcript_new() {
   Transcript *transcript;

@@ -10,8 +10,13 @@
 #include "Slice.h"
 #include "AssemblyMapper.h"
 
+#include "ExonAdaptor.h"
+#include "TranscriptAdaptor.h"
+
 #include "StatementHandle.h"
 #include "ResultRow.h"
+
+#include "Error.h"
 
 GeneAdaptor *GeneAdaptor_new(DBAdaptor *dba) {
   GeneAdaptor *ga;
@@ -83,7 +88,7 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
   nExon = ExonAdaptor_fetchAllByGeneId( ea, geneId, &exons);
 
   if( !nExon ) {
-    fprintf(stderr,"ERROR: No exons for gene %d, assumming no gene\n",geneId);
+    fprintf(stderr,"ERROR: No exons for gene " IDFMTSTR ", assumming no gene\n",geneId);
     return NULL;
   }
 
@@ -119,7 +124,7 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
   transcriptExonsHash = IDHash_new(IDHASH_SMALL);
   translationHash = IDHash_new(IDHASH_SMALL);
 
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     // building a gene
     TranscriptExons *tes = NULL;
     IDType transcriptId;
@@ -266,7 +271,6 @@ int GeneAdaptor_getStableEntryInfo(GeneAdaptor *ga, Gene *gene) {
 
 
 Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName) {
-  char sliceName[256];
   char sliceCacheKey[512];
   AssemblyMapperAdaptor *ama;
   AssemblyMapper *assMapper;
@@ -351,7 +355,7 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
 
   sth->execute(sth);
 
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType geneId = row->getLongLongAt(row,0);
     Gene *gene  = GeneAdaptor_fetchByDbID(ga, geneId, NULL );
     Gene *newGene = Gene_transformToSlice(gene, slice);

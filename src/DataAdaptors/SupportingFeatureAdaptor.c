@@ -52,7 +52,7 @@ Set *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, Exon
   dafa = DBAdaptor_getDNAAlignFeatureAdaptor(sfa->dba);
 
   
-  while (row = sth->fetchRow(sth)) {      
+  while ((row = sth->fetchRow(sth))) {      
     BaseAlignFeature *baf;
     char *type = row->getStringAt(row,0);
 

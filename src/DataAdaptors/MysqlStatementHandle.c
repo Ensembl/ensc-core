@@ -4,6 +4,9 @@
 #include "mysql.h"
 #include "EnsC.h"
 
+#include "Error.h"
+#include "Class.h"
+
 
 StatementHandle *MysqlStatementHandle_new(DBConnection *dbc, char *query) {
   MysqlStatementHandle *sth;
@@ -49,7 +52,6 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
   char statement[EXTREMELEN];
   int qlen;
   MYSQL_RES *results;
-  unsigned int field_count;
   MysqlStatementHandle *m_sth;
 
   Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);

@@ -3,6 +3,7 @@
 #include "AnalysisAdaptor.h"
 #include "AssemblyMapperAdaptor.h"
 #include "StrUtil.h"
+#include "Error.h"
 
 int SLICE_FEATURE_CACHE_SIZE = 4;
 

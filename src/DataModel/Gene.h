@@ -77,6 +77,8 @@ Gene *Gene_transformToSlice(Gene *gene, Slice *slice);
 Set *Gene_getAllExons(Gene *gene);
 
 Set *Gene_getAllDBLinks(Gene *g);
+int Gene_addDBLink(Gene *g, DBEntry *dbe);
+
 
 
 

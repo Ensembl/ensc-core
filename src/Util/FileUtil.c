@@ -11,6 +11,7 @@
 #include "StrUtil.h"
 #include "Error.h"
 #include "Stream.h"
+#include "StrUtil.h"
 
 /******************************************************************************/
 /* Routine    :                                                               */

@@ -86,7 +86,7 @@ Set *RepeatConsensusAdaptor_genericFetch(RepeatConsensusAdaptor *rca, char *wher
 
   consensi = Set_new();
   
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     RepeatConsensus *rc = RepeatConsensus_new();
 
     RepeatConsensus_setDbID(rc, row->getLongLongAt(row,0));

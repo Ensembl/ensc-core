@@ -1,6 +1,28 @@
 #include "DBAdaptor.h"
 #include "MetaContainer.h"
 
+#include "AnalysisAdaptor.h"
+#include "AssemblyMapperAdaptor.h"
+#include "ChromosomeAdaptor.h"
+#include "CloneAdaptor.h"
+#include "DBEntryAdaptor.h"
+#include "DNAAlignFeatureAdaptor.h"
+#include "ExonAdaptor.h"
+#include "GeneAdaptor.h"
+#include "PredictionTranscriptAdaptor.h"
+#include "ProteinAlignFeatureAdaptor.h"
+#include "RawContigAdaptor.h"
+#include "RepeatConsensusAdaptor.h"
+#include "RepeatFeatureAdaptor.h"
+#include "SequenceAdaptor.h"
+#include "SimpleFeatureAdaptor.h"
+#include "SliceAdaptor.h"
+#include "SupportingFeatureAdaptor.h"
+#include "TranscriptAdaptor.h"
+
+
+#include "StrUtil.h"
+
 DBAdaptor *DBAdaptor_new(char *host, char *user, char *pass, char *dbname,
                          unsigned int port, DBAdaptor *dnadb) {
   DBAdaptor *dba;
@@ -21,7 +43,7 @@ DBAdaptor *DBAdaptor_new(char *host, char *user, char *pass, char *dbname,
 }
 
 char *DBAdaptor_setAssemblyType(DBAdaptor *dba, char *type) {
-  StrUtil_copyString(dba->assemblyType,type);
+  StrUtil_copyString(&(dba->assemblyType),type,0);
 
   return dba->assemblyType;
 }
@@ -162,6 +184,14 @@ SequenceAdaptor *DBAdaptor_getSequenceAdaptor(DBAdaptor *dba) {
                             (BaseAdaptor *)SequenceAdaptor_new(dba));
   }
   return (SequenceAdaptor *)DBConnection_getAdaptor(dba->dbc,SEQUENCE_ADAPTOR);
+}
+
+TranslationAdaptor *DBAdaptor_getTranslationAdaptor(DBAdaptor *dba) {
+  if (!DBConnection_getAdaptor(dba->dbc,TRANSLATION_ADAPTOR)) {
+    DBConnection_addAdaptor(dba->dbc,
+                            (BaseAdaptor *)TranslationAdaptor_new(dba));
+  }
+  return (TranslationAdaptor *)DBConnection_getAdaptor(dba->dbc,TRANSLATION_ADAPTOR);
 }
 
 ChromosomeAdaptor *DBAdaptor_getChromosomeAdaptor(DBAdaptor *dba) {

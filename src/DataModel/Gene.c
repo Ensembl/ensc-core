@@ -2,6 +2,8 @@
 #include "GeneAdaptor.h"
 #include "IDHash.h"
 
+#include "DBEntryAdaptor.h"
+
 Gene *Gene_new() {
   Gene *gene;
 

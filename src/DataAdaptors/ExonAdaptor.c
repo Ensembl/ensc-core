@@ -86,7 +86,7 @@ Exon *ExonAdaptor_exonFromResults(ExonAdaptor *ea, StatementHandle *sth, ResultR
     Exon_setAdaptor(exon,(BaseAdaptor *)ea);
 
     // continue while loop until we hit sticky_rank 1
-    while( row = sth->fetchRow(sth)) {
+    while ((row = sth->fetchRow(sth))) {
       component = ExonAdaptor_exonFromRow(ea, row);
   
       Exon_addComponentExon(exon,component);
@@ -135,7 +135,6 @@ Exon *ExonAdaptor_exonFromRow(ExonAdaptor *ea, ResultRow *row) {
 }
 
 int ExonAdaptor_fetchAllByGeneId(ExonAdaptor *ea, IDType geneId, Exon ***retExons) {
-  Exon **exons;
   char qStr[512];
   StatementHandle *sth;
   ResultRow *row;
@@ -168,7 +167,7 @@ int ExonAdaptor_fetchAllByGeneId(ExonAdaptor *ea, IDType geneId, Exon ***retExon
   sth = ea->prepare((BaseAdaptor *)ea, qStr, strlen(qStr));
   sth->execute(sth);
 
-  while( row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     if( ! IDHash_contains(exonHash,row->getLongLongAt(row,0))) {
       Exon *exon = ExonAdaptor_exonFromResults(ea,sth,row);
 
@@ -231,7 +230,7 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
   StatementHandle *sth2;
   char qStr[1024];
   int i;
-  int exonId;
+  IDType exonId;
   DNAAlignFeatureAdaptor *dafa;
   ProteinAlignFeatureAdaptor *pafa;
   char *type;

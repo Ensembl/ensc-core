@@ -1,6 +1,7 @@
 #include "GenomicRange.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 GenomicRange *GenomicRange_new() {
   GenomicRange *genRange;

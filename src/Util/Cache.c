@@ -1,5 +1,11 @@
 #include "Cache.h"
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "StrUtil.h"
+
 Cache *Cache_new(int size) {
   Cache *cache;
 

@@ -3,6 +3,8 @@
 #include "MysqlUtil.h"
 #include "Class.h"
 
+#include <stdlib.h>
+
 MysqlResultRow *MysqlResultRow_new() {
   MysqlResultRow *rr;
 

@@ -78,6 +78,7 @@ int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
                  SimpleFeature_getStrand(sf),SimpleFeature_getDisplayLabel(sf),
                  (IDType)(Analysis_getDbID(analysis)), SimpleFeature_getScore(sf));
   } 
+  return 1;
 }
 
 NameTableType *SimpleFeatureAdaptor_getTables(void) {
@@ -109,7 +110,7 @@ Set *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
 
   features = Set_new();
   
-  while(row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     RawContig *contig = RawContigAdaptor_fetchByDbID(rca, row->getLongLongAt(row,1));
     Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,6));
 
