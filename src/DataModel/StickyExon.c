@@ -7,6 +7,7 @@
 #include "BaseContig.h"
 #include "Mapper.h"
 #include "RawContigAdaptor.h"
+#include "StrUtil.h"
 
 StickyExon *StickyExon_new(void) {
   StickyExon *stickyExon;
@@ -366,7 +367,7 @@ sub StickyExon_getSeq(StickyExon *stickyExon) {
 
   for (i=0; i<StickyExon_getComponentExonCount(stickyExon); i++) {
     Exon *cExon = StickyExon_getComponentExonAt(stickyExon, i);
-    StrUtil_appendString(&seqString, Exon_getSeqString(cExon));
+    seqString = StrUtil_appendString(seqString, Exon_getSeqString(cExon));
   }
   $self->{'_seq'} = $seqString;
 

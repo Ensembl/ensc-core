@@ -197,7 +197,6 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
       DNAAlignFeature_setHitEnd(daf,row->getIntAt(row,7));
       DNAAlignFeature_setHitSeqName(daf,row->getStringAt(row,8));
       DNAAlignFeature_setHitStrand(daf,row->getIntAt(row,9));
-      printf("hit strand = %d\n",DNAAlignFeature_getHitStrand(daf));
 
       DNAAlignFeature_setCigarString(daf,row->getStringAt(row,10));
   

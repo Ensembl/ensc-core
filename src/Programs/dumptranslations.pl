@@ -40,7 +40,6 @@ my $db = new Bio::EnsEMBL::DBSQL::DBAdaptor(
 $db->assembly_type($path);
 
 my $sa   = $db->get_SliceAdaptor();
-my $ga   = $db->get_GeneAdaptor();
 
 my $chrhash = get_chrlengths($db);
 
@@ -75,33 +74,34 @@ if ($file ne "stdout") {
 }
 
 foreach my $chr (reverse sort bychrnum keys %$chrhash) {
-  print STDERR "Chr $chr from 1 to " . $chrhash->{$chr}. "\n";
   my $chrstart = 1;
   my $chrend   = $chrhash->{$chr};
+
+  $chrend=230000000;
+  print STDERR "Chr $chr from 1 to " . $chrend. "\n";
 
   my $slice = $sa->fetch_by_chr_start_end($chr,$chrstart,$chrend);
 
   print "Fetching genes\n";
-  my %genes_hash;
-  my @genes = $slice->get_all_Genes();
+  my $genes = $slice->get_all_Genes;
 
-  print "Done fetching genes (fetched " . scalar(@genes) .")\n";
+  print "Done fetching genes (fetched " . scalar(@$genes) .")\n";
 
 # Go through the genes sorting the transcripts
   print "Starting sorting transcripts\n";
-  foreach my $gene (@genes) {
+  foreach my $gene (@$genes) {
     foreach my $trans (@{$gene->get_all_Transcripts}) {
       $trans->sort;
     }
   }
   print "Done sorting transcripts\n";
   print "Starting translating transcripts\n";
-  foreach my $gene (@genes) {
+  foreach my $gene (@$genes) {
     print "Gene " . $gene->stable_id . "\n";
     foreach my $trans (@{$gene->get_all_Transcripts}) {
       print " Transcript " . $trans->stable_id . "\n";
       my $pep = $trans->translate;
-      print $pep . "\n";
+      print $pep->seq . "\n";
     }
   }
   print "Done translating transcripts\n";

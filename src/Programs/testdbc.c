@@ -235,7 +235,7 @@ int main(int argc, char *argv[]) {
 */
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
-    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);
+    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,230000000);
     Vector *geneVector = Slice_getAllGenes(slice,NULL);
     int i;
 
