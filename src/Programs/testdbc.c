@@ -3,17 +3,20 @@
 #include "EnsC.h"
 
 #include "DBAdaptor.h"
-#include "BaseAdaptor.h"
-#include "GeneAdaptor.h"
 #include "AnalysisAdaptor.h"
+#include "BaseAdaptor.h"
 #include "ChromosomeAdaptor.h"
+#include "DNAAlignFeatureAdaptor.h"
+#include "ExonAdaptor.h"
+#include "GeneAdaptor.h"
 #include "SequenceAdaptor.h"
+#include "SimpleFeatureAdaptor.h"
 #include "SliceAdaptor.h"
 #include "TranscriptAdaptor.h"
+
 #include "RawContig.h"
-#include "ExonAdaptor.h"
 #include "SimpleFeature.h"
-#include "SimpleFeatureAdaptor.h"
+#include "DNAAlignFeature.h"
 
 int main(int argc, char *argv[]) {
   DBAdaptor *dba;
@@ -44,6 +47,18 @@ int main(int argc, char *argv[]) {
       SimpleFeature *sf = Set_getElementAt(sSet,i);
       printf("Simple feature: %d-%d id " INT64FMTSTR "\n", SimpleFeature_getStart(sf), 
              SimpleFeature_getEnd(sf), SimpleFeature_getDbID(sf));
+    }
+  }
+  {
+    SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
+    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);
+    Set *dafSet = Slice_getAllDNAAlignFeatures(slice,"",NULL);
+    int i;
+
+    for (i=0;i<Set_getNumElement(dafSet);i++) {
+      DNAAlignFeature *daf = Set_getElementAt(dafSet,i);
+      printf("DNA align feature: %d-%d id " INT64FMTSTR "\n", DNAAlignFeature_getStart(daf), 
+             DNAAlignFeature_getEnd(daf), DNAAlignFeature_getDbID(daf));
     }
   }
   {

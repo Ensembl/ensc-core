@@ -20,7 +20,7 @@ struct SeqFeatureStruct {
   Storable    st;
   Analysis *  analysis;
   double      score;
-  double      pValue;
+  double      eValue;
   double      percentId;
   BaseContig *contig;
 };
@@ -33,6 +33,12 @@ struct SeqFeatureStruct {
 
 #define SeqFeature_setScore(sf,s) (sf)->score = (s)
 #define SeqFeature_getScore(sf) (sf)->score
+
+#define SeqFeature_setEValue(sf,s) (sf)->eValue = (s)
+#define SeqFeature_getEValue(sf) (sf)->eValue
+
+#define SeqFeature_setPercId(sf,s) (sf)->percentId = (s)
+#define SeqFeature_getPercId(sf) (sf)->percentId
 
 #define SeqFeature_setPhase(sf,p) (sf)->phase = (p)
 #define SeqFeature_getPhase(sf) (sf)->phase

@@ -68,6 +68,14 @@ SimpleFeatureAdaptor *DBAdaptor_getSimpleFeatureAdaptor(DBAdaptor *dba) {
   return (SimpleFeatureAdaptor *)DBConnection_getAdaptor(dba->dbc,SIMPLEFEATURE_ADAPTOR);
 }
 
+DNAAlignFeatureAdaptor *DBAdaptor_getDNAAlignFeatureAdaptor(DBAdaptor *dba) {
+  if (!DBConnection_getAdaptor(dba->dbc,DNAALIGNFEATURE_ADAPTOR)) {
+    DBConnection_addAdaptor(dba->dbc,
+                            (BaseAdaptor *)DNAAlignFeatureAdaptor_new(dba));
+  }
+  return (DNAAlignFeatureAdaptor *)DBConnection_getAdaptor(dba->dbc,DNAALIGNFEATURE_ADAPTOR);
+}
+
 #ifdef DONE
 PredictionTranscriptAdaptor *DBAdaptor_getPredictionTranscriptAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,PREDICTIONTRANSCRIPT_ADAPTOR)) {
@@ -75,14 +83,6 @@ PredictionTranscriptAdaptor *DBAdaptor_getPredictionTranscriptAdaptor(DBAdaptor 
                             (BaseAdaptor *)PredictionTranscriptAdaptor_new(dba));
   }
   return (PredictionTranscriptAdaptor *)DBConnection_getAdaptor(dba->dbc,PREDICTIONTRANSCRIPT_ADAPTOR);
-}
-
-DNAAlignFeatureAdaptor *DBAdaptor_getDNAAlignFeatureAdaptor(DBAdaptor *dba) {
-  if (!DBConnection_getAdaptor(dba->dbc,DNAALIGNFEATURE_ADAPTOR)) {
-    DBConnection_addAdaptor(dba->dbc,
-                            (BaseAdaptor *)DNAAlignFeatureAdaptor_new(dba));
-  }
-  return (DNAAlignFeatureAdaptor *)DBConnection_getAdaptor(dba->dbc,DNAALIGNFEATURE_ADAPTOR);
 }
 
 ProteinAlignFeatureAdaptor *DBAdaptor_getProteinAlignFeatureAdaptor(DBAdaptor *dba) {

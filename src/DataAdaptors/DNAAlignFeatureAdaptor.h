@@ -9,5 +9,18 @@ struct DNAAlignFeatureAdaptorStruct {
 };
 
 DNAAlignFeatureAdaptor *DNAAlignFeatureAdaptor_new(DBAdaptor *dba);
+int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features);
+NameTableType *DNAAlignFeatureAdaptor_getTables(void); 
+char *DNAAlignFeatureAdaptor_getColumns(void);
+Set *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
+                                                       StatementHandle *sth,
+                                                       AssemblyMapper *assMapper,
+                                                       Slice *slice);
+
+
+#define DNAAlignFeatureAdaptor_fetchByDbID(dafa, id) BaseFeatureAdaptor_fetchByDbID((BaseFeatureAdaptor *)(dafa), (id))
+#define DNAAlignFeatureAdaptor_fetchAllBySliceAndScore(dafa, slice, score, lname) \
+          BaseFeatureAdaptor_fetchAllBySliceAndScore((BaseFeatureAdaptor *)(dafa), (slice), (score), (lname))
+
 
 #endif

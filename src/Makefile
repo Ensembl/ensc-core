@@ -43,6 +43,7 @@ libensc.a	: \
 	objectfiles/DataAdaptors/CloneAdaptor.o \
 	objectfiles/DataAdaptors/DBAdaptor.o \
 	objectfiles/DataAdaptors/DBConnection.o \
+	objectfiles/DataAdaptors/DNAAlignFeatureAdaptor.o \
 	objectfiles/DataAdaptors/ExonAdaptor.o \
 	objectfiles/DataAdaptors/GeneAdaptor.o \
 	objectfiles/DataAdaptors/MetaContainer.o \

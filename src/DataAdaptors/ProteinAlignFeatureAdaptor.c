@@ -1,5 +1,7 @@
 #include "ProteinAlignFeatureAdaptor.h"
 
+#include "RawContigAdaptor.h"
+#include "AnalysisAdaptor.h"
 
 NameTableType ProteinAlignFeatureAdaptor_tableNames = {{"protein_align_feature","paf"},{NULL,NULL}};
 

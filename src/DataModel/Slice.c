@@ -1,11 +1,15 @@
 #define __SLICE_C__
 #include "Slice.h"
 #undef __SLICE_C__
-#include "Gene.h"
+
+#include "ChromosomeAdaptor.h"
+#include "DNAAlignFeatureAdaptor.h"
 #include "GeneAdaptor.h"
 #include "SimpleFeatureAdaptor.h"
 #include "SliceAdaptor.h"
-#include "ChromosomeAdaptor.h"
+
+#include "Gene.h"
+
 #include "Set.h"
 #include "StrUtil.h"
 
@@ -81,6 +85,13 @@ Set *Slice_getAllSimpleFeatures(Slice *slice, char *logicName, double *score) {
   SimpleFeatureAdaptor *sfa = DBAdaptor_getSimpleFeatureAdaptor(Slice_getAdaptor(slice)->dba);
 
   return SimpleFeatureAdaptor_fetchAllBySliceAndScore(sfa, slice, score, logicName);
+}
+
+Set *Slice_getAllDNAAlignFeatures(Slice *slice, char *logicName, double *score) {
+
+  DNAAlignFeatureAdaptor *dafa = DBAdaptor_getDNAAlignFeatureAdaptor(Slice_getAdaptor(slice)->dba);
+
+  return DNAAlignFeatureAdaptor_fetchAllBySliceAndScore(dafa, slice, score, logicName);
 }
 
 

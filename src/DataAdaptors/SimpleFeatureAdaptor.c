@@ -23,7 +23,7 @@ SimpleFeatureAdaptor *SimpleFeatureAdaptor_new(DBAdaptor *dba) {
   return sfa;
 }
 
-int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *baf, Set *features) {
+int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
 /*
   my ($self,@sf) = @_;
   
@@ -80,7 +80,7 @@ char *SimpleFeatureAdaptor_getColumns(void) {
          "sf.score";
 }
 
-Set *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf,
+Set *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
                                                      StatementHandle *sth,
                                                      AssemblyMapper *mapper,
                                                      Slice *slice) {
@@ -89,8 +89,8 @@ Set *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf,
   Set *features;
   ResultRow *row;
 
-  aa = DBAdaptor_getAnalysisAdaptor(baf->dba);
-  rca = DBAdaptor_getRawContigAdaptor(baf->dba);
+  aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
+  rca = DBAdaptor_getRawContigAdaptor(bfa->dba);
 
   features = Set_new();
   
