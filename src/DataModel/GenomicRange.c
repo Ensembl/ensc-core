@@ -13,7 +13,7 @@ GenomicRange *GenomicRange_new() {
 }
 
 char *GenomicRange_setChrName(GenomicRange *gr, char *chrName) {
-  if ((gr->chrName = (char *)malloc(strlen(chrName))) == NULL) {
+  if ((gr->chrName = (char *)malloc(strlen(chrName)+1)) == NULL) {
     fprintf(stderr,"ERROR: Failed allocating space for chrName\n");
     exit(1);
   }

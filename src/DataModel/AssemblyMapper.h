@@ -1,7 +1,7 @@
 #ifndef __ASSEMBLYMAPPER_H__
 #define __ASSEMBLYMAPPER_H__
 
-typedef struct AssemblyMapperStruct AssemblyMapper;
+#include "DataModelTypes.h"
 
 #include "IDHash.h"
 #include "Mapper.h"

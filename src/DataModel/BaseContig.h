@@ -1,7 +1,7 @@
 #ifndef __BASECONTIG_H__
 #define __BASECONTIG_H__
 
-typedef struct BaseContigStruct BaseContig;
+#include "DataModelTypes.h"
 
 typedef enum ContigTypeEnum {
   CONTIGTYPE_NONE,
@@ -15,6 +15,7 @@ typedef enum ContigTypeEnum {
   int end;
 
 struct BaseContigStruct {
+  BASECONTIG_DATA
 };
 
 #endif

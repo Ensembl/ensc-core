@@ -30,3 +30,22 @@ int Translation_getVersion(Translation *translation) {
   return StableIdInfo_getVersion(&(translation->si));
 }
 
+void Translation_transform(Translation *translation, IDHash *exonTransforms) {
+
+  Exon * startExon = Translation_getStartExon(translation);
+  Exon * endExon   = Translation_getEndExon(translation);
+
+  if (IDHash_contains(exonTransforms,(long)startExon)) {
+    Translation_setStartExon(translation,IDHash_getValue(exonTransforms,(long)startExon));
+  } else {
+    // do nothing, the start exon wasnt mapped
+  }
+
+  if (IDHash_contains(exonTransforms,(long)endExon)) {
+    Translation_setEndExon(translation,IDHash_getValue(exonTransforms,(long)endExon));
+  } else {
+    // do nothing, the end exon wasnt mapped
+  }
+}
+
+

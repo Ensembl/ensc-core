@@ -1,9 +1,8 @@
 #ifndef __ANALYSIS_H__
 #define __ANALYSIS_H__
 
+#include "DataModelTypes.h"
 #include "Storable.h"
-
-typedef struct AnalysisStruct Analysis;
 
 struct AnalysisStruct {
   Storable st;

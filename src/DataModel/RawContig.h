@@ -1,10 +1,9 @@
 #ifndef __RAWCONTIG_H__
 #define __RAWCONTIG_H__
 
+#include "DataModelTypes.h"
 #include "Storable.h"
 #include "BaseContig.h"
-
-typedef struct RawContigStruct RawContig;
 
 struct RawContigStruct {
   BASECONTIG_DATA

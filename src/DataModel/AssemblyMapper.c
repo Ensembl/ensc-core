@@ -26,7 +26,7 @@ AssemblyMapper *AssemblyMapper_new(AssemblyMapperAdaptor *ama, char *type) {
 }
 
 char *AssemblyMapper_setType(AssemblyMapper *am, char *type) {
-  if ((am->type = (char *)malloc(strlen(type))) == NULL) {
+  if ((am->type = (char *)malloc(strlen(type)+1)) == NULL) {
     fprintf(stderr,"ERROR: Failed allocating space for assmapper type\n");
     exit(1);
   }

@@ -3,16 +3,18 @@
 
 #include <time.h>
 
+#include "DataModelTypes.h"
 #include "SeqFeature.h"
 #include "StableIdInfo.h"
 #include "FeatureSet.h"
+#include "Slice.h"
 
-typedef struct ExonStruct {
+struct ExonStruct {
   SeqFeature sf;
   StableIdInfo si;
   FeatureSet components;
   int stickyRank;
-} Exon;
+};
 
 #define Exon_setStart(exon,start) SeqFeature_setStart(&((exon)->sf),start)
 #define Exon_getStart(exon) SeqFeature_getStart(&((exon)->sf))
@@ -56,11 +58,20 @@ time_t Exon_getModified(Exon *exon);
 #define Exon_getLength(e) SeqFeature_getLength(&((e)->sf))
 
 #define Exon_addComponentExon(e, comp) FeatureSet_addFeature(&((e)->components),(comp))
+
+#define Exon_isSticky(e) FeatureSet_getNumFeature(&((e)->components))
+#define Exon_getComponentExonAt(e,ind) FeatureSet_getFeatureAt(&((e)->components),(ind))
+#define Exon_getComponents(e) FeatureSet_getFeatures(&((e)->components))
+
+#define Exon_getNumComponentExon(e) FeatureSet_getNumFeature(&((e)->components))
+
 void Exon_sortByStickyRank(Exon *exon);
 
 
 #define Exon_setContig(exon,c) SeqFeature_setContig(&((exon)->sf),(c))
 #define Exon_getContig(exon) SeqFeature_getContig(&((exon)->sf))
+
+Exon *Exon_transformToSlice(Exon *exon, Slice *slice);
 
 
 Exon *Exon_new();

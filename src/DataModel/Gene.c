@@ -23,7 +23,7 @@ char *Gene_getStableId(Gene *gene) {
 }
 
 char *Gene_setType(Gene *g, char *type) {
-  if ((g->type = (char *)malloc(strlen(type))) == NULL) {
+  if ((g->type = (char *)malloc(strlen(type)+1)) == NULL) {
     fprintf(stderr,"ERROR: Failed allocating space for gene type\n");
     return NULL;
   }
@@ -33,29 +33,61 @@ char *Gene_setType(Gene *g, char *type) {
   return g->type;
 }
 
-void Gene_transformToSlice(Gene *gene, Slice *slice) {
-  IDHash *exonTransforms = IDHash_new(IDHASH_SMALL);
+Set *Gene_getAllExons(Gene *gene) {
+  IDHash *exonHash = IDHash_new(IDHASH_SMALL);
+  int i;
+  Set *exonSet = Set_new();
+  void **values;
 
-#ifdef DONE
-  Exon = Gene_getAllExons(gene);
+  for (i=0;i<Gene_getTranscriptCount(gene);i++) {
+    Transcript *trans = Gene_getTranscriptAt(gene,i);
+    int j;
+
+    for (j=0;j<Transcript_getExonCount(trans);j++) {
+      Exon *exon = Transcript_getExonAt(trans,j);
+      if (!IDHash_contains(exonHash,(long)exon)) {
+        IDHash_add(exonHash,(long)exon,exon);
+      }
+    }
+  }
+
+  values = IDHash_getValues(exonHash);
+
+  for (i=0;i<IDHash_getNumValues(exonHash);i++) {
+    Set_addElement(exonSet, values[i]);
+  }
+  free(values);
+  IDHash_free(exonHash,NULL);
+  
+  return exonSet;
+}
+
+Gene *Gene_transformToSlice(Gene *gene, Slice *slice) {
+  IDHash *exonTransforms = IDHash_new(IDHASH_SMALL);
+  int i;
+  Set *exons = Gene_getAllExons(gene);
 
   // transform Exons
-  for my $exon ( @{$self->get_all_Exons()} ) {
-    my $newExon = $exon->transform( $slice );
-    $exon_transforms{ $exon } = $newExon;
+  for (i=0;i<Set_getNumElement(exons); i++) {
+    Exon *exon = (Exon *)Set_getElementAt(exons,i);
+     
+    Exon *newExon = Exon_transformToSlice(exon,slice);
+    IDHash_add(exonTransforms, (long)exon, newExon);
   }
 
   // now need to re-jiggle the transcripts and their
   // translations to account for the re-mapping process
 
-  foreach my $transcript ( @{$self->get_all_Transcripts()} ) {
+  for (i=0;i<Gene_getTranscriptCount(gene);i++) {
+    Transcript *trans = Gene_getTranscriptAt(gene,i);
 
     // need to grab the translation before starting to
     // re-jiggle the exons
 
-    $transcript->transform( \%exon_transforms );
+    Transcript_transform(trans, exonTransforms);
   }
 
+#ifdef DONE
   // unset the start, end, and strand - they need to be recalculated
   $self->{start} = undef;
   $self->{end} = undef;

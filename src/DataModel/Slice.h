@@ -1,11 +1,12 @@
 #ifndef __SLICE_H__
 #define __SLICE_H__
 
+#include "DataModelTypes.h"
 #include "Storable.h"
 #include "BaseContig.h"
 #include "Gene.h"
+#include "Set.h"
 
-typedef struct SliceStruct Slice;
 
 struct SliceStruct {
   BASECONTIG_DATA
@@ -48,8 +49,7 @@ char *Slice_setChrName(Slice *sl,char *chrName);
 #define Slice_getChrName(sl) (sl)->chrName
 
 char *Slice_getName(Slice *sl, char *retStr);
-
-Gene **Slice_getAllGenes(Slice *slice, char *logicName);
+Set *Slice_getAllGenes(Slice *slice, char *logicName);
 
 
 #endif

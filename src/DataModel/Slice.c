@@ -3,6 +3,7 @@
 #include "GeneAdaptor.h"
 #include "SliceAdaptor.h"
 #include "ChromosomeAdaptor.h"
+#include "Set.h"
 
 Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
                  SliceAdaptor *sa, long dbID, int empty) {
@@ -60,11 +61,10 @@ char *Slice_getName(Slice *slice, char *retStr) {
 }
 
 /* logicName is optional - set to NULL if you want them all */
-Gene **Slice_getAllGenes(Slice *slice, char *logicName) {
+Set *Slice_getAllGenes(Slice *slice, char *logicName) {
   GeneAdaptor *ga = DBAdaptor_getGeneAdaptor(Slice_getAdaptor(slice)->dba);
-  Gene **genes;
 
-  return GeneAdaptor_fetchAllBySlice(ga,slice,logicName,&genes);
+  return GeneAdaptor_fetchAllBySlice(ga,slice,logicName);
 }
 
 char *Slice_setChrName(Slice *sl, char *chrName) {

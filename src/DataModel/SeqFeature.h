@@ -1,13 +1,15 @@
 #ifndef __SEQFEATURE_H__
 #define __SEQFEATURE_H__
 
+
+#include "DataModelTypes.h"
 #include "EnsC.h"
 #include "Storable.h"
 #include "Sequence.h"
 #include "Analysis.h"
 #include "BaseContig.h"
 
-typedef struct SeqFeatureStruct {
+struct SeqFeatureStruct {
   int         start;
   int         end;
   signed char phase;
@@ -21,7 +23,7 @@ typedef struct SeqFeatureStruct {
   double      pValue;
   double      percentId;
   BaseContig *contig;
-} SeqFeature; 
+};
 
 #define SeqFeature_setStart(sf,s) (sf)->start = (s)
 #define SeqFeature_getStart(sf) (sf)->start

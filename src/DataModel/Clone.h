@@ -3,9 +3,9 @@
 
 #include <time.h>
 
+#include "DataModelTypes.h"
 #include "Storable.h"
 
-typedef struct CloneStruct Clone;
 
 struct CloneStruct {
   char *emblAcc;

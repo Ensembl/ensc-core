@@ -1,9 +1,8 @@
 #ifndef __CHROMOSOME_H__
 #define __CHROMOSOME_H__
 
+#include "DataModelTypes.h"
 #include "Storable.h"
-
-typedef struct ChromosomeStruct Chromosome;
 
 struct ChromosomeStruct {
   Storable st;

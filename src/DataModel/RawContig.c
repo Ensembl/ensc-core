@@ -15,7 +15,7 @@ RawContig *RawContig_new() {
 }
 
 char *RawContig_setName(RawContig *rc, char *name) {
-  if ((rc->name = (char *)malloc(strlen(name))) == NULL) {
+  if ((rc->name = (char *)malloc(strlen(name)+1)) == NULL) {
     fprintf(stderr,"ERROR: Failed allocating space for seqfeature name\n");
     return NULL;
   }

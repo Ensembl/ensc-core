@@ -250,8 +250,7 @@ int GeneAdaptor_getStableEntryInfo(GeneAdaptor *ga, Gene *gene) {
 }
 
 
-int GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName, Gene ***outP) {
-  Gene **out = *outP;
+Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName) {
   char sliceName[256];
   char sliceCacheKey[512];
   AssemblyMapperAdaptor *ama;
@@ -262,6 +261,7 @@ int GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName, 
   char *qStr;
   MYSQL_RES *results;
   MYSQL_ROW row;
+  Set *geneSet;
 
   if (logicName) {
     sprintf(sliceCacheKey,"%s:%s",Slice_getName(slice,sliceName),logicName);
@@ -272,7 +272,7 @@ int GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName, 
 
   // check the cache which uses the slice name as it key
   if(StringHash_contains(ga->sliceGeneCache,sliceCacheKey)) {
-    return (Gene **)StringHash_getValue(ga->sliceGeneCache,sliceCacheKey);
+    return (Set *)StringHash_getValue(ga->sliceGeneCache,sliceCacheKey);
   }
 
   ama = DBAdaptor_getAssemblyMapperAdaptor(ga->dba);
@@ -286,7 +286,7 @@ int GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName, 
 
 
   if (!nContigId) {
-    return 0;
+    return emptySet;
   }
 
   qStr = StrUtil_CopyString(
@@ -317,7 +317,7 @@ int GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName, 
 
     if (!analysis || !Analysis_getDbID(analysis)) {
       fprintf(stderr,"WARNING: No analysis for logic name %s exists\n",logicName);
-      return 0;
+      return emptySet;
     }
 
     sprintf(analStr," AND g.analysis_id = %d", Analysis_getDbID(analysis));
@@ -325,6 +325,7 @@ int GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName, 
     qStr = StrUtil_AppendString(qStr,analStr); 
   }
 
+  geneSet = Set_new();
 
   results = ga->prepare((BaseAdaptor *)ga, qStr, strlen(qStr) );
 
@@ -340,15 +341,13 @@ int GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName, 
       push( @out, $newgene );
     }
 */
+    Set_addElement(geneSet, newGene);
   }
 
   free(qStr);
 
-  //place the results in an LRU cache
-/*
-  $self->{'_slice_gene_cache'}{$key} = \@out;
+  StringHash_add(ga->sliceGeneCache, sliceCacheKey, geneSet);
 
-  return \@out;
-*/
+  return geneSet;
 }
 

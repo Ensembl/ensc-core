@@ -1,13 +1,14 @@
 #ifndef __BASEALIGNFEATURE_H__
 #define __BASEALIGNFEATURE_H__
 
+#include "DataModelTypes.h"
 #include "SeqFeature.h"
 
-typedef struct BaseAlignFeatureStruct {
+struct BaseAlignFeatureStruct {
   SeqFeature sf1;
   SeqFeature sf2;
   char *cigarString;
-} BaseAlignFeature;
+};
 
 BaseAlignFeature *BaseAlignFeature_new(void);
 

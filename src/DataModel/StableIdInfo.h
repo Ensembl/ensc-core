@@ -4,12 +4,14 @@
 #include <time.h>
 #include <stdio.h>
 
-typedef struct StableIdInfoStruct {
+#include "DataModelTypes.h"
+
+struct StableIdInfoStruct {
   char *stableId;
   int   version;
   time_t created;
   time_t modified;
-} StableIdInfo;
+};
 
 char *StableIdInfo_setStableId(StableIdInfo *si, char *sid); 
 #define StableIdInfo_getStableId(si)  (si)->stableId

@@ -1,16 +1,17 @@
 #ifndef __TRANSLATION_H__
 #define __TRANSLATION_H__
 
+#include "DataModelTypes.h"
 #include "Exon.h"
 
-typedef struct TranslationStruct {
+struct TranslationStruct {
   int start;
   int end;
   Exon *startExon;
   Exon *endExon;
   Storable st; 
   StableIdInfo si;
-} Translation;
+};
 
 #define Translation_setStart(translation,s) (translation)->start = (s)
 #define Translation_getStart(translation) (translation)->start

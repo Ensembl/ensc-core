@@ -1,19 +1,22 @@
 #ifndef __TRANSCRIPT_H__
 #define __TRANSCRIPT_H__
 
+#include "DataModelTypes.h"
+
 #include "SeqFeature.h"
 #include "FeatureSet.h"
 #include "Storable.h"
 #include "Translation.h"
+#include "IDHash.h"
 
-typedef struct TranscriptStruct {
+struct TranscriptStruct {
   SeqFeature sf;
   Translation *translation;
   long translationId;
   FeatureSet fs;
   StableIdInfo si;
   char *type;
-} Transcript;
+};
 
 #define Transcript_setStableId(transcript,sid)  StableIdInfo_setStableId(&((transcript)->si),(sid))
 char *Transcript_getStableId(Transcript *transcript);
@@ -42,6 +45,9 @@ Transcript *Transcript_new(void);
 
 #define Transcript_setTranslationId(transcript,tid) (transcript)->translationId = (tid)
 #define Transcript_getTranslationId(transcript) (transcript)->translationId
+
+#define Transcript_setTranslation(transcript,tn) (transcript)->translation = (tn)
+#define Transcript_getTranslation(transcript) (transcript)->translation
 
 #define Transcript_setDbID(transcript,id) SeqFeature_setDbID(&((transcript)->sf),(id))
 #define Transcript_getDbID(transcript) SeqFeature_getDbID(&((transcript)->sf))

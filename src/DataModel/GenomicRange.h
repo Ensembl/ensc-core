@@ -1,14 +1,14 @@
 #ifndef __GENOMICRANGE_H__
 #define __GENOMICRANGE_H__
 
+#include "DataModelTypes.h"
 
-
-typedef struct GenomicRangeStruct {
+struct GenomicRangeStruct {
   char *chrName;
   int   chrStart;
   int   chrEnd;
   long  chrId;
-} GenomicRange;
+};
 
 GenomicRange *GenomicRange_new();
 

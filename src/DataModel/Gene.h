@@ -1,16 +1,20 @@
 #ifndef __GENE_H__
 #define __GENE_H__
 
+#include "DataModelTypes.h"
 #include "SeqFeature.h"
 #include "FeatureSet.h"
 #include "StableIdInfo.h"
+#include "Slice.h"
+#include "Transcript.h"
+#include "Set.h"
 
-typedef struct GeneStruct {
+struct GeneStruct {
   FeatureSet fs;
   SeqFeature sf;
   StableIdInfo si;
   char *type;
-} Gene;
+};
 
 Gene *Gene_new(void);
 
@@ -55,5 +59,10 @@ char *Gene_setType(Gene *gene, char *type);
 #define Gene_EachTranscript(gene,trans,iter) \
     for (iter=0; iter<Gene_getTranscriptCount(gene); iter++) { \
       trans = Gene_getTranscriptAt(gene,iter);
+
+Gene *Gene_transformToSlice(Gene *gene, Slice *slice);
+Set *Gene_getAllExons(Gene *gene);
+
+
 
 #endif

@@ -5,6 +5,8 @@
 
 #include "IDHash.h"
 
+#include "DataModelTypes.h"
+
 #include "MapperDefs.h"
 #include "MapperPairSet.h"
 #include "MapperRangeSet.h"
@@ -12,12 +14,12 @@
 #include "MapperRange.h"
 #include "MapperGap.h"
 
-typedef struct MapperStruct {
+struct MapperStruct {
   IDHash *hashes[2];
   CoordSystem toSystem;
   CoordSystem fromSystem;
   int isSorted;
-} Mapper;
+};
 
 #define Mapper_setTo(m, t) (m)->toSystem = (t)
 #define Mapper_getTo(m) (m)->toSystem
