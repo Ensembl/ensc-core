@@ -149,7 +149,7 @@ Gene *Gene_transformToSlice(Gene *gene, Slice *slice) {
     Exon *exon = (Exon *)Vector_getElementAt(exons,i);
      
     Exon *newExon = Exon_transformToSlice(exon,slice);
-    IDHash_add(exonTransforms, (long)exon, newExon);
+    IDHash_add(exonTransforms, (IDType)exon, newExon);
   }
 
   // now need to re-jiggle the transcripts and their
