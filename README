@@ -1,0 +1,9 @@
+EnsC core
+=========
+Aim: To replicate the ensembl core API in C.
+
+Warning: This code is in the early stages of development. Do not 
+         expect it to contain all the API methods, or in fact to
+         work in any way at all.
+
+To see it in action compile the code, and then run bin/testdbc

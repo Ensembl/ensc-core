@@ -1,0 +1,178 @@
+#include <stdio.h>
+#include "IDHash.h"
+
+#define IDHash_getBucketNum(idHash,key) ((key)%(idHash)->size);
+
+IDHash *IDHash_new(IDHashSizes size) {
+  IDHash *idHash;
+
+  if ((idHash = (IDHash *)calloc(1,sizeof(IDHash))) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for idHash\n");
+    return NULL;
+  }
+
+  switch (size) {
+    case IDHASH_SMALL:
+      idHash->size = 257; 
+      break;
+    case IDHASH_LARGE:
+      idHash->size = 104711; 
+      break;
+    case IDHASH_MEDIUM:
+    default:
+      idHash->size = 32353; 
+  }
+
+  if ((idHash->buckets = (IDKeyValuePair **)calloc(idHash->size,sizeof(IDKeyValuePair *))) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for idHash->buckets\n");
+    return NULL;
+  }
+
+  if ((idHash->bucketCounts = (int *)calloc(idHash->size,sizeof(int))) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for idHash->buckets\n");
+    return NULL;
+  }
+
+  return idHash;
+}
+
+int IDHash_getNumValues(IDHash *idHash) {
+  return idHash->nValue;
+}
+
+void *IDHash_getValues(IDHash *idHash) {
+  int i;
+  int j;
+  void **values;
+  int valCnt = 0;
+  
+  if (!idHash->nValue) {
+    return NULL;
+  }
+
+  if ((values = (void **)calloc(idHash->nValue,sizeof(void *))) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for values\n");
+    return NULL;
+  }
+
+  for (i=0; i<idHash->size; i++) {
+    if (idHash->bucketCounts[i]) {
+      for (j=0; j<idHash->bucketCounts[i]; j++) {
+        values[valCnt++] = idHash->buckets[i][j].value;
+      }
+    }
+  }
+  if (valCnt != idHash->nValue) {
+    fprintf(stderr,"ERROR: Internal IDHash error - valCnt != idHash->nValue\n");
+  }
+  return values;
+}
+
+long *IDHash_getKeys(IDHash *idHash) {
+  int i;
+  int j;
+  long *keys;
+  int keyCnt = 0;
+  
+  if (!idHash->nValue) {
+    return NULL;
+  }
+
+  if ((keys = (long *)calloc(idHash->nValue,sizeof(long))) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for keys\n");
+    return NULL;
+  }
+
+  for (i=0; i<idHash->size; i++) {
+    if (idHash->bucketCounts[i]) {
+      for (j=0; j<idHash->bucketCounts[i]; j++) {
+        keys[keyCnt++] = idHash->buckets[i][j].key;
+      }
+    }
+  }
+  if (keyCnt != idHash->nValue) {
+    fprintf(stderr,"ERROR: Internal IDHash error - keyCnt != idHash->nValue\n");
+  }
+  return keys;
+}
+
+void *IDHash_getValue(IDHash *idHash, long id) {
+  int bucketNum = IDHash_getBucketNum(idHash,id);
+  int i;
+
+  for (i=0; i<idHash->bucketCounts[bucketNum]; i++) {
+    if (id == idHash->buckets[bucketNum][i].key) {
+      return idHash->buckets[bucketNum][i].value;
+    }
+  }
+
+  fprintf(stderr,"ERROR: Didn't find key %d in IDHash\n",id);
+  return NULL;
+}
+
+int IDHash_contains(IDHash *idHash, long id) {
+  int bucketNum = IDHash_getBucketNum(idHash,id);
+  int i;
+
+  for (i=0; i<idHash->bucketCounts[bucketNum]; i++) {
+    if (id == idHash->buckets[bucketNum][i].key) {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+int IDHash_add(IDHash *idHash, long id, void *val) {
+  int bucketNum = IDHash_getBucketNum(idHash,id);
+  int count = idHash->bucketCounts[bucketNum];
+
+  if (IDHash_contains(idHash,id)) {
+    int i;
+
+    fprintf(stderr,"WARNING: Duplicate key %d - value will be overwritten\n",id);
+    for (i=0; i<idHash->bucketCounts[bucketNum]; i++) {
+      if (id == idHash->buckets[bucketNum][i].key) {
+        idHash->buckets[bucketNum][i].value = val;
+        return 1;
+      }
+    }
+    
+  } else {
+    if (!count || !(count%10)) {
+      if ((idHash->buckets[bucketNum] = 
+           (IDKeyValuePair *)realloc(idHash->buckets[bucketNum],
+                                   (count+10) * sizeof(IDKeyValuePair))) == NULL) {
+        fprintf(stderr,"ERROR: Failed allocating space for idHash bucket\n");
+        return 0;
+      }
+    }
+    
+    idHash->buckets[bucketNum][count].key   = id;
+    idHash->buckets[bucketNum][count].value = val;
+
+    idHash->nValue++;
+    idHash->bucketCounts[bucketNum]++;
+  }
+
+  return 1; 
+}
+
+void IDHash_free(IDHash *idHash, int freeFunc()) {
+  int i;
+  int j;
+  
+  for (i=0; i<idHash->size; i++) {
+    if (idHash->bucketCounts[i]) {
+      if (freeFunc) {
+        for (j=0; j<idHash->bucketCounts[i]; j++) {
+          freeFunc(idHash->buckets[i][j].value);
+        }
+      }
+      free(idHash->buckets[i]);
+    }
+  }
+  
+  free(idHash->bucketCounts);
+  free(idHash);
+}

@@ -1,0 +1,1 @@
+cc -g -I/Users/searle/local/include/mysql -I../DataModel/Mapper -I../Util -I../DataModel -I../DataAdaptors -o testdbc testdbc.c ../DataAdaptors/*.c ../Util/*.c ../DataModel/*.c ../DataModel/Mapper/*.c -L/users/searle/local/lib/mysql -lmysqlclient
