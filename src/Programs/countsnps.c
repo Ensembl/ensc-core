@@ -147,12 +147,18 @@ int main(int argc, char **argv) {
   
           for (k=0; k<Gene_getTranscriptCount(gene) && !done; k++) {
             Transcript *trans = Gene_getTranscriptAt(gene,k);
+            /* 
+            printf("Translation %p Coding region start = %d coding region end = %d\n",
+                   Transcript_getTranslation(trans),
+                   Transcript_getCodingRegionStart(trans),
+                   Transcript_getCodingRegionEnd(trans)); 
+            */
   
             if (DNAAlignFeature_getEnd(snp) >= Transcript_getStart((SeqFeature *)trans) && 
                 DNAAlignFeature_getStart(snp) <= Transcript_getEnd((SeqFeature *)trans)) {
               int m;
        
-              for (m=0; m<Transcript_getExonCount(trans); m++) {
+              for (m=0; m<Transcript_getExonCount(trans) && !done; m++) {
                 Exon *exon = Transcript_getExonAt(trans,m);
   
                 if (DNAAlignFeature_getEnd(snp) >= Exon_getStart(exon) && 

@@ -38,8 +38,8 @@ void Translation_transform(Translation *translation, IDHash *exonTransforms) {
 
   Exon * startExon = Translation_getStartExon(translation);
   Exon * endExon   = Translation_getEndExon(translation);
-  IDType startExonRef = (int)startExon;
-  IDType endExonRef = (int)endExon;
+  IDType startExonRef = (IDType)startExon;
+  IDType endExonRef = (IDType)endExon;
 
 /* CHECK */
   if (IDHash_contains(exonTransforms,startExonRef)) {

@@ -117,6 +117,7 @@ Exon *ExonAdaptor_exonFromRow(ExonAdaptor *ea, ResultRow *row) {
   RawContig *rc;
 
   Exon_setDbID(exon,row->getLongLongAt(row,0));
+  // printf("Set exon id to " IDFMTSTR " from " IDFMTSTR "\n",Exon_getDbID(exon),row->getLongLongAt(row,0));
   Exon_setStart(exon,row->getLongAt(row,2));
   Exon_setEnd(exon,row->getLongAt(row,3));
   Exon_setStrand(exon,row->getIntAt(row,4));

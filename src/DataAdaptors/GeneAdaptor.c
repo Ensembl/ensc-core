@@ -161,7 +161,7 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
 
 // Note using string because its allocated
     if (!IDHash_contains(translationHash,row->getLongAt(row,1))) {
-      IDHash_add(translationHash, row->getLongAt(row,1), row->getStringAt(row,6));
+      IDHash_add(translationHash, row->getLongLongAt(row,1), row->getStringAt(row,6));
     }
   }
 
@@ -206,7 +206,9 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
     }
 
     for (i=0;i<tes->nExon;i++) {
-      Transcript_addExon(transcript, (Exon *)IDHash_getValue(exonHash, tes->exonIds[i]));
+      Exon *exon = IDHash_getValue(exonHash, tes->exonIds[i]);
+      // printf(" Exon from tes = " IDFMTSTR "\n",Exon_getDbID(exon));
+      Transcript_addExon(transcript, exon);
     }
 
     Transcript_setType(transcript, Gene_getType(gene));

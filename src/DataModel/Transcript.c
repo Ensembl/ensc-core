@@ -1,5 +1,6 @@
 #include "Transcript.h"
 #include "TranscriptAdaptor.h"
+#include "TranslationAdaptor.h"
 #include "DBEntryAdaptor.h"
 
 Transcript *Transcript_new() {
@@ -235,3 +236,14 @@ Exon *Transcript_getStartExon(Transcript *trans) {
 Exon *Transcript_getEndExon(Transcript *trans) {
   return Transcript_getExonAt(trans,Transcript_getExonCount(trans)-1); 
 }
+
+
+Translation *Transcript_getTranslation(Transcript *trans) {
+  if (!trans->translation && trans->translationId ) {
+    TranslationAdaptor *ta = DBAdaptor_getTranslationAdaptor(Transcript_getAdaptor(trans)->dba);
+    
+    trans->translation = TranslationAdaptor_fetchByDbID(ta, trans->translationId, trans);
+  }
+  return trans->translation;
+}
+

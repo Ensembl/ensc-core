@@ -229,7 +229,7 @@ Exon *Exon_copy(Exon *orig, CopyDepth depth) {
   }
   Exon_setStart(newEx,Exon_getStart(orig));  
   Exon_setEnd(newEx,Exon_getEnd(orig));  
-  Exon_setDbID(newEx,Exon_getEnd(orig));  
+  Exon_setDbID(newEx,Exon_getDbID(orig));  
   Exon_setAdaptor(newEx,Exon_getAdaptor(orig));  
   Exon_setStrand(newEx,Exon_getStrand(orig));  
   Exon_setPhase(newEx,Exon_getPhase(orig));  

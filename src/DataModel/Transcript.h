@@ -57,7 +57,8 @@ Transcript *Transcript_new(void);
 #define Transcript_getTranslationId(transcript) (transcript)->translationId
 
 #define Transcript_setTranslation(transcript,tn) (transcript)->translation = (tn)
-#define Transcript_getTranslation(transcript) (transcript)->translation
+Translation *Transcript_getTranslation(Transcript *trans);
+
 
 #define Transcript_setDbID(transcript,id) AnnotatedSeqFeature_setDbID((transcript),(id))
 #define Transcript_getDbID(transcript) AnnotatedSeqFeature_getDbID((transcript))
