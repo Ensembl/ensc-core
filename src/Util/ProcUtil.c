@@ -63,7 +63,7 @@ int ProcUtil_timeInfo(char *routine) {
 /*            22/6/93 SMJS  Initial Implementation                            */
 /******************************************************************************/
 void ProcUtil_mallInfo() {
-#if !defined(os2) && !defined(__ppc__)
+#if !defined(os2) && !defined(__ppc__) && !defined(__osf__)
 #ifndef linux
   struct mallinfo mall;
 
