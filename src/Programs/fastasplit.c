@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
   int fileArgNum;
   int bySize = 0;
   long nPerFile;
-  long entryCount;
+  long entryCount = -1;
   int argnum;
   long remainder; 
 
@@ -139,6 +139,8 @@ int main(int argc, char *argv[]) {
         nPerFile--;
       }
 
+      printf("chunk file = %s\n",chunkFName);
+
       if ((OutP = fopen(chunkFName,"w")) == NULL) {
         fprintf(stderr,"Error: Couldn't open file %s\n",chunkFName);
         exit(1);
@@ -151,7 +153,6 @@ int main(int argc, char *argv[]) {
     } else {
       entryCount++;
     }
-
     fprintf(OutP,"%s",line);
     while (fgets(line,MAXSTRLEN,InP)) {
       if (line[0] == '>') break;
