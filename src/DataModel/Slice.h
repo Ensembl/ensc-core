@@ -11,7 +11,6 @@
 struct SliceStruct {
   BASECONTIG_DATA
   int strand;
-  Storable st;
   char emptyFlag;
   char *chrName;
   char *assemblyType;
@@ -21,14 +20,14 @@ struct SliceStruct {
 Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
                  SliceAdaptor *sa, long dbID, int empty);
 
-#define Slice_setDbID(s,dbID) Storable_setDbID(&((s)->st),dbID)
-#define Slice_getDbID(s) Storable_getDbID(&((s)->st))
+#define Slice_setDbID(s,dbID) BaseContig_setDbID((s),(dbID))
+#define Slice_getDbID(s) BaseContig_getDbID((s))
 
-#define Slice_setAdaptor(s,ad) Storable_setAdaptor(&((s)->st),ad)
-#define Slice_getAdaptor(s) Storable_getAdaptor(&((s)->st))
+#define Slice_setAdaptor(s,ad) BaseContig_setAdaptor((s),(ad))
+#define Slice_getAdaptor(s) BaseContig_getAdaptor((s))
 
 #define Slice_setEmptyFlag(s,e) (s)->emptyFlag = (e)
-#define Slice_getEmptyFlag(s) (s)->emptyFlag;
+#define Slice_getEmptyFlag(s) (s)->emptyFlag
 
 #define Slice_setChrStart(sl,s) (sl)->start = (s)
 #define Slice_getChrStart(sl) (sl)->start

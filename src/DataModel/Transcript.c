@@ -59,15 +59,22 @@ Transcript *Transcript_transform(Transcript *trans, IDHash *exonTransforms) {
     }
   }
 
-#ifdef DONE
-  //Flush the exons and all related internal caches
-  $self->flush_Exons();
+  //Flush the exons and NIY all related internal caches
+  Transcript_flushExons(trans);
 
   // attach the new list of exons to the transcript
-  push @{$self->{'_trans_exon_array'}},@mapped_list_of_exons;
-#endif
+  for (i=0; i<Set_getNumElement(mappedExonSet); i++) {
+    Transcript_addExon(trans,(Exon *)Set_getElementAt(mappedExonSet,i));
+  }
 
   if ( Transcript_getTranslation(trans)) {
     Translation_transform(Transcript_getTranslation(trans), exonTransforms);
   }
+
+  Set_free(mappedExonSet,NULL);
+}
+
+void Transcript_flushExons(Transcript *trans) {
+  Transcript_removeAllExons(trans);
+// NIY caches 
 }

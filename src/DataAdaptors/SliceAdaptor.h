@@ -11,6 +11,8 @@ struct SliceAdaptorStruct {
 
 SliceAdaptor *SliceAdaptor_new(DBAdaptor *dba);
 Slice *SliceAdaptor_fetchByChrStartEnd(SliceAdaptor *sa, char *chr, int start, int end);
+Slice *SliceAdaptor_fetchByChrName(SliceAdaptor *sa, char *chr);
+
 
 
 #endif

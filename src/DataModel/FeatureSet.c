@@ -28,3 +28,6 @@ void *FeatureSet_addFeature(FeatureSet *fs, void *sf) {
   return sf;
 }
 
+void FeatureSet_removeAll(FeatureSet *fs) {
+  fs->nFeature = 0;
+}

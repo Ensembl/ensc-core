@@ -97,5 +97,5 @@ Gene *Gene_transformToSlice(Gene *gene, Slice *slice) {
 
   IDHash_free(exonTransforms, NULL);
 
-  return;
+  return gene;
 }

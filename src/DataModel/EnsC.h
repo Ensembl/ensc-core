@@ -13,4 +13,10 @@
 #endif
 #define FALSE 0
 
+typedef enum CopyDepthEnum {
+  NONE_DEPTH,
+  SHALLOW_DEPTH,
+  DEEP_DEPTH
+} CopyDepth;
+
 #endif

@@ -3,6 +3,7 @@
 
 #include <time.h>
 
+#include "EnsC.h"
 #include "DataModelTypes.h"
 #include "SeqFeature.h"
 #include "StableIdInfo.h"
@@ -75,5 +76,7 @@ Exon *Exon_transformToSlice(Exon *exon, Slice *slice);
 
 
 Exon *Exon_new();
+Exon *Exon_copy(Exon *orig, CopyDepth depth);
+
 
 #endif

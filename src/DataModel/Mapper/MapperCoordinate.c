@@ -13,5 +13,6 @@ MapperCoordinate *MapperCoordinate_new(long id, int start, int end, int strand) 
   mc->start = start;
   mc->end = end;
   mc->strand = strand;
+  mc->rangeType = MAPPERRANGE_COORD;
   return mc;
 }

@@ -11,16 +11,15 @@ struct RawContigStruct {
   int emblOffset;
   long cloneId;
   char *name;  
-  Storable st;
 };
 
 RawContig *RawContig_new(void);
 
-#define RawContig_setDbID(rc,id) Storable_setDbID(&((rc)->st),(id))
-#define RawContig_getDbID(rc) Storable_getDbID(&((rc)->st))
+#define RawContig_setDbID(rc,id) BaseContig_setDbID((rc),(id))
+#define RawContig_getDbID(rc) BaseContig_getDbID((rc))
 
-#define RawContig_setAdaptor(rc,ad) Storable_setAdaptor(&((rc)->st),ad)
-#define RawContig_getAdaptor(rc) Storable_getAdaptor(&((rc)->st))
+#define RawContig_setAdaptor(rc,ad) BaseContig_setAdaptor((rc),(ad))
+#define RawContig_getAdaptor(rc) BaseContig_getAdaptor((rc))
 
 char *RawContig_setName(RawContig *rc, char *name);
 char *RawContig_getName(RawContig *rc);

@@ -2,6 +2,7 @@
 #define __MAPPERRANGE_H__
 
 typedef enum MapperRangeTypeEnum {
+  MAPPERRANGE_NONE,
   MAPPERRANGE_GAP,
   MAPPERRANGE_COORD
 } MapperRangeType;

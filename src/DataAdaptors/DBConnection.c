@@ -30,7 +30,7 @@ DBConnection *DBConnection_new(char *host, char *user, char *pass,
 }
 
 MYSQL_RES *DBConnection_prepare(DBConnection *dbc, char *queryStr, int queryLen) {
-  fprintf(stderr,"Query = %s\n",queryStr);
+  /*fprintf(stderr,"Query = %s\n",queryStr);*/
   mysql_real_query(dbc->mysql, queryStr, queryLen);
   return mysql_store_result(dbc->mysql);
 }

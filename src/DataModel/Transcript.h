@@ -43,6 +43,8 @@ Transcript *Transcript_new(void);
 
 #define Transcript_getExonCount(trans) FeatureSet_getNumFeature(&((trans)->fs))
 
+#define Transcript_removeAllExons(trans) FeatureSet_removeAll(&((trans)->fs))
+
 #define Transcript_setTranslationId(transcript,tid) (transcript)->translationId = (tid)
 #define Transcript_getTranslationId(transcript) (transcript)->translationId
 
@@ -54,5 +56,8 @@ Transcript *Transcript_new(void);
 
 #define Transcript_setAdaptor(transcript,ad) SeqFeature_setAdaptor(&((transcript)->sf),(ad))
 #define Transcript_getAdaptor(transcript) SeqFeature_getAdaptor(&((transcript)->sf))
+
+void Transcript_flushExons(Transcript *trans);
+
 
 #endif

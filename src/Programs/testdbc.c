@@ -81,8 +81,31 @@ int main(int argc, char *argv[]) {
   }
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
-    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,10000000);
+    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",9000000,10000000);
     Set *geneSet = Slice_getAllGenes(slice,NULL);
+    int i;
+
+    for (i=0;i<Set_getNumElement(geneSet);i++) {
+      Gene *gene = Set_getElementAt(geneSet,i);
+      int j;
+
+      fprintf(stderr,"Gene %s\n",Gene_getStableId(gene));
+      for (j=0;j<Gene_getTranscriptCount(gene);j++) {
+        Transcript *trans = Gene_getTranscriptAt(gene,j);
+        int k;
+
+        fprintf(stderr," Transcript %s\n",Transcript_getStableId(trans));
+        for (k=0;k<Transcript_getExonCount(trans);k++) {
+          Exon *exon = (Exon *)Transcript_getExonAt(trans,k);
+          fprintf(stderr,"  Exon %s %d %d %d\n",
+                  Exon_getStableId(exon),
+                  Exon_getStart(exon),
+                  Exon_getEnd(exon),
+                  Exon_getStrand(exon)
+                 );
+        }
+      }
+    }
   }
   {
     ChromosomeAdaptor *ca = DBAdaptor_getChromosomeAdaptor(dba);

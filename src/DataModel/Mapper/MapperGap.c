@@ -9,5 +9,7 @@ MapperGap *MapperGap_new() {
     exit(1);
   }
 
+  mg->rangeType = MAPPERRANGE_GAP;
+
   return mg;
 }

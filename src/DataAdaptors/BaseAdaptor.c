@@ -9,6 +9,6 @@ void BaseAdaptor_init(BaseAdaptor *ba, DBAdaptor *dba, int adaptorType) {
 }
 
 MYSQL_RES *BaseAdaptor_prepare(BaseAdaptor *ba, char *qStr, int len) {
-  printf("Query = %s len = %d\n",qStr,len);
+  /*printf("Query = %s len = %d\n",qStr,len);*/
   return DBAdaptor_prepare(ba->dba,qStr,len);
 }

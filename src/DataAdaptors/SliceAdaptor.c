@@ -1,5 +1,6 @@
 #include "SliceAdaptor.h"
 #include "BaseAdaptor.h"
+#include "ChromosomeAdaptor.h"
 #include "MysqlUtil.h"
 
 
@@ -36,3 +37,29 @@ Slice *SliceAdaptor_fetchByChrStartEnd(SliceAdaptor *sa, char *chr, int start, i
   return slice;
 }
 
+Slice *SliceAdaptor_fetchByChrName(SliceAdaptor *sa, char *chr) {
+  Slice *slice;
+  int chrStart = 1;
+  int chrEnd;
+  ChromosomeAdaptor *ca;
+  Chromosome *chromosome;
+  char *assemblyType;
+
+  // set the end of the slice to the end of the chromosome
+
+  ca = DBAdaptor_getChromosomeAdaptor(sa->dba);
+  chromosome = ChromosomeAdaptor_fetchByChrName(ca,chr); 
+
+  if (!chromosome) {
+    fprintf(stderr, "ERROR: Unknown chromosome %s\n",chr);
+    exit(1);
+  }
+
+  chrEnd = Chromosome_getLength(chromosome);
+
+  assemblyType = DBAdaptor_getAssemblyType(sa->dba);
+
+  slice = Slice_new(chr, chrStart, chrEnd, 1, assemblyType, sa, 0, FALSE);
+
+  return slice;
+}
