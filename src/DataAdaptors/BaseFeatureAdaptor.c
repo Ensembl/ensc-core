@@ -1,7 +1,9 @@
 #include "BaseFeatureAdaptor.h"
 
 
+#ifdef DONE
 $SLICE_FEATURE_CACHE_SIZE = 4;
+#endif
 
 
 void BaseFeatureAdaptor_init(BaseFeatureAdaptor *baf) {
@@ -19,21 +21,6 @@ void BaseFeatureAdaptor_init(BaseFeatureAdaptor *baf) {
   return $self;
 }
 
-=head2 generic_fetch
-
-  Arg [1]    : (optional) string $constraint
-               An SQL query constraint (i.e. part of the WHERE clause)
-  Arg [2]    : (optional) string $logic_name
-               the logic_name of the analysis of the features to obtain
-  Example    : $fts = $a->generic_fetch('contig_id in (1234, 1235)', 'Swall');
-  Description: Performs a database fetch and returns feature objects in
-               contig coordinates.
-  Returntype : listref of Bio::EnsEMBL::SeqFeature in contig coordinates
-  Exceptions : none
-  Caller     : BaseFeatureAdaptor, ProxyDnaAlignFeatureAdaptor::generic_fetch
-
-=cut
-  
 sub BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *baf, char *constraint,
                                     char *logicName, AssemblyMapper *mapper, Slice *slice) {
   
@@ -111,21 +98,7 @@ sub BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *baf, char *constraint,
   return $self->_objs_from_sth($sth, $mapper, $slice);
 }
 
-
-=head2 fetch_by_dbID
-
-  Arg [1]    : int $id
-               the unique database identifier for the feature to be obtained 
-  Example    : $feat = $adaptor->fetch_by_dbID(1234);
-  Description: Returns the feature created from the database defined by the
-               the id $id. 
-  Returntype : Bio::EnsEMBL::SeqFeature
-  Exceptions : thrown if $id is not defined
-  Caller     : general
-
-=cut
-
-sub BaseFeatureAdaptor_fetchByDbID(BaseFeatureAdaptor *baf, int64 dbID) {
+SeqFeature *BaseFeatureAdaptor_fetchByDbID(BaseFeatureAdaptor *baf, int64 dbID) {
 
   my @tabs = $self->_tables;
 
@@ -138,26 +111,6 @@ sub BaseFeatureAdaptor_fetchByDbID(BaseFeatureAdaptor *baf, int64 dbID) {
   my ($feat) = @{$self->generic_fetch($constraint)}; 
   return $feat;
 }
-
-
-=head2 fetch_all_by_RawContig_constraint
-
-  Arg [1]    : Bio::EnsEMBL::RawContig $contig
-               The contig object from which features are to be obtained
-  Arg [2]    : (optional) string $constraint
-               An SQL query constraint (i.e. part of the WHERE clause)
-  Arg [3]    : (optional) string $logic_name
-               the logic name of the type of features to obtain
-  Example    : $fs = $a->fetch_all_by_Contig_constraint($ctg,'perc_ident>5.0');
-  Description: Returns a listref of features created from the database which 
-               are on the contig defined by $cid and fulfill the SQL constraint
-               defined by $constraint. If logic name is defined, only features
-               with an analysis of type $logic_name will be returned. 
-  Returntype : listref of Bio::EnsEMBL::SeqFeature in contig coordinates
-  Exceptions : thrown if $cid is not defined
-  Caller     : general
-
-=cut
 
 Set *BaseFeatureAdaptor_fetchAllByRawContigConstraint(BaseFeatureAdaptor *baf, RawContig *contig,
                                                       char *constraint, char *logicName)  {
@@ -181,47 +134,10 @@ Set *BaseFeatureAdaptor_fetchAllByRawContigConstraint(BaseFeatureAdaptor *baf, R
   return $self->generic_fetch($constraint, $logic_name);
 }
 
-
-=head2 fetch_all_by_RawContig
-
-  Arg [1]    : Bio::EnsEMBL::RawContig $contig 
-               the contig from which features should be obtained
-  Arg [2]    : (optional) string $logic_name
-               the logic name of the type of features to obtain
-  Example    : @fts = $a->fetch_all_by_RawContig($contig, 'wall');
-  Description: Returns a list of features created from the database which are 
-               are on the contig defined by $cid If logic name is defined, 
-               only features with an analysis of type $logic_name will be 
-               returned. 
-  Returntype : listref of Bio::EnsEMBL::*Feature in contig coordinates
-  Exceptions : none
-  Caller     : general
-
-=cut
-   
 Set *BaseFeatureAdaptor_fetchAllByRawContig(BaseFeatureAdaptor *baf, RawContig *contig,
                                             char *logicName) {
   return BaseFeatureAdaptor_fetchAllByRawContigConstraint(baf,contig,"",logicName);
 }
-
-
-=head2 fetch_all_by_RawContig_and_score
-  Arg [1]    : Bio::EnsEMBL::RawContig $contig 
-               the contig from which features should be obtained
-  Arg [2]    : (optional) float $score
-               the lower bound of the score of the features to obtain
-  Arg [3]    : (optional) string $logic_name
-               the logic name of the type of features to obtain
-  Example    : @fts = $a->fetch_by_RawContig_and_score(1, 50.0, 'Swall');
-  Description: Returns a list of features created from the database which are 
-               are on the contig defined by $cid and which have score greater  
-               than score.  If logic name is defined, only features with an 
-               analysis of type $logic_name will be returned. 
-  Returntype : listref of Bio::EnsEMBL::*Feature in contig coordinates
-  Exceptions : thrown if $score is not defined
-  Caller     : general
-
-=cut
 
 Set *BaseFeatureAdaptor_fetchAllByRawContigAndScore(BaseFeatureAdaptor *baf, RawContig *contig,
                                                     double score, char *logicName) {
@@ -240,49 +156,10 @@ Set *BaseFeatureAdaptor_fetchAllByRawContigAndScore(BaseFeatureAdaptor *baf, Raw
 					                  char *logicName);
 }
 
-
-=head2 fetch_all_by_Slice
-
-  Arg [1]    : Bio::EnsEMBL::Slice $slice
-               the slice from which to obtain features
-  Arg [2]    : (optional) string $logic_name
-               the logic name of the type of features to obtain
-  Example    : $fts = $a->fetch_all_by_Slice($slice, 'Swall');
-  Description: Returns a listref of features created from the database 
-               which are on the Slice defined by $slice. If $logic_name is 
-               defined only features with an analysis of type $logic_name 
-               will be returned. 
-  Returntype : listref of Bio::EnsEMBL::SeqFeatures in Slice coordinates
-  Exceptions : none
-  Caller     : Bio::EnsEMBL::Slice
-
-=cut
-
 Set *BaseFeatureAdaptor_fetchAllBySlice(BaseFeatureAdaptor *baf, Slice *slice,
                                         char *logicName) {
   return BaseFeatureAdaptor_fetchAllBySliceConstraint(slice, "", logicName);
 }
-
-
-=head2 fetch_all_by_Slice_and_score
-
-  Arg [1]    : Bio::EnsEMBL::Slice $slice
-               the slice from which to obtain features
-  Arg [2]    : (optional) float $score
-               lower bound of the the score of the features retrieved
-  Arg [3]    : (optional) string $logic_name
-               the logic name of the type of features to obtain
-  Example    : $fts = $a->fetch_all_by_Slice($slice, 'Swall');
-  Description: Returns a list of features created from the database which are 
-               are on the Slice defined by $slice and which have a score 
-               greated than $score. If $logic_name is defined, 
-               only features with an analysis of type $logic_name will be 
-               returned. 
-  Returntype : listref of Bio::EnsEMBL::SeqFeatures in Slice coordinates
-  Exceptions : none
-  Caller     : Bio::EnsEMBL::Slice
-
-=cut
 
 Set *BaseFeatureAdaptor_fetchAllBySliceAndScore(BaseFeatureAdaptor *baf, Slice *slice,
                                                 double score, char *logicName) {
@@ -298,27 +175,6 @@ Set *BaseFeatureAdaptor_fetchAllBySliceAndScore(BaseFeatureAdaptor *baf, Slice *
 
   return BaseFeatureAdaptor_fetchAllBySliceConstraint(slice, constraint, logicName);
 }  
-
-
-=head2 fetch_all_by_Slice_constraint
-
-  Arg [1]    : Bio::EnsEMBL::Slice $slice
-               the slice from which to obtain features
-  Arg [2]    : (optional) string $constraint
-               An SQL query constraint (i.e. part of the WHERE clause)
-  Arg [3]    : (optional) string $logic_name
-               the logic name of the type of features to obtain
-  Example    : $fs = $a->fetch_all_by_Slice_constraint($slc, 'perc_ident > 5');
-  Description: Returns a listref of features created from the database which 
-               are on the Slice defined by $slice and fulfill the SQL 
-               constraint defined by $constraint. If logic name is defined, 
-               only features with an analysis of type $logic_name will be 
-               returned. 
-  Returntype : listref of Bio::EnsEMBL::SeqFeatures in Slice coordinates
-  Exceptions : thrown if $slice is not defined
-  Caller     : Bio::EnsEMBL::Slice
-
-=cut
 
 Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *baf, Slice *slice,
                                                   char *constraint, char *logicName) {
@@ -401,7 +257,6 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *baf, Slice
   return $self->{'_slice_feature_cache'}{$key} = \@out;
 }
 
-
 int BaseFeatureAdaptor_store(BaseFeatureAdaptor *baf, Set *features) {
   fprintf(stderr,"ERROR: Abstract method store not defined by implementing subclass\n");
   exit(1);
@@ -430,22 +285,6 @@ int BaseFeatureAdaptor_remove(BaseFeatureAdaptor *baf, SeqFeature *feature) {
   
   return;
 }
-
-
-
-=head2 remove_by_RawContig
-
-  Arg [1]    : Bio::Ensembl::RawContig $contig 
-  Example    : $feature_adaptor->remove_by_RawContig($contig);
-  Description: This removes features from the database which lie on a removed
-               contig.  The table the features are removed from is defined by 
-               the abstract method_tablename, and the primary key of the table
-               is assumed to be contig_id.
-  Returntype : none
-  Exceptions : thrown if no contig is supplied
-  Caller     : general
-
-=cut
 
 int BaseFeatureAdaptor_removeByRawContig(BaseFeatureAdaptor *baf, RawContig *contig) {
   my ($self, $contig) = @_;

@@ -68,12 +68,12 @@ SimpleFeatureAdaptor *DBAdaptor_getSimpleFeatureAdaptor(DBAdaptor *dba) {
   return (SimpleFeatureAdaptor *)DBConnection_getAdaptor(dba->dbc,SIMPLEFEATURE_ADAPTOR);
 }
 
-DnaAlignFeatureAdaptor *DBAdaptor_getDnaAlignFeatureAdaptor(DBAdaptor *dba) {
+DNAAlignFeatureAdaptor *DBAdaptor_getDNAAlignFeatureAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,DNAALIGNFEATURE_ADAPTOR)) {
     DBConnection_addAdaptor(dba->dbc,
-                            (BaseAdaptor *)DnaAlignFeatureAdaptor_new(dba));
+                            (BaseAdaptor *)DNAAlignFeatureAdaptor_new(dba));
   }
-  return (DnaAlignFeatureAdaptor *)DBConnection_getAdaptor(dba->dbc,DNAALIGNFEATURE_ADAPTOR);
+  return (DNAAlignFeatureAdaptor *)DBConnection_getAdaptor(dba->dbc,DNAALIGNFEATURE_ADAPTOR);
 }
 
 ProteinAlignFeatureAdaptor *DBAdaptor_getProteinAlignFeatureAdaptor(DBAdaptor *dba) {

@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 
     for (i=1;i<5;i++) {
       gene = GeneAdaptor_fetchByDbID(ga,i,FALSE);
-      if (gene) printf("Gene %s %d\n",Gene_getStableId(gene), Gene_getDbID(gene));
+      if (gene) printf("Gene %s " INT64FMTSTR "\n",Gene_getStableId(gene), Gene_getDbID(gene));
     }
 
     
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
     TranscriptAdaptor *ta = DBAdaptor_getTranscriptAdaptor(dba);
     Transcript *t = TranscriptAdaptor_fetchByDbID(ta,1);
 
-    printf("Transcript %d translation id = %d\n",Transcript_getDbID(t), Transcript_getTranslationId(t));
+    printf("Transcript " INT64FMTSTR " translation id = " INT64FMTSTR "\n",Transcript_getDbID(t), Transcript_getTranslationId(t));
   }
   {
     ExonAdaptor *ea = DBAdaptor_getExonAdaptor(dba);
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     printf("NExon = %d\n",nExon);
     for (i=0;i<nExon;i++) {
       e = exons[i];
-      printf("Exon %d %d %d %d\n",Exon_getDbID(e), Exon_getStart(e), Exon_getEnd(e), Exon_getStrand(e));
+      printf("Exon " INT64FMTSTR " %d %d %d\n",Exon_getDbID(e), Exon_getStart(e), Exon_getEnd(e), Exon_getStrand(e));
     }
     
   }

@@ -12,7 +12,7 @@ char * hierarchyString =
   "  MYSQLSTATEMENTHANDLE\n"
   " RESULTROW\n"
   "  MYSQLRESULTROW\n"
-  " REPEATCONSENSUS"\n"
+  " REPEATCONSENSUS\n"
   " SEQFEATURE\n"
   "  EXON\n"
   "  FEATURESET\n"
