@@ -106,6 +106,7 @@ int main(int argc, char *argv[]) {
       printf("Prediction transcript: %d-%d id " IDFMTSTR "\n", PredictionTranscript_getStart(pt), 
              PredictionTranscript_getEnd(pt), PredictionTranscript_getDbID(pt));
     }
+    PredictionTranscriptAdaptor_store((BaseFeatureAdaptor *)pta,sSet);
   }
   {
     RawContigAdaptor *rca = DBAdaptor_getRawContigAdaptor(dba);
@@ -115,9 +116,36 @@ int main(int argc, char *argv[]) {
     int i;
     for (i=0;i<Set_getNumElement(sSet);i++) {
       RepeatFeature *rf = Set_getElementAt(sSet,i);
-      printf("Prediction transcrirf: %d-%d id " IDFMTSTR "\n", RepeatFeature_getStart(rf), 
+      printf("Repeat feature: %d-%d id " IDFMTSTR "\n", RepeatFeature_getStart(rf), 
              RepeatFeature_getEnd(rf), RepeatFeature_getDbID(rf));
     }
+    RepeatFeatureAdaptor_store((BaseFeatureAdaptor *)rfa,sSet);
+  }
+  {
+    RawContigAdaptor *rca = DBAdaptor_getRawContigAdaptor(dba);
+    RawContig *contig = RawContigAdaptor_fetchByDbID(rca,10000);
+    DNAAlignFeatureAdaptor *dafa = DBAdaptor_getDNAAlignFeatureAdaptor(dba);
+    Set *sSet = RawContig_getAllDNAAlignFeatures(contig,"",NULL);
+    int i;
+    for (i=0;i<Set_getNumElement(sSet);i++) {
+      DNAAlignFeature *daf = Set_getElementAt(sSet,i);
+      printf("DNA align feature: %d-%d id " IDFMTSTR "\n", DNAAlignFeature_getStart(daf), 
+             DNAAlignFeature_getEnd(daf), DNAAlignFeature_getDbID(daf));
+    }
+    DNAAlignFeatureAdaptor_store((BaseFeatureAdaptor *)dafa,sSet);
+  }
+  {
+    RawContigAdaptor *rca = DBAdaptor_getRawContigAdaptor(dba);
+    RawContig *contig = RawContigAdaptor_fetchByDbID(rca,10000);
+    ProteinAlignFeatureAdaptor *pafa = DBAdaptor_getProteinAlignFeatureAdaptor(dba);
+    Set *sSet = RawContig_getAllProteinAlignFeatures(contig,"",NULL);
+    int i;
+    for (i=0;i<Set_getNumElement(sSet);i++) {
+      DNAPepAlignFeature *paf = Set_getElementAt(sSet,i);
+      printf("DNA align feature: %d-%d id " IDFMTSTR "\n", DNAPepAlignFeature_getStart(paf), 
+             DNAPepAlignFeature_getEnd(paf), DNAPepAlignFeature_getDbID(paf));
+    }
+    ProteinAlignFeatureAdaptor_store((BaseFeatureAdaptor *)pafa,sSet);
   }
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);

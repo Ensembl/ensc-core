@@ -25,7 +25,7 @@ RepeatConsensus *RepeatConsensusAdaptor_fetchByDbID(RepeatConsensusAdaptor *rca,
   sprintf(constraintStr,"repeat_consensus_id = " IDFMTSTR, dbID);
   rcSet = RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
 
-  rc = Set_getElementAt(rcSet,1);
+  rc = Set_getElementAt(rcSet,0);
 
   Set_free(rcSet,NULL);
 
@@ -40,7 +40,7 @@ RepeatConsensus *RepeatConsensusAdaptor_fetchByName(RepeatConsensusAdaptor *rca,
   sprintf(constraintStr,"repeat_name = \'%s\'", name);
   rcSet = RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
 
-  rc = Set_getElementAt(rcSet,1);
+  rc = Set_getElementAt(rcSet,0);
 
   Set_free(rcSet,NULL);
 
@@ -55,7 +55,7 @@ RepeatConsensus *RepeatConsensusAdaptor_fetchByNameAndClass(RepeatConsensusAdapt
   sprintf(constraintStr,"repeat_name = \'%s\' AND repeat_class = \'%s\'", name,class);
   rcSet = RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
 
-  rc = Set_getElementAt(rcSet,1);
+  rc = Set_getElementAt(rcSet,0);
 
   Set_free(rcSet,NULL);
 
