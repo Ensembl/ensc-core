@@ -22,6 +22,7 @@ all	: directories \
           Tests/DNAAlignFeatureTest \
           Tests/DNAPepAlignFeatureTest \
           Tests/EcoStringTest \
+          Tests/HomologyTest \
           Tests/RepeatFeatureTest \
           Tests/SeqUtilTest \
           Tests/SimpleFeatureTest \
@@ -194,6 +195,11 @@ Tests/EcoStringTest: \
 	libensc.a \
 	Tests/EcoStringTest.c
 	$(CC) $(CFLAGS) -o Tests/EcoStringTest Tests/EcoStringTest.c -L. -lensc $(LDFLAGS)
+
+Tests/HomologyTest: \
+	libensc.a \
+	Tests/HomologyTest.c
+	$(CC) $(CFLAGS) -o Tests/HomologyTest Tests/HomologyTest.c -L. -lensc $(LDFLAGS)
 
 Tests/RepeatFeatureTest: \
 	libensc.a \

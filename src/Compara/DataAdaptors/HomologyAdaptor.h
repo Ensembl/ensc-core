@@ -12,12 +12,15 @@ struct HomologyAdaptorStruct {
 
 HomologyAdaptor *HomologyAdaptor_new(ComparaDBAdaptor *dba);
 
+Vector *HomologyAdaptor_fetchHomologuesOfGeneInSpecies(HomologyAdaptor *ha,
+                          char *sp, char *gene, char *hSp);
 Vector *HomologyAdaptor_fetchHomologuesBySpeciesRelationshipId(HomologyAdaptor *ha,
                    char *hSpecies, IDType internalId);
 
 IDType HomologyAdaptor_getRelationship(HomologyAdaptor *ha, char *qStr);
 int HomologyAdaptor_getRelationships(HomologyAdaptor *ha, char *qStr, IDType **idsP);
 Vector *HomologyAdaptor_getHomologues(HomologyAdaptor *ha, char *qStr);
+Vector *HomologyAdaptor_listStableIdsFromSpecies(HomologyAdaptor *ha, char *sp);
 
 
 
