@@ -9,12 +9,12 @@ CFLAGS = -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic 
 
 BINDIR=../bin
 
-all	: ensc-core
+all	: libensc.a Tests/EcoStringTest
 
 objectfiles/%.o: %.c
 	$(CC) -c $(CFLAGS) -o $@ $<
 
-ensc-core	: \
+libensc.a	: \
 	objectfiles/DataAdaptors/AnalysisAdaptor.o \
 	objectfiles/DataAdaptors/AssemblyMapperAdaptor.o \
 	objectfiles/DataAdaptors/BaseAdaptor.o \
@@ -69,9 +69,10 @@ ensc-core	: \
 	ar rcv libensc.a objectfiles/DataModel/*.o objectfiles/DataAdaptors/*.o objectfiles/Util/*.o
 	ranlib libensc.a
 
-EcoStringTest: ensc-core \
+Tests/EcoStringTest: \
+	libensc.a \
 	Tests/EcoStringTest.c
-	cc $(CFLAGS) -o EcoStringTest Tests/EcoStringTest.c -L. -lensc
+	cc $(CFLAGS) -o Tests/EcoStringTest Tests/EcoStringTest.c -L. -lensc
 
 # deletes compiled class files
 clean	:	
