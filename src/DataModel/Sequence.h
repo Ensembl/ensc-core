@@ -37,6 +37,7 @@ struct SequenceStruct {
 #undef FUNCSTRUCTTYPE
 
 void Sequence_freePtrs(Sequence *seq);
+Sequence *Sequence_new();
 
 #ifdef __SEQUENCE_MAIN__
  SequenceFuncs sequenceFuncs;

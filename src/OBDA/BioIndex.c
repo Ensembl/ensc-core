@@ -30,7 +30,7 @@
 /* for MAXPATHLEN */
 #include <sys/param.h>
  
-int selectPrefix(const struct dirent *DirEnt);
+int selectPrefix(struct dirent *DirEnt);
 char *currentPrefix;  
 #define MAXSTRLEN 1024
 
@@ -172,7 +172,7 @@ int BioIndex_parse_primary_record(BioIndex *bi,
   }
 */
     
-  if ((ntok = sscanf(line,"%d %ld %d",&(loc->fileIndex), 
+  if ((ntok = sscanf(line,"%hd %ld %d",&(loc->fileIndex), 
                      &(loc->start),&(loc->length))) != 3) {
     printf("N token = %d\n",ntok);
     Error_write(EOBDA,"BioIndex_parse_primary_record",ERR_SEVERE,"ERROR: Failed parsing primary record %s\n", line);
@@ -228,7 +228,9 @@ Sequence * BioIndex_get_fasta_sequence(BioIndex *bi, BioIndex_Location *loc,
   }
   *RepP = '\0';
 
-  //seq = Sequence_create(id,NULL,data,strlen(data),NULL);
+  seq = Sequence_new();
+  Sequence_setName(seq,id);
+  Sequence_setSeq(seq,data);
     
   free(data);
 
@@ -760,7 +762,7 @@ static void BioIndex_add_file(BioIndex *bi, char *fname,
 }         
 
 
-int selectPrefix(const struct dirent *DirEnt) {
+int selectPrefix(struct dirent *DirEnt) {
   int lenPref = strlen(currentPrefix);
 
   if (!strncmp(DirEnt->d_name,currentPrefix,lenPref)) {

@@ -32,6 +32,17 @@ ECOSTRING Sequence_setName(Sequence *seq, char *name) {
   return seq->name;
 }
 
+char *Sequence_setSeq(Sequence *seq, char *seqstr) {
+  if (StrUtil_copyString(&(seq->seq),seqstr,0)) {
+    fprintf(stderr,"ERROR: Failed allocating space for seq\n");
+    return NULL;
+  }
+
+  seq->length = strlen(seq->seq);
+
+  return seq->seq;
+}
+
 void Sequence_freePtrs(Sequence *seq) {
   if (seq->name) free(seq->name);
 // Is this OK!??
