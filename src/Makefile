@@ -9,7 +9,7 @@ CFLAGS = -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic 
 
 BINDIR=../bin
 
-all	: directories libensc.a Tests/EcoStringTest Tests/StreamTest
+all	: directories libensc.a Tests/EcoStringTest Tests/StreamTest Tests/ClassTest
 
 directories	:
 	mkdir -p objectfiles/{DataAdaptors,DataModel,Util,Programs,Tests}
@@ -33,6 +33,7 @@ libensc.a	: \
 	objectfiles/DataAdaptors/SequenceAdaptor.o \
 	objectfiles/DataAdaptors/SliceAdaptor.o \
 	objectfiles/DataAdaptors/StatementHandle.o \
+	objectfiles/DataAdaptors/StatementHandle.o \
 	objectfiles/DataAdaptors/TranscriptAdaptor.o \
 	objectfiles/DataAdaptors/TranslationAdaptor.o \
 	objectfiles/DataModel/Analysis.o \
@@ -40,6 +41,7 @@ libensc.a	: \
 	objectfiles/DataModel/BaseAlignFeature.o \
 	objectfiles/DataModel/Basic/Set.o \
 	objectfiles/DataModel/Chromosome.o \
+	objectfiles/DataModel/Class.o \
 	objectfiles/DataModel/Clone.o \
 	objectfiles/DataModel/Exon.o \
 	objectfiles/DataModel/FeatureSet.o \
@@ -72,6 +74,11 @@ libensc.a	: \
 	objectfiles/Util/StringHash.o
 	ar rcv libensc.a objectfiles/DataModel/*.o objectfiles/DataAdaptors/*.o objectfiles/Util/*.o
 	ranlib libensc.a
+
+Tests/ClassTest: \
+	libensc.a \
+	Tests/ClassTest.c
+	cc $(CFLAGS) -o Tests/ClassTest Tests/ClassTest.c -L. -lensc
 
 Tests/EcoStringTest: \
 	libensc.a \
