@@ -48,6 +48,7 @@ SimpleFeature *SimpleFeature_transformToSlice(SimpleFeature *simpleFeature, Slic
 SimpleFeature *SimpleFeature_new();
 
 char *SimpleFeature_setDisplayLabel(SimpleFeature *sf, char *label);
+#define SimpleFeature_getDisplayLabel(simpleFeature) (simpleFeature)->displayLabel
 
 
 #endif

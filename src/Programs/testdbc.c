@@ -10,6 +10,7 @@
 #include "ExonAdaptor.h"
 #include "GeneAdaptor.h"
 #include "ProteinAlignFeatureAdaptor.h"
+#include "RawContigAdaptor.h"
 #include "RepeatFeatureAdaptor.h"
 #include "SequenceAdaptor.h"
 #include "SimpleFeatureAdaptor.h"
@@ -79,6 +80,20 @@ int main(int argc, char *argv[]) {
       printf("Simple feature: %d-%d id " INT64FMTSTR "\n", SimpleFeature_getStart(sf), 
              SimpleFeature_getEnd(sf), SimpleFeature_getDbID(sf));
     }
+  }
+  {
+    RawContigAdaptor *rca = DBAdaptor_getRawContigAdaptor(dba);
+    RawContig *contig = RawContigAdaptor_fetchByDbID(rca,10000);
+    SimpleFeatureAdaptor *sfa = DBAdaptor_getSimpleFeatureAdaptor(dba);
+    Set *sSet = RawContig_getAllSimpleFeatures(contig,"",NULL);
+    int i;
+    for (i=0;i<Set_getNumElement(sSet);i++) {
+      SimpleFeature *sf = Set_getElementAt(sSet,i);
+      printf("Simple feature: %d-%d id " INT64FMTSTR "\n", SimpleFeature_getStart(sf), 
+             SimpleFeature_getEnd(sf), SimpleFeature_getDbID(sf));
+    }
+    
+    SimpleFeatureAdaptor_store((BaseFeatureAdaptor *)sfa,sSet);
   }
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
@@ -152,9 +167,6 @@ int main(int argc, char *argv[]) {
       e = exons[i];
       printf("Exon " INT64FMTSTR " %d %d %d\n",Exon_getDbID(e), Exon_getStart(e), Exon_getEnd(e), Exon_getStrand(e));
     }
-  }
-  {
-    RawContigAdaptor *rca = DBAdaptor_getRawContigAdaptor(dba);
   }
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);

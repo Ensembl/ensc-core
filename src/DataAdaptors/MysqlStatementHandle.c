@@ -68,7 +68,7 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
 
 
   if (mysql_real_query (m_sth->dbc->mysql, statement, qlen) != 0) {    /* the query failed */
-    fprintf(stderr, "Could not execute query");
+    fprintf(stderr, "Could not execute query %s\n", statement);
     return;
   }
 

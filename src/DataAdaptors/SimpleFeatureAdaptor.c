@@ -24,45 +24,60 @@ SimpleFeatureAdaptor *SimpleFeatureAdaptor_new(DBAdaptor *dba) {
 }
 
 int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
-/*
-  my ($self,@sf) = @_;
+  char qStr[512];
+  StatementHandle *sth;
+  int i;
   
-  if( scalar(@sf) == 0 ) {
-    $self->throw("Must call store with list of sequence features");
+  if (!Set_getNumElement(features)) {
+    fprintf(stderr, "Warning: SimpleFeatureAdaptor_store called with no features\n");
+    return 0;
   }
   
-  my $sth = 
-    $self->prepare("INSERT INTO simple_feature (contig_id, contig_start,
-                                                contig_end, contig_strand,
-                                                display_label, analysis_id,
-                                                score) 
-                    VALUES (?,?,?,?,?,?,?)");
+  sprintf(qStr,"INSERT INTO simple_feature (contig_id, contig_start,"
+                                           " contig_end, contig_strand,"
+                                           "display_label, analysis_id,"
+                                           "score) VALUES (%"
+                                           INT64FMTSTR ",%%d,%%d,%%d,\'%%s\',%"
+                                           INT64FMTSTR ",%%f)");
+  sth = bfa->prepare((BaseAdaptor *)bfa, qStr,strlen(qStr));
+  printf("%s\n",qStr);
 
-  foreach my $sf ( @sf ) {
+  for (i=0; i<Set_getNumElement(features); i++) {
+    SimpleFeature *sf = Set_getElementAt(features, i);
+    Analysis *analysis = SimpleFeature_getAnalysis(sf);
+    RawContig *contig;
+
+/* NIY
     if( !ref $sf || !$sf->isa("Bio::EnsEMBL::SimpleFeature") ) {
       $self->throw("Simple feature must be an Ensembl SimpleFeature, " .
 		   "not a [$sf]");
     }
+*/
     
-    if( !defined $sf->analysis ) {
-      $self->throw("Cannot store sequence features without analysis");
+    if (!analysis) {
+      fprintf(stderr,"Cannot store sequence features without analysis");
+      exit(1);
     }
-    if( !defined $sf->analysis->dbID ) {
-      $self->throw("I think we should always have an analysis object " .
-		   "which has originated from the database. No dbID, " .
-		   "not putting in!");
+    if( !Analysis_getDbID(analysis)) {
+      fprintf(stderr,"I think we should always have an analysis object "
+		     "which has originated from the database. No dbID, "
+		     "not putting in!");
+      exit(1);
     }
     
+    contig = SimpleFeature_getContig(sf);
+/* NIY
     my $contig = $sf->entire_seq();
     unless(defined $contig && $contig->isa("Bio::EnsEMBL::RawContig")) {
       $self->throw("Cannot store feature without a Contig object attached via "
 		   . "attach_seq\n");
     }
-
-    $sth->execute($contig->dbID(), $sf->start, $sf->end, $sf->strand,
-		  $sf->display_label, $sf->analysis->dbID, $sf->score);
-  } 
 */
+
+    sth->execute(sth, (long long)(RawContig_getDbID(contig)), SimpleFeature_getStart(sf), SimpleFeature_getEnd(sf), 
+                 SimpleFeature_getStrand(sf),SimpleFeature_getDisplayLabel(sf),
+                 (long long)(Analysis_getDbID(analysis)), SimpleFeature_getScore(sf));
+  } 
 }
 
 NameTableType *SimpleFeatureAdaptor_getTables(void) {

@@ -1,5 +1,6 @@
 #include "RawContig.h"
 #include "RawContigAdaptor.h"
+#include "SimpleFeatureAdaptor.h"
 
 RawContig *RawContig_new() {
   RawContig *rc;
@@ -62,3 +63,17 @@ char *RawContig_getName(RawContig *rc) {
   }
   return rc->name;
 }
+
+Set *RawContig_getAllSimpleFeatures(RawContig *rc, char *logicName, double *scoreP) {
+  RawContigAdaptor *rca = (RawContigAdaptor *)RawContig_getAdaptor(rc);
+  SimpleFeatureAdaptor *sfa;
+
+  if (!rca) {
+    fprintf(stderr, "Warning: Contig has no adaptor - cannot retrieve simple features\n");
+    return emptySet;
+  }
+  sfa = DBAdaptor_getSimpleFeatureAdaptor(rca->dba);
+  return SimpleFeatureAdaptor_fetchAllByRawContigAndScore(sfa,rc,scoreP,logicName);
+}
+
+

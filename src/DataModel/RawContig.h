@@ -4,6 +4,7 @@
 #include "DataModelTypes.h"
 #include "Storable.h"
 #include "BaseContig.h"
+#include "Set.h"
 
 struct RawContigStruct {
   BASECONTIG_DATA
@@ -33,5 +34,6 @@ int RawContig_getEMBLOffset(RawContig *rc);
 #define RawContig_setLength(rc,l) (rc)->length = (l)
 int RawContig_getLength(RawContig *rc);
 
+Set *RawContig_getAllSimpleFeatures(RawContig *rc, char *logicName, double *scoreP);
 
 #endif

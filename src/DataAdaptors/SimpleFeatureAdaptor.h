@@ -24,5 +24,7 @@ Set *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf,
 #define SimpleFeatureAdaptor_fetchByDbID(sfa, id) BaseFeatureAdaptor_fetchByDbID((BaseFeatureAdaptor *)(sfa), (id))
 #define SimpleFeatureAdaptor_fetchAllBySliceAndScore(sfa, slice, score, lname) \
           BaseFeatureAdaptor_fetchAllBySliceAndScore((BaseFeatureAdaptor *)(sfa), (slice), (score), (lname))
+#define SimpleFeatureAdaptor_fetchAllByRawContigAndScore(sfa, rc, score, lname) \
+          BaseFeatureAdaptor_fetchAllByRawContigAndScore((BaseFeatureAdaptor *)(sfa), (rc), (score), (lname))
 
 #endif
