@@ -6,4 +6,11 @@ Warning: This code is in the early stages of development. Do not
          expect it to contain all the API methods, or in fact to
          work in any way at all.
 
-To see it in action compile the code, and then run bin/testdbc
+To see it in action:
+cd src
+make
+Programs/testdbc
+
+Your make will probably need to be GNU make
+
+Comments to Steve Searle <searle@sanger.ac.uk> 

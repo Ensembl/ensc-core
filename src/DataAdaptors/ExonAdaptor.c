@@ -198,9 +198,10 @@ int ExonAdaptor_getStableEntryInfo(ExonAdaptor *ea, Exon *exon) {
           "SELECT stable_id, UNIX_TIMESTAMP(created),"
           "                  UNIX_TIMESTAMP(modified), version"
           " FROM exon_stable_id"
-          " WHERE exon_id = %d",Exon_getDbID(exon));
+          " WHERE exon_id = " INT64FMTSTR, Exon_getDbID(exon));
 
   sth = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
+  sth->execute(sth);
 
   row = sth->fetchRow(sth);
   if( row == NULL ) {

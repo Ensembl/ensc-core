@@ -45,7 +45,7 @@ char *SequenceAdaptor_fetchByRawContigStartEndStrand(SequenceAdaptor *sa,
             "SELECT c.length, SUBSTRING( d.sequence, %d )"
               " FROM dna d, contig c"
               " WHERE d.dna_id = c.dna_id"
-              "  AND c.contig_id = %d", start, RawContig_getDbID(rc));
+              "  AND c.contig_id = " INT64FMTSTR, start, RawContig_getDbID(rc));
 
   } else {
     int length = end - start + 1;
@@ -58,7 +58,7 @@ char *SequenceAdaptor_fetchByRawContigStartEndStrand(SequenceAdaptor *sa,
                  " SUBSTRING( d.sequence, %d, %d )"
                  " FROM dna d, contig c"
                  " WHERE d.dna_id = c.dna_id"
-                 " AND c.contig_id = %d",start,length,RawContig_getDbID(rc));
+                 " AND c.contig_id = " INT64FMTSTR,start,length,RawContig_getDbID(rc));
   }
 
   if(  DBAdaptor_getDNADBAdaptor(sa->dba) ) {
