@@ -1,4 +1,6 @@
 #include "SliceAdaptor.h"
+
+#include "DBAdaptor.h"
 #include "BaseAdaptor.h"
 #include "ChromosomeAdaptor.h"
 #include "MysqlUtil.h"

@@ -10,3 +10,8 @@ Species *Species_new() {
 
   return species;
 }
+
+char *Species_getBinomialName(Species *species) {
+
+  return NULL;
+}

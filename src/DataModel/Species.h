@@ -21,4 +21,7 @@ Species *Species_new();
 char *Species_setCommonName(Species *species, char *commonName);
 #define Species_getCommonName(sp) (sp)->commonName
 
+char *Species_getBinomialName(Species *species);
+
+
 #endif

@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 #include "AdaptorTypes.h"
-#include "DBAdaptor.h"
+//#include "DBAdaptor.h"
 #include "StatementHandle.h"
 
 

@@ -1,6 +1,8 @@
 #define __BASEALIGNFEATURE_MAIN__
 #include "BaseAlignFeature.h"
 #undef __BASEALIGNFEATURE_MAIN__
+
+#include "DBAdaptor.h"
 #include "StrUtil.h"
 #include "AssemblyMapperAdaptor.h"
 #include "RawContigAdaptor.h"

@@ -1,6 +1,8 @@
 #define __STICKYEXON_MAIN__
 #include "StickyExon.h"
 #undef __STICKYEXON_MAIN__
+
+#include "DBAdaptor.h"
 #include "AssemblyMapperAdaptor.h"
 #include "ChromosomeAdaptor.h"
 #include "SliceAdaptor.h"
@@ -384,7 +386,7 @@ char *StickyExon_getSeqString(StickyExon *stickyExon) {
   } else {
     for (i=0; i<StickyExon_getComponentExonCount(stickyExon); i++) {
       Exon *cExon = StickyExon_getComponentExonAt(stickyExon, i);
-      StrUtil_appendString(&seqString, Exon_getSeqString(cExon));
+      seqString = StrUtil_appendString(seqString, Exon_getSeqString(cExon));
     }
   }
 

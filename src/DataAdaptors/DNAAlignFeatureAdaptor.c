@@ -63,7 +63,12 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
     // will only store if object is not already stored in this database
     AnalysisAdaptor_store(aa,analysis);
 
-    contig = DNAAlignFeature_getContig(sf);
+    if (!DNAAlignFeature_getContig(sf)->objectType != CLASS_RAWCONTIG) {
+      fprintf(stderr,"Error: contig isn't raw contig when trying to store\n");
+      exit(1);
+    }
+
+    contig = (RawContig *)DNAAlignFeature_getContig(sf);
 
 /* NIY
      unless(defined $contig && $contig->isa("Bio::EnsEMBL::RawContig")) { 

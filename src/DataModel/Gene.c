@@ -1,6 +1,8 @@
 #define __GENE_MAIN__
 #include "Gene.h"
 #undef __GENE_MAIN__
+
+#include "DBAdaptor.h"
 #include "GeneAdaptor.h"
 #include "IDHash.h"
 

@@ -2,6 +2,8 @@
 #include "BaseAdaptor.h"
 #undef __MAIN_C__
 
+#include "DBAdaptor.h"
+
 void BaseAdaptor_init(BaseAdaptor *ba, DBAdaptor *dba, int adaptorType) {
   ba->dba = dba;
   ba->adaptorType = adaptorType;

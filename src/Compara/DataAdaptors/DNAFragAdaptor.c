@@ -1,4 +1,6 @@
 #include "DNAFragAdaptor.h"
+#include "DNAFrag.h"
+#include "Vector.h"
 
 DNAFrag *DNAFragAdaptor_fetchByDbID(DNAFragAdaptor *dfa, IDType dbID) {
   char qStr[1024];
@@ -6,7 +8,7 @@ DNAFrag *DNAFragAdaptor_fetchByDbID(DNAFragAdaptor *dfa, IDType dbID) {
   DNAFrag *firstFrag;
   StatementHandle *sth;
 
-  if (!dbid) {
+  if (!dbID) {
     fprintf(stderr,"Error: Must have a dbid to fetch by dbid\n");
     exit(1);
   }
@@ -17,7 +19,7 @@ DNAFrag *DNAFragAdaptor_fetchByDbID(DNAFragAdaptor *dfa, IDType dbID) {
      "  FROM dnafrag"
      " WHERE dnafrag_id = " IDFMTSTR, dbID);
 
-  sth = ((BaseAdaptor *)dfa)->prepare(sth,qStr,strlen(qStr));
+  sth = dfa->prepare((BaseAdaptor *)dfa,qStr,strlen(qStr));
   sth->execute(sth);
 
   dnaFrags = DNAFragAdaptor_objectsFromStatementHandle(sth);
@@ -37,6 +39,7 @@ Vector *DNAFragAdaptor_fetchAllByGenomeDBRegion(DNAFragAdaptor *dfa, GenomeDB *g
                       char *dnaFragType, char *name, int *startP, int *endP) {
   IDType gdbId;
   char qStr[1024];
+  StatementHandle *sth;
 
   if (!genomeDB) {
     fprintf(stderr, "Error: genome_db arg must be set\n");
@@ -77,7 +80,7 @@ Vector *DNAFragAdaptor_fetchAllByGenomeDBRegion(DNAFragAdaptor *dfa, GenomeDB *g
 
   if (endP) {
     char tmpStr[64];
-    sprintf(tmpStr," AND d.start <= %d", *EndP);
+    sprintf(tmpStr," AND d.start <= %d", *endP);
     strcat(qStr, tmpStr);
   }
 
@@ -89,6 +92,7 @@ Vector *DNAFragAdaptor_fetchAllByGenomeDBRegion(DNAFragAdaptor *dfa, GenomeDB *g
 
 Vector *DNAFragAdaptor_fetchAll(DNAFragAdaptor *dfa) {
   char qStr[256];
+  StatementHandle *sth;
  
   sprintf(qStr,
            "SELECT genome_db_id, dnafrag_type, dnafrag_id," 
@@ -129,6 +133,7 @@ IDType DNAFragAdaptor_store(DNAFragAdaptor *dfa, DNAFrag *dnaFrag) {
   GenomeDB *gdb;
   IDType gid;
   IDType dnaFragId = 0;
+  char qStr[512];
   StatementHandle *sth;
 
   if (!dnaFrag) {
@@ -164,7 +169,7 @@ IDType DNAFragAdaptor_store(DNAFragAdaptor *dfa, DNAFrag *dnaFrag) {
      "                      name, start, end )"
      " VALUES (" IDFMTSTR ",'%s','%s',%d,%d)",
      gid, 
-     DNAFrag_getType(dnaFrag) ? DNAFrag_getType(dnaFrag) : "\N",
+     DNAFrag_getType(dnaFrag) ? DNAFrag_getType(dnaFrag) : "\\N",
      DNAFrag_getName(dnaFrag),
      DNAFrag_getStart(dnaFrag),
      DNAFrag_getEnd(dnaFrag));

@@ -1,4 +1,6 @@
 #include "SequenceAdaptor.h"
+
+#include "DBAdaptor.h"
 #include "BaseAdaptor.h"
 #include "MysqlUtil.h"
 #include "SeqUtil.h"

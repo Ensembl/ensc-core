@@ -65,7 +65,13 @@ int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
       exit(1);
     }
     
-    contig = SimpleFeature_getContig(sf);
+    if (!SimpleFeature_getContig(sf)->objectType != CLASS_RAWCONTIG) {
+      fprintf(stderr,"Error: contig isn't raw contig when trying to store\n");
+      exit(1);
+    }
+
+
+    contig = (RawContig *)SimpleFeature_getContig(sf);
 /* NIY
     my $contig = $sf->entire_seq();
     unless(defined $contig && $contig->isa("Bio::EnsEMBL::RawContig")) {

@@ -4,6 +4,7 @@
 #include "ComparaDataModelTypes.h"
 #include "EnsRoot.h"
 
+#define FUNCSTRUCTTYPE NoTypeFuncs
 struct SyntenyRegionStruct {
   ENSROOT_DATA
   Storable st;
@@ -12,5 +13,6 @@ struct SyntenyRegionStruct {
   IDType clusterId;
   IDType dnaFragId;
 };
+#undef FUNCSTRUCTTYPE
 
 #endif

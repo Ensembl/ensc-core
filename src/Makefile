@@ -5,7 +5,7 @@ CC = cc
 MYSQLCFLAGS=${shell mysql_config --cflags}
 MYSQLLIBS=${shell mysql_config --libs}
 
-CFLAGS =  -g -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic $(MYSQLCFLAGS)
+CFLAGS =  -g -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS)
 
 BINDIR=../bin
@@ -37,6 +37,8 @@ directories	:
 	mkdir -p objectfiles/Tests
 	mkdir -p objectfiles/DataModel/Basic
 	mkdir -p objectfiles/DataModel/Mapper
+	mkdir -p objectfiles/Compara/DataModel
+	mkdir -p objectfiles/Compara/DataAdaptors
 
 objectfiles/%.o: %.c
 	$(CC) -c $(CFLAGS) -o $@ $<

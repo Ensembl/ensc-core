@@ -1,6 +1,8 @@
 #define __SEQFEATURE_MAIN__
 #include "SeqFeature.h"
 #undef __SEQFEATURE_MAIN__
+
+#include "DBAdaptor.h"
 #include "StrUtil.h"
 #include "AssemblyMapperAdaptor.h"
 #include "RawContigAdaptor.h"

@@ -3,6 +3,7 @@
 
 #include "BaseAdaptor.h"
 #include "AdaptorTypes.h"
+#include "DBAdaptor.h"
 #include "Vector.h"
 #include "RawContig.h"
 #include "StatementHandle.h"

@@ -1,4 +1,6 @@
 #include "TranscriptAdaptor.h"
+
+#include "DBAdaptor.h"
 #include "ExonAdaptor.h"
 #include "BaseAdaptor.h"
 #include "MysqlUtil.h"

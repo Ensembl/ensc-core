@@ -3,6 +3,7 @@
 
 #include "BaseAdaptor.h"
 #include "AdaptorTypes.h"
+#include "Species.h"
 
 
 struct MetaContainerStruct {
@@ -11,5 +12,7 @@ struct MetaContainerStruct {
 
 MetaContainer *MetaContainer_new(DBAdaptor *dba);
 char *MetaContainer_getDefaultAssembly(MetaContainer *mc);
+Species *MetaContainer_getSpecies(MetaContainer *mc);
+
 
 #endif

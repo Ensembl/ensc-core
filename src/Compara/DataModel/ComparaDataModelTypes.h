@@ -1,11 +1,11 @@
 #ifndef __COMPARADATAMODELTYPES_H__
 #define __COMPARADATAMODELTYPES_H__
 
-typedef DNAFragStruct DNAFrag;
-typedef GenomicAlignStruct GenomicAlign;
-typedef GenomeDBStruct GenomeDB;
-typedef HomologyStruct Homology;
-typedef SyntenyRegionStruct SyntenyRegion;
+typedef struct DNAFragStruct DNAFrag;
+typedef struct GenomicAlignStruct GenomicAlign;
+typedef struct GenomeDBStruct GenomeDB;
+typedef struct HomologyStruct Homology;
+typedef struct SyntenyRegionStruct SyntenyRegion;
 
 
 #endif

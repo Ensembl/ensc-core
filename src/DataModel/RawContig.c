@@ -9,6 +9,7 @@
 #include "RawContigAdaptor.h"
 #include "RepeatFeatureAdaptor.h"
 #include "SimpleFeatureAdaptor.h"
+#include "DBAdaptor.h"
 
 #include "StrUtil.h"
 #include "SeqUtil.h"

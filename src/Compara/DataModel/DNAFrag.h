@@ -3,7 +3,10 @@
 
 #include "ComparaDataModelTypes.h"
 #include "EnsRoot.h"
+#include "BaseContig.h"
+#include "Storable.h"
 
+#define FUNCSTRUCTTYPE NoTypeFuncs
 struct DNAFragStruct {
   ENSROOT_DATA
   Storable st;
@@ -14,5 +17,6 @@ struct DNAFragStruct {
   char *genomeDB;
   char *type;
 };
+#undef FUNCSTRUCTTYPE
 
 #endif

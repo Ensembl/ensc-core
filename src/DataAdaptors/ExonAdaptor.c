@@ -1,4 +1,5 @@
 #include "ExonAdaptor.h"
+#include "DBAdaptor.h"
 #include "BaseAdaptor.h"
 #include "MysqlUtil.h"
 #include "RawContigAdaptor.h"
@@ -286,7 +287,15 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
 
     for (i=0; i<StickyExon_getComponentExonCount(stickyExon); i++) {
       Exon *componentExon = StickyExon_getComponentExonAt(stickyExon,i);
-      RawContig *contig = Exon_getContig(componentExon);
+      RawContig *contig; 
+
+      if (!Exon_getContig(componentExon)->objectType != CLASS_RAWCONTIG) {
+        fprintf(stderr,"Error: contig isn't raw contig when trying to store\n");
+        exit(1);
+      }
+      contig = (RawContig *)Exon_getContig(componentExon);
+
+
 
       if (!contig || !RawContig_getDbID(contig)) {
         fprintf(stderr,"Component Exon does not have an attached contig "
@@ -319,7 +328,13 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
     }
   } else {
     // normal storing
-    RawContig *contig = Exon_getContig(exon);
+    RawContig *contig;
+
+    if (!Exon_getContig(exon)->objectType != CLASS_RAWCONTIG) {
+      fprintf(stderr,"Error: contig isn't raw contig when trying to store\n");
+      exit(1);
+    }
+    contig = (RawContig *)Exon_getContig(exon);
 
     if (!contig || !RawContig_getDbID(contig)) {
       fprintf(stderr,"Exon does not have an attached contig with a valid " 

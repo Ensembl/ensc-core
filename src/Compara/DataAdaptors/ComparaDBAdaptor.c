@@ -1,5 +1,9 @@
 #include "ComparaDBAdaptor.h"
 
+#include "DBAdaptor.h"
+#include "Species.h"
+#include "MetaContainer.h"
+
 ComparaDBAdaptor *ComparaDBAdaptor_new(char *host, char *user, char *pass, char *dbname,
                                        unsigned int port, char *confFile) {
   ComparaDBAdaptor *cdba;
@@ -60,9 +64,8 @@ ComparaDBAdaptor *ComparaDBAdaptor_new(char *host, char *user, char *pass, char 
   return cdba;
 }
 
-sub ComparaDBAdaptor_addDBAdaptor(ComparaDBAdaptor *cdba, DBAdaptor *dba) {
+void ComparaDBAdaptor_addDBAdaptor(ComparaDBAdaptor *cdba, DBAdaptor *dba) {
   char key[1024];
-  char *species;
   char *assembly;
   MetaContainer *mc;
   Species *species;
@@ -70,7 +73,7 @@ sub ComparaDBAdaptor_addDBAdaptor(ComparaDBAdaptor *cdba, DBAdaptor *dba) {
 
   if (!dba) {
     fprintf(stderr, "Error: dba argument must be non null\n");
-    exit(1):
+    exit(1);
   }
 
   mc = DBAdaptor_getMetaContainer(dba);
@@ -159,7 +162,7 @@ ComparaDNAAlignFeatureAdaptor *ComparaDBAdaptor_getComparaDNAAlignFeatureAdaptor
     DBConnection_addAdaptor(cdba->dbc,
                             (BaseAdaptor *)ComparaDNAFeatureAdaptor_new(cdba));
   }
-  return (ComparaDNAFeatureAdaptor *)DBConnection_getAdaptor(cdba->dbc,COMPARADNAALIGNFEATURE_ADAPTOR);
+  return (ComparaDNAAlignFeatureAdaptor *)DBConnection_getAdaptor(cdba->dbc,COMPARADNAALIGNFEATURE_ADAPTOR);
 }
 
 MetaContainer *ComparaDBAdaptor_getMetaContainer(ComparaDBAdaptor *cdba)  {

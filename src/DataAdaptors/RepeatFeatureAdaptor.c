@@ -137,7 +137,12 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
       }
     }
     
-    contig = RepeatFeature_getContig(rf);
+    if (!RepeatFeature_getContig(rf)->objectType != CLASS_RAWCONTIG) {
+      fprintf(stderr,"Error: contig isn't raw contig when trying to store\n");
+      exit(1);
+    }
+
+    contig = (RawContig *)RepeatFeature_getContig(rf);
 
 /* NIY
     unless(defined $contig && $contig->isa("Bio::EnsEMBL::RawContig")) {

@@ -1,4 +1,6 @@
 #include "Transcript.h"
+
+#include "DBAdaptor.h"
 #include "TranscriptAdaptor.h"
 #include "TranslationAdaptor.h"
 #include "DBEntryAdaptor.h"

@@ -1,6 +1,7 @@
 #include "GeneAdaptor.h"
 #include "AnalysisAdaptor.h"
 #include "AssemblyMapperAdaptor.h"
+#include "DBAdaptor.h"
 #include "StrUtil.h"
 #include "BaseAdaptor.h"
 #include "MysqlUtil.h"
