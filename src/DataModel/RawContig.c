@@ -1,4 +1,6 @@
+#define __RAWCONTIG_MAIN__
 #include "RawContig.h"
+#undef __RAWCONTIG_MAIN__
 
 #include "DNAAlignFeatureAdaptor.h"
 #include "GeneAdaptor.h"
@@ -22,6 +24,7 @@ RawContig *RawContig_new() {
   rc->length = rc->emblOffset = rc->cloneId = -1;
 
   rc->objectType = CLASS_RAWCONTIG;
+  rc->funcs = &rawContigFuncs;
 
   return rc;
 }

@@ -87,6 +87,8 @@ char *BaseAlignFeature_setCigarString(BaseAlignFeature *fp, char *ciggy);
 
 #define BaseAlignFeature_setSeqName(fp,str) FeaturePair_setSeqName((fp),(str))
 
+#define BaseAlignFeature_transformToRawContig(fp) FeaturePair_transformToRawContig((fp))
+
 Vector *BaseAlignFeature_parseCigar(BaseAlignFeature *baf);
 Vector *BaseAlignFeature_transformSliceToRawContigImpl(BaseAlignFeature *baf);
 int BaseAlignFeature_getHitUnitImpl(void);

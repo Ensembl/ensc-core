@@ -642,7 +642,9 @@ Vector *BaseAlignFeature_transformSliceToRawContigImpl(BaseAlignFeature *baf) {
   // transform each of the ungapped features into raw contig coordinates
   for (i=0;i<Vector_getNumElement(features); i++) {
     FeaturePair *f = Vector_getElementAt(features,i);
-    Vector_addElement(mappedFeatures, BaseAlignFeature_transformFeatureSliceToRawContig(baf, f));
+    Vector *featVector = BaseAlignFeature_transformFeatureSliceToRawContig(baf, f);
+    Vector_append(mappedFeatures, featVector);
+    Vector_free(featVector,NULL);
   }
 
   // sort the transformed ungapped features into contig buckets
@@ -909,7 +911,7 @@ Vector *BaseAlignFeature_transformFeatureSliceToRawContig(BaseAlignFeature *baf,
     if (mr->rangeType == MAPPERRANGE_GAP) {
       fprintf(stderr, "Warning: piece of evidence lies on gap\n");
 // NIY Not sure what to return
-      return NULL;
+      return emptyVector;
     }
 
     mc = (MapperCoordinate *)mr;

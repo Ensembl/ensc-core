@@ -7,7 +7,13 @@
 #include "Vector.h"
 #include "SequenceAdaptor.h"
 
-#define FUNCSTRUCTTYPE BaseContigFuncs
+BASECONTIGFUNC_TYPES(RawContig)
+
+typedef struct RawContigFuncsStruct {
+  BASECONTIGFUNCS_DATA(RawContig)
+} RawContigFuncs;
+
+#define FUNCSTRUCTTYPE RawContigFuncs
 struct RawContigStruct {
   BASECONTIG_DATA
   int emblOffset;
@@ -40,6 +46,20 @@ Vector *RawContig_getAllPredictionTranscripts(RawContig *rc, char *logicName);
 Vector *RawContig_getAllRepeatFeatures(RawContig *rc, char *logicName);
 Vector *RawContig_getAllDNAAlignFeatures(RawContig *rc, char *logicName, double *scoreP);
 Vector *RawContig_getAllProteinAlignFeatures(RawContig *rc, char *logicName, double *scoreP);
+char *RawContig_getSubSeq(RawContig *contig, int start, int end, int strand);
+char *RawContig_getSeq(RawContig *contig);
+
+
+
+#ifdef __RAWCONTIG_MAIN__
+  RawContigFuncs rawContigFuncs = {
+                           RawContig_getName,
+                           RawContig_getSeq,
+                           RawContig_getSubSeq
+                          };
+#else
+  extern RawContigFuncs rawContigFuncs;
+#endif
 
 
 #endif

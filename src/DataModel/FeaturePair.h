@@ -80,6 +80,8 @@ char *FeaturePair_setHitSeqName(FeaturePair *fp, char *str);
 #define FeaturePair_setPercId(fp,pid) SeqFeature_setPercId((fp),(pid))
 #define FeaturePair_getPercId(fp) SeqFeature_getPercId((fp))
 
+#define FeaturePair_transformToRawContig(fp) SeqFeature_transformToRawContig((fp))
+
 #ifdef __FEATUREPAIR_MAIN__
   FeaturePairFuncs 
     featurePairFuncs = {

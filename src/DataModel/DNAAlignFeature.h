@@ -67,6 +67,7 @@ DNAAlignFeature *DNAAlignFeature_new(void);
 int DNAAlignFeature_getHitUnit(void);
 int DNAAlignFeature_getQueryUnit(void);
 
+#define DNAAlignFeature_transformToRawContig(fp) BaseAlignFeature_transformToRawContig((fp))
 
 #ifdef __DNAALIGNFEATURE_MAIN__
   DNAAlignFeatureFuncs 

@@ -52,5 +52,13 @@ int main(int argc, char *argv[]) {
   }
   ok(5, !failed);
 
+  failed = 0;
+  for (i=0;i<Vector_getNumElement(features) && !failed;i++) {
+    DNAAlignFeature *daf = Vector_getElementAt(features,i);
+    Vector *rdafVector;
+    rdafVector = DNAAlignFeature_transformToRawContig(daf);
+    printf("transformed to %d raw contig features\n",Vector_getNumElement(rdafVector));
+  }
+  ok(6, !failed);
   return 0;
 }

@@ -112,6 +112,7 @@ libensc.a	: \
 	objectfiles/Util/FileUtil.o \
 	objectfiles/Util/IDHash.o \
 	objectfiles/Util/MysqlUtil.o \
+	objectfiles/Util/ProcUtil.o \
 	objectfiles/Util/SeqUtil.o \
 	objectfiles/Util/StrUtil.o \
 	objectfiles/Util/Stream.o \
