@@ -27,16 +27,6 @@ struct VectorStruct {
 };
 #undef FUNCSTRUCTTYPE
 
-#ifdef __VECTOR_MAIN__
-  Vector  emptyVectorData = {CLASS_VECTOR,-1,NULL,0,1};
-  Vector *emptyVector = &emptyVectorData;
-  void   *singleEntryVectorArray[1] = { NULL };
-  Vector  singleEntryVectorData = {CLASS_VECTOR,-1,singleEntryVectorArray,1,1};
-  Vector *singleEntryVector = &singleEntryVectorData;
-#else
-  extern Vector *emptyVector;
-  extern Vector *singleEntryVector;
-#endif
 
 Vector *Vector_new();
 void *Vector_addElement(Vector *vector, void *elem);
@@ -59,6 +49,17 @@ void Vector_setNumElement(Vector *v, int nElem);
                    };
 #else
   extern VectorFuncs vectorFuncs;
+#endif
+
+#ifdef __VECTOR_MAIN__
+  Vector  emptyVectorData = {CLASS_VECTOR,-1, &vectorFuncs, NULL,0,1};
+  Vector *emptyVector = &emptyVectorData;
+  void   *singleEntryVectorArray[1] = { NULL };
+  Vector  singleEntryVectorData = {CLASS_VECTOR,-1, &vectorFuncs, singleEntryVectorArray,1,1,NULL};
+  Vector *singleEntryVector = &singleEntryVectorData;
+#else
+  extern Vector *emptyVector;
+  extern Vector *singleEntryVector;
 #endif
 
 
