@@ -56,7 +56,8 @@ struct SimpleFeatureStruct {
 #define SimpleFeature_setContig(simpleFeature,c) SeqFeature_setContig((simpleFeature),(c))
 #define SimpleFeature_getContig(simpleFeature) SeqFeature_getContig((simpleFeature))
 
-SimpleFeature *SimpleFeature_transformToSlice(SimpleFeature *simpleFeature, Slice *slice);
+#define SimpleFeature_transformToSlice(simpleFeature,slice) SeqFeature_transformToSlice((simpleFeature),(slice))
+#define SimpleFeature_transformToRawContig(simpleFeature) SeqFeature_transformToRawContig((simpleFeature))
 
 SimpleFeature *SimpleFeature_new();
 

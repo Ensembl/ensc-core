@@ -66,6 +66,8 @@ DNAPepAlignFeature *DNAPepAlignFeature_new(void);
 int DNAPepAlignFeature_getHitUnit(void);
 int DNAPepAlignFeature_getQueryUnit(void);
 
+#define DNAPepAlignFeature_transformToSlice(fp,slice) BaseAlignFeature_transformToSlice((fp),(slice))
+#define DNAPepAlignFeature_transformToRawContig(fp) BaseAlignFeature_transformToRawContig((fp))
 
 #ifdef __DNAPEPALIGNFEATURE_MAIN__
   DNAPepAlignFeatureFuncs

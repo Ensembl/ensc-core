@@ -20,7 +20,9 @@ all	: directories \
           Tests/DNAAlignFeatureTest \
           Tests/DNAPepAlignFeatureTest \
           Tests/EcoStringTest \
+          Tests/RepeatFeatureTest \
           Tests/SeqUtilTest \
+          Tests/SimpleFeatureTest \
           Tests/SliceAdaptorTest \
           Tests/StreamTest \
           Tests/StrUtilTest \
@@ -162,10 +164,20 @@ Tests/EcoStringTest: \
 	Tests/EcoStringTest.c
 	$(CC) $(CFLAGS) -o Tests/EcoStringTest Tests/EcoStringTest.c -L. -lensc $(LDFLAGS)
 
+Tests/RepeatFeatureTest: \
+	libensc.a \
+	Tests/RepeatFeatureTest.c
+	$(CC) $(CFLAGS) -o Tests/RepeatFeatureTest Tests/RepeatFeatureTest.c -L. -lensc $(LDFLAGS)
+
 Tests/SeqUtilTest: \
 	libensc.a \
 	Tests/SeqUtilTest.c
 	$(CC) $(CFLAGS) -o Tests/SeqUtilTest Tests/SeqUtilTest.c -L. -lensc $(LDFLAGS)
+
+Tests/SimpleFeatureTest: \
+	libensc.a \
+	Tests/SimpleFeatureTest.c
+	$(CC) $(CFLAGS) -o Tests/SimpleFeatureTest Tests/SimpleFeatureTest.c -L. -lensc $(LDFLAGS)
 
 Tests/SliceAdaptorTest: \
 	libensc.a \

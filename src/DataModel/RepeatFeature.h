@@ -62,6 +62,9 @@ struct RepeatFeatureStruct {
 #define RepeatFeature_setConsensus(repeat,rc) (repeat)->repeatConsensus = (rc)
 #define RepeatFeature_getConsensus(repeat) (repeat)->repeatConsensus
 
+#define RepeatFeature_transformToSlice(repeat,slice) SeqFeature_transformToSlice((repeat),(slice))
+#define RepeatFeature_transformToRawContig(repeat) SeqFeature_transformToRawContig((repeat))
+
 RepeatFeature *RepeatFeature_new();
 
 #ifdef __REPEATFEATURE_MAIN__
