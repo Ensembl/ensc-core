@@ -13,6 +13,7 @@ BINDIR=../bin
 all	: directories \
           libensc.a \
           Programs/testdbc \
+          Tests/CacheTest \
           Tests/ClassTest \
           Tests/DBAdaptorTest \
           Tests/EcoStringTest \
@@ -80,6 +81,7 @@ libensc.a	: \
 	objectfiles/DataModel/Translation.o \
 	objectfiles/Programs/testdbc.o \
 	objectfiles/Util/CHash.o \
+	objectfiles/Util/Cache.o \
 	objectfiles/Util/EcoString.o \
 	objectfiles/Util/Error.o \
 	objectfiles/Util/FileUtil.o \
@@ -97,6 +99,11 @@ Programs/testdbc: \
 	libensc.a \
 	Programs/testdbc.c
 	$(CC) $(CFLAGS) -o Programs/testdbc Programs/testdbc.c -L. -lensc $(LDFLAGS)
+
+Tests/CacheTest: \
+	libensc.a \
+	Tests/CacheTest.c
+	$(CC) $(CFLAGS) -o Tests/CacheTest Tests/CacheTest.c -L. -lensc $(LDFLAGS)
 
 Tests/ClassTest: \
 	libensc.a \
