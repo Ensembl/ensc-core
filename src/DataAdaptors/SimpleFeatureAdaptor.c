@@ -74,9 +74,9 @@ int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
     }
 */
 
-    sth->execute(sth, (long long)(RawContig_getDbID(contig)), SimpleFeature_getStart(sf), SimpleFeature_getEnd(sf), 
+    sth->execute(sth, (IDType)(RawContig_getDbID(contig)), SimpleFeature_getStart(sf), SimpleFeature_getEnd(sf), 
                  SimpleFeature_getStrand(sf),SimpleFeature_getDisplayLabel(sf),
-                 (long long)(Analysis_getDbID(analysis)), SimpleFeature_getScore(sf));
+                 (IDType)(Analysis_getDbID(analysis)), SimpleFeature_getScore(sf));
   } 
 }
 

@@ -144,15 +144,15 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
     consId = RepeatConsensus_getDbID(RepeatFeature_getConsensus(rf));
     analId = Analysis_getDbID(RepeatFeature_getAnalysis(rf));
     sth->execute(sth,
-          (long long)RawContig_getDbID(contig),
+          (IDType)RawContig_getDbID(contig),
           RepeatFeature_getStart(rf),
           RepeatFeature_getEnd(rf),
           RepeatFeature_getStrand(rf),
-          (long long)consId,
+          (IDType)consId,
           RepeatFeature_getHitStart(rf),
           RepeatFeature_getHitEnd(rf),
           RepeatFeature_getScore(rf),
-          (long long)analId
+          (IDType)analId
          );
 
     dbID = sth->getInsertId(sth);

@@ -72,7 +72,7 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
      }   
 */
      
-    sth->execute(sth, (long long)RawContig_getDbID(contig), 
+    sth->execute(sth, (IDType)RawContig_getDbID(contig), 
                       DNAAlignFeature_getStart(sf), 
                       DNAAlignFeature_getEnd(sf), 
                       DNAAlignFeature_getStrand(sf), 
@@ -81,7 +81,7 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
                       DNAAlignFeature_getHitStrand(sf),
                       DNAAlignFeature_getHitId(sf), 
                       DNAAlignFeature_getCigarString(sf),
-                      (long long)Analysis_getDbID(analysis),
+                      (IDType)Analysis_getDbID(analysis),
                       DNAAlignFeature_getScore(sf), 
                       DNAAlignFeature_getEValue(sf), 
                       DNAAlignFeature_getPercId(sf));
