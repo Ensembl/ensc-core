@@ -1,9 +1,10 @@
 #include "MysqlStatementHandle.h"
+#include "StrUtil.h"
 #include "mysql.h"
 #include "EnsC.h"
 
 
-MysqlStatementHandle *MysqlStatementHandle_new() {
+StatementHandle *MysqlStatementHandle_new(DBConnection *dbc, char *query) {
   MysqlStatementHandle *sth;
 
   if ((sth = (MysqlStatementHandle *)calloc(1,sizeof(MysqlStatementHandle))) == NULL) {
@@ -17,8 +18,17 @@ MysqlStatementHandle *MysqlStatementHandle_new() {
   sth->fetchRow = MysqlStatementHandle_fetchRow;
   sth->finish   = MysqlStatementHandle_finish;
 
-  return sth;
+  sth->dbc = dbc;
+
+  if ((sth->statementFormat = StrUtil_copyString(&(sth->statementFormat),
+                                                 query,0)) == NULL) {
+    Error_trace("MysqlStatementHandle_new", NULL);
+    return NULL;
+  }
+
+  return (StatementHandle *)sth;
 }
+
 
 #ifdef __hpux /* Machines with vararg vsprintf */
 
@@ -29,19 +39,56 @@ void MysqlStatementHandle_execute(va_alist) {
 
 #else /* Machines with stdarg vsprintf */
 
+/* bits of this came from the process_query routine in the MYSQL
+ * book.
+ */
 void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
   va_list args;
   char statement[EXTREMELEN];
-  int retval;
+  int qlen;
   MYSQL_RES *results;
+  unsigned int field_count;
+  MysqlStatementHandle *m_sth;
+
+  Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);
+
+  m_sth = (MysqlStatementHandle *)sth;
 
   va_start(args, sth);
-  retval = vsnprintf(statement, EXTREMELEN, sth->statementFormat, args);
+  qlen = vsnprintf(statement, EXTREMELEN, m_sth->statementFormat, args);
   va_end(args);
 
-  if (retval < 0 || retval > EXTREMELEN) {
+  if (qlen < 0 || qlen > EXTREMELEN) {
     fprintf(stderr, "ERROR: vsnprintf call failed during statement execution\n");
     exit(1);
+  }
+
+
+  if (mysql_real_query (m_sth->dbc->mysql, statement, qlen) != 0) {    /* the query failed */
+    fprintf(stderr, "Could not execute query");
+    return;
+  }
+
+  /* the query succeeded; determine whether or not it returns data */
+
+  results = mysql_store_result (m_sth->dbc->mysql);
+  if (results) {                    /* a result set was returned */
+    /* store it for future fetches */
+    m_sth->results = results;
+
+  } else { /* no result set was returned */ 
+    /*
+     * does the lack of a result set mean that the query didn't
+     * return one, or that it should have but an error occurred?
+     */
+    if (!mysql_field_count(m_sth->dbc->mysql)) {
+      /*
+       * query generated no result set (it was not a SELECT, SHOW,
+       * DESCRIBE, etc.) - do nothing
+       */
+    } else {   /* an error occurred */
+      fprintf (stderr, "Could not retrieve result set");
+    }
   }
 }
 
@@ -49,7 +96,17 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
 
 
 ResultRow *MysqlStatementHandle_fetchRow(StatementHandle *sth) {
+  MysqlStatementHandle *m_sth;
+
+  Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);
+
+  m_sth = (MysqlStatementHandle *)sth;
 }
 
 void MysqlStatementHandle_finish(StatementHandle *sth) {
+  MysqlStatementHandle *m_sth;
+
+  Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);
+
+  m_sth = (MysqlStatementHandle *)sth;
 }

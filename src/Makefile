@@ -6,10 +6,16 @@ MYSQLCFLAGS=${shell mysql_config --cflags}
 MYSQLLIBS=${shell mysql_config --libs}
 
 CFLAGS = -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic $(MYSQLCFLAGS)
+LDFLAGS = $(MYSQLLIBS)
 
 BINDIR=../bin
 
-all	: directories libensc.a Tests/EcoStringTest Tests/StreamTest Tests/ClassTest
+all	: directories \
+          libensc.a \
+          Tests/EcoStringTest \
+          Tests/StreamTest \
+          Tests/ClassTest \
+          Tests/DBAdaptorTest
 
 directories	:
 	mkdir -p objectfiles/{DataAdaptors,DataModel,Util,Programs,Tests}
@@ -39,10 +45,12 @@ libensc.a	: \
 	objectfiles/DataModel/Analysis.o \
 	objectfiles/DataModel/AssemblyMapper.o \
 	objectfiles/DataModel/BaseAlignFeature.o \
+	objectfiles/DataModel/BaseContig.o \
 	objectfiles/DataModel/Basic/Set.o \
 	objectfiles/DataModel/Chromosome.o \
 	objectfiles/DataModel/Class.o \
 	objectfiles/DataModel/Clone.o \
+	objectfiles/DataModel/EnsC.o \
 	objectfiles/DataModel/Exon.o \
 	objectfiles/DataModel/FeatureSet.o \
 	objectfiles/DataModel/Gene.o \
@@ -72,23 +80,29 @@ libensc.a	: \
 	objectfiles/Util/StrUtil.o \
 	objectfiles/Util/Stream.o \
 	objectfiles/Util/StringHash.o
-	ar rcv libensc.a objectfiles/DataModel/*.o objectfiles/DataAdaptors/*.o objectfiles/Util/*.o
+	ar rcv libensc.a objectfiles/DataModel/*.o objectfiles/DataAdaptors/*.o objectfiles/Util/*.o \
+               objectfiles/DataModel/Basic/*.o objectfiles/DataModel/Mapper/*.o
 	ranlib libensc.a
 
 Tests/ClassTest: \
 	libensc.a \
 	Tests/ClassTest.c
-	cc $(CFLAGS) -o Tests/ClassTest Tests/ClassTest.c -L. -lensc
+	cc $(CFLAGS) $(LDFLAGS) -o Tests/ClassTest Tests/ClassTest.c -L. -lensc
+
+Tests/DBAdaptorTest: \
+	libensc.a \
+	Tests/DBAdaptorTest.c
+	cc $(CFLAGS) $(LDFLAGS) -o Tests/DBAdaptorTest Tests/DBAdaptorTest.c -L. -lensc
 
 Tests/EcoStringTest: \
 	libensc.a \
 	Tests/EcoStringTest.c
-	cc $(CFLAGS) -o Tests/EcoStringTest Tests/EcoStringTest.c -L. -lensc
+	cc $(CFLAGS) $(LDFLAGS) -o Tests/EcoStringTest Tests/EcoStringTest.c -L. -lensc
 
 Tests/StreamTest: \
 	libensc.a \
 	Tests/StreamTest.c
-	cc $(CFLAGS) -o Tests/StreamTest Tests/StreamTest.c -L. -lensc
+	cc $(CFLAGS) $(LDFLAGS) -o Tests/StreamTest Tests/StreamTest.c -L. -lensc
 
 # deletes compiled class files
 clean	:	

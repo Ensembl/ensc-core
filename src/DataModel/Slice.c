@@ -6,6 +6,7 @@
 #include "SliceAdaptor.h"
 #include "ChromosomeAdaptor.h"
 #include "Set.h"
+#include "StrUtil.h"
 
 Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
                  SliceAdaptor *sa, long dbID, int empty) {
@@ -56,9 +57,14 @@ Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
   return slice;
 }
 
-char *Slice_getName(Slice *slice, char *retStr) {
-  sprintf(retStr,"%s.%d-%d",Slice_getChrName(slice),
+ECOSTRING Slice_getName(Slice *slice) {
+  char tmpStr[MAXSTRLEN];
+  ECOSTRING retStr;
+
+  printf("Need to redo this\n");
+  sprintf(tmpStr,"%s.%d-%d",Slice_getChrName(slice),
           Slice_getChrStart(slice),Slice_getChrEnd(slice));
+  EcoString_copyStr(ecoSTable,&retStr,tmpStr,0);
   return retStr;
 }
 

@@ -6,6 +6,7 @@
 #include "BaseContig.h"
 #include "Gene.h"
 #include "Set.h"
+#include "EcoString.h"
 
 
 struct SliceStruct {
@@ -54,7 +55,7 @@ char *Slice_setAssemblyType(Slice *sl,char *type);
 char *Slice_setChrName(Slice *sl,char *chrName);
 #define Slice_getChrName(sl) (sl)->chrName
 
-char *Slice_getName(Slice *sl, char *retStr);
+ECOSTRING Slice_getName(Slice *sl);
 Set *Slice_getAllGenes(Slice *slice, char *logicName);
 
 

@@ -29,7 +29,7 @@ int EcoString_freeStr(ECOSTRTABLE *EcoSTabP, ECOSTRING String);
 int EcoString_genCheckSum(char *String);
 int EcoString_getInfo(ECOSTRTABLE *EcoSTabP);
 int EcoString_getPointer(ECOSTRTABLE *EcoSTabP, ECOSTRING *To, char *From);
-int EcoString_init(ECOSTRTABLE **EcoSTabP);
+int EcoString_initTable(ECOSTRTABLE **EcoSTabP);
 int EcoString_subtractOne(ECOSTRTABLE *EcoSTabP, ECOSTRING String);
 
 #endif /* __ECOSTR_H__ */

@@ -3,6 +3,7 @@
 
 #include "Object.h"
 #include "ResultRow.h"
+#include "DBConnection.h"
 
 typedef struct StatementHandleStruct StatementHandle;
 
@@ -14,6 +15,7 @@ typedef void (*StatementHandle_FinishFunc)(StatementHandle *sth);
   OBJECT_DATA \
   char *statementFormat; \
   char *currentStatement; \
+  DBConnection *dbc; \
   StatementHandle_ExecuteFunc execute; \
   StatementHandle_FetchRowFunc fetchRow; \
   StatementHandle_FinishFunc finish;

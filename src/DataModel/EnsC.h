@@ -2,6 +2,7 @@
 #define __ENSC_H__
 
 #include <stdio.h>
+#include "EcoString.h"
 
 #ifdef TRUE
 #undef TRUE
@@ -23,5 +24,10 @@ typedef long long int64;
 
 #define EXTREMELEN 65536
 
+#ifdef __ECOS_MAIN__
+ ECOSTRTABLE *ecoSTable;
+#else
+ extern ECOSTRTABLE *ecoSTable;
+#endif
 
 #endif

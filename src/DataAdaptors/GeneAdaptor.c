@@ -263,9 +263,9 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
   Set *geneSet;
 
   if (logicName) {
-    sprintf(sliceCacheKey,"%s:%s",Slice_getName(slice,sliceName),logicName);
+    sprintf(sliceCacheKey,"%s:%s",Slice_getName(slice),logicName);
   } else {
-    sprintf(sliceCacheKey,"%s:",Slice_getName(slice,sliceName));
+    sprintf(sliceCacheKey,"%s:",Slice_getName(slice));
   }
   StrUtil_strupr(sliceCacheKey);
 
