@@ -6,6 +6,7 @@
 #include "AnnotatedSeqFeature.h"
 #include "FeatureSet.h"
 #include "StableIdInfo.h"
+#include "Mapper.h"
 
 ANNOTATEDSEQFEATUREFUNC_TYPES(PredictionTranscript)
 
@@ -18,7 +19,15 @@ typedef struct PredictionTranscriptFuncsStruct {
 #define FUNCSTRUCTTYPE PredictionTranscriptFuncs
 struct PredictionTranscriptStruct {
   ANNOTATEDSEQFEATURE_DATA
-  FeatureSet fs;
+  Mapper *exonCoordMapper;
+  Vector *exons;
+  int codingRegionStart;
+  int codingRegionEnd;
+  char codingRegionStartIsSet;
+  char codingRegionEndIsSet;
+  char startIsSet;
+  char endIsSet;
+  Vector *translateableExons;
   char *type;
 };
 #undef FUNCSTRUCTTYPE
@@ -28,23 +37,35 @@ PredictionTranscript *PredictionTranscript_new(void);
 #define PredictionTranscript_setStableId(transcript,sid)  StableIdInfo_setStableId(&((transcript)->si),(sid))
 #define PredictionTranscript_getStableId(transcript)  StableIdInfo_getStableId(&((transcript)->si))
 
-#define PredictionTranscript_setStart(transcript,start) AnnotatedSeqFeature_setStart((transcript),start)
-#define PredictionTranscript_getStart(transcript) AnnotatedSeqFeature_getStart((transcript))
+int PredictionTranscript_setStart(PredictionTranscript *transcript, int start);
+int PredictionTranscript_getStart(PredictionTranscript *transcript);
 
-#define PredictionTranscript_setEnd(transcript,end) AnnotatedSeqFeature_setEnd((transcript),end)
-#define PredictionTranscript_getEnd(transcript) AnnotatedSeqFeature_getEnd((transcript))
+int PredictionTranscript_setEnd(PredictionTranscript *transcript,int end);
+int PredictionTranscript_getEnd(PredictionTranscript *transcript);
 
 #define PredictionTranscript_setStrand(transcript,strand) AnnotatedSeqFeature_setStrand((transcript),strand)
 #define PredictionTranscript_getStrand(transcript) AnnotatedSeqFeature_getStrand((transcript))
 
-#define PredictionTranscript_addExon(transcript,exon) FeatureSet_addFeature(&((transcript)->fs),exon)
-#define PredictionTranscript_getExonAt(transcript,ind) FeatureSet_getFeatureAt(&((transcript)->fs),ind)
+#define PredictionTranscript_setCodingRegionEndIsSet(transcript,flag) (transcript)->codingRegionEndIsSet = (flag)
+#define PredictionTranscript_getCodingRegionEndIsSet(transcript) (transcript)->codingRegionEndIsSet
 
-//#define PredictionTranscript_setExonCount(transcript,ec) FeatureSet_setNumFeature(&((transcript)->fs))
-#define PredictionTranscript_setExonCount(transcript,ec)
-#define PredictionTranscript_getExonCount(transcript) FeatureSet_getNumFeature(&((transcript)->fs))
+#define PredictionTranscript_setCodingRegionStartIsSet(transcript,flag) (transcript)->codingRegionStartIsSet = (flag)
+#define PredictionTranscript_getCodingRegionStartIsSet(transcript) (transcript)->codingRegionStartIsSet
 
-#define PredictionTranscript_removeAllExons(transcript) FeatureSet_removeAll(&((transcript)->fs))
+#define PredictionTranscript_setEndIsSet(transcript,flag) (transcript)->endIsSet = (flag)
+#define PredictionTranscript_getEndIsSet(transcript) (transcript)->endIsSet
+
+#define PredictionTranscript_setStartIsSet(transcript,flag) (transcript)->startIsSet = (flag)
+#define PredictionTranscript_getStartIsSet(transcript) (transcript)->startIsSet
+
+void PredictionTranscript_addExon(PredictionTranscript *transcript,Exon *exon,int *positionP);
+#define PredictionTranscript_getExonAt(transcript,ind) Vector_getElementAt((transcript)->exons,ind)
+#define PredictionTranscript_getExons(transcript) (transcript)->exons
+
+int PredictionTranscript_setExonCount(PredictionTranscript *trans, int count);
+int PredictionTranscript_getExonCount(PredictionTranscript *trans);
+
+//#define PredictionTranscript_removeAllExons(transcript) FeatureSet_removeAll(&((transcript)->fs))
 
 #define PredictionTranscript_setDbID(transcript,id) AnnotatedSeqFeature_setDbID((transcript),(id))
 #define PredictionTranscript_getDbID(transcript) AnnotatedSeqFeature_getDbID((transcript))
@@ -61,20 +82,36 @@ void PredictionTranscript_free(PredictionTranscript *transcript);
 
 int PredictionTranscript_getLength(PredictionTranscript *trans);
 
+int PredictionTranscript_setCodingRegionStart(PredictionTranscript *trans, int start);
+int PredictionTranscript_getCodingRegionStart(PredictionTranscript *trans);
+
+int PredictionTranscript_setCodingRegionEnd(PredictionTranscript *trans, int start);
+int PredictionTranscript_getCodingRegionEnd(PredictionTranscript *trans);
+
+Vector *PredictionTranscript_getAllExons(PredictionTranscript *trans, int wishUndefinedExon);
+Vector *PredictionTranscript_getAllTranslateableExons(PredictionTranscript *trans);
+
+void PredictionTranscript_sort(PredictionTranscript *trans);
+
+char *PredictionTranscript_translate(PredictionTranscript *trans);
+
+char *PredictionTranscript_getcDNA(PredictionTranscript *trans);
+
+MapperRangeSet *PredictionTranscript_pep2Genomic(PredictionTranscript *trans, int start, int end);
+
+MapperRangeSet *PredictionTranscript_cDNA2Genomic(PredictionTranscript *trans, int start, int end);
+MapperRangeSet *PredictionTranscript_genomic2cDNA(PredictionTranscript *trans, int start, int end, int strand, BaseContig *contig);
+
+Mapper *PredictionTranscript_getcDNACoordMapper(PredictionTranscript *trans);
+
 
 #ifdef __PREDICTIONTRANSCRIPT_MAIN__
   PredictionTranscriptFuncs 
     predictionTranscriptFuncs = {
- /* Not done yet
                        PredictionTranscript_getStart,
                        PredictionTranscript_setStart,
                        PredictionTranscript_getEnd,
                        PredictionTranscript_setEnd,
- */
-                       NULL, // getStart  
-                       NULL, // setStart 
-                       NULL, // getEnd
-                       NULL, // setEnd
                        NULL, // getStrand
                        NULL, // setStrand
                        NULL, // getSeq

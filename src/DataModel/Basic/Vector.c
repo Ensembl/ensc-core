@@ -87,6 +87,18 @@ void *Vector_addElement(Vector *v, void *elem) {
   return elem;
 }
 
+void Vector_setNumElement(Vector *v, int nElem) {
+
+  v->nElement = nElem;
+  if ((v->elements = (void **)realloc(v->elements,
+               v->nElement*sizeof(void *))) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for elem array\n");
+    return NULL;
+  }
+
+  return;
+}
+
 void Vector_free(Vector *v, int freeFunc()) {
   int i;
 

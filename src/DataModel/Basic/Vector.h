@@ -33,5 +33,7 @@ void Vector_reverse(Vector *v);
 void *Vector_setElementAt(Vector *v, int ind, void *elem);
 void Vector_sort(Vector *v, SortCompFunc sortFunc);
 void *Vector_getLastElement(Vector *v);
+void Vector_setNumElement(Vector *v, int nElem);
+
 
 #endif

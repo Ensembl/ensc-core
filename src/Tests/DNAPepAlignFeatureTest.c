@@ -40,10 +40,10 @@ int main(int argc, char *argv[]) {
 
     ungapped = DNAPepAlignFeature_getUngappedFeatures((BaseAlignFeature *)daf);
     if (!ungapped) failed = 1;
-    printf(" cigar = %s num ungapped %d\n",DNAPepAlignFeature_getCigarString(daf), Vector_getNumElement(ungapped));
+    // printf(" cigar = %s num ungapped %d\n",DNAPepAlignFeature_getCigarString(daf), Vector_getNumElement(ungapped));
 
     BaseAlignFeature_parseFeatures(daf,ungapped); 
-    printf(" cigar now = %s\n",DNAPepAlignFeature_getCigarString(daf));
+    // printf(" cigar now = %s\n",DNAPepAlignFeature_getCigarString(daf));
     Vector_free(ungapped,NULL);
     if (strcmp(oldCigar,DNAPepAlignFeature_getCigarString(daf))) {
       printf(" cigars different %s %s\n",oldCigar, DNAPepAlignFeature_getCigarString(daf));
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
     Vector *rdafVector;
     DNAPepAlignFeature *rdaf;
 
-    printf("slice start = %d end = %d\n",start,end);
+    // printf("slice start = %d end = %d\n",start,end);
     rdafVector = DNAPepAlignFeature_transformToRawContig(daf);
     if (Vector_getNumElement(rdafVector) > 1) {
       printf("Feature mapped to more than one rawcontig\n");
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
     }
     rdaf = Vector_getElementAt(rdafVector,0);
 
-    printf("rc start = %d end = %d\n",DNAPepAlignFeature_getStart(rdaf),DNAPepAlignFeature_getEnd(rdaf));
+    // printf("rc start = %d end = %d\n",DNAPepAlignFeature_getStart(rdaf),DNAPepAlignFeature_getEnd(rdaf));
     daf = DNAPepAlignFeature_transformToSlice(rdaf, slice);
     if (DNAPepAlignFeature_getStart(daf) != start ||
         DNAPepAlignFeature_getEnd(daf) != end) {

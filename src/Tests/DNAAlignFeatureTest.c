@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
     Vector *rdafVector;
     DNAAlignFeature *rdaf;
 
-    //printf("slice start = %d end = %d\n",start,end);
+    // printf("slice start = %d end = %d id " IDFMTSTR "\n",start,end,DNAAlignFeature_getDbID(daf));
     rdafVector = DNAAlignFeature_transformToRawContig(daf);
     if (Vector_getNumElement(rdafVector) > 1) {
       printf("Feature mapped to more than one rawcontig\n");
@@ -68,11 +68,13 @@ int main(int argc, char *argv[]) {
     }
     rdaf = Vector_getElementAt(rdafVector,0);
 
-    //printf("rc start = %d end = %d\n",DNAAlignFeature_getStart(rdaf),DNAAlignFeature_getEnd(rdaf));
+    // printf("rc id " IDFMTSTR " rc start = %d end = %d\n",BaseContig_getDbID(DNAAlignFeature_getContig(rdaf)),
+    //       DNAAlignFeature_getStart(rdaf),DNAAlignFeature_getEnd(rdaf));
     daf = DNAAlignFeature_transformToSlice(rdaf, slice);
     if (DNAAlignFeature_getStart(daf) != start ||
         DNAAlignFeature_getEnd(daf) != end) {
-      printf("Remapping to slice produced different coords\n");
+      // printf("slice start now = %d end = %d\n",DNAAlignFeature_getStart(daf),DNAAlignFeature_getEnd(daf));
+      printf("Remapping to slice produced different coords for " IDFMTSTR "\n", DNAAlignFeature_getDbID(daf));
       failed =1;
     }
   }

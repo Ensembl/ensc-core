@@ -24,6 +24,7 @@ all	: directories \
           Tests/DNAPepAlignFeatureTest \
           Tests/EcoStringTest \
           Tests/HomologyTest \
+          Tests/PredictionTranscriptTest \
           Tests/RepeatFeatureTest \
           Tests/SeqUtilTest \
           Tests/SimpleFeatureTest \
@@ -207,6 +208,11 @@ Tests/HomologyTest: \
 	libensc.a \
 	Tests/HomologyTest.c
 	$(CC) $(CFLAGS) -o Tests/HomologyTest Tests/HomologyTest.c -L. -lensc $(LDFLAGS)
+
+Tests/PredictionTranscriptTest: \
+	libensc.a \
+	Tests/PredictionTranscriptTest.c
+	$(CC) $(CFLAGS) -o Tests/PredictionTranscriptTest Tests/PredictionTranscriptTest.c -L. -lensc $(LDFLAGS)
 
 Tests/RepeatFeatureTest: \
 	libensc.a \

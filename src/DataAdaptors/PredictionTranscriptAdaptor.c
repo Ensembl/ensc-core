@@ -48,12 +48,11 @@ int PredictionTranscriptAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features)
     IDType analysisId = Analysis_getDbID(PredictionTranscript_getAnalysis(predTrans));
     int nExon = PredictionTranscript_getExonCount(predTrans);
 
-/* NIY
-    if( ! $pre_trans->isa('Bio::EnsEMBL::PredictionTranscript') ) {
-      $self->throw("$pre_trans is not a EnsEMBL PredictionTranscript "
-                   . "- not dumping!");
+    if (predTrans->objectType != CLASS_PREDICTIONTRANSCRIPT) {
+      fprintf(stderr,"Error: Object is not a EnsEMBL PredictionTranscript "
+                     "- not dumping!");
+      exit(1);
     }
-*/
 
     if (PredictionTranscript_getDbID(predTrans) && 
         (BaseFeatureAdaptor *)PredictionTranscript_getAdaptor(predTrans) == bfa ) {
@@ -284,8 +283,8 @@ Vector *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdapto
     Exon_setScore(exon, score);
     Exon_setpValue(exon, pValue);
 
-    //PredictionTranscript_addExon(predTrans, exon, exonRank);
-    PredictionTranscript_addExon(predTrans, exon);
+    PredictionTranscript_addExon(predTrans, exon, &exonRank);
+    //PredictionTranscript_addExon(predTrans, exon);
     nExon++;
   }
 
