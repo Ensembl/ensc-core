@@ -5,7 +5,7 @@ CC = cc
 MYSQLCFLAGS=${shell mysql_config --cflags}
 MYSQLLIBS=${shell mysql_config --libs}
 
-CFLAGS =  -g -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel $(MYSQLCFLAGS)
+CFLAGS =  -g -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS)
 
 BINDIR=../bin
@@ -14,6 +14,7 @@ all	: directories \
           libensc.a \
           Programs/testdbc \
           Programs/countsnps \
+          Programs/indicate \
           Tests/CacheTest \
           Tests/CigarStrUtilTest \
           Tests/ClassTest \
@@ -40,6 +41,7 @@ directories	:
 	mkdir -p objectfiles
 	mkdir -p objectfiles/DataAdaptors
 	mkdir -p objectfiles/DataModel
+	mkdir -p objectfiles/OBDA
 	mkdir -p objectfiles/Util
 	mkdir -p objectfiles/Programs
 	mkdir -p objectfiles/Tests
@@ -118,6 +120,7 @@ libensc.a	: \
 	objectfiles/DataModel/Mapper/MapperPairSet.o \
 	objectfiles/DataModel/Mapper/MapperRangeSet.o \
 	objectfiles/DataModel/Mapper/MapperUnit.o \
+	objectfiles/DataModel/Object.o \
 	objectfiles/DataModel/PredictionTranscript.o \
 	objectfiles/DataModel/RawContig.o \
 	objectfiles/DataModel/RepeatConsensus.o \
@@ -132,6 +135,8 @@ libensc.a	: \
 	objectfiles/DataModel/StickyExon.o \
 	objectfiles/DataModel/Transcript.o \
 	objectfiles/DataModel/Translation.o \
+	objectfiles/OBDA/BioIndex.o \
+	objectfiles/OBDA/parsers.o \
 	objectfiles/Util/CHash.o \
 	objectfiles/Util/Cache.o \
 	objectfiles/Util/EcoString.o \
@@ -147,8 +152,14 @@ libensc.a	: \
 	objectfiles/Util/translate.o
 	ar rcv libensc.a objectfiles/DataModel/*.o objectfiles/DataAdaptors/*.o objectfiles/Util/*.o \
                objectfiles/DataModel/Basic/*.o objectfiles/DataModel/Mapper/*.o \
-               objectfiles/Compara/DataAdaptors/*.o objectfiles/Compara/DataModel/*.o
+               objectfiles/Compara/DataAdaptors/*.o objectfiles/Compara/DataModel/*.o \
+               objectfiles/OBDA/*.o
 	ranlib libensc.a
+
+Programs/indicate: \
+	libensc.a \
+	Programs/indicate.c
+	$(CC) $(CFLAGS) -o Programs/indicate Programs/indicate.c -L. -lensc $(LDFLAGS)
 
 Programs/testdbc: \
 	libensc.a \
@@ -270,6 +281,7 @@ clean	:
 	rm -f libensc.a
 	rm -f Programs/testdbc
 	rm -f Programs/countsnps
+	rm -f Programs/indicate
 	find ./ -name "*.o" -exec rm {} \;
 	find ./Tests ! -name "*.c" ! -name "*.h" -type f -perm -0700 -exec rm {} \;
 
