@@ -35,5 +35,10 @@ int RawContig_getEMBLOffset(RawContig *rc);
 int RawContig_getLength(RawContig *rc);
 
 Set *RawContig_getAllSimpleFeatures(RawContig *rc, char *logicName, double *scoreP);
+Set *RawContig_getAllPredictionTranscripts(RawContig *rc, char *logicName);
+Set *RawContig_getAllRepeatFeatures(RawContig *rc, char *logicName);
+Set *RawContig_getAllDNAAlignFeatures(RawContig *rc, char *logicName, double *scoreP);
+Set *RawContig_getAllProteinAlignFeatures(RawContig *rc, char *logicName, double *scoreP);
+
 
 #endif

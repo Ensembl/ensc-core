@@ -172,15 +172,17 @@ Set *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *
     if (!predTrans || !(ptId == predictionTranscriptId)) {
  
       // throw away last pt if no exons or introns were on the slice
-      if (slice && (transcriptSliceEnd < 1 ||
-                    transcriptSliceStart > sliceLen)) {
-        PredictionTranscript_free(predTrans);
-      } else {
-        // set the stable_id of the previous prediction
-        char tmpStr[256]; 
-        sprintf(tmpStr,"%s.%d.%d\n",stableCtg,stableStart,stableEnd);
-        PredictionTranscript_setStableId(predTrans,tmpStr);
-        Set_addElement(out,predTrans);
+      if (predTrans) {
+        if (slice && (transcriptSliceEnd < 1 ||
+                      transcriptSliceStart > sliceLen)) {
+          PredictionTranscript_free(predTrans);
+        } else {
+          // set the stable_id of the previous prediction
+          char tmpStr[256]; 
+          sprintf(tmpStr,"%s.%d.%d\n",stableCtg,stableStart,stableEnd);
+          PredictionTranscript_setStableId(predTrans,tmpStr);
+          Set_addElement(out,predTrans);
+        }
       }
 
       // Now we've stored the old (if it was any good) start a new prediction transcript

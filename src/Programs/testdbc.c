@@ -96,6 +96,30 @@ int main(int argc, char *argv[]) {
     SimpleFeatureAdaptor_store((BaseFeatureAdaptor *)sfa,sSet);
   }
   {
+    RawContigAdaptor *rca = DBAdaptor_getRawContigAdaptor(dba);
+    RawContig *contig = RawContigAdaptor_fetchByDbID(rca,10000);
+    PredictionTranscriptAdaptor *pta = DBAdaptor_getPredictionTranscriptAdaptor(dba);
+    Set *sSet = RawContig_getAllPredictionTranscripts(contig,"");
+    int i;
+    for (i=0;i<Set_getNumElement(sSet);i++) {
+      PredictionTranscript *pt = Set_getElementAt(sSet,i);
+      printf("Prediction transcript: %d-%d id " INT64FMTSTR "\n", PredictionTranscript_getStart(pt), 
+             PredictionTranscript_getEnd(pt), PredictionTranscript_getDbID(pt));
+    }
+  }
+  {
+    RawContigAdaptor *rca = DBAdaptor_getRawContigAdaptor(dba);
+    RawContig *contig = RawContigAdaptor_fetchByDbID(rca,10000);
+    RepeatFeatureAdaptor *rfa = DBAdaptor_getRepeatFeatureAdaptor(dba);
+    Set *sSet = RawContig_getAllRepeatFeatures(contig,"");
+    int i;
+    for (i=0;i<Set_getNumElement(sSet);i++) {
+      RepeatFeature *rf = Set_getElementAt(sSet,i);
+      printf("Prediction transcrirf: %d-%d id " INT64FMTSTR "\n", RepeatFeature_getStart(rf), 
+             RepeatFeature_getEnd(rf), RepeatFeature_getDbID(rf));
+    }
+  }
+  {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
     Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);
     Set *dafSet = Slice_getAllDNAAlignFeatures(slice,"",NULL);

@@ -20,6 +20,8 @@ int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *baf, Set *features);
 #define ProteinAlignFeatureAdaptor_fetchByDbID(pafa, id) BaseFeatureAdaptor_fetchByDbID((BaseFeatureAdaptor *)(pafa), (id))
 #define ProteinAlignFeatureAdaptor_fetchAllBySliceAndScore(pafa, slice, score, lname) \
           BaseFeatureAdaptor_fetchAllBySliceAndScore((BaseFeatureAdaptor *)(pafa), (slice), (score), (lname))
+#define ProteinAlignFeatureAdaptor_fetchAllByRawContigAndScore(pafa, contig, score, lname) \
+          BaseFeatureAdaptor_fetchAllByRawContigAndScore((BaseFeatureAdaptor *)(pafa), (contig), (score), (lname))
 
 
 

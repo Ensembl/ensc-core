@@ -23,5 +23,7 @@ Set *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
 #define RepeatFeatureAdaptor_fetchByDbID(rfa, id) BaseFeatureAdaptor_fetchByDbID((BaseFeatureAdaptor *)(rfa), (id))
 #define RepeatFeatureAdaptor_fetchAllBySlice(rfa, slice, lname) \
           BaseFeatureAdaptor_fetchAllBySlice((BaseFeatureAdaptor *)(rfa), (slice), (lname))
+#define RepeatFeatureAdaptor_fetchAllByRawContig(rfa, contig, lname) \
+          BaseFeatureAdaptor_fetchAllByRawContig((BaseFeatureAdaptor *)(rfa), (contig), (lname))
 
 #endif

@@ -5,7 +5,7 @@ CC = cc
 MYSQLCFLAGS=${shell mysql_config --cflags}
 MYSQLLIBS=${shell mysql_config --libs}
 
-CFLAGS = -O2 -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic $(MYSQLCFLAGS)
+CFLAGS = -g -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS)
 
 BINDIR=../bin
