@@ -65,6 +65,7 @@ DNAAlignFeature *DNAAlignFeature_new(void);
 #define DNAAlignFeature_getPercId(fp) BaseAlignFeature_getPercId((fp))
 
 #define DNAAlignFeature_setSeqName(fp,name) BaseAlignFeature_setSeqName((fp),(name))
+#define DNAAlignFeature_getSeqName(fp) BaseAlignFeature_getSeqName((fp))
 
 #define DNAAlignFeature_setSpecies(fp,sp) BaseAlignFeature_setSpecies((fp),(sp))
 #define DNAAlignFeature_getSpecies(fp) BaseAlignFeature_getSpecies((fp))

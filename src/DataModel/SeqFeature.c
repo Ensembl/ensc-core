@@ -30,7 +30,7 @@ char *SeqFeature_setSeqName(SeqFeature *sf, char *seqName) {
   }
 
   strcpy(sf->seqName,seqName);
-  printf("set name = %d\n",sf->seqName);
+  // printf("set name = %d\n",sf->seqName);
 
   return sf->seqName;
 }

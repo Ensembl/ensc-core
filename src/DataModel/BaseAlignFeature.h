@@ -92,6 +92,7 @@ char *BaseAlignFeature_setCigarString(BaseAlignFeature *fp, char *ciggy);
 #define BaseAlignFeature_getPercId(fp) FeaturePair_getPercId((fp))
 
 #define BaseAlignFeature_setSeqName(fp,str) FeaturePair_setSeqName((fp),(str))
+#define BaseAlignFeature_getSeqName(fp) FeaturePair_getSeqName((fp))
 
 #define BaseAlignFeature_transformToRawContig(fp) FeaturePair_transformToRawContig((fp))
 #define BaseAlignFeature_transformToSlice(fp,slice) FeaturePair_transformToSlice((fp),(slice))

@@ -33,7 +33,6 @@ BaseContig *DNAFrag_getContig(DNAFrag *df) {
 
    if (!df->contig) {
      DBAdaptor *dba = GenomeDB_getDBAdaptor(DNAFrag_getGenomeDB(df));
-     printf("fetching contig for %s\n",DNAFrag_getType(df));
      if (!strcmp(DNAFrag_getType(df),"RawContig")) {
        RawContigAdaptor *rca = DBAdaptor_getRawContigAdaptor(dba);
        df->contig = (BaseContig *)RawContigAdaptor_fetchByName(rca, DNAFrag_getName(df));

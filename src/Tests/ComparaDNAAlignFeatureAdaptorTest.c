@@ -32,17 +32,20 @@ int main(int argc, char *argv[]) {
   ok(3, dnaAligns!=NULL);
   ok(4, Vector_getNumElement(dnaAligns)!=0);
 
-/*
   for (i=0; i<Vector_getNumElement(dnaAligns); i++) {
     DNAAlignFeature *daf = Vector_getElementAt(dnaAligns,i);
-    printf(" %s %d %d and %s %d %d\n", ComparaDNAAlignFeatureRegion_getChrName(daf),
-                                       ComparaDNAAlignFeatureRegion_getChrStart(daf),
-                                       ComparaDNAAlignFeatureRegion_getChrEnd(daf),
-                                       ComparaDNAAlignFeatureRegion_getHitChrName(daf),
-                                       ComparaDNAAlignFeatureRegion_getHitChrStart(daf),
-                                       ComparaDNAAlignFeatureRegion_getHitChrEnd(daf));
+    Slice *slice = (Slice *)DNAAlignFeature_getContig(daf);
+    printf(" %s %d %d and %s %d %d\n", DNAAlignFeature_getSeqName(daf),
+                                       DNAAlignFeature_getStart(daf),
+                                       DNAAlignFeature_getEnd(daf),
+                                       DNAAlignFeature_getHitSeqName(daf),
+                                       DNAAlignFeature_getHitStart(daf),
+                                       DNAAlignFeature_getHitEnd(daf));
+    printf(" seq = %s\n",Slice_getSubSeq(slice,
+                                         DNAAlignFeature_getStart(daf),
+                                         DNAAlignFeature_getEnd(daf), 
+                                         DNAAlignFeature_getStrand(daf)));
   }
-*/
 
   return 0;
 }

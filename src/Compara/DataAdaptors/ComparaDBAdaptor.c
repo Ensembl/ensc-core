@@ -85,6 +85,7 @@ Vector *ComparaDBAdaptor_readConfFile(ComparaDBAdaptor *cdba, char *fileName) {
     int tokLen;
     char *startSect;
     int tokNum = 0;
+    int port = 3306;
     char species[1024];
     char assembly[1024];
     char user[1024];
@@ -143,6 +144,8 @@ Vector *ComparaDBAdaptor_readConfFile(ComparaDBAdaptor *cdba, char *fileName) {
               strcpy(host, value);
             } else if (!strcmp(key,"user")) {
               strcpy(user, value);
+            } else if (!strcmp(key,"port")) {
+              port = atoi(value);
             } else if (!strcmp(key,"dbname")) {
               strcpy(dbname, value);
             } else if (!strcmp(key,"module")) {
@@ -167,7 +170,7 @@ Vector *ComparaDBAdaptor_readConfFile(ComparaDBAdaptor *cdba, char *fileName) {
       fprintf(stderr,"Error: Missing parameter in conf section\n");
       exit(1);
     }
-    dba = DBAdaptor_new(host,user,NULL,dbname,3306,NULL);
+    dba = DBAdaptor_new(host,user,NULL,dbname,port,NULL);
     DBAdaptor_setAssemblyType(dba, assembly);
     sprintf(genomeHashKey,"%s:%s",species,assembly);
     StringHash_add(cdba->genomes, genomeHashKey, dba);
