@@ -26,6 +26,8 @@ Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
   }
 
   slice->objectType = CLASS_SLICE;
+  Object_incRefCount(slice);
+
   slice->funcs = &sliceFuncs;
 
   if (!empty) {
@@ -68,13 +70,14 @@ Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
 
 ECOSTRING Slice_getName(Slice *slice) {
   char tmpStr[MAXSTRLEN];
-  ECOSTRING retStr;
 
   // NIY printf("Need to redo this\n");
-  sprintf(tmpStr,"%s.%d-%d",Slice_getChrName(slice),
-          Slice_getChrStart(slice),Slice_getChrEnd(slice));
-  EcoString_copyStr(ecoSTable,&retStr,tmpStr,0);
-  return retStr;
+  if (!slice->name) {
+    sprintf(tmpStr,"%s.%d-%d",Slice_getChrName(slice),
+            Slice_getChrStart(slice),Slice_getChrEnd(slice));
+    EcoString_copyStr(ecoSTable,&(slice->name),tmpStr,0);
+  }
+  return slice->name;
 }
 
 /* logicName is optional - set to NULL if you want them all */
@@ -131,24 +134,14 @@ Vector *Slice_getAllPredictionTranscripts(Slice *slice, char *logicName) {
 }
 
 
-char *Slice_setChrName(Slice *sl, char *chrName) {
-  if ((sl->chrName = (char *)malloc(strlen(chrName)+1)) == NULL) {
-    fprintf(stderr,"ERROR: Failed allocating space for chrName\n");
-    exit(1);
-  }
-
-  strcpy(sl->chrName,chrName);
+ECOSTRING Slice_setChrName(Slice *sl, char *chrName) {
+  EcoString_copyStr(ecoSTable, &(sl->chrName), chrName, 0);
 
   return sl->chrName;
 }
 
-char *Slice_setAssemblyType(Slice *sl, char *assemblyType) {
-  if ((sl->assemblyType = (char *)malloc(strlen(assemblyType)+1)) == NULL) {
-    fprintf(stderr,"ERROR: Failed allocating space for assemblyType\n");
-    exit(1);
-  }
-
-  strcpy(sl->assemblyType,assemblyType);
+ECOSTRING Slice_setAssemblyType(Slice *sl, char *assemblyType) {
+  EcoString_copyStr(ecoSTable, &(sl->assemblyType), assemblyType, 0);
 
   return sl->assemblyType;
 }
@@ -179,3 +172,22 @@ char *Slice_getSubSeq(Slice *slice, int start, int end, int strand) {
   return SequenceAdaptor_fetchBySliceStartEndStrand(sa,slice,start,end,strand);
 }
 
+void Slice_free(Slice *slice) {
+  Object_decRefCount(slice);
+
+  if (Object_getRefCount(slice) > 0) {
+    return;
+  } else if (Object_getRefCount(slice) < 0) {
+    fprintf(stderr,"Error: Negative reference count for Slice\n"
+                   "       Freeing it anyway\n");
+  }
+
+  BaseContig_freePtrs(slice);
+
+  if (slice->name) EcoString_freeStr(ecoSTable, slice->name);
+  if (slice->chrName) EcoString_freeStr(ecoSTable, slice->chrName);
+  if (slice->assemblyType) EcoString_freeStr(ecoSTable, slice->assemblyType);
+
+
+  free(slice);
+}

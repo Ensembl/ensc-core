@@ -44,7 +44,8 @@ int main(int argc, char *argv[]) {
 
     BaseAlignFeature_parseFeatures(daf,ungapped); 
     //printf(" cigar now = %s\n",DNAAlignFeature_getCigarString(daf));
-    Vector_free(ungapped,NULL);
+// NIY Check that free func has been set
+    Vector_free(ungapped);
     if (strcmp(oldCigar,DNAAlignFeature_getCigarString(daf))) {
       printf(" cigars different %s %s\n",oldCigar, DNAAlignFeature_getCigarString(daf));
       failed = 1;

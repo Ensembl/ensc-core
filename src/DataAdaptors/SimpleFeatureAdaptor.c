@@ -65,7 +65,7 @@ int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
       exit(1);
     }
     
-    if (!SimpleFeature_getContig(sf)->objectType != CLASS_RAWCONTIG) {
+    if (SimpleFeature_getContig(sf)->objectType != CLASS_RAWCONTIG) {
       fprintf(stderr,"Error: contig isn't raw contig when trying to store\n");
       exit(1);
     }

@@ -21,6 +21,7 @@ Gene *Gene_new() {
   Gene_setVersion(gene,-1);
 
   gene->objectType = CLASS_GENE;
+  Object_incRefCount(gene);
 
   gene->funcs = &geneFuncs;
 
@@ -99,7 +100,7 @@ int Gene_getStart(Gene *gene) {
       }
       lastContig =  BaseContig_getName(Exon_getContig(exon));
     }
-    Vector_free(exonVector,NULL);
+    Vector_free(exonVector);
   }
 
   if (multiFlag) {
@@ -138,7 +139,7 @@ int Gene_getEnd(Gene *gene) {
       }
       lastContig =  BaseContig_getName(Exon_getContig(exon));
     }
-    Vector_free(exonVector,NULL);
+    Vector_free(exonVector);
   }
 
   if (multiFlag) {
@@ -183,12 +184,12 @@ int Gene_getStrand(Gene *gene) {
     if (multiFlag) {
       fprintf(stderr, "WARNING: Gene_getStrand - Gene spans multiple contigs."
                   "The return value from getStrand may not be what you want");
-      Vector_free(exonVector,NULL);
+      Vector_free(exonVector);
       return 0;
     }
 
     Gene_setStrand(gene, Exon_getStrand((Exon *)Vector_getElementAt(exonVector,0)));
-    Vector_free(exonVector,NULL);
+    Vector_free(exonVector);
   }
 
   return gene->strand;
@@ -300,4 +301,17 @@ Gene *Gene_transformToRawContig(Gene *gene) {
   IDHash_free(exonTransforms, NULL);
 
   return gene;
+}
+
+void Gene_free(Gene *gene) {
+// NIY
+  Object_decRefCount(gene);
+
+  if (Object_getRefCount(gene) > 0) {
+    return;
+  } else if (Object_getRefCount(gene) < 0) {
+    fprintf(stderr,"Error: Negative reference count for Gene\n"
+                   "       Freeing it anyway\n");
+  }
+  printf("Gene_free not implemented\n");
 }

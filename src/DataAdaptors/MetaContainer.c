@@ -62,6 +62,7 @@ int MetaContainer_getIntValueByKey(MetaContainer *mc, char *key, int *retVal) {
 
   return okFlag;
 }
+
 Species *MetaContainer_getSpecies(MetaContainer *mc) {
   Vector *classification;
   StatementHandle *sth;

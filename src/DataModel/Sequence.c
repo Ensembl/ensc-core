@@ -23,13 +23,18 @@ Sequence *Sequence_new() {
   return seq;
 }
 
-char *Sequence_setName(Sequence *seq, char *name) {
-  if ((seq->name = (char *)malloc(strlen(name)+1)) == NULL) {
+ECOSTRING Sequence_setName(Sequence *seq, char *name) {
+  if (EcoString_copyStr(ecoSTable,&(seq->name),name,0)) {
     fprintf(stderr,"ERROR: Failed allocating space for seq name\n");
     return NULL;
   }
 
-  strcpy(seq->name,name);
-
   return seq->name;
+}
+
+void Sequence_freePtrs(Sequence *seq) {
+  if (seq->name) free(seq->name);
+// Is this OK!??
+  if (seq->seq) free(seq->seq);
+
 }

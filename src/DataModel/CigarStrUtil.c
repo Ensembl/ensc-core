@@ -31,6 +31,10 @@ char *CigarStrUtil_reverse(char *oldCigarString, int len) {
     *oldChP--;
     *newChP++;
   }
+
+
+  // NIY does old cigar string need freeing?
+
   return newCigarString;
 }
 
@@ -39,6 +43,8 @@ Vector *CigarStrUtil_getPieces(char *cigarString) {
   char *chP = cigarString;
   char piece[128];
   char *pieceP = piece;
+
+  Vector_setFreeFunc(pieces,free);
 
   while (*chP != '\0') {
     if (*chP == 'M' || *chP == 'D' || *chP == 'I') {

@@ -12,6 +12,7 @@ Translation *Translation_new() {
   Translation_setVersion(t,-1);
 
   t->objectType = CLASS_TRANSLATION;
+  Object_incRefCount(t);
 
   return t;
 }
@@ -55,4 +56,15 @@ void Translation_transform(Translation *translation, IDHash *exonTransforms) {
   }
 }
 
+void Translation_free(Translation *translation) {
+  Object_decRefCount(translation);
 
+  if (Object_getRefCount(translation) > 0) {
+    return;
+  } else if (Object_getRefCount(translation) < 0) {
+    fprintf(stderr,"Error: Negative reference count for Translation\n"
+                   "       Freeing it anyway\n");
+  }
+
+  printf("Translation_free not implemented\n");
+}

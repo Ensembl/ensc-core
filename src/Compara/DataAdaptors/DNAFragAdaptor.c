@@ -30,7 +30,7 @@ DNAFrag *DNAFragAdaptor_fetchByDbID(DNAFragAdaptor *dfa, IDType dbID) {
      "SELECT genome_db_id, dnafrag_type, dnafrag_id,"
      "       name, start, end"
      "  FROM dnafrag"
-     " WHERE dnafrag_id = " IDFMTSTR, dbID);
+     " WHERE dnafrag_id = " IDFMTSTR " limit 1", dbID);
 
   sth = dfa->prepare((BaseAdaptor *)dfa,qStr,strlen(qStr));
   sth->execute(sth);
@@ -43,8 +43,7 @@ DNAFrag *DNAFragAdaptor_fetchByDbID(DNAFragAdaptor *dfa, IDType dbID) {
   }
 
   firstFrag = Vector_getElementAt(dnaFrags,0);
-  Vector_free(dnaFrags,NULL);
-// NIY free other frags
+  Vector_free(dnaFrags);
   return firstFrag;
 }
 

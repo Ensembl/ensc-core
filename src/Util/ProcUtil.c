@@ -18,7 +18,7 @@
 #include "Stream.h"
 /******************************************************************************/
 /* Routine    :                                                               */
-/*             TimeInfo()                                                     */
+/*             ProcUtil_timeInfo()                                            */
 /* Role       :                                                               */
 /*             timing information about a process                             */
 /* Arguments  :                                                               */
@@ -35,15 +35,15 @@ int ProcUtil_timeInfo(char *routine) {
 
   times(&t);
 
-  FPrintF(OutStream,"----------------------------------\n");
+  Stream_fprintf(OutStream,"----------------------------------\n");
   if (strlen(routine)) {
-    FPrintF(OutStream,"Timing information %s\n",routine);
+    Stream_fprintf(OutStream,"Timing information %s\n",routine);
   }
-  FPrintF(OutStream,"User time      : %f s\n",(float)t.tms_utime/(float)CLOK_TCK);
-  FPrintF(OutStream,"System time    : %f s\n",(float)t.tms_stime/(float)CLOK_TCK);
-  FPrintF(OutStream,"User children  : %f s\n",(float)t.tms_cutime/(float)CLOK_TCK);
-  FPrintF(OutStream,"System children: %f s\n",(float)t.tms_cstime/(float)CLOK_TCK);
-  FPrintF(OutStream,"----------------------------------\n");
+  Stream_fprintf(OutStream,"User time      : %f s\n",(float)t.tms_utime/(float)CLOK_TCK);
+  Stream_fprintf(OutStream,"System time    : %f s\n",(float)t.tms_stime/(float)CLOK_TCK);
+  Stream_fprintf(OutStream,"User children  : %f s\n",(float)t.tms_cutime/(float)CLOK_TCK);
+  Stream_fprintf(OutStream,"System children: %f s\n",(float)t.tms_cstime/(float)CLOK_TCK);
+  Stream_fprintf(OutStream,"----------------------------------\n");
 #endif
 
   return 1;
@@ -51,7 +51,7 @@ int ProcUtil_timeInfo(char *routine) {
 
 /******************************************************************************/
 /* Routine   :                                                                */
-/*            mallInfo()                                                      */
+/*            ProcUtil_mallInfo()                                             */
 /* Role      :                                                                */
 /*            To output the memory allocation information from                */
 /*            the mallinfo structure                                          */
@@ -69,31 +69,31 @@ void ProcUtil_mallInfo() {
 
   mall=mallinfo();
 
-  FPrintF(OutStream,"---------------------------------------------------\n\n");
-  FPrintF(OutStream,"Total space in arena           : %d\n", mall.arena);
-  FPrintF(OutStream,"Number of ordinary blocks      : %d\n", mall.ordblks);
-  FPrintF(OutStream,"Number of small blocks         : %d\n", mall.smblks);
-  FPrintF(OutStream,"Number of holding blocks       : %d\n", mall.hblks);
-  FPrintF(OutStream,"Space in holding block headers : %d\n", mall.hblkhd);
-  FPrintF(OutStream,"Space in small blocks in use   : %d\n", mall.usmblks);
-  FPrintF(OutStream,"Space in free small blocks     : %d\n", mall.fsmblks);
-  FPrintF(OutStream,"Space in ordinary blocks in use: %d\n", mall.uordblks);
-  FPrintF(OutStream,"Space in free ordinary blocks  : %d\n", mall.fordblks);
-  FPrintF(OutStream,"Cost of enabling keep option   : %d\n", mall.keepcost);
-  FPrintF(OutStream,"---------------------------------------------------\n\n");
+  Stream_fprintf(OutStream,"---------------------------------------------------\n\n");
+  Stream_fprintf(OutStream,"Total space in arena           : %d\n", mall.arena);
+  Stream_fprintf(OutStream,"Number of ordinary blocks      : %d\n", mall.ordblks);
+  Stream_fprintf(OutStream,"Number of small blocks         : %d\n", mall.smblks);
+  Stream_fprintf(OutStream,"Number of holding blocks       : %d\n", mall.hblks);
+  Stream_fprintf(OutStream,"Space in holding block headers : %d\n", mall.hblkhd);
+  Stream_fprintf(OutStream,"Space in small blocks in use   : %d\n", mall.usmblks);
+  Stream_fprintf(OutStream,"Space in free small blocks     : %d\n", mall.fsmblks);
+  Stream_fprintf(OutStream,"Space in ordinary blocks in use: %d\n", mall.uordblks);
+  Stream_fprintf(OutStream,"Space in free ordinary blocks  : %d\n", mall.fordblks);
+  Stream_fprintf(OutStream,"Cost of enabling keep option   : %d\n", mall.keepcost);
+  Stream_fprintf(OutStream,"---------------------------------------------------\n\n");
 #endif
 
 #ifdef linux_old
 #ifdef linux_orig
   struct mstats stats;
   stats=mstats();
-  FPrintF(OutStream,"---------------------------------------------------\n\n");
-  FPrintF(OutStream,"Total space in heap            : %d\n",stats.bytes_total);
-  FPrintF(OutStream,"Chunks allocated               : %d\n",stats.chunks_used);
-  FPrintF(OutStream,"Bytes used                     : %d\n",stats.bytes_used);
-  FPrintF(OutStream,"Chunks free                    : %d\n",stats.chunks_free);
-  FPrintF(OutStream,"Bytes free                     : %d\n",stats.bytes_free);
-  FPrintF(OutStream,"---------------------------------------------------\n\n");
+  Stream_fprintf(OutStream,"---------------------------------------------------\n\n");
+  Stream_fprintf(OutStream,"Total space in heap            : %d\n",stats.bytes_total);
+  Stream_fprintf(OutStream,"Chunks allocated               : %d\n",stats.chunks_used);
+  Stream_fprintf(OutStream,"Bytes used                     : %d\n",stats.bytes_used);
+  Stream_fprintf(OutStream,"Chunks free                    : %d\n",stats.chunks_free);
+  Stream_fprintf(OutStream,"Bytes free                     : %d\n",stats.bytes_free);
+  Stream_fprintf(OutStream,"---------------------------------------------------\n\n");
 #endif
 #endif
 #endif

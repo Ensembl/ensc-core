@@ -12,13 +12,31 @@ SimpleFeature *SimpleFeature_new() {
   }
 
   sf->objectType = CLASS_SIMPLEFEATURE;
+  Object_incRefCount(sf);
 
   sf->funcs = &simpleFeatureFuncs;
  
   return sf;
 }
 
-char *SimpleFeature_setDisplayLabel(SimpleFeature *sf, char *label) {
-  sf->displayLabel = StrUtil_copyString(&(sf->displayLabel), label, 0);
+ECOSTRING SimpleFeature_setDisplayLabel(SimpleFeature *sf, char *label) {
+  EcoString_copyStr(ecoSTable, &(sf->displayLabel), label, 0);
   return sf->displayLabel;
 }
+
+void SimpleFeature_free(SimpleFeature *sf) {
+  Object_decRefCount(sf);
+
+  if (Object_getRefCount(sf) > 0) {
+    return;
+  } else if (Object_getRefCount(sf) < 0) {
+    fprintf(stderr,"Error: Negative reference count for SimpleFeature\n"
+                   "       Freeing it anyway\n");
+  }
+
+  if (sf->displayLabel) EcoString_freeStr(ecoSTable, sf->displayLabel);
+
+  SeqFeature_freePtrs((SeqFeature *)sf);
+  free(sf);
+}
+

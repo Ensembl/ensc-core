@@ -22,12 +22,12 @@ RepeatConsensus *RepeatConsensusAdaptor_fetchByDbID(RepeatConsensusAdaptor *rca,
   Vector *rcVector;
   RepeatConsensus *rc;
   
-  sprintf(constraintStr,"repeat_consensus_id = " IDFMTSTR, dbID);
+  sprintf(constraintStr,"repeat_consensus_id = " IDFMTSTR " limit 1", dbID);
   rcVector = RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
 
   rc = Vector_getElementAt(rcVector,0);
 
-  Vector_free(rcVector,NULL);
+  Vector_free(rcVector);
 
   return rc;   
 }
@@ -37,12 +37,12 @@ RepeatConsensus *RepeatConsensusAdaptor_fetchByName(RepeatConsensusAdaptor *rca,
   Vector *rcVector;
   RepeatConsensus *rc;
   
-  sprintf(constraintStr,"repeat_name = \'%s\'", name);
+  sprintf(constraintStr,"repeat_name = \'%s\' limit 1", name);
   rcVector = RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
 
   rc = Vector_getElementAt(rcVector,0);
 
-  Vector_free(rcVector,NULL);
+  Vector_free(rcVector);
 
   return rc;   
 }
@@ -52,12 +52,12 @@ RepeatConsensus *RepeatConsensusAdaptor_fetchByNameAndClass(RepeatConsensusAdapt
   Vector *rcVector;
   RepeatConsensus *rc;
   
-  sprintf(constraintStr,"repeat_name = \'%s\' AND repeat_class = \'%s\'", name,class);
+  sprintf(constraintStr,"repeat_name = \'%s\' AND repeat_class = \'%s\' limit 1", name,class);
   rcVector = RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
 
   rc = Vector_getElementAt(rcVector,0);
 
-  Vector_free(rcVector,NULL);
+  Vector_free(rcVector);
 
   return rc;   
 }
@@ -146,7 +146,7 @@ int RepeatConsensusAdaptor_store(RepeatConsensusAdaptor *rca, Vector *consensi) 
   return 1;
 }
 
-int RepeatConsensus_free(RepeatConsensus *rc) {
-  fprintf(stderr,"RepeatConsensus_free not implemented\n");
+int RepeatConsensusAdaptor_free(RepeatConsensusAdaptor *rc) {
+  fprintf(stderr,"RepeatConsensusAdaptor_free not implemented\n");
   return 0;
 }

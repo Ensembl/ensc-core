@@ -9,6 +9,7 @@ DBEntry *DBEntry_new() {
   }
 
   dbe->objectType = CLASS_DBENTRY;
+  Object_incRefCount(dbe);
   return dbe;
 }
 
@@ -74,3 +75,28 @@ ECOSTRING DBEntry_setStatus(DBEntry *dbe, char *status) {
 
   return dbe->status;
 }
+
+void DBEntry_free(DBEntry *dbe) {
+  Object_decRefCount(dbe);
+
+  if (Object_getRefCount(dbe) > 0) {
+    return;
+  } else if (Object_getRefCount(dbe) < 0) {
+    fprintf(stderr,"Error: Negative reference count for DBEntry\n"
+                   "       Freeing it anyway\n");
+  }
+
+  if (dbe->dbName) EcoString_freeStr(ecoSTable, dbe->dbName);
+  if (dbe->status) EcoString_freeStr(ecoSTable, dbe->status);
+
+  if (dbe->displayId)   free(dbe->displayId);
+  if (dbe->description) free(dbe->description);
+  if (dbe->primaryId)   free(dbe->primaryId);
+
+  if (dbe->synonyms) Vector_free(dbe->synonyms);
+
+  if (dbe->idXref) IdentityXref_free(dbe->idXref);
+
+  free(dbe);
+}
+

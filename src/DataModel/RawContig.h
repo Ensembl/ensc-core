@@ -29,8 +29,8 @@ RawContig *RawContig_new(void);
 #define RawContig_setAdaptor(rc,ad) BaseContig_setAdaptor((rc),(ad))
 #define RawContig_getAdaptor(rc) BaseContig_getAdaptor((rc))
 
-char *RawContig_setName(RawContig *rc, char *name);
-char *RawContig_getName(RawContig *rc);
+ECOSTRING RawContig_setName(RawContig *rc, char *name);
+ECOSTRING RawContig_getName(RawContig *rc);
 
 #define RawContig_setCloneID(rc,cid) (rc)->cloneId = (cid)
 long RawContig_getCloneID(RawContig *rc);

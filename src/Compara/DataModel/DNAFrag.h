@@ -11,12 +11,12 @@
 struct DNAFragStruct {
   ENSROOT_DATA
   Storable st;
-  char *name;
+  ECOSTRING name;
   BaseContig *contig;
   int start;
   int end;
   GenomeDB *genomeDB;
-  char *type;
+  ECOSTRING type;
 };
 #undef FUNCSTRUCTTYPE
 

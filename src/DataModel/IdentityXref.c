@@ -12,3 +12,7 @@ IdentityXref *IdentityXref_new() {
 
   return idx;
 }
+
+void IdentityXref_free(IdentityXref *idx) {
+  free(idx);
+}

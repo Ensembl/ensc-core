@@ -61,7 +61,7 @@ struct SimpleFeatureStruct {
 
 SimpleFeature *SimpleFeature_new();
 
-char *SimpleFeature_setDisplayLabel(SimpleFeature *sf, char *label);
+ECOSTRING SimpleFeature_setDisplayLabel(SimpleFeature *sf, char *label);
 #define SimpleFeature_getDisplayLabel(simpleFeature) (simpleFeature)->displayLabel
 
 #ifdef __SIMPLEFEATURE_MAIN__

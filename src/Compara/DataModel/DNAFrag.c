@@ -14,11 +14,12 @@ DNAFrag *DNAFrag_new() {
   }
 
   df->objectType = CLASS_DNAFRAG;
+  Object_incRefCount(df);
   return df;
 }
 
-char *DNAFrag_setName(DNAFrag *df, char *name) {
-  StrUtil_copyString(&(df->name),name,0);
+ECOSTRING DNAFrag_setName(DNAFrag *df, char *name) {
+  EcoString_copyStr(ecoSTable,&(df->name),name,0);
 
   return df->name;
 }
@@ -54,5 +55,25 @@ BaseContig *DNAFrag_getContig(DNAFrag *df) {
    }
 
    return df->contig;
+}
+
+void DNAFrag_free(DNAFrag *df) {
+  Object_decRefCount(df);
+
+  if (Object_getRefCount(df) > 0) {
+    return;
+  } else if (Object_getRefCount(df) < 0) {
+    fprintf(stderr,"Error: Negative reference count for DNAFrag\n"
+                   "       Freeing it anyway\n");
+  }
+
+  printf("BaseContig_free needs implementing in DNAFrag\n");
+  //if (df->contig)   BaseContig_free(df->contig);
+  if (df->genomeDB) GenomeDB_free(df->genomeDB);
+
+  if (df->type) EcoString_freeStr(ecoSTable, df->type);
+  if (df->name) EcoString_freeStr(ecoSTable, df->name);
+
+  free(df);
 }
 

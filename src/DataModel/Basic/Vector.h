@@ -2,20 +2,25 @@
 #define __VECTOR_H__
 
 #include "EnsC.h"
+#include "Class.h"
+#include "Object.h"
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef void   (*Vector_ElementFreeFunc)();
 typedef struct VectorStruct {
+  OBJECT_DATA
   void **elements;
   int nElement;
   int isSpecial;
+  Vector_ElementFreeFunc freeElement;  
 } Vector;
 
 #ifdef __VECTOR_MAIN__
-  Vector  emptyVectorData = {NULL,0,1};
+  Vector  emptyVectorData = {CLASS_VECTOR,-1,NULL,0,1};
   Vector *emptyVector = &emptyVectorData;
   void   *singleEntryVectorArray[1] = { NULL };
-  Vector  singleEntryVectorData = {singleEntryVectorArray,1,1};
+  Vector  singleEntryVectorData = {CLASS_VECTOR,-1,singleEntryVectorArray,1,1};
   Vector *singleEntryVector = &singleEntryVectorData;
 #else
   extern Vector *emptyVector;
@@ -26,7 +31,8 @@ Vector *Vector_new();
 void *Vector_addElement(Vector *vector, void *elem);
 #define Vector_getNumElement(v) (v)->nElement
 void *Vector_getElementAt(Vector *v, int ind);
-void Vector_free(Vector *vector, void freeFunc());
+void Vector_free(Vector *vector);
+void Vector_setFreeFunc(Vector *vector, void freeFunc());
 
 void Vector_append(Vector *dest, Vector *src);
 void Vector_reverse(Vector *v);

@@ -24,6 +24,8 @@ BaseAlignFeature *BaseAlignFeature_new() {
 
   baf->objectType = CLASS_BASEALIGNFEATURE;
 
+  Object_incRefCount(baf);
+
   baf->funcs = &baseAlignFeatureFuncs;
 
   return baf;
@@ -625,7 +627,7 @@ Vector *BaseAlignFeature_transformSliceToRawContigImpl(BaseAlignFeature *baf) {
     FeaturePair *f = Vector_getElementAt(features,i);
     Vector *featVector = BaseAlignFeature_transformFeatureSliceToRawContig(baf, f);
     Vector_append(mappedFeatures, featVector);
-    Vector_free(featVector,NULL);
+    Vector_free(featVector);
   }
 
   // sort the transformed ungapped features into contig buckets
@@ -919,3 +921,26 @@ Vector *BaseAlignFeature_transformFeatureSliceToRawContig(BaseAlignFeature *baf,
 
   return out;
 }
+
+void BaseAlignFeature_freePtrs(BaseAlignFeature *baf) {
+  if (baf->cigarString) free(baf->cigarString);
+
+  FeaturePair_freePtrs((FeaturePair *)baf);
+}
+
+
+void BaseAlignFeature_free(BaseAlignFeature *baf) {
+  Object_decRefCount(baf);
+
+  if (Object_getRefCount(baf) > 0) {
+    return;
+  } else if (Object_getRefCount(baf) < 0) {
+    fprintf(stderr,"Error: Negative reference count for BaseAlignFeature\n"
+                   "       Freeing it anyway\n");
+  }
+
+  BaseAlignFeature_freePtrs(baf);
+
+  free(baf);
+}
+

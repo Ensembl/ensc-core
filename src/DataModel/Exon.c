@@ -3,6 +3,7 @@
 #undef __EXON_MAIN__
 #include "ExonAdaptor.h"
 #include "AssemblyMapperAdaptor.h"
+#include "SupportingFeatureAdaptor.h"
 #include "AssemblyMapper.h"
 #include "DBAdaptor.h"
 #include "SliceAdaptor.h"
@@ -26,6 +27,7 @@ Exon *Exon_new() {
   Exon_setVersion(exon,-1);
 
   exon->objectType = CLASS_EXON;
+  Object_incRefCount(exon);
 
   exon->funcs = &exonFuncs;
 
@@ -250,14 +252,29 @@ void Exon_findSupportingEvidence(Exon *exon, Vector *features, int isSorted) {
   }
   Exon_addSupportingFeatures(exon, support);
 
-  Vector_free(support,NULL);
+  Vector_free(support);
 }
 
 Vector *Exon_getAllSupportingFeaturesImpl(Exon *exon) {
+
+  if (!exon->supportingFeatures)  {
+    if (Exon_getAdaptor(exon)) {
+      DBAdaptor *dba = Exon_getAdaptor(exon)->dba;
+      SupportingFeatureAdaptor *sfa=DBAdaptor_getSupportingFeatureAdaptor(dba);
+      exon->supportingFeatures=SupportingFeatureAdaptor_fetchAllByExon(sfa,exon);
+    }
+  }
+
+  if (!exon->supportingFeatures) {
+    exon->supportingFeatures = emptyVector;
+  }
   return exon->supportingFeatures;
 }
 
 void Exon_addSupportingFeaturesImpl(Exon *exon, Vector *v) {
+  if (!exon->supportingFeatures || exon->supportingFeatures == emptyVector) {
+    exon->supportingFeatures = Vector_new();
+  }
   Vector_append(exon->supportingFeatures,v);
 }
 
@@ -332,7 +349,7 @@ char *Exon_getPeptideImpl(Exon *exon, Transcript *trans) {
     peptide = StrUtil_substr(wholePeptide,start,(end-start+1));
   }
 
-  Vector_free(coords,NULL);
+  Vector_free(coords);
   MapperRangeSet_free(mapped);
 
   return peptide;
@@ -614,4 +631,7 @@ void Exon_loadGenomicMapperImpl(Exon *exon, Mapper *mapper, IDType id, int start
 }
 
 
+void Exon_free(Exon *exon) {
+  printf("Exon_free not implemented\n");
+}
 

@@ -10,7 +10,6 @@ typedef struct NoTypeFuncsStruct {
 
 #define ENSROOT_DATA \
   OBJECT_DATA \
-  int referenceCount; \
   FUNCSTRUCTTYPE *funcs;
 
 

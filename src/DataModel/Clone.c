@@ -10,6 +10,7 @@ Clone *Clone_new() {
   }
 
   cl->objectType = CLASS_CLONE;
+  Object_incRefCount(cl);
 
   return cl;
 }
@@ -35,4 +36,21 @@ char *Clone_setEmblAcc(Clone *cl, char *acc) {
 
   return cl->emblAcc;
 }
+
+void Clone_free(Clone *clone) {
+  Object_decRefCount(clone);
+
+  if (Object_getRefCount(clone) > 0) {
+    return;
+  } else if (Object_getRefCount(clone) < 0) {
+    fprintf(stderr,"Error: Negative reference count for Clone\n"
+                   "       Freeing it anyway\n");
+  }
+
+  if (clone->name) EcoString_freeStr(ecoSTable, clone->name);
+  if (clone->emblAcc) EcoString_freeStr(ecoSTable, clone->emblAcc);
+
+  free(clone);
+}
+
 

@@ -21,6 +21,7 @@ Transcript *Transcript_new() {
   Transcript_setVersion(transcript,-1);
 
   transcript->objectType = CLASS_TRANSCRIPT;
+  Object_incRefCount(transcript);
 
   return transcript;
 }
@@ -78,6 +79,7 @@ int Transcript_getVersion(Transcript *transcript) {
   return StableIdInfo_getVersion(&(transcript->si));
 }
 
+//NIY Freeing old exons???
 Transcript *Transcript_transform(Transcript *trans, IDHash *exonTransforms) {
   Vector *mappedExonVector = Vector_new();
   int i;
@@ -110,7 +112,7 @@ Transcript *Transcript_transform(Transcript *trans, IDHash *exonTransforms) {
     Translation_transform(Transcript_getTranslation(trans), exonTransforms);
   }
 
-  Vector_free(mappedExonVector,NULL);
+  Vector_free(mappedExonVector);
 
   return trans;
 }
@@ -302,7 +304,7 @@ char *Transcript_getTranslateableSeq(Transcript *trans) {
     lastPhase = Exon_getEndPhase(exon);
   }
 
-  Vector_free(translateableExons,NULL);
+  Vector_free(translateableExons);
 
 // NIY free adjusted
 
@@ -694,4 +696,15 @@ Mapper *Transcript_getcDNACoordMapper(Transcript *trans) {
   return mapper;
 }
 
+void Transcript_free(Transcript *trans) {
+  Object_decRefCount(trans);
 
+  if (Object_getRefCount(trans) > 0) {
+    return;
+  } else if (Object_getRefCount(trans) < 0) {
+    fprintf(stderr,"Error: Negative reference count for Transcript\n"
+                   "       Freeing it anyway\n");
+  }
+
+  printf("Transcript_free not implemented\n");
+}

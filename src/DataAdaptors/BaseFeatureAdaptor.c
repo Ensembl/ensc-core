@@ -140,7 +140,12 @@ SeqFeature *BaseFeatureAdaptor_fetchByDbID(BaseFeatureAdaptor *bfa, IDType dbID)
   features = BaseFeatureAdaptor_genericFetch(bfa, constraintStr, "", NULL, NULL);
   sf = Vector_getElementAt(features, 0);
 // NIY free func
-  Vector_free(features, NULL);
+  if (Vector_getNumElement(features) > 1) {
+    fprintf(stderr,
+            "Error: Memory leak because got more than one feature with id " 
+            IDFMTSTR, dbID);
+  }
+  Vector_free(features);
 
   return (SeqFeature *)sf;
 }

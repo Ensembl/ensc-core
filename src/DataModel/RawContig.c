@@ -25,12 +25,14 @@ RawContig *RawContig_new() {
   rc->length = rc->emblOffset = rc->cloneId = -1;
 
   rc->objectType = CLASS_RAWCONTIG;
+  Object_incRefCount(rc);
+
   rc->funcs = &rawContigFuncs;
 
   return rc;
 }
 
-char *RawContig_getName(RawContig *rc) {
+ECOSTRING RawContig_getName(RawContig *rc) {
   RawContigAdaptor *rca = (RawContigAdaptor *)RawContig_getAdaptor(rc);
 
   if (rc->name == NULL && rca) {
@@ -39,13 +41,11 @@ char *RawContig_getName(RawContig *rc) {
   return rc->name;
 }
 
-char *RawContig_setName(RawContig *rc, char *name) {
-  if ((rc->name = (char *)malloc(strlen(name)+1)) == NULL) {
-    fprintf(stderr,"ERROR: Failed allocating space for seqfeature name\n");
+ECOSTRING RawContig_setName(RawContig *rc, char *name) {
+  if (!EcoString_copyStr(ecoSTable,&(rc->name),name,0)) {
+    fprintf(stderr,"ERROR: Failed allocating space for contig name\n");
     return NULL;
   }
-
-  strcpy(rc->name,name);
 
   return rc->name;
 }
@@ -200,4 +200,19 @@ char *RawContig_getSubSeq(RawContig *contig, int start, int end, int strand) {
 
 }
 
+void RawContig_free(RawContig *rc) {
+  Object_decRefCount(rc);
+
+  if (Object_getRefCount(rc) > 0) {
+    return;
+  } else if (Object_getRefCount(rc) < 0) {
+    fprintf(stderr,"Error: Negative reference count for RawContig\n"
+                   "       Freeing it anyway\n");
+  }
+
+  printf("Freeing rawcontig\n");
+  BaseContig_freePtrs(rc);
+
+  free(rc);
+}
 

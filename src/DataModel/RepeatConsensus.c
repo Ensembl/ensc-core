@@ -10,6 +10,7 @@ RepeatConsensus *RepeatConsensus_new() {
   }
 
   rc->objectType = CLASS_REPEATCONSENSUS;
+  Object_incRefCount(rc);
   return rc;
 }
 
@@ -26,4 +27,20 @@ ECOSTRING RepeatConsensus_setRepeatClass(RepeatConsensus *rc, char *class) {
 ECOSTRING RepeatConsensus_setName(RepeatConsensus *rc, char *name) {
   EcoString_copyStr(ecoSTable,&(rc->name), name, 0);
   return rc->name;
+}
+
+void RepeatConsensus_free(RepeatConsensus *rc) {
+  Object_decRefCount(rc);
+
+  if (Object_getRefCount(rc) > 0) {
+    return;
+  } else if (Object_getRefCount(rc) < 0) {
+    fprintf(stderr,"Error: Negative reference count for RepeatConsensus\n"
+                   "       Freeing it anyway\n");
+  }
+
+  if (rc->name) EcoString_freeStr(ecoSTable, rc->name);
+  if (rc->repeatClass) EcoString_freeStr(ecoSTable, rc->repeatClass);
+
+  free(rc);
 }

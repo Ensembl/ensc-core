@@ -11,6 +11,7 @@ DNAPepAlignFeature *DNAPepAlignFeature_new() {
   }
 
   dpaf->objectType = CLASS_DNAPEPALIGNFEATURE;
+  Object_incRefCount(dpaf);
 
   dpaf->funcs = &dnaPepAlignFeatureFuncs;
   return dpaf;
@@ -23,3 +24,19 @@ int DNAPepAlignFeature_getHitUnit(void) {
 int DNAPepAlignFeature_getQueryUnit(void) {
   return 3;
 }
+
+void DNAPepAlignFeature_free(DNAPepAlignFeature *dpaf) {
+  Object_decRefCount(dpaf);
+
+  if (Object_getRefCount(dpaf) > 0) {
+    return;
+  } else if (Object_getRefCount(dpaf) < 0) {
+    fprintf(stderr,"Error: Negative reference count for DNAPepAlignFeature\n"
+                   "       Freeing it anyway\n");
+  }
+
+  BaseAlignFeature_freePtrs((BaseAlignFeature *)dpaf);
+
+  free(dpaf);
+}
+

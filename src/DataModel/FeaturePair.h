@@ -34,16 +34,16 @@ struct FeaturePairStruct {
 
 FeaturePair *FeaturePair_new(void);
 
+ECOSTRING FeaturePair_setHitSeqName(FeaturePair *fp, char *str);
 #define FeaturePair_getHitSeqName(fp)  (fp)->hitId
-char *FeaturePair_setHitSeqName(FeaturePair *fp, char *str);
 
 #define FeaturePair_getSeqName(fp)  SeqFeature_getSeqName((fp))
 #define FeaturePair_setSeqName(fp,str)  SeqFeature_setSeqName((fp),(str))
 
-char *FeaturePair_setSpecies(FeaturePair *fp, char *str);
+ECOSTRING FeaturePair_setSpecies(FeaturePair *fp, char *str);
 #define FeaturePair_getSpecies(fp)  (fp)->species
 
-char *FeaturePair_setHitSpecies(FeaturePair *fp, char *str);
+ECOSTRING FeaturePair_setHitSpecies(FeaturePair *fp, char *str);
 #define FeaturePair_getHitSpecies(fp)  (fp)->hitSpecies
 
 #define FeaturePair_setStart(fp,start) SeqFeature_setStart((fp),(start))

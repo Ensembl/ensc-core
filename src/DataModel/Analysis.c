@@ -10,6 +10,8 @@ Analysis *Analysis_new() {
 
   anal->objectType = CLASS_ANALYSIS;
 
+  Object_incRefCount(anal);
+
   return anal;
 }
 
@@ -57,3 +59,28 @@ int Analysis_compare(Analysis *a, Analysis *b) {
   
   return retVal;
 }
+
+void Analysis_free(Analysis *anal) {
+  Object_decRefCount(anal);
+
+  if (Object_getRefCount(anal) > 0) {
+    return;
+  } else if (Object_getRefCount(anal) < 0) {
+    fprintf(stderr,"Error: Negative reference count for Analysis\n"
+                   "       Freeing it anyway\n");
+  }
+
+  if (anal->db)          free(anal->db);
+  if (anal->dbFile)      free(anal->dbFile);
+  if (anal->program)     free(anal->program);
+  if (anal->programFile) free(anal->programFile);
+  if (anal->gffSource)   free(anal->gffSource);
+  if (anal->gffFeature)  free(anal->gffFeature);
+  if (anal->module)      free(anal->module);
+  if (anal->parameters)  free(anal->parameters);
+  if (anal->created)     free(anal->created);
+  if (anal->logicName)   free(anal->logicName);
+
+  free(anal);
+}
+

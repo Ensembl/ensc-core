@@ -26,6 +26,7 @@ StickyExon *StickyExon_new(void) {
   StickyExon_setVersion(stickyExon,-1);
 
   stickyExon->objectType = CLASS_STICKYEXON;
+  Object_incRefCount(stickyExon);
 
   stickyExon->funcs = &stickyExonFuncs;
 
@@ -87,9 +88,7 @@ Exon *StickyExon_transformRawContigToSlice(StickyExon *exon, Slice *slice)  {
       MapperRange *mrange;
       MapperCoordinate *mcoord;
 
-/*
-      fprintf(stderr," component exon %s",Exon_getStableId(exon));
-*/
+      // fprintf(stderr," component exon %s",Exon_getStableId(exon));
 
       mapped = AssemblyMapper_mapCoordinatesToAssembly(assMapper,
 	 BaseContig_getDbID(Exon_getContig(compExon)),
@@ -98,9 +97,7 @@ Exon *StickyExon_transformRawContigToSlice(StickyExon *exon, Slice *slice)  {
 	 Exon_getStrand(compExon)
 	);
       
-/*
-      fprintf(stderr, "\nStickyExon transform method:\n"); 
-*/
+      // fprintf(stderr, "\nStickyExon transform method:\n"); 
       
       // exons should always transform so in theory no error check
       // necessary
@@ -123,12 +120,10 @@ Exon *StickyExon_transformRawContigToSlice(StickyExon *exon, Slice *slice)  {
 
       mcoord = (MapperCoordinate *)mrange;
 
-/*
-      fprintf(stderr, "[Mapped start  %d ", mcoord->start);
-      fprintf(stderr, "\tMapped end %d ", mcoord->end);
-      fprintf(stderr, "\tMapped strand %d ",  mcoord->strand);
-      fprintf(stderr, "]\nSticky rank : %d\n", Exon_getStickyRank(compExon));
-*/
+      // fprintf(stderr, "[Mapped start  %d ", mcoord->start);
+      // fprintf(stderr, "\tMapped end %d ", mcoord->end);
+      // fprintf(stderr, "\tMapped strand %d ",  mcoord->strand);
+      // fprintf(stderr, "]\nSticky rank : %d\n", Exon_getStickyRank(compExon));
 
       // add the supporting features from the exons
       // each exon has the pieces of the supporting features that fall in the corresponding contig
@@ -440,7 +435,7 @@ char *StickyExon_getPeptide(StickyExon *stickyExon, Transcript *trans) {
       }
     }
   
-    Vector_free(coords,NULL);
+    Vector_free(coords);
     MapperRangeSet_free(mapped);
   }
 
@@ -503,3 +498,6 @@ void StickyExon_addSupportingFeatures(StickyExon *stickyExon, Vector *features) 
   }
 }
 
+void StickyExon_free(StickyExon *stickyExon) {
+  printf("StickyExon_free not implemented\n");
+}

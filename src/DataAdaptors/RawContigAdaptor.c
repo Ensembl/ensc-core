@@ -66,6 +66,7 @@ void RawContigAdaptor_fetchAttributes(RawContigAdaptor *rca, RawContig *rc) {
 
 void RawContigAdaptor_fillRawContigWithRow(RawContigAdaptor *rca, RawContig *rc, ResultRow *row) {
 
+//NIY Freeing of name
   RawContig_setName(rc,row->getStringAt(row,1));
   RawContig_setCloneID(rc,row->getLongLongAt(row,2));
   RawContig_setLength(rc,row->getIntAt(row,3));

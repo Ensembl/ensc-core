@@ -328,7 +328,7 @@ int DBEntryAdaptor_fetchAllByGene(DBEntryAdaptor *dbea, Gene *gene) {
       for (i=0;i<Vector_getNumElement(translatLinks); i++) {
         Gene_addDBLink(gene,Vector_getElementAt(translatLinks,i));
       }
-      Vector_free(translatLinks,NULL);
+      Vector_free(translatLinks);
     }
 
     
@@ -336,7 +336,7 @@ int DBEntryAdaptor_fetchAllByGene(DBEntryAdaptor *dbea, Gene *gene) {
     for (i=0;i<Vector_getNumElement(transLinks); i++) {
       Gene_addDBLink(gene, Vector_getElementAt(transLinks,i));
     }
-    Vector_free(transLinks,NULL);
+    Vector_free(transLinks);
   }
 
 /* NIY This is wrong so I'm not going to implement it!
@@ -384,7 +384,7 @@ int DBEntryAdaptor_fetchAllByTranscript(DBEntryAdaptor *dbea, Transcript *trans)
     for (i=0;i<Vector_getNumElement(translatLinks); i++) {
       Transcript_addDBLink(trans,Vector_getElementAt(translatLinks,i));
     }
-    Vector_free(translatLinks,NULL);
+    Vector_free(translatLinks);
   }
 
   sth->finish(sth);
@@ -394,7 +394,7 @@ int DBEntryAdaptor_fetchAllByTranscript(DBEntryAdaptor *dbea, Transcript *trans)
   for (i=0;i<Vector_getNumElement(transLinks); i++) {
     Transcript_addDBLink(trans,Vector_getElementAt(transLinks,i));
   }
-  Vector_free(transLinks,NULL);
+  Vector_free(transLinks);
 
   return 1;
 }

@@ -8,25 +8,44 @@ Homology *Homology_new() {
     fprintf(stderr,"ERROR: Failed allocating space for hm\n");
     return NULL;
   }
+  Object_incRefCount(hm);
 
   hm->objectType = CLASS_HOMOLOGY;
   return hm;
 }
 
-char *Homology_setSpecies(Homology *homol, char *species) {
-  StrUtil_copyString(&(homol->species),species,0);
+ECOSTRING Homology_setSpecies(Homology *homol, char *species) {
+  EcoString_copyStr(ecoSTable, &(homol->species),species,0);
  
   return homol->species;
 }
 
-char *Homology_setStableId(Homology *homol, char *sid) {
-  StrUtil_copyString(&(homol->stableId),sid,0);
+ECOSTRING Homology_setStableId(Homology *homol, char *sid) {
+  EcoString_copyStr(ecoSTable, &(homol->stableId),sid,0);
  
   return homol->stableId;
 }
 
-char *Homology_setChromosome(Homology *homol, char *chr) {
-  StrUtil_copyString(&(homol->chrName),chr,0);
+ECOSTRING Homology_setChromosome(Homology *homol, char *chr) {
+  EcoString_copyStr(ecoSTable, &(homol->chrName),chr,0);
  
   return homol->chrName;
 }
+
+void Homology_free(Homology *hom) {
+  Object_decRefCount(hom);
+
+  if (Object_getRefCount(hom) > 0) {
+    return;
+  } else if (Object_getRefCount(hom) < 0) {
+    fprintf(stderr,"Error: Negative reference count for Homology\n"
+                   "       Freeing it anyway\n");
+  }
+
+  if (hom->chrName)  EcoString_freeStr(ecoSTable, hom->chrName);
+  if (hom->stableId) EcoString_freeStr(ecoSTable, hom->stableId);
+  if (hom->species)  EcoString_freeStr(ecoSTable, hom->species);
+
+  free(hom);
+}
+

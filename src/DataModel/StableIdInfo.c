@@ -13,3 +13,7 @@ char *StableIdInfo_setStableId(StableIdInfo *si, char *sid) {
 
   return si->stableId;
 }
+
+void StableIdInfo_freePtrs(StableIdInfo *si) {
+  if (si->stableId) free(si->stableId);
+}

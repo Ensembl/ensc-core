@@ -45,11 +45,12 @@ int main(int argc, char *argv[]) {
     for (j=0;j<Vector_getNumElement(geneHomols);j++) {
       Homology *hom = Vector_getElementAt(geneHomols,j);
       printf(" homol = %s %s %d %d\n",Homology_getStableId(hom),
-                                      Homology_getChrName(hom),
+                                      Homology_getChromosome(hom),
                                       Homology_getChrStart(hom),
                                       Homology_getChrEnd(hom));
     }
-    Vector_free(geneHomols,NULL);
+// Check that free func has been set
+    Vector_free(geneHomols);
   }
 
   return 0;

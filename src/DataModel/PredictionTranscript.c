@@ -16,18 +16,16 @@ PredictionTranscript *PredictionTranscript_new() {
   }
 
   transcript->objectType = CLASS_PREDICTIONTRANSCRIPT;
+  Object_incRefCount(transcript);
+
   transcript->funcs = &predictionTranscriptFuncs;
+
   transcript->exons = Vector_new();
   return transcript;
 }
 
-char *PredictionTranscript_setType(PredictionTranscript *t, char *type) {
-  if ((t->type = (char *)malloc(strlen(type)+1)) == NULL) {
-    fprintf(stderr,"ERROR: Failed allocating space for transcript type\n");
-    return NULL;
-  }
-
-  strcpy(t->type,type);
+ECOSTRING PredictionTranscript_setType(PredictionTranscript *t, char *type) {
+  EcoString_copyStr(ecoSTable,&(t->type),type,0);
 
   return t->type;
 }
@@ -38,15 +36,11 @@ void PredictionTranscript_flushExons(PredictionTranscript *trans) {
   PredictionTranscript_setStartIsSet(trans, 0);  
   PredictionTranscript_setEndIsSet(trans, 0);  
   if (trans->translateableExons) {
-    Vector_free(trans->translateableExons,NULL);
+    Vector_free(trans->translateableExons);
     trans->translateableExons = NULL;
   }
 // NIY  Transcript_removeAllExons(trans);
 // NIY caches 
-}
-
-void PredictionTranscript_free(PredictionTranscript *trans) {
-  printf("PredictionTranscript_free not implemented\n");
 }
 
 int PredictionTranscript_getLength(PredictionTranscript *trans) {
@@ -102,7 +96,6 @@ int PredictionTranscript_setStart(PredictionTranscript *trans, int start) {
 int PredictionTranscript_getStart(PredictionTranscript *trans) {
 
   if (!PredictionTranscript_getStartIsSet(trans)) {
-    //if the coding start is not defined, use the start of the transcript
     fprintf(stderr, "Error: Trying to call PT getStart before its set\n");
     exit(1);
   }
@@ -462,7 +455,7 @@ MapperRangeSet *PredictionTranscript_genomic2cDNA(PredictionTranscript *trans, i
     }
     firstExon = Vector_getElementAt(translateable, 0);
     contig = Exon_getContig(firstExon);
-    Vector_free(translateable, NULL);
+    Vector_free(translateable);
   }
 
   mapper = PredictionTranscript_getcDNACoordMapper(trans);
@@ -494,6 +487,27 @@ Mapper *PredictionTranscript_getcDNACoordMapper(PredictionTranscript *trans) {
     start += Exon_getLength(exon);
   }
   trans->exonCoordMapper = mapper;
-  Vector_free(translateable,NULL);
+  Vector_free(translateable);
   return mapper;
 }
+
+void PredictionTranscript_free(PredictionTranscript *trans) {
+  int i;
+
+  Object_decRefCount(trans);
+
+  if (Object_getRefCount(trans) > 0) {
+    return;
+  } else if (Object_getRefCount(trans) < 0) {
+    fprintf(stderr,"Error: Negative reference count for PredictionTranscript\n"
+                   "       Freeing it anyway\n");
+  }
+
+  if (trans->exonCoordMapper)    Mapper_free(trans->exonCoordMapper);
+  if (trans->translateableExons) Vector_free(trans->translateableExons);
+  if (trans->exons)              Vector_free(trans->exons);
+
+
+  free(trans);
+}
+

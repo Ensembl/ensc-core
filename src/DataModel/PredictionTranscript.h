@@ -28,7 +28,7 @@ struct PredictionTranscriptStruct {
   char startIsSet;
   char endIsSet;
   Vector *translateableExons;
-  char *type;
+  ECOSTRING type;
 };
 #undef FUNCSTRUCTTYPE
 

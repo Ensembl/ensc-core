@@ -29,7 +29,7 @@ ComparaDBAdaptor *ComparaDBAdaptor_new(char *host, char *user, char *pass, char 
 }
 
 /* Format of conf file:-
-# $compara_db->get_bd_adaptor("Homo sapiens","NCBI31")
+# $compara_db->get_db_adaptor("Homo sapiens","NCBI31")
 
 [
 ['Homo sapiens', 'NCBI31', {'host' => "ecs2b.internal.sanger.ac.uk",

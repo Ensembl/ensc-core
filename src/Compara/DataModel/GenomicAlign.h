@@ -18,7 +18,7 @@ struct GenomicAlignStruct {
   int queryStart;
   int queryEnd;
   signed char queryStrand;
-  char *alignmentType;
+  ECOSTRING alignmentType;
   double percentId;
   double score;
 };

@@ -9,29 +9,49 @@ SyntenyRegion *SyntenyRegion_new() {
   }
 
   sr->objectType = CLASS_SYNTENYREGION;
+  Object_incRefCount(sr);
   return sr;
 }
 
-char *SyntenyRegion_setChrName(SyntenyRegion *sr, char *chrName) {
-  StrUtil_copyString(&(sr->chrName), chrName, 0);
+ECOSTRING SyntenyRegion_setChrName(SyntenyRegion *sr, char *chrName) {
+  EcoString_copyStr(ecoSTable, &(sr->chrName), chrName, 0);
 
   return sr->chrName;
 }
 
-char *SyntenyRegion_setHitChrName(SyntenyRegion *sr, char *hitChrName) {
-  StrUtil_copyString(&(sr->hitChrName), hitChrName, 0);
+ECOSTRING SyntenyRegion_setHitChrName(SyntenyRegion *sr, char *hitChrName) {
+  EcoString_copyStr(ecoSTable, &(sr->hitChrName), hitChrName, 0);
 
   return sr->hitChrName;
 }
 
-char *SyntenyRegion_setHitSeqType(SyntenyRegion *sr, char *hitSeqType) {
-  StrUtil_copyString(&(sr->hitSeqType), hitSeqType, 0);
+ECOSTRING SyntenyRegion_setHitSeqType(SyntenyRegion *sr, char *hitSeqType) {
+  EcoString_copyStr(ecoSTable, &(sr->hitSeqType), hitSeqType, 0);
 
   return sr->hitSeqType;
 }
 
-char *SyntenyRegion_setSeqType(SyntenyRegion *sr, char *seqType) {
-  StrUtil_copyString(&(sr->seqType), seqType, 0);
+ECOSTRING SyntenyRegion_setSeqType(SyntenyRegion *sr, char *seqType) {
+  EcoString_copyStr(ecoSTable, &(sr->seqType), seqType, 0);
 
   return sr->seqType;
 }
+
+void SyntenyRegion_free(SyntenyRegion *sr) {
+  Object_decRefCount(sr);
+
+  if (Object_getRefCount(sr) > 0) {
+    return;
+  } else if (Object_getRefCount(sr) < 0) {
+    fprintf(stderr,"Error: Negative reference count for SyntenyRegion\n"
+                   "       Freeing it anyway\n");
+  }
+
+  if (sr->chrName)    EcoString_freeStr(ecoSTable, sr->chrName);
+  if (sr->hitChrName) EcoString_freeStr(ecoSTable, sr->hitChrName);
+  if (sr->seqType)    EcoString_freeStr(ecoSTable, sr->seqType);
+  if (sr->hitSeqType) EcoString_freeStr(ecoSTable, sr->hitSeqType);
+
+  free(sr);
+}
+

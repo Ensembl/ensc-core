@@ -19,8 +19,8 @@ struct SliceStruct {
   BASECONTIG_DATA
   int strand;
   char emptyFlag;
-  char *chrName;
-  char *assemblyType;
+  ECOSTRING chrName;
+  ECOSTRING assemblyType;
   IDType chrId;
 };
 #undef FUNCSTRUCTTYPE
@@ -58,10 +58,10 @@ Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
 
 #define Slice_getLength(sl) ((sl)->end - (sl)->start + 1)
 
-char *Slice_setAssemblyType(Slice *sl,char *type);
+ECOSTRING Slice_setAssemblyType(Slice *sl,char *type);
 #define Slice_getAssemblyType(sl) (sl)->assemblyType
 
-char *Slice_setChrName(Slice *sl,char *chrName);
+ECOSTRING Slice_setChrName(Slice *sl,char *chrName);
 #define Slice_getChrName(sl) (sl)->chrName
 
 ECOSTRING Slice_getName(Slice *sl);

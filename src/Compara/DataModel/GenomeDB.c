@@ -10,6 +10,7 @@ GenomeDB *GenomeDB_new() {
   }
 
   gdb->objectType = CLASS_GENOMEDB;
+  Object_incRefCount(gdb);
   return gdb;
 }
 
@@ -66,3 +67,20 @@ char *GenomeDB_setName(GenomeDB *gdb, char *name) {
 
   return gdb->name;
 }
+
+void GenomeDB_free(GenomeDB *gdb) {
+  Object_decRefCount(gdb);
+
+  if (Object_getRefCount(gdb) > 0) {
+    return;
+  } else if (Object_getRefCount(gdb) < 0) {
+    fprintf(stderr,"Error: Negative reference count for GenomeDB\n"
+                   "       Freeing it anyway\n");
+  }
+
+  if (gdb->name)     free(gdb->name);
+  if (gdb->assembly) free(gdb->assembly);
+
+  free(gdb);
+}
+

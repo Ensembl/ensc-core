@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/users/searle/otterinst/bin/perl -w
 
 
 use strict;
@@ -6,13 +6,13 @@ use strict;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Getopt::Long;
 
-my $host   = 'kaka.sanger.ac.uk';
-my $user   = 'anonymous';
-my $dbname = 'homo_sapiens_core_12_31';
+my $host   = 'localhost';
+my $user   = 'root';
+my $dbname = 'homo_sapiens_core_18_34';
 my @chromosomes;
 my $file = 'stdout';
 
-my $path = 'NCBI31';
+my $path = 'NCBI34';
 my $port = 3306;
 
 $| = 1;
@@ -100,8 +100,12 @@ foreach my $chr (reverse sort bychrnum keys %$chrhash) {
     print "Gene " . $gene->stable_id . "\n";
     foreach my $trans (@{$gene->get_all_Transcripts}) {
       print " Transcript " . $trans->stable_id . "\n";
-      my $pep = $trans->translate;
-      print $pep->seq . "\n";
+      if ($trans->translation) {
+        my $pep = $trans->translate;
+        print $pep->seq . "\n";
+      } else {
+        print "No translation\n";
+      }
     }
   }
   print "Done translating transcripts\n";

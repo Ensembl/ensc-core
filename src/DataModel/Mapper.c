@@ -499,3 +499,9 @@ void Mapper_sort(Mapper *m) {
 
   Mapper_setIsSorted(m, 1);
 }
+
+void Mapper_free(Mapper *m) {
+// NIY freeing the mapper
+  printf("Mapper_free not implemented\n");
+  free(m);
+}

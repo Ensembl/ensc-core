@@ -46,7 +46,7 @@ Vector *HomologyAdaptor_fetchHomologuesOfGeneInSpecies(HomologyAdaptor *ha,
   for (i=0;i<nRelationship;i++) {
     Vector *homols = HomologyAdaptor_fetchHomologuesBySpeciesRelationshipId(ha,hSpecies,relationshipIds[i]);
     Vector_append(genes, homols);
-    Vector_free(homols,NULL);
+    Vector_free(homols);
   }
 
   free(relationshipIds);
@@ -96,7 +96,7 @@ Vector *HomologyAdaptor_fetchHomologuesOfGene(HomologyAdaptor *ha, char *sp, cha
 
     homols = HomologyAdaptor_getHomologues(ha, qStr);
     Vector_append(genes,homols);
-    Vector_free(homols, NULL);
+    Vector_free(homols);
   }
 
   free(relationshipIds);
@@ -148,11 +148,11 @@ Vector **HomologyAdaptor_fetchHomologuesByChrStartInSpecies(HomologyAdaptor *ha,
 
     homols = HomologyAdaptor_fetchHomologuesBySpeciesRelationshipId(ha, species, relationshipIds[i]);
     Vector_append(genesPair[0],homols);
-    Vector_free(homols, NULL);
+    Vector_free(homols);
 
     homols = HomologyAdaptor_fetchHomologuesBySpeciesRelationshipId(ha, hSpecies, relationshipIds[i]);
     Vector_append(genesPair[1],homols);
-    Vector_free(homols, NULL);
+    Vector_free(homols);
   }
 
   free(species);

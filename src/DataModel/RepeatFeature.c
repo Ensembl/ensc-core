@@ -11,8 +11,24 @@ RepeatFeature *RepeatFeature_new() {
   }
 
   rf->objectType = CLASS_REPEATFEATURE;
+  Object_incRefCount(rf);
 
   rf->funcs = &repeatFeatureFuncs;
 
   return rf;
 }
+
+void RepeatFeature_free(RepeatFeature *rf) {
+  Object_decRefCount(rf);
+
+  if (Object_getRefCount(rf) > 0) {
+    return;
+  } else if (Object_getRefCount(rf) < 0) {
+    fprintf(stderr,"Error: Negative reference count for RepeatFeature\n"
+                   "       Freeing it anyway\n");
+  }
+
+  SeqFeature_freePtrs((SeqFeature *)rf);
+  free(rf);
+}
+

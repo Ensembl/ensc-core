@@ -9,18 +9,18 @@
 int COMPARA_DAFA_CACHE_SIZE = 4;
 
 ComparaDNAAlignFeatureAdaptor *ComparaDNAAlignFeatureAdaptor_new(ComparaDBAdaptor *dba) {
-  ComparaDNAAlignFeatureAdaptor *dafa;
+  ComparaDNAAlignFeatureAdaptor *cdafa;
 
-  if ((dafa = (ComparaDNAAlignFeatureAdaptor *)
+  if ((cdafa = (ComparaDNAAlignFeatureAdaptor *)
             calloc(1,sizeof(ComparaDNAAlignFeatureAdaptor))) == NULL) {
-    fprintf(stderr,"Error: Failed allocating dafa\n");
+    fprintf(stderr,"Error: Failed allocating cdafa\n");
     exit(1);
   }
-  BaseComparaAdaptor_init((BaseComparaAdaptor *)dafa, dba, COMPARADNAALIGNFEATURE_ADAPTOR);
+  BaseComparaAdaptor_init((BaseComparaAdaptor *)cdafa, dba, COMPARADNAALIGNFEATURE_ADAPTOR);
 
-  dafa->regionCache = Cache_new(COMPARA_DAFA_CACHE_SIZE);
+  cdafa->regionCache = Cache_new(COMPARA_DAFA_CACHE_SIZE);
 
-  return dafa;
+  return cdafa;
 }
 
 Vector *ComparaDNAAlignFeatureAdaptor_fetchAllBySpeciesRegion(ComparaDNAAlignFeatureAdaptor *dafa,
@@ -107,6 +107,7 @@ Vector *ComparaDNAAlignFeatureAdaptor_fetchAllBySpeciesRegion(ComparaDNAAlignFea
     }
   }
 
+// NIY Freeing genomic aligns
   return out;
 }
 

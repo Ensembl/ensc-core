@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
 
       Vector_append(genes,genesOfType);
 
-      Vector_free(genesOfType,NULL);
+      Vector_free(genesOfType);
       geneType++;
     }
 
@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
 
         Vector_append(snps,snpsOfType);
 
-        Vector_free(snpsOfType,NULL);
+        Vector_free(snpsOfType);
         snpType++;
       }
     }
@@ -224,8 +224,8 @@ int main(int argc, char **argv) {
       free(keys);
     }
     printf("Done coding type calcs\n");
-    Vector_free(snps,NULL);
-    Vector_free(genes,NULL);
+    Vector_free(snps);
+    Vector_free(genes);
     StringHash_free(snpCodingType,free);
     chrName++;
   }

@@ -3,9 +3,10 @@
 
 #include "DataModelTypes.h"
 #include "EnsRoot.h"
+#include "EnsC.h"
 
 #define SEQUENCEFUNC_TYPES(CLASSTYPE) \
-  typedef char * (*CLASSTYPE ## _GetNameFunc)(CLASSTYPE *seq); \
+  typedef ECOSTRING (*CLASSTYPE ## _GetNameFunc)(CLASSTYPE *seq); \
   typedef char * (*CLASSTYPE ## _GetSeqFunc)(CLASSTYPE *seq); \
   typedef char * (*CLASSTYPE ## _GetSubSeqFunc)(CLASSTYPE *seq, int start, int end, int strand);
 
@@ -24,7 +25,7 @@ typedef struct SequenceFuncsStruct {
 #define SEQUENCE_DATA \
   ENSROOT_DATA \
   char *seq; \
-  char *name; \
+  ECOSTRING name; \
   int length;
 
 #define FUNCSTRUCTTYPE SequenceFuncs
@@ -33,6 +34,7 @@ struct SequenceStruct {
 };
 #undef FUNCSTRUCTTYPE
 
+void Sequence_freePtrs(Sequence *seq);
 
 #ifdef __SEQUENCE_MAIN__
  SequenceFuncs sequenceFuncs;

@@ -59,7 +59,7 @@ typedef struct SeqFeatureFuncsStruct {
   signed char endPhase; \
   signed char frame; \
   signed char strand; \
-  char *      seqName; \
+  ECOSTRING   seqName; \
   Storable    st; \
   Analysis *  analysis; \
   double      score; \
@@ -106,7 +106,7 @@ SeqFeature *SeqFeature_new(void);
 #define SeqFeature_setEndPhase(sf,ep) (sf)->endPhase = (ep)
 #define SeqFeature_getEndPhase(sf) (sf)->endPhase
 
-#define SeqFeature_setAnalysis(sf,ana) (sf)->analysis = ana
+#define SeqFeature_setAnalysis(sf,ana) (sf)->analysis = ana, Object_incRefCount(ana)
 #define SeqFeature_getAnalysis(sf) (sf)->analysis
 
 char *SeqFeature_setStableId(SeqFeature *sf, char *stableId);
@@ -134,8 +134,8 @@ Vector *SeqFeature_transformSliceToRawContigImpl(SeqFeature *sf);
 SeqFeature *SeqFeature_transformToSliceImpl(SeqFeature *sf, Slice *slice);
 SeqFeature *SeqFeature_transformRawContigToSliceImpl(SeqFeature *sf, Slice *slice);
 
-char *SeqFeature_setSeqName(SeqFeature *sf, char *seqName);
-char *SeqFeature_getSeqName(SeqFeature *sf);
+ECOSTRING SeqFeature_setSeqName(SeqFeature *sf, char *seqName);
+ECOSTRING SeqFeature_getSeqName(SeqFeature *sf);
 
 
 #define SeqFeature_transformToSlice(sf,slice) \

@@ -13,12 +13,12 @@ struct SyntenyRegionStruct {
   int end;
   IDType clusterId;
   IDType dnaFragId;
-  char *chrName;
+  ECOSTRING chrName;
+  ECOSTRING hitChrName;
+  ECOSTRING seqType;
+  ECOSTRING hitSeqType;
   int chrStart;
   int chrEnd;
-  char *hitChrName;
-  char *seqType;
-  char *hitSeqType;
   int hitChrStart;
   int hitChrEnd;
   int relOri;
@@ -54,6 +54,7 @@ SyntenyRegion *SyntenyRegion_new();
 #define SyntenyRegion_setChrStart(sr,s) (sr)->chrStart = (s)
 #define SyntenyRegion_getChrStart(sr) (sr)->chrStart
 
+ECOSTRING SyntenyRegion_setChrName(SyntenyRegion *sr, char *chrName);
 #define SyntenyRegion_getChrName(sr) (sr)->chrName
 
 #define SyntenyRegion_setHitChrEnd(sr,e) (sr)->hitChrEnd = (e)
@@ -62,6 +63,10 @@ SyntenyRegion *SyntenyRegion_new();
 #define SyntenyRegion_setHitChrStart(sr,s) (sr)->hitChrStart = (s)
 #define SyntenyRegion_getHitChrStart(sr) (sr)->hitChrStart
 
+ECOSTRING SyntenyRegion_setHitChrName(SyntenyRegion *sr, char *hitChrName);
 #define SyntenyRegion_getHitChrName(sr) (sr)->hitChrName
 
+ECOSTRING SyntenyRegion_setHitSeqType(SyntenyRegion *sr, char *hitSeqType);
+
+ECOSTRING SyntenyRegion_setSeqType(SyntenyRegion *sr, char *seqType);
 #endif

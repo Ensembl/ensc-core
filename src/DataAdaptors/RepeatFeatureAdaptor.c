@@ -75,16 +75,17 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
 // NIY This is a terribly slow way to do this - f**king consensi
 
       Vector *match = RepeatConsensusAdaptor_fetchByClassAndSeq(rca, "trf", RepeatConsensus_getConsensus(cons)); 
+      Vector_setFreeFunc(match,RepeatConsensus_free);
       if (Vector_getNumElement(match)) {
         RepeatConsensus *matchedCons = Vector_getElementAt(match,0);
         RepeatConsensus_setDbID(cons,RepeatConsensus_getDbID(matchedCons));
-        Vector_free(match,RepeatConsensus_free);
+        Vector_free(match);
       } else {
         Vector *consVector = Vector_new();
         Vector_addElement(consVector,cons);
         RepeatConsensusAdaptor_store(rca,consVector);
-        Vector_free(match,NULL);
-        Vector_free(consVector,NULL);
+        Vector_free(match);
+        Vector_free(consVector);
       }
 
     } else if (!strcmp(RepeatConsensus_getRepeatClass(cons),"Simple_repeat")) {
@@ -111,7 +112,7 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
         Vector *consVector = Vector_new();
         Vector_addElement(consVector,cons);
         RepeatConsensusAdaptor_store(rca,consVector);
-        Vector_free(consVector,NULL);
+        Vector_free(consVector);
       }
     } else {
 
@@ -132,13 +133,13 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
           RepeatConsensus_setConsensus(cons,"N");
           Vector_addElement(consVector,cons);
           RepeatConsensusAdaptor_store(rca,consVector);
-          Vector_free(consVector,NULL);
+          Vector_free(consVector);
         }
       }
     }
     
-    if (!RepeatFeature_getContig(rf)->objectType != CLASS_RAWCONTIG) {
-      fprintf(stderr,"Error: contig isn't raw contig when trying to store\n");
+    if (RepeatFeature_getContig(rf)->objectType != CLASS_RAWCONTIG) {
+      fprintf(stderr,"Error: contig isn't raw contig when trying to store (is %d)\n",RepeatFeature_getContig(rf)->objectType);
       exit(1);
     }
 

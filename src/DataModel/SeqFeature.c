@@ -23,19 +23,13 @@ SeqFeature *SeqFeature_new(void) {
 }
 
 
-char *SeqFeature_setSeqName(SeqFeature *sf, char *seqName) {
-  if ((sf->seqName = (char *)malloc(strlen(seqName)+1)) == NULL) {
-    fprintf(stderr,"ERROR: Failed allocating space for seqfeature seqName\n");
-    return NULL;
-  }
-
-  strcpy(sf->seqName,seqName);
-  // printf("set name = %d\n",sf->seqName);
+ECOSTRING SeqFeature_setSeqName(SeqFeature *sf, char *seqName) {
+  EcoString_copyStr(ecoSTable, &(sf->seqName),seqName,0);
 
   return sf->seqName;
 }
 
-char *SeqFeature_getSeqName(SeqFeature *sf) {
+ECOSTRING SeqFeature_getSeqName(SeqFeature *sf) {
   BaseContig *contig = SeqFeature_getContig(sf);
 
   if (contig) {
@@ -46,7 +40,6 @@ char *SeqFeature_getSeqName(SeqFeature *sf) {
     fprintf(stderr,"Warning: No seq name defined for feature\n");
     return emptyString;
   }
-
 }
 
 int SeqFeature_startCompFunc(const void *a, const void *b) {
@@ -362,10 +355,16 @@ Vector *SeqFeature_transformSliceToRawContigImpl(SeqFeature *sf) {
       }
     }
     //NIY freeing mapper and coord etc.
-    Vector_free(coords,NULL);
-    Vector_free(gaps,NULL);
+    Vector_free(coords);
+    Vector_free(gaps);
 
     return out;
   }
 }
 
+void SeqFeature_freePtrs(SeqFeature *sf) {
+  if (sf->seqName)  EcoString_freeStr(ecoSTable, sf->seqName);
+  if (sf->analysis) Analysis_free(sf->analysis);
+// NIY Is this the right thing to do
+  // NIY Freeing contig if (sf->contig)   BaseContig_free(sf->contig);
+}

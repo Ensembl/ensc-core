@@ -33,7 +33,8 @@ int main(int argc, char *argv[]) {
 
   printf("Opening connection ...");
   //dba = DBAdaptor_new("localhost","root",NULL,"test_ensembl",3306,NULL);
-  dba = DBAdaptor_new("kaka.sanger.ac.uk","anonymous",NULL,"homo_sapiens_core_12_31",3306,NULL);
+  //dba = DBAdaptor_new("kaka.sanger.ac.uk","anonymous",NULL,"homo_sapiens_core_12_31",3306,NULL);
+  dba = DBAdaptor_new("localhost","root",NULL,"homo_sapiens_core_18_34",3306,NULL);
   //dba = DBAdaptor_new("ecs2d.internal.sanger.ac.uk","ensro",NULL,"homo_sapiens_core_14_31",3306,NULL);
   //dba = DBAdaptor_new("ecs2d.internal.sanger.ac.uk","ensro",NULL,"rattus_norvegicus_core_15_2",3306,NULL);
   printf(" Done\n");
@@ -146,7 +147,7 @@ int main(int argc, char *argv[]) {
     int i;
     for (i=0;i<Vector_getNumElement(sVector);i++) {
       DNAPepAlignFeature *paf = Vector_getElementAt(sVector,i);
-      printf("DNA align feature: %d-%d id " IDFMTSTR "\n", DNAPepAlignFeature_getStart(paf), 
+      printf("Protein align feature: %d-%d id " IDFMTSTR "\n", DNAPepAlignFeature_getStart(paf), 
              DNAPepAlignFeature_getEnd(paf), DNAPepAlignFeature_getDbID(paf));
     }
     ProteinAlignFeatureAdaptor_store((BaseFeatureAdaptor *)pafa,sVector);
@@ -202,13 +203,14 @@ int main(int argc, char *argv[]) {
   {
     AnalysisAdaptor *aa = DBAdaptor_getAnalysisAdaptor(dba);
 
-    Analysis *anal = AnalysisAdaptor_fetchByDbID(aa,1);
+    Analysis *anal = AnalysisAdaptor_fetchByDbID(aa,2);
 
     printf("Anal logic name = %s\n",anal->logicName);
     anal = AnalysisAdaptor_fetchByLogicName(aa,"ensembl");
 
     printf("Anal logic name = %s\n",anal->logicName);
   }
+*/
   {
     TranscriptAdaptor *ta = DBAdaptor_getTranscriptAdaptor(dba);
     Transcript *t = TranscriptAdaptor_fetchByDbID(ta,1);
@@ -232,7 +234,6 @@ int main(int argc, char *argv[]) {
       printf("Exon " IDFMTSTR " %d %d %d\n",Exon_getDbID(e), Exon_getStart(e), Exon_getEnd(e), Exon_getStrand(e));
     }
   }
-*/
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
     Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,230000000);
@@ -257,7 +258,11 @@ int main(int argc, char *argv[]) {
                 Transcript_getStableId(trans),
                 Transcript_getStart(trans),
                 Transcript_getEnd(trans));
-        fprintf(stderr,"translation = %s\n",Transcript_translate(trans));
+        if (Transcript_getTranslation(trans)) {
+          fprintf(stderr,"translation = %s\n",Transcript_translate(trans));
+        } else {
+          fprintf(stderr,"No translation\n");
+        }
 /*
         for (k=0;k<Transcript_getExonCount(trans);k++) {
           Exon *exon = (Exon *)Transcript_getExonAt(trans,k);
@@ -289,7 +294,7 @@ int main(int argc, char *argv[]) {
     char *rawseq;
     char *sliceSeq;
 
-    RawContig_setDbID(rc,24);
+    RawContig_setDbID(rc,10000);
     rawseq = SequenceAdaptor_fetchByRawContigStartEndStrand(sa,rc,1,10,1);
     
     printf("Seq = %s\n",rawseq);

@@ -11,6 +11,7 @@ DNAAlignFeature *DNAAlignFeature_new() {
   }
 
   daf->objectType = CLASS_DNADNAALIGNFEATURE;
+  Object_incRefCount(daf);
 
   daf->funcs = &dnaAlignFeatureFuncs;
 
@@ -25,3 +26,17 @@ int DNAAlignFeature_getQueryUnit(void) {
   return 1;
 }
 
+void DNAAlignFeature_free(DNAAlignFeature *daf) {
+  Object_decRefCount(daf);
+
+  if (Object_getRefCount(daf) > 0) {
+    return;
+  } else if (Object_getRefCount(daf) < 0) {
+    fprintf(stderr,"Error: Negative reference count for DNAAlignFeature\n"
+                   "       Freeing it anyway\n");
+  }
+
+  BaseAlignFeature_freePtrs((BaseAlignFeature *)daf);
+  
+  free(daf);
+}

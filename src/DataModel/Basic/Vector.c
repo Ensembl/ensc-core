@@ -5,12 +5,21 @@
 
 Vector *Vector_new() {
   Vector *vector;
+
   if ((vector = (Vector *)calloc(1,sizeof(Vector))) == NULL) {
     fprintf(stderr,"ERROR: Failed allocating space for Vector\n");
     return NULL;
   }
 
+  vector->objectType = CLASS_VECTOR;
+
+  Object_incRefCount(vector);
+
   return vector;
+}
+
+void Vector_setFreeFunc(Vector *v, void freeElement()) {
+  v->freeElement = freeElement;
 }
 
 void *Vector_getElementAt(Vector *v, int ind) {
@@ -85,39 +94,51 @@ void *Vector_addElement(Vector *v, void *elem) {
 }
 
 void Vector_setNumElement(Vector *v, int nElem) {
-  void **tmp;
   int i;
 
-  if ((tmp = (void **)calloc(nElem,sizeof(void *))) == NULL) {
+  if ((v->elements = (void **)realloc(v->elements,nElem*sizeof(void *))) == NULL) {
     fprintf(stderr,"ERROR: Failed allocating space for elem array\n");
     return;
   }
 
-  for (i=0;i<v->nElement;i++) {
-    tmp[i] = v->elements[i];
+  for (i=v->nElement; i<nElem; i++) {
+    v->elements[i] = NULL;
   }
-  free(v->elements);
 
   v->nElement = nElem;
-  v->elements = tmp;
 
   return;
 }
 
-void Vector_free(Vector *v, void freeFunc()) {
+void Vector_free(Vector *v) {
   int i;
 
+  printf("Vector free called\n");
   if (v->isSpecial) {
+    printf(" - special vector so returning\n");
     return;
   }
 
-  if (freeFunc) {
+
+  Object_decRefCount(v);
+
+  if (Object_getRefCount(v) > 0) {
+    return;
+  } else if (Object_getRefCount(v) < 0) {
+    fprintf(stderr,"Error: Negative reference count for Vector\n"
+                   "       Freeing it anyway\n");
+  }
+
+
+  if (v->freeElement) {
+    printf(" - has free func so freeing elements\n");
     for (i=0;i<v->nElement;i++) {
       if (v->elements[i]) {
-        freeFunc(v->elements[i]);
+        v->freeElement(v->elements[i]);
       }
     }
   }
   free(v->elements);
   free(v);
+  printf(" - done freeing vector\n");
 }

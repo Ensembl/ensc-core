@@ -3,8 +3,10 @@
 
 #include "DataModelTypes.h"
 #include "Storable.h"
+#include "Object.h"
 
 struct ChromosomeStruct {
+  OBJECT_DATA
   Storable st;
   int length;
   char *name;
@@ -21,7 +23,9 @@ Chromosome *Chromosome_new(void);
 #define Chromosome_setLength(c,len) (c)->length = (len)
 #define Chromosome_getLength(c) (c)->length
 
-#define Chromosome_setName(c,n) (c)->name = (n)
+ECOSTRING Chromosome_setName(Chromosome *c,char *name);
 #define Chromosome_getName(c) (c)->name
+
+void Chromosome_free(Chromosome *chr);
 
 #endif

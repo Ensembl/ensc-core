@@ -15,6 +15,7 @@ GenomicAlign *GenomicAlign_new() {
   }
 
   ga->objectType = CLASS_GENOMICALIGN;
+  Object_incRefCount(ga);
   return ga;
 }
 
@@ -24,8 +25,8 @@ char *GenomicAlign_setCigarString(GenomicAlign *ga, char *cigStr) {
   return ga->cigarString;
 }
 
-char *GenomicAlign_setAlignmentType(GenomicAlign *ga, char *alType) {
-  StrUtil_copyString(&(ga->alignmentType), alType, 0);
+ECOSTRING GenomicAlign_setAlignmentType(GenomicAlign *ga, char *alType) {
+  EcoString_copyStr(ecoSTable, &(ga->alignmentType), alType, 0);
 
   return ga->alignmentType;
 }
@@ -145,7 +146,27 @@ char * GenomicAlign_getSequenceAlignString(GenomicAlign *ga, Slice *consensusSli
         exit(1);
     }
   }     
-  Vector_free(cig,free);
+  Vector_free(cig);
 
   return rSeq;
+}
+
+void GenomicAlign_free(GenomicAlign *ga) {
+  Object_decRefCount(ga);
+
+  if (Object_getRefCount(ga) > 0) {
+    return;
+  } else if (Object_getRefCount(ga) < 0) {
+    fprintf(stderr,"Error: Negative reference count for GenomicAlign\n"
+                   "       Freeing it anyway\n");
+  }
+
+  free(ga->cigarString);
+
+  if (ga->consensusDNAFrag) DNAFrag_free(ga->consensusDNAFrag);
+  if (ga->queryDNAFrag)     DNAFrag_free(ga->queryDNAFrag);
+
+  if (ga->alignmentType) EcoString_freeStr(ecoSTable, ga->alignmentType);
+
+  free(ga);
 }

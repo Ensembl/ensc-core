@@ -39,8 +39,6 @@ struct BaseContigStruct {
 #define BaseContig_setAdaptor(bc,ad) Storable_setAdaptor(&((bc)->st),ad)
 #define BaseContig_getAdaptor(bc) Storable_getAdaptor(&((bc)->st))
 
-char *BaseContig_getName(BaseContig *bc);
-
 #define BaseContig_getObjectType(bc) (bc)->objectType
 
 #define BaseContig_getSubSeq(seq,start,end,strand) \

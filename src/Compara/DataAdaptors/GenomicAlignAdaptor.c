@@ -192,7 +192,7 @@ Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect( GenomicAlignAdaptor
 
     qres = GenomicAlignAdaptor_objectsFromStatementHandle(gaa, sth, 0);
     Vector_append(results,qres);
-    Vector_free(qres,NULL);
+    Vector_free(qres);
 
     sth->finish(sth);
   }
@@ -223,7 +223,7 @@ Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect( GenomicAlignAdaptor
 
     cres = GenomicAlignAdaptor_objectsFromStatementHandle(gaa, sth, 1);
     Vector_append(results,cres);
-    Vector_free(cres,NULL);
+    Vector_free(cres);
 
     sth->finish(sth);
   }
@@ -300,8 +300,8 @@ Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDB(GenomicAlignAdaptor *gaa,
 	}
       }
     }
-    Vector_free(linkedCons,NULL);
-    Vector_free(linkedQuery,NULL);
+    Vector_free(linkedCons);
+    Vector_free(linkedQuery);
 
     // collect GenomicAligns from all linked genomes
     for (i=0; i<Vector_getNumElement(linked); i++) {
@@ -311,7 +311,7 @@ Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDB(GenomicAlignAdaptor *gaa,
                              dnaFrag, g, startP, endP, methodLinkId);
       Vector_append(set1, gres);
 
-      Vector_free(gres,NULL);
+      Vector_free(gres);
     }
 
     // go from each dnafrag in the result set to target_genome
@@ -333,7 +333,7 @@ Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDB(GenomicAlignAdaptor *gaa,
         GenomicAlign *alignB = Vector_getElementAt(dres,j);
 	GenomicAlignAdaptor_addDerivedAlignments(gaa,  mergedAligns, alignA, alignB);
       } 
-      Vector_free(dres,NULL);
+      Vector_free(dres);
     }
 // NIY freeing
     return mergedAligns;
@@ -534,7 +534,7 @@ void GenomicAlignAdaptor_addDerivedAlignments(GenomicAlignAdaptor *gaa,
 
   // ocs will be found relative to oce and has to be comparable
   // to oqs. But it could be that we have to move downwards if we
-  // are not - strand. thats why coordinates are trnaformed here
+  // are not - strand. thats why coordinates are transformed here
 
   if (GenomicAlign_getQueryStrand(alignA) == -1 ) {
     // query_end is first basepair of alignment
@@ -737,7 +737,10 @@ void GenomicAlignAdaptor_addDerivedAlignments(GenomicAlignAdaptor *gaa,
   }
 
   free(resultCig);
-// NIY freeing pieces
+
+  Vector_free(cigA);
+  Vector_free(cigB);
+
   // nothing to return all in merged_aligns
 }
 

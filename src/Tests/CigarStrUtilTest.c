@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
 
   ok(2, !strcmp(str,"6M"));
 
-  Vector_free(pieces,free);
+  Vector_free(pieces);
 
   StrUtil_copyString(&str,cigar1,0);
   

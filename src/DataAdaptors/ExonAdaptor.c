@@ -71,7 +71,7 @@ Exon *ExonAdaptor_exonFromResults(ExonAdaptor *ea, StatementHandle *sth, ResultR
     Exon *component;
     StickyExon *stickyExon;
     
-    fprintf(stderr, "ERROR: Sticky exons not implemented yet\n");
+    // Hopefully not true anymore fprintf(stderr, "ERROR: Sticky exons not implemented yet\n");
 
     // sticky exon
     stickyExon = StickyExon_new();
@@ -285,7 +285,7 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
       Exon *componentExon = StickyExon_getComponentExonAt(stickyExon,i);
       RawContig *contig; 
 
-      if (!Exon_getContig(componentExon)->objectType != CLASS_RAWCONTIG) {
+      if (Exon_getContig(componentExon)->objectType != CLASS_RAWCONTIG) {
         fprintf(stderr,"Error: contig isn't raw contig when trying to store\n");
         exit(1);
       }
@@ -326,7 +326,7 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
     // normal storing
     RawContig *contig;
 
-    if (!Exon_getContig(exon)->objectType != CLASS_RAWCONTIG) {
+    if (Exon_getContig(exon)->objectType != CLASS_RAWCONTIG) {
       fprintf(stderr,"Error: contig isn't raw contig when trying to store\n");
       exit(1);
     }
