@@ -5,7 +5,7 @@ CC = cc
 MYSQLCFLAGS=${shell mysql_config --cflags}
 MYSQLLIBS=${shell mysql_config --libs}
 
-CFLAGS =  -O3 -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic $(MYSQLCFLAGS)
+CFLAGS =  -g -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS)
 
 BINDIR=../bin
@@ -17,6 +17,7 @@ all	: directories \
           Tests/CacheTest \
           Tests/ClassTest \
           Tests/DBAdaptorTest \
+          Tests/DNAAlignFeatureTest \
           Tests/EcoStringTest \
           Tests/SeqUtilTest \
           Tests/SliceAdaptorTest \
@@ -143,6 +144,11 @@ Tests/DBAdaptorTest: \
 	libensc.a \
 	Tests/DBAdaptorTest.c
 	$(CC) $(CFLAGS) -o Tests/DBAdaptorTest Tests/DBAdaptorTest.c -L. -lensc $(LDFLAGS)
+
+Tests/DNAAlignFeatureTest: \
+	libensc.a \
+	Tests/DNAAlignFeatureTest.c
+	$(CC) $(CFLAGS) -o Tests/DNAAlignFeatureTest Tests/DNAAlignFeatureTest.c -L. -lensc $(LDFLAGS)
 
 Tests/EcoStringTest: \
 	libensc.a \

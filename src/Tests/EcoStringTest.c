@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
   ECOSTRING    ecoS3;
 
   if (!EcoString_initTable(&table)) {
-    failAndDie("Couldn't create table\n");
+    Test_failAndDie("Couldn't create table\n");
   }
   ok(1, table != NULL);
 

@@ -23,6 +23,8 @@ DNAAlignFeature *DNAAlignFeature_new(void);
 #define DNAAlignFeature_setCigarString(fp, ciggy) BaseAlignFeature_setCigarString((BaseAlignFeature *)(fp), (ciggy))
 #define DNAAlignFeature_getCigarString(fp) BaseAlignFeature_getCigarString((fp))
 
+#define DNAAlignFeature_getUngappedFeatures(fp) BaseAlignFeature_getUngappedFeatures((fp))
+
 #define DNAAlignFeature_setHitSeqName(fp,stableId)  BaseAlignFeature_setHitSeqName((BaseAlignFeature *)(fp),(stableId))
 #define DNAAlignFeature_getHitSeqName(fp)  BaseAlignFeature_getHitSeqName((fp))
 
@@ -41,8 +43,8 @@ DNAAlignFeature *DNAAlignFeature_new(void);
 #define DNAAlignFeature_setStrand(fp,strand) BaseAlignFeature_setStrand((fp),(strand))
 #define DNAAlignFeature_getStrand(fp) BaseAlignFeature_getStrand((fp))
 
-#define DNAAlignFeature_setHitStrand(fp,strand) BaseAlignFeature_setStrand((fp),(strand))
-#define DNAAlignFeature_getHitStrand(fp) BaseAlignFeature_getStrand((fp))
+#define DNAAlignFeature_setHitStrand(fp,strand) BaseAlignFeature_setHitStrand((fp),(strand))
+#define DNAAlignFeature_getHitStrand(fp) BaseAlignFeature_getHitStrand((fp))
 
 #define DNAAlignFeature_setDbID(fp,dbID) BaseAlignFeature_setDbID((fp),(dbID))
 #define DNAAlignFeature_getDbID(fp) BaseAlignFeature_getDbID((fp))

@@ -7,7 +7,7 @@
 
 /* Unusually for me I'm including the complete code so the tests compile easier */
 
-void failAndDie(char *message) {
+void Test_failAndDie(char *message) {
   fprintf(stderr,message);
   exit(1);
 }

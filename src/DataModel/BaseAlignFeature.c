@@ -35,7 +35,8 @@ char *BaseAlignFeature_setCigarString(BaseAlignFeature *baf, char *str) {
 Vector *BaseAlignFeature_getUngappedFeatures(BaseAlignFeature *baf) {
   Vector *features;
 
-  if (!BaseAlignFeature_getCigarString(baf)) {
+  if (BaseAlignFeature_getCigarString(baf)) {
+    printf("hit strand in getUngappedFeatures %d\n",BaseAlignFeature_getHitStrand(baf));
     features = BaseAlignFeature_parseCigar(baf);
     return features;
   } else {
@@ -103,6 +104,8 @@ Vector *BaseAlignFeature_parseCigar(BaseAlignFeature *baf) {
   char *pieceP = piece;
  
   *pieceP = '\0';
+
+        printf("baf  hit strand in parseCigar =  %d\n",BaseAlignFeature_getHitStrand(baf));
 
   if (!string) {
     fprintf(stderr, "Error: No cigar string defined in object.  This should be caught"
@@ -206,8 +209,10 @@ Vector *BaseAlignFeature_parseCigar(BaseAlignFeature *baf) {
         FeaturePair_setHitStart(fp,a);
         FeaturePair_setHitEnd(fp,b);
         FeaturePair_setHitStrand(fp, BaseAlignFeature_getHitStrand(baf));
+        printf("Set featurepair hit strand from %d to %d\n",BaseAlignFeature_getHitStrand(baf), FeaturePair_getHitStrand(fp));
   // NIY memory
         FeaturePair_setHitSeqName(fp, BaseAlignFeature_getHitSeqName(baf));
+        printf("Set featurepair hit seqname from %s to %s\n",BaseAlignFeature_getHitSeqName(baf), FeaturePair_getHitSeqName(fp));
   
         FeaturePair_setContig(fp,BaseAlignFeature_getContig(baf));
         FeaturePair_setAnalysis(fp,BaseAlignFeature_getAnalysis(baf));
@@ -353,6 +358,8 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
   // Loop through each portion of alignment and construct cigar string
   // 
    
+  string = StrUtil_copyString(&string,"",0);
+
   for (i=0; i<Vector_getNumElement(features); i++) {
     FeaturePair *f = Vector_getElementAt(features,i);
     int start1;
@@ -375,7 +382,7 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
 
 // NIY    if ( defined $f->hstrand() ) {
       if (FeaturePair_getHitStrand(f) != hstrand) {
-        fprintf(stderr, "Error: Inconsistent hstrands in feature array\n");
+        fprintf(stderr, "Error: Inconsistent hstrands in feature array (%d and %d, feature number %d)\n",hstrand, FeaturePair_getHitStrand(f),i);
         exit(1);
       }
 //    }
@@ -390,8 +397,9 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
               name, FeaturePair_getSeqName(f));
       exit(1);
     }
+    printf("hname = %s\n",hname);
     if (strcmp(hname,FeaturePair_getHitSeqName(f))) {
-      fprintf(stderr,"Error: Inconsistent names in feature array [%s - %s]\n", 
+      fprintf(stderr,"Error: Inconsistent hnames in feature array [%s - %s]\n", 
               hname, FeaturePair_getHitSeqName(f));
       exit(1);
     }
@@ -478,10 +486,10 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
 
         insertionFlag = 1;
         if (gap == 1 ) {
-          StrUtil_appendString(string,"I");
+          string = StrUtil_appendString(string,"I");
         } else {
           sprintf(piece,"%dI",gap);
-          StrUtil_appendString(string,piece);
+          string = StrUtil_appendString(string,piece);
         }
       }
 
@@ -495,10 +503,10 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
         // there is an insertion
         insertionFlag = 1;
         if (gap == 1) {
-          StrUtil_appendString(string,"I");
+          string = StrUtil_appendString(string,"I");
         } else {
           sprintf(piece,"%dI",gap);
-          StrUtil_appendString(string,piece);
+          string = StrUtil_appendString(string,piece);
         }
       }
 
@@ -519,10 +527,10 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
         int gap2 = (int)(gap * hlengthfactor + 0.05 );
 
         if (gap2 == 1 ) {
-          StrUtil_appendString(string,"D");
+          string = StrUtil_appendString(string,"D");
         } else {
           sprintf(piece,"%dD",gap2);
-          StrUtil_appendString(string,piece);
+          string = StrUtil_appendString(string,piece);
         }
 
         // sanity check,  Should not be an insertion and deletion
@@ -542,10 +550,10 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
         int gap2 = (int)(gap * hlengthfactor + 0.05);
 
         if (gap2 == 1) {
-          StrUtil_appendString(string,"D");
+          string = StrUtil_appendString(string,"D");
         } else {
           sprintf(piece,"%dD",gap2);
-          StrUtil_appendString(string,piece);
+          string = StrUtil_appendString(string,piece);
         }
 
         // sanity check,  Should not be an insertion and deletion
@@ -563,10 +571,10 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
 
     matchlength = FeaturePair_getEnd(f) - FeaturePair_getStart(f) + 1;
     if (matchlength == 1) {
-      StrUtil_appendString(string,"M");
+      string = StrUtil_appendString(string,"M");
     } else {
       sprintf(piece,"%dM",matchlength);
-      StrUtil_appendString(string,piece);
+      string = StrUtil_appendString(string,piece);
     }
   }
 

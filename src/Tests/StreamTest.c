@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
   Stream_setDefaults(1);
 
   if (!FileUtil_exists("Hist.log")) {
-    failAndDie("Failed setting up streams\n");
+    Test_failAndDie("Failed setting up streams\n");
   }
   ok(1,1);
 

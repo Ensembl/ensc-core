@@ -21,6 +21,9 @@ DNAPepAlignFeature *DNAPepAlignFeature_new(void);
 #define DNAPepAlignFeature_setCigarString(fp, ciggy) BaseAlignFeature_setCigarString((BaseAlignFeature *)(fp), (ciggy))
 #define DNAPepAlignFeature_getCigarString(fp) BaseAlignFeature_getCigarString((fp))
 
+#define DNAPepAlignFeature_getUngappedFeatures(fp) BaseAlignFeature_getUngappedFeatures((fp))
+
+
 #define DNAPepAlignFeature_setHitSeqName(fp,hname)  BaseAlignFeature_setHitSeqName((BaseAlignFeature *)(fp),(hname))
 #define DNAPepAlignFeature_getHitSeqName(fp)  BaseAlignFeature_getHitSeqName((fp))
 
