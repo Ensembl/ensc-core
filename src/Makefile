@@ -15,6 +15,7 @@ all	: directories \
           Programs/testdbc \
           Programs/countsnps \
           Programs/indicate \
+          Programs/fastasplit \
           Tests/CacheTest \
           Tests/CigarStrUtilTest \
           Tests/ClassTest \
@@ -155,6 +156,11 @@ libensc.a	: \
                objectfiles/Compara/DataAdaptors/*.o objectfiles/Compara/DataModel/*.o \
                objectfiles/OBDA/*.o
 	ranlib libensc.a
+
+Programs/fastasplit: \
+	libensc.a \
+	Programs/fastasplit.c
+	$(CC) $(CFLAGS) -o Programs/fastasplit Programs/fastasplit.c -L. -lensc $(LDFLAGS)
 
 Programs/indicate: \
 	libensc.a \
