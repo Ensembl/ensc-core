@@ -163,7 +163,7 @@ ECOSTRING SeqFeature_getSeqName(SeqFeature *sf);
 #define SeqFeature_free(sf) \
       ((sf)->funcs->free == NULL ? \
          (fprintf(stderr,"Error: Null pointer for free func - bye\n"),  exit(1), (void *)NULL) : \
-         ((sf)->funcs->free((sf))))
+         ((sf)->funcs->free((sf)), (void *)NULL))
 
 #ifdef __SEQFEATURE_MAIN__
  SeqFeatureFuncs 

@@ -18,6 +18,7 @@
 #include "StrUtil.h"
 #include "Error.h"
 #include "EnsC.h"
+#include "Sequence.h"
 
 #include <ctype.h> /* for isspace() */
 #include <string.h>

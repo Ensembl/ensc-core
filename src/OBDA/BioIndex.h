@@ -24,7 +24,8 @@ extern "C" {
 
 #include <stdio.h>
 
-#include "sequence.h"
+#include "Sequence.h"
+
 
 typedef enum {
   BioIndexType_FLAT    = (1<<0),
@@ -91,6 +92,7 @@ Sequence **BioIndex_fetch_all(BioIndex *bi, char *key);
 Sequence *BioIndex_fetch(BioIndex *bi, char *key);
 Sequence * BioIndex_get_fasta_sequence(BioIndex *bi, BioIndex_Location *loc,
                                        char *id);
+
 char * BioIndex_get_entry(BioIndex *bi, BioIndex_Location *loc);
 BioIndex_Index_Definition *BioIndex_Index_Definition_create(char *record_start,
                                               char *line_prefix,
