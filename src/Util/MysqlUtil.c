@@ -9,6 +9,16 @@ long MysqlUtil_getLong(MYSQL_ROW row, int col) {
   return atol(row[col]);
 }
 
+int64 MysqlUtil_getLongLong(MYSQL_ROW row, int col) {
+  long long val;
+
+  if (sscanf(row[col],"%qd",&val) == 0) {
+    fprintf(stderr,"Error: Failed to decode a long long from %s\n",row[col]);
+  }
+
+  return val;
+}
+
 double MysqlUtil_getDouble(MYSQL_ROW row, int col) {
   return atof(row[col]);
 }

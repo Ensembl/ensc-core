@@ -10,6 +10,8 @@
 char * hierarchyString =  
   " STATEMENTHANDLE\n"
   "  MYSQLSTATEMENTHANDLE\n"
+  " RESULTROW\n"
+  "  MYSQLRESULTROW\n"
   " SEQFEATURE\n"
   "  EXON\n"
   "  FEATURESET\n"
@@ -22,6 +24,8 @@ Class classArray[CLASS_NUMCLASS] =
   {CLASS_OBJECT, "OBJECT"},
   {CLASS_STATEMENTHANDLE, "STATEMENTHANDLE"},
   {CLASS_MYSQLSTATEMENTHANDLE, "MYSQLSTATEMENTHANDLE"},
+  {CLASS_RESULTROW, "RESULTROW"},
+  {CLASS_MYSQLRESULTROW, "MYSQLRESULTROW"},
   {CLASS_SEQFEATURE, "SEQFEATURE"},
   {CLASS_EXON, "EXON"},
   {CLASS_GENE, "GENE"},
@@ -50,6 +54,14 @@ ClassHierarchyNode *ClassHierarchyNode_addSubClass(ClassHierarchyNode *parent,Cl
   }
   parent->subClasses[parent->nSubClass-1] = child;
   return child;
+}
+
+int Class_assertType(ClassType wantedType, ClassType actualType) {
+  if (!Class_isDescendent(wantedType,actualType)) {
+    fprintf(stderr,"Class type assertion failed for %d and %d\n",wantedType,actualType);
+    exit(1);
+  }
+  return 1;
 }
 
 int Class_isDescendent(ClassType parentType, ClassType descType) {

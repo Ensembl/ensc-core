@@ -19,6 +19,9 @@ typedef enum CopyDepthEnum {
   DEEP_DEPTH
 } CopyDepth;
 
+typedef long long int64;
+
 #define EXTREMELEN 65536
+
 
 #endif

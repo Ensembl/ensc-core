@@ -29,11 +29,11 @@ libensc.a	: \
 	objectfiles/DataAdaptors/ExonAdaptor.o \
 	objectfiles/DataAdaptors/GeneAdaptor.o \
 	objectfiles/DataAdaptors/MetaContainer.o \
+	objectfiles/DataAdaptors/MysqlResultRow.o \
+	objectfiles/DataAdaptors/MysqlStatementHandle.o \
 	objectfiles/DataAdaptors/RawContigAdaptor.o \
 	objectfiles/DataAdaptors/SequenceAdaptor.o \
 	objectfiles/DataAdaptors/SliceAdaptor.o \
-	objectfiles/DataAdaptors/StatementHandle.o \
-	objectfiles/DataAdaptors/StatementHandle.o \
 	objectfiles/DataAdaptors/TranscriptAdaptor.o \
 	objectfiles/DataAdaptors/TranslationAdaptor.o \
 	objectfiles/DataModel/Analysis.o \
@@ -92,6 +92,7 @@ Tests/StreamTest: \
 
 # deletes compiled class files
 clean	:	
+	rm libensc.a
 	find ./ -name "*.o" -exec rm {} \;
 
 #DO NOT REMOVE THIS LINE OR ADD ANYTHING AFTER IT - ADDMAKE DEPENDS ON IT FOR MAKING DEPENDENCIES
