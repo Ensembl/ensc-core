@@ -4,6 +4,7 @@
 #include "ComparaDataModelTypes.h"
 #include "EnsRoot.h"
 
+#define FUNCSTRUCTTYPE NoTypeFuncs
 struct HomologyStruct {
   ENSROOT_DATA
   char *species;
@@ -12,5 +13,8 @@ struct HomologyStruct {
   int chrEnd;
   char *chrName;
 };
+#undef FUNCSTRUCTTYPE
+
+Homology *Homology_new();
 
 #endif

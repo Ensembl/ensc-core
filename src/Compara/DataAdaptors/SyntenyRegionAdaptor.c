@@ -1,20 +1,15 @@
 #include "SyntenyRegionAdaptor.h"
 
-package Bio::EnsEMBL::Compara::SyntenyRegionAdaptor;
-use vars qw(@ISA);
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-use Bio::EnsEMBL::Compara::SyntenyRegion;
-use strict;
-
-@ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
-
-SyntenyRegionAdaptor *SyntenyRegionAdaptor_new() {
+SyntenyRegionAdaptor *SyntenyRegionAdaptor_new(ComparaDBAdaptor *dba) {
   SyntenyRegionAdaptor *sra;
 
   if ((sra = (SyntenyRegionAdaptor *)calloc(1,sizeof(SyntenyRegionAdaptor))) == NULL) {
     fprintf(stderr,"Error: Failed allocating sra\n");
     exit(1);
   }
+  BaseComparaAdaptor_init((BaseComparaAdaptor *)sra, dba, SYNTENYREGION_ADAPTOR);
+
+
 
   return sra;
 }
@@ -23,6 +18,7 @@ SyntenyRegion *SyntenyRegionAdaptor_fetchByDbID(SyntenyRegionAdaptor *sra, IDTyp
   StatementHandle *sth;
   ResultRow *row;
   char qStr[1024];
+  SyntenyRegion *sr;
   
   if (!dbID) {
     fprintf(stderr,"Error: SyntenyRegionAdaptor_fetchByDbID with no dbID!\n");

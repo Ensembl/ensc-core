@@ -1,6 +1,19 @@
 #include "DNAFragAdaptor.h"
 #include "DNAFrag.h"
 #include "Vector.h"
+#include "GenomeDBAdaptor.h"
+
+DNAFragAdaptor *DNAFragAdaptor_new(ComparaDBAdaptor *dba) {
+  DNAFragAdaptor *dfa;
+
+  if ((dfa = (DNAFragAdaptor *)calloc(1,sizeof(DNAFragAdaptor))) == NULL) {
+    fprintf(stderr,"Error: Failed allocating dfa\n");
+    exit(1);
+  }
+  BaseComparaAdaptor_init((BaseComparaAdaptor *)dfa, dba, DNAFRAG_ADAPTOR);
+
+  return dfa;
+}
 
 DNAFrag *DNAFragAdaptor_fetchByDbID(DNAFragAdaptor *dfa, IDType dbID) {
   char qStr[1024];
@@ -22,7 +35,7 @@ DNAFrag *DNAFragAdaptor_fetchByDbID(DNAFragAdaptor *dfa, IDType dbID) {
   sth = dfa->prepare((BaseAdaptor *)dfa,qStr,strlen(qStr));
   sth->execute(sth);
 
-  dnaFrags = DNAFragAdaptor_objectsFromStatementHandle(sth);
+  dnaFrags = DNAFragAdaptor_objectsFromStatementHandle(dfa,sth);
 
   if (!Vector_getNumElement(dnaFrags)) {
     fprintf(stderr,"Error: No dnafrag with dbID " IDFMTSTR "\n",dbID);
@@ -141,7 +154,7 @@ IDType DNAFragAdaptor_store(DNAFragAdaptor *dfa, DNAFrag *dnaFrag) {
     exit(1);
   }
 
-  if (DNAFrag_getAdaptor(dnaFrag) == dfa) {
+  if (DNAFrag_getAdaptor(dnaFrag) == (BaseAdaptor *)dfa) {
     return DNAFrag_getDbID(dnaFrag);
   }
 
@@ -178,7 +191,7 @@ IDType DNAFragAdaptor_store(DNAFragAdaptor *dfa, DNAFrag *dnaFrag) {
   sth->execute(sth);
 
   DNAFrag_setDbID(dnaFrag, sth->getInsertId(sth));
-  DNAFrag_setAdaptor(dnaFrag, dfa);
+  DNAFrag_setAdaptor(dnaFrag, (BaseAdaptor *)dfa);
 
   return DNAFrag_getDbID(dnaFrag);
 }
@@ -196,7 +209,7 @@ IDType DNAFragAdaptor_storeIfNeeded(DNAFragAdaptor *dfa, DNAFrag *dnaFrag) {
     exit(1);
   }
 
-  if (DNAFrag_getAdaptor(dnaFrag) == dfa) {
+  if (DNAFrag_getAdaptor(dnaFrag) == (BaseAdaptor *)dfa) {
     return DNAFrag_getDbID(dnaFrag);
   }
    
@@ -239,7 +252,7 @@ IDType DNAFragAdaptor_storeIfNeeded(DNAFragAdaptor *dfa, DNAFrag *dnaFrag) {
   if (dnaFragId) {
     // dnafrag already stored
     DNAFrag_setDbID(dnaFrag, dnaFragId);
-    DNAFrag_setAdaptor(dnaFrag, dfa);
+    DNAFrag_setAdaptor(dnaFrag, (BaseAdaptor *)dfa);
     return dnaFragId;
   } else {
     return DNAFragAdaptor_store(dfa, dnaFrag);

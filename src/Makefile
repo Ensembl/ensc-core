@@ -52,7 +52,6 @@ libensc.a	: \
 	objectfiles/Compara/DataAdaptors/GenomicAlignAdaptor.o \
 	objectfiles/Compara/DataAdaptors/HomologyAdaptor.o \
 	objectfiles/Compara/DataAdaptors/SyntenyAdaptor.o \
-	objectfiles/Compara/DataAdaptors/SyntenyRegionAdaptor.o \
 	objectfiles/DataAdaptors/AnalysisAdaptor.o \
 	objectfiles/DataAdaptors/AssemblyMapperAdaptor.o \
 	objectfiles/DataAdaptors/BaseAdaptor.o \
@@ -86,6 +85,7 @@ libensc.a	: \
 	objectfiles/DataModel/BaseContig.o \
 	objectfiles/DataModel/Basic/Vector.o \
 	objectfiles/DataModel/Chromosome.o \
+	objectfiles/DataModel/CigarStrUtil.o \
 	objectfiles/DataModel/Class.o \
 	objectfiles/DataModel/Clone.o \
 	objectfiles/DataModel/DBEntry.o \

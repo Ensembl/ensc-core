@@ -63,31 +63,9 @@ void BaseAlignFeature_reverseComplementImpl(BaseAlignFeature *baf) {
     return;
   }
 
-  // reverse cigar_string as consequence
-  if ((newCigarString = (char *)calloc(len+1,sizeof(char))) == NULL) {
-    fprintf(stderr, "Error: Failed allocating cigarString\n");
-    exit(1);
-  }
+  newCigarString = CigarStrUtil_reverse(oldCigarString,len);
 
-  oldChP = &(BaseAlignFeature_getCigarString(baf)[len-2]);
-
-  newPieceStartP = newChP = newCigarString;
-  *newChP = *(oldChP+1);
-  *newChP++;
- 
-  while (oldChP >= oldCigarString-1) {
-    if (*oldChP == 'M' || *oldChP == 'D' || *oldChP == 'I' || oldChP == oldCigarString-1) {
-      *newChP = '\0';
-      
-      StrUtil_reverseString(newPieceStartP, newChP-newPieceStartP);
-      newPieceStartP = newChP;
-    } 
-
-    *newChP = *oldChP;
-    *oldChP--;
-    *newChP++;
-  }
-
+// NIY free old cigar string
   BaseAlignFeature_setCigarString(baf, newCigarString);
 }
 

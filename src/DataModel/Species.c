@@ -11,6 +11,13 @@ Species *Species_new() {
   return species;
 }
 
+
+char *Species_setCommonName(Species *species, char *comName) {
+  StrUtil_copyString(&(species->commonName), comName,0);
+
+  return species->commonName;
+}
+
 char *Species_getBinomialName(Species *species) {
 
   return NULL;

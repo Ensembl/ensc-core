@@ -1,50 +1,35 @@
 #include "GenomicAlignAdaptor.h"
+#include "StrUtil.h"
+#include "CigarStrUtil.h"
+#include "DNAFragAdaptor.h"
 
-package Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
-use vars qw(@ISA);
-use strict;
+#define DEFAULT_MAX_ALIGNMENT 20000
 
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-use Bio::EnsEMBL::Compara::GenomicAlign;
-use Bio::EnsEMBL::Compara::DnaFrag;
+GenomicAlignAdaptor *GenomicAlignAdaptor_new(ComparaDBAdaptor *dba) {
+  GenomicAlignAdaptor *gaa;
+  Vector *vals;
+  int maxAlLen;
+  MetaContainer *mc;
+
+  if ((gaa = (GenomicAlignAdaptor *)calloc(1,sizeof(GenomicAlignAdaptor))) == NULL) {
+    fprintf(stderr, "ERROR: Failed allocating space for GenomicAlignAdaptor\n");
+    return NULL;
+  }
+  BaseComparaAdaptor_init((BaseComparaAdaptor *)gaa, dba, GENOMICALIGN_ADAPTOR);
 
 
-@ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+  mc = ComparaDBAdaptor_getMetaContainer(gaa->dba);
 
-my $DEFAULT_MAX_ALIGNMENT = 20000;
-
-GenomicAlignAdaptor *GenomicAlignAdaptor_new() {
-  my $class = shift;
-
-  my $self = $class->SUPER::new(@_);
-
-  my $vals =
-    $self->db->get_MetaContainer->list_value_by_key('max_alignment_length');
-
-  if(@$vals) {
-    $self->{'max_alignment_length'} = $vals->[0];
+  if (MetaContainer_getIntValueByKey(mc, "max_alignment_length", &maxAlLen)) {
+    gaa->maxAlignmentLength = maxAlLen;
   } else {
-    $self->warn("Meta table key 'max_alignment_length' not defined\n" .
-	       "using default value [$DEFAULT_MAX_ALIGNMENT]");
-    $self->{'max_alignment_length'} = $DEFAULT_MAX_ALIGNMENT;
+    fprintf(stderr, "Warning: Meta table key 'max_alignment_length' not defined\n" 
+	       "using default value [%d]", DEFAULT_MAX_ALIGNMENT);
+    gaa->maxAlignmentLength = DEFAULT_MAX_ALIGNMENT;
   }
 
-  return $self;
+  return gaa;
 }
-
-
-=head2 store
-
-  Arg  1     : listref  Bio::EnsEMBL::Compara::GenomicAlign $ga 
-               The things you want to store
-  Example    : none
-  Description: It stores the give GA in the database. Attached
-               objects are not stored. Make sure you store them first.
-  Returntype : none
-  Exceptions : not stored linked dnafrag objects throw.
-  Caller     : general
-
-=cut
 
 void GenomicAlignAdaptor_store(GenomicAlignAdaptor *gaa, Vector *genomicAligns) {
   char *qStr;
@@ -57,7 +42,7 @@ void GenomicAlignAdaptor_store(GenomicAlignAdaptor *gaa, Vector *genomicAligns) 
   StrUtil_copyString(&qStr, "INSERT INTO genomic_align_block"
              " (consensus_dnafrag_id, consensus_start, consensus_end,"
              "  query_dnafrag_id, query_start, query_end, query_strand, method_link_id,"
-             "  score, perc_id, cigar_line) VALUES ");
+             "  score, perc_id, cigar_line) VALUES ",0);
   
   for (i=0; i<Vector_getNumElement(genomicAligns); i++) {
     GenomicAlign *ga = Vector_getElementAt(genomicAligns,i);
@@ -78,7 +63,7 @@ void GenomicAlignAdaptor_store(GenomicAlignAdaptor *gaa, Vector *genomicAligns) 
     DNAFrag *consDNAFrag  = GenomicAlign_getConsensusDNAFrag(ga);
     DNAFrag *queryDNAFrag = GenomicAlign_getQueryDNAFrag(ga);
 
-    IDType methodLinkId = GenomicAlignAdaptor_methodLinkIdByAlignmentType(GenomicAlign_getAlignmentType(ga));
+    IDType methodLinkId = GenomicAlignAdaptor_methodLinkIdByAlignmentType(gaa, GenomicAlign_getAlignmentType(ga));
 
     if (!methodLinkId) {
       fprintf(stderr, "Error: There is no method_link with this type [%s] in the DB.\n",
@@ -86,7 +71,7 @@ void GenomicAlignAdaptor_store(GenomicAlignAdaptor *gaa, Vector *genomicAligns) 
       exit(1);
     }
     
-    sprintf(tmpStr," %s(" IDFMTSTR ", %d, %d, " IDFMTSTR ", %d, %d, %d, " IDFMTSTR ", %f, %f, '%s')"   
+    sprintf(tmpStr," %s(" IDFMTSTR ", %d, %d, " IDFMTSTR ", %d, %d, %d, " IDFMTSTR ", %f, %f, '%s')", 
             commaStr, 
             DNAFrag_getDbID(consDNAFrag),
             GenomicAlign_getConsensusStart(ga),
@@ -111,6 +96,7 @@ void GenomicAlignAdaptor_store(GenomicAlignAdaptor *gaa, Vector *genomicAligns) 
   free(qStr);
 }
      
+/*
 =head2 _fetch_all_by_DnaFrag_GenomeDB_direct
 
   Arg  1     : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
@@ -130,10 +116,11 @@ void GenomicAlignAdaptor_store(GenomicAlignAdaptor *gaa, Vector *genomicAligns) 
   Caller     : general
 
 =cut
+*/
 
 
 Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect( GenomicAlignAdaptor *gaa, 
-     DNAFrag *dnaFrag, GenomeDB *targetGenome, int *startP, int *endP, methodLinkId) {
+     DNAFrag *dnaFrag, GenomeDB *targetGenome, int *startP, int *endP, IDType methodLinkId) {
   IDType dnaFragId;
   GenomeDB *genomeDB;
   char *qStr;
@@ -163,9 +150,9 @@ Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect( GenomicAlignAdaptor
      "       gab.score,"
      "       gab.perc_id," 
      "       gab.cigar_line"
-     " FROM genomic_align_block gab ";
+     " FROM genomic_align_block gab ",0);
 
-  if (!target_genome) {
+  if (!targetGenome) {
     qStr = StrUtil_appendString(qStr,", dnafrag d");
   }
   sprintf(tmpStr," WHERE gab.method_link_id = " IDFMTSTR, methodLinkId);
@@ -180,7 +167,7 @@ Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect( GenomicAlignAdaptor
     sprintf(tmpStr," AND gab.consensus_dnafrag_id = " IDFMTSTR, dnaFragId);
     qStr = StrUtil_appendString(qStr, tmpStr);
 
-    if (defined $start && defined $end) {
+    if (startP && endP) {
       int lowerBound = *startP - GenomicAlignAdaptor_getMaxAlignmentLength(gaa);
       sprintf(tmpStr,
                " AND gab.consensus_start <= %d"
@@ -241,7 +228,7 @@ Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect( GenomicAlignAdaptor
   return results;
 }
 
-
+/*
 
 =head2 fetch_all_by_DnaFrag_GenomeDB
 
@@ -261,6 +248,7 @@ Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect( GenomicAlignAdaptor
   Caller     : object::methodname or just methodname
 
 =cut
+*/
 
 Vector *GenomicAlignAdaptor_fetchAllbyDNAFragGenomeDB(GenomicAlignAdaptor *gaa,
                DNAFrag *dnaFrag, GenomeDB *targetGenome, int *startP, int *endP, 
@@ -269,9 +257,9 @@ Vector *GenomicAlignAdaptor_fetchAllbyDNAFragGenomeDB(GenomicAlignAdaptor *gaa,
   GenomeDB *genomeCons;
   IDType methodLinkId;
   GenomeDB *genomeQuery;
-  Vector mergedAligns;
+  Vector *mergedAligns;
 
-  if (!dnaFrag)
+  if (!dnaFrag) {
     fprintf(stderr, "Error: dnaFrag argument must be non NULL\n");
     exit(1);
   }
@@ -284,7 +272,7 @@ Vector *GenomicAlignAdaptor_fetchAllbyDNAFragGenomeDB(GenomicAlignAdaptor *gaa,
   // direct or indirect ??
   if (GenomeDB_hasConsensus(genomeCons, genomeQuery, methodLinkId) ||
       GenomeDB_hasQuery(genomeCons, genomeQuery, methodLinkId)) {
-    return GenomicAlignAdaptor_fetchAllByDnaFragGenomeDBDirect(gaa, 
+    return GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect(gaa, 
                    dnaFrag, targetGenome, startP, endP, methodLinkId);
   } else {
     // indirect checks
@@ -318,7 +306,7 @@ Vector *GenomicAlignAdaptor_fetchAllbyDNAFragGenomeDB(GenomicAlignAdaptor *gaa,
                              dnaFrag, g, startP, endP, methodLinkId);
       Vector_append(set1, gres);
 
-      Vector_free(gres);
+      Vector_free(gres,NULL);
     }
 
     // go from each dnafrag in the result set to target_genome
@@ -332,7 +320,7 @@ Vector *GenomicAlignAdaptor_fetchAllbyDNAFragGenomeDB(GenomicAlignAdaptor *gaa,
       int qStart = GenomicAlign_getQueryStart(alignA);
       int qEnd   = GenomicAlign_getQueryEnd(alignA);
 
-      Vector dres = GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect(gaa,
+      Vector *dres = GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect(gaa,
                       frag, genomeQuery, &qStart, &qEnd, methodLinkId);
       int j;
 
@@ -347,7 +335,7 @@ Vector *GenomicAlignAdaptor_fetchAllbyDNAFragGenomeDB(GenomicAlignAdaptor *gaa,
   }
 }
 
-
+/*
 =head2 _merge_alignsets
 
   Arg  1     : listref Bio::EnsEMBL::Compara::GenomicAlign $set1
@@ -365,7 +353,7 @@ Vector *GenomicAlignAdaptor_fetchAllbyDNAFragGenomeDB(GenomicAlignAdaptor *gaa,
   Caller     : internal
 
 =cut
-
+*/
 
 Vector *GenomicAlignAdaptor_mergeAlignsets(GenomicAlignAdaptor *gaa, Vector *alignSet1, Vector *alignSet2) {
 
@@ -380,6 +368,7 @@ Vector *GenomicAlignAdaptor_mergeAlignsets(GenomicAlignAdaptor *gaa, Vector *ali
   // set the first time they appear and they are removed the
   // second time they appear. Scanline algorithm
 
+#ifdef DONE
   my @biglist = ();
   for my $align ( @$alignset1 ) {
     push( @biglist, 
@@ -431,10 +420,10 @@ Vector *GenomicAlignAdaptor_mergeAlignsets(GenomicAlignAdaptor *gaa, Vector *ali
   }
 
   return mergedAligns;
+#endif
 }
 
-
-
+/*
 =head2 _add_derived_alignments
 
   Arg  1     : listref 
@@ -447,15 +436,18 @@ Vector *GenomicAlignAdaptor_mergeAlignsets(GenomicAlignAdaptor *gaa, Vector *ali
   Caller     : object::methodname or just methodname
 
 =cut
+*/
 
-
-sub GenomicAlignAdaptor_addDerivedAlignments(GenomicAlignAdaptor *gaa, 
+void GenomicAlignAdaptor_addDerivedAlignments(GenomicAlignAdaptor *gaa, 
                      Vector *mergedAligns, Vector *alignA, Vector *alignB) {
 
   // variable name explanation
   // q - query c - consensus s - start e - end l - last
   // o, ov overlap j - jump_in_
   // r - result
+
+#ifdef DONE
+
   my ( $qs, $qe, $lqs, $lqe, $cs, $ce, $lcs, $lce,
        $ocs, $oce, $oqs, $oqe, $jc, $jq, $ovs, $ove,
        $rcs, $rce, $rqs, $rqe);
@@ -674,10 +666,13 @@ sub GenomicAlignAdaptor_addDerivedAlignments(GenomicAlignAdaptor *gaa,
     push( @$merged_aligns, $ga );
   // nothing to return all in merged_aligns
   }
+#endif
+
 }
 
 
-sub GenomicAlignAdaptor_nextCig {
+#ifdef DONE
+void GenomicAlignAdaptor_nextCig(GenomicAlignAdaptor *gaa,  {
   my ( $self, $ciglist, $cs, $ce, $qs, $qe ) = @_;
   
   my ( $cig_elem, $type, $count );
@@ -699,62 +694,80 @@ sub GenomicAlignAdaptor_nextCig {
     } 
   } until ( $type eq 'M' || ! ( @$ciglist ));
 }
+#endif
 
 Vector *GenomicAlignAdaptor_objectsFromStatementHandle(GenomicAlignAdaptor *gaa, StatementHandle *sth,
                                                        int reverse) {
   Vector *results = Vector_new();
   ResultRow *row;
+  DNAFragAdaptor *dfa;
+
+  IDType consensusDNAFragId;
+  IDType queryDNAFragId;
+  int consensusStart;
+  int consensusEnd;
+  int queryStart;
+  int queryEnd;
+  int queryStrand;
+  IDType methodLinkId;
+  double score;
+  double percId;
+  char *cigarString;
 
 
-  my ( $consensus_dnafrag_id, $consensus_start, $consensus_end, $query_dnafrag_id,
-       $query_start, $query_end, $query_strand, $method_link_id, $score, $perc_id, $cigar_string );
-  if( $reverse ) {
-    $sth->bind_columns
-      ( \$query_dnafrag_id, \$query_start, \$query_end,  
-	\$consensus_dnafrag_id, \$consensus_start, \$consensus_end, \$query_strand, \$method_link_id,
-	\$score, \$perc_id, \$cigar_string );
-  } else {
-    $sth->bind_columns
-      ( \$consensus_dnafrag_id, \$consensus_start, \$consensus_end, 
-	\$query_dnafrag_id, \$query_start, \$query_end, \$query_strand, \$method_link_id,
-	\$score, \$perc_id, \$cigar_string );
-  }
 
-  my $da = $self->db()->get_DnaFragAdaptor();
+  dfa = ComparaDBAdaptor_getDNAFragAdaptor(gaa->dba);
 
   while ((row = sth->fetchRow(sth))) {
     GenomicAlign *genomicAlign;
-    char *alignment_type = GenomicAlignAdaptor_alignmentTypeByMethodLinkId(gaa, methodLinkId);
+    char *alignmentType;
     
     if (reverse) {
-      $cigar_string =~ tr/DI/ID/;
-      if( $query_strand == -1 ) {
-	// alignment of the opposite strand
+      queryDNAFragId     = row->getLongLongAt(row,0);
+      queryStart         = row->getIntAt(row,1);
+      queryEnd           = row->getIntAt(row,2);
+      consensusDNAFragId = row->getLongLongAt(row,3);
+      consensusStart     = row->getIntAt(row,4);
+      consensusEnd       = row->getIntAt(row,5);
+    } else {
+      consensusDNAFragId = row->getLongLongAt(row,0);
+      consensusStart     = row->getIntAt(row,1);
+      consensusEnd       = row->getIntAt(row,2);
+      queryDNAFragId     = row->getLongLongAt(row,3);
+      queryStart         = row->getIntAt(row,4);
+      queryEnd           = row->getIntAt(row,5);
+    }
+    queryStrand  = row->getIntAt(row,6);
+    methodLinkId = row->getLongLongAt(row,7);
+    score        = row->getDoubleAt(row,8);
+    percId       = row->getDoubleAt(row,9);
+    cigarString  = row->getStringAt(row,10);
 
-	my @pieces = ( $cigar_string =~ /(\d*[MDI])/g );
-	$cigar_string= join( "", reverse( @pieces ));
+    alignmentType = GenomicAlignAdaptor_alignmentTypeByMethodLinkId(gaa, methodLinkId);
+
+    if (reverse) {
+      StrUtil_strReplChrs(cigarString,"DI","ID");
+
+      // alignment of the opposite strand
+      if (queryStrand == -1) {
+        cigarString = CigarStrUtil_reverse(cigarString, strlen(cigarString));
       }
     }
     
     
     genomicAlign = GenomicAlign_new();
-    GenomicAlign_setAdaptor(genomicAlign, gaa);
-    GenomicAlign_setConsensusDNAFrag(genomicAlign, );
-      (
-       -adaptor => $self,
-       -consensus_dnafrag => $da->fetch_by_dbID( $consensus_dnafrag_id ),
-       -consensus_start => $consensus_start,
-       -consensus_end => $consensus_end,
-       -query_dnafrag => $da->fetch_by_dbID( $query_dnafrag_id ),
-       -query_start => $query_start,
-       -query_end => $query_end,
-       -query_strand => $query_strand,
-       -alignment_type => $alignment_type,
-       -score => $score,
-       -perc_id => $perc_id,
-       -cigar_line => $cigar_string
-      );
-
+    GenomicAlign_setAdaptor(genomicAlign, (BaseAdaptor *)gaa);
+    GenomicAlign_setConsensusDNAFrag(genomicAlign, DNAFragAdaptor_fetchByDbID(dfa,consensusDNAFragId));
+    GenomicAlign_setConsensusStart(genomicAlign, consensusStart);
+    GenomicAlign_setConsensusEnd(genomicAlign, consensusEnd);
+    GenomicAlign_setQueryDNAFrag(genomicAlign, DNAFragAdaptor_fetchByDbID(dfa,queryDNAFragId));
+    GenomicAlign_setQueryStart(genomicAlign, queryStart);
+    GenomicAlign_setQueryEnd(genomicAlign, queryEnd);
+    GenomicAlign_setQueryStrand(genomicAlign, queryStrand);
+    GenomicAlign_setAlignmentType(genomicAlign, alignmentType);
+    GenomicAlign_setScore(genomicAlign, score);
+    GenomicAlign_setPercentId(genomicAlign, percId);
+    GenomicAlign_setCigarString(genomicAlign, cigarString);
 
     Vector_addElement(results, genomicAlign);
   }
@@ -763,7 +776,7 @@ Vector *GenomicAlignAdaptor_objectsFromStatementHandle(GenomicAlignAdaptor *gaa,
 }
 
 
-sub GenomicAlignAdaptor_alignmentTypeByMethodLinkId(GenomicAlignAdaptor *gaa, IDType methodLinkId) {
+char *GenomicAlignAdaptor_alignmentTypeByMethodLinkId(GenomicAlignAdaptor *gaa, IDType methodLinkId) {
   StatementHandle *sth;
   ResultRow *row;
   char qStr[512];
@@ -787,6 +800,7 @@ sub GenomicAlignAdaptor_alignmentTypeByMethodLinkId(GenomicAlignAdaptor *gaa, ID
 
   sth->finish(sth);
 
+// NIY switch to using passed in string
   return alignmentType;
 }
 

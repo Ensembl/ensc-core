@@ -18,7 +18,7 @@ MetaContainer *MetaContainer_new(DBAdaptor *dba) {
 }
 
 Vector *MetaContainer_listValueByKey(MetaContainer *mc, char *key) {
-  Vector *results;
+  Vector *results = Vector_new();
   StatementHandle *sth;
   ResultRow *row;
   char qStr[1024];
@@ -40,6 +40,28 @@ Vector *MetaContainer_listValueByKey(MetaContainer *mc, char *key) {
   return results;
 }
 
+int MetaContainer_getIntValueByKey(MetaContainer *mc, char *key, int *retVal) {
+  StatementHandle *sth;
+  ResultRow *row;
+  char qStr[1024];
+  int okFlag = 0;
+
+  sprintf(qStr,
+       "SELECT meta_value"
+       " FROM meta"
+       " WHERE meta_key = '%s' ORDER BY meta_id",key);
+
+  sth = mc->prepare((BaseAdaptor *)mc,qStr,strlen(qStr)); 
+  sth->execute(sth);
+
+  if ((row = sth->fetchRow(sth))) {
+    *retVal = row->getIntAt(row,0); 
+    okFlag = 1;
+  }
+  sth->finish(sth);
+
+  return okFlag;
+}
 Species *MetaContainer_getSpecies(MetaContainer *mc) {
   Vector *classification;
   StatementHandle *sth;

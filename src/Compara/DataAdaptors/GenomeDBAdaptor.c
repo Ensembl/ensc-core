@@ -1,23 +1,17 @@
 #include "GenomeDBAdaptor.h"
 
 
-package Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor;
-use vars qw(@ISA);
-use strict;
+GenomeDBAdaptor *GenomeDBAdaptor_new(ComparaDBAdaptor *dba) {
+  GenomeDBAdaptor *gda;
+
+  if ((gda = (GenomeDBAdaptor *)calloc(1,sizeof(GenomeDBAdaptor))) == NULL) {
+    fprintf(stderr,"Error: Failed allocating gda\n");
+    exit(1);
+  }
+  BaseComparaAdaptor_init((BaseComparaAdaptor *)gda, dba, GENOMEDB_ADAPTOR);
 
 
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-use Bio::EnsEMBL::Compara::GenomeDB;
-
-
-# Hashes for storing a cross-referencing of compared genomes
-my %genome_consensus_xreflist;
-my %genome_query_xreflist;
-
-
-@ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
-
-GenomeDBAdaptor *GenomeDBAdaptor_new() {
+  return gda;
 }
 
 GenomeDB *GenomeDBAdaptor_fetchByDbID(GenomeDBAdaptor *gda, IDType dbID) {
@@ -25,7 +19,8 @@ GenomeDB *GenomeDBAdaptor_fetchByDbID(GenomeDBAdaptor *gda, IDType dbID) {
   DBAdaptor *dba;
 
   if (!dbID) {
-    $self->throw("Must fetch by dbid");
+    fprintf(stderr,"Error: Must have dbID to fetch by dbid\n");
+    exit(1);
   }
 
   // check to see whether all the GenomeDBs have already been created
@@ -41,7 +36,8 @@ GenomeDB *GenomeDBAdaptor_fetchByDbID(GenomeDBAdaptor *gda, IDType dbID) {
   // set up the dbadaptor for this genome db
   // this could have been added after the cache was created which is why
   // it is re-added every request
-  my $dba = $self->db->get_db_adaptor($gdb->name, $gdb->assembly);
+  dba = ComparaDBAdaptor_getDBAdaptor(gda->dba, GenomeDB_getName(gdb), 
+                                      GenomeDB_getAssembly(gdb));
 
   if (!dba) {
     fprintf(stderr,"Error: Could not obtain DBAdaptor for dbID [" IDFMTSTR "].\n" 
@@ -57,72 +53,62 @@ GenomeDB *GenomeDBAdaptor_fetchByDbID(GenomeDBAdaptor *gda, IDType dbID) {
   return gdb;
 }
 
-
-=head2 fetch_all
-
-  Args       : none
-  Example    : none
-  Description: gets all GenomeDBs for this compara database
-  Returntype : listref Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : none
-  Caller     : general
-
-=cut
-
 Vector *GenomeDBAdaptor_fetchAll(GenomeDBAdaptor *gda) {
-
-  if ( !defined $self->{'_GenomeDB_cache'}) {
-    $self->create_GenomeDBs;
+  Vector *genomeDBs;
+  IDType *keys;
+  int i;
+  
+  if (!gda->genomeDBCache) {
+    GenomeDBAdaptor_createGenomeDBs(gda);
   }
 
-  my @genomeDBs = values %{$self->{'_cache'}};
+  keys = IDHash_getKeys(gda->genomeDBCache);
+  genomeDBs = Vector_new();
 
-  for my $gdb ( @genomeDBs ) {
-    my $dba = $self->db->get_db_adaptor($gdb->name, $gdb->assembly);
-    if($dba) {
-      $gdb->db_adaptor($dba);
+  for (i=0; i<IDHash_getNumValues(gda->genomeDBCache); i++) {
+    GenomeDB *gdb = IDHash_getValue(gda->genomeDBCache, keys[i]);
+    ComparaDBAdaptor *cdb = gda->dba;
+    DBAdaptor *dba = ComparaDBAdaptor_getDBAdaptor(cdb, GenomeDB_getName(gdb), 
+                                                   GenomeDB_getAssembly(gdb));
+    Vector_addElement(genomeDBs, gdb);
+    if (dba) {
+      GenomeDB_setDBAdaptor(gdb, dba);
     }
   }
+
+  free(keys);
     
   return genomeDBs;
 } 
 
-
-
-=head2 fetch_by_name_assembly
-
-  Arg [1]    : string $name
-  Arg [2]    : string $assembly
-  Example    : $gdb = $gdba->fetch_by_name_assembly("Homo sapiens", 'NCBI_31');
-  Description: Retrieves a genome db using the name of the species and
-               the assembly version.
-  Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : thrown if GenomeDB of name $name and $assembly cannot be found
-  Caller     : general
-
-=cut
-
 GenomeDB *GenomeDBAdaptor_fetchByNameAssembly(GenomeDBAdaptor *gda, char *name, char *assembly) {
+  StatementHandle *sth;
+  ResultRow *row;
+  char qStr[512];
+  IDType id;
 
-   unless($name && $assembly) {
-     $self->throw('name and assembly arguments are required');
-   }
+  if (!name || !assembly) {
+    fprintf(stderr,"Error: name and assembly arguments are required\n");
+    exit(1);
+  }
 
-   my $sth = $self->prepare(
-	     "SELECT genome_db_id
-              FROM genome_db
-              WHERE name = ? AND assembly = ?");
+  sprintf(qStr,
+	     "SELECT genome_db_id"
+             " FROM genome_db"
+             " WHERE name = '%s' AND assembly = '%s'", name, assembly);
+  sth = gda->prepare((BaseAdaptor *)gda, qStr, strlen(qStr));
 
-   $sth->execute($name, $assembly);
+  sth->execute(sth);
 
-   my ($id) = $sth->fetchrow_array();
+  if (!(row = sth->fetchRow(sth))) {
+    fprintf(stderr,"Error: No GenomeDB with this name [%s] and " 
+                   "assembly [%s]\n", name, assembly);
+    exit(1);
+  }
 
-   if( !defined $id ) {
-       $self->throw("No GenomeDB with this name [$name] and " .
-		    "assembly [$assembly]");
-   }
+  id = row->getLongLongAt(row,0);
 
-   return $self->fetch_by_dbID($id);
+  return GenomeDBAdaptor_fetchByDbID(gda, id);
 }
 
 IDType GenomeDBAdaptor_store(GenomeDBAdaptor *gda, GenomeDB *gdb) {
@@ -165,87 +151,135 @@ IDType GenomeDBAdaptor_store(GenomeDBAdaptor *gda, GenomeDB *gdb) {
     sth = gda->prepare((BaseAdaptor *)gda, qStr, strlen(qStr));
     sth->execute(sth);
     dbID = sth->getInsertId(sth);
+    sth->finish(sth);
   }
 
   // update the genomeDB object so that it's dbID and adaptor are set
   GenomeDB_setDbID(gdb, dbID);
-  GenomeDB_setAdaptor(gdb, dfa);
+  GenomeDB_setAdaptor(gdb, (BaseAdaptor *)gda);
 
   return dbID;
 }
 
 void GenomeDBAdaptor_createGenomeDBs(GenomeDBAdaptor *gda) {
+  char qStr[1024];
+  StatementHandle *sth;
+  ResultRow *row;
 
   // Populate the hash array which cross-references the consensus
   // and query dbs
+ 
+  gda->genomeDBCache = IDHash_new(IDHASH_SMALL);
+  gda->genomeConsensusXrefList = StringHash_new(STRINGHASH_SMALL);
+  gda->genomeQueryXrefList = StringHash_new(STRINGHASH_SMALL);
 
-  my $sth = $self->prepare("
-     SELECT consensus_genome_db_id, query_genome_db_id, method_link_id
-     FROM genomic_align_genome
-  ");
+  sprintf(qStr,
+     "SELECT consensus_genome_db_id, query_genome_db_id, method_link_id"
+     " FROM genomic_align_genome");
 
-  $sth->execute;
+  sth = gda->prepare((BaseAdaptor *)gda, qStr, strlen(qStr));
+  sth->execute(sth);
 
-  while ( my @db_row = $sth->fetchrow_array() ) {
-    my ( $con, $query, $method_link_id ) = @db_row;
+  while ((row = sth->fetchRow(sth))) {
+    char cKey[512];
+    char qKey[512];
+    Vector *qVector;
+    Vector *cVector;
+    IDType *idP;
+    IDType cons  = row->getLongLongAt(row,0);
+    IDType query = row->getLongLongAt(row,1);
+    IDType methId = row->getLongLongAt(row,2);
 
-    $genome_consensus_xreflist{$con .":" .$method_link_id} ||= [];
-    $genome_query_xreflist{$query .":" .$method_link_id} ||= [];
+    sprintf(cKey,IDFMTSTR ":" IDFMTSTR, cons, methId);
+    sprintf(qKey,IDFMTSTR ":" IDFMTSTR, query, methId);
 
-    push @{ $genome_consensus_xreflist{$con .":" .$method_link_id}}, $query;
-    push @{ $genome_query_xreflist{$query .":" .$method_link_id}}, $con;
+    if (!StringHash_contains(gda->genomeConsensusXrefList, cKey)) {
+      StringHash_add(gda->genomeConsensusXrefList, cKey, Vector_new());
+    }
+    if (!StringHash_contains(gda->genomeQueryXrefList, qKey)) {
+      StringHash_add(gda->genomeQueryXrefList, qKey, Vector_new());
+    }
+
+    cVector =  StringHash_getValue(gda->genomeConsensusXrefList, cKey);
+    if ((idP = (IDType *)calloc(1,sizeof(IDType))) == NULL) {
+      fprintf(stderr,"Error: Failed allocating idP\n");
+      exit(1);
+    }
+    *idP = query;
+    Vector_addElement(cVector, idP);
+
+    qVector =  StringHash_getValue(gda->genomeQueryXrefList, qKey);
+    if ((idP = (IDType *)calloc(1,sizeof(IDType))) == NULL) {
+      fprintf(stderr,"Error: Failed allocating idP\n");
+      exit(1);
+    }
+    *idP = cons;
+    Vector_addElement(qVector, idP);
   }
 
+  sth->finish(sth);
+
   // grab all the possible species databases in the genome db table
-  $sth = $self->prepare("
-     SELECT genome_db_id, name, assembly, taxon_id
-     FROM genome_db 
-   ");
-   $sth->execute;
+  sprintf(qStr,
+     "SELECT genome_db_id, name, assembly, taxon_id"
+     " FROM genome_db");
+
+  sth = gda->prepare((BaseAdaptor *)gda, qStr, strlen(qStr));
+  sth->execute(sth);
 
   // build a genome db for each species
-  while ( my @db_row = $sth->fetchrow_array() ) {
-    my ($dbid, $name, $assembly, $taxon_id) = @db_row;
+  while ((row = sth->fetchRow(sth))) {
 
     GenomeDB *gdb = GenomeDB_new();
     GenomeDB_setDbID(gdb, row->getLongLongAt(row,0));
     GenomeDB_setName(gdb, row->getStringAt(row,1));
-    $gdb->assembly($assembly);
-    $gdb->taxon_id($taxon_id);
-    GenomeDB_setAdaptor(gdb,gda);
+    GenomeDB_setAssembly(gdb, row->getStringAt(row,2));
+    GenomeDB_setTaxonId(gdb, row->getLongLongAt(row,3));
+    GenomeDB_setAdaptor(gdb,(BaseAdaptor *)gda);
 
     IDHash_add(gda->genomeDBCache,GenomeDB_getDbID(gdb),gdb);
   }
-
+  sth->finish(sth);
 }
 
-
-=head2 check_for_consensus_db
-
-  Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $consensus_genomedb
-  Arg[2]     : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
-  Arg[3]     : int $method_link_id
-  Example    :
-  Description: Checks to see whether a consensus genome database has been
-               analysed against the specific query genome database.
-               Returns the dbID of the database of the query genomeDB if 
-               one is found.  A 0 is returned if no match is found.
-  Returntype : int ( 0 or 1 )
-  Exceptions : none
-  Caller     : Bio::EnsEMBL::Compara::GenomeDB.pm
-
-=cut
-
-
-int GenomeDBAdaptor_checkForConsensusDb(GenomeDBAdaptor *gda, GenomeDB *queryGdb, GenomeDB *conGdb, IDType methodLinkId) {
-
-  // just to make things a wee bit more readable
-  my $cid = $con_gdb->dbID;
-  my $qid = $query_gdb->dbID;
+int GenomeDBAdaptor_checkForConsensusDb(GenomeDBAdaptor *gda, GenomeDB *queryGdb, 
+                                        GenomeDB *conGdb, IDType methodLinkId) {
+  char key[512];
+  IDType cid = GenomeDB_getDbID(conGdb);
+  IDType qid = GenomeDB_getDbID(queryGdb);
   
-  if ( exists $genome_consensus_xreflist{$cid .":" .$method_link_id} ) {
-    for my $i ( 0 .. $#{$genome_consensus_xreflist{$cid .":" .$method_link_id}} ) {
-      if ( $qid == $genome_consensus_xreflist{$cid .":" .$method_link_id}[$i] ) {
+  sprintf(key,IDFMTSTR ":" IDFMTSTR, cid, methodLinkId);
+  
+  if (StringHash_contains(gda->genomeConsensusXrefList,key)) {
+    int i;
+    Vector *cxl = StringHash_getValue(gda->genomeConsensusXrefList, key);
+
+    for (i=0; i<Vector_getNumElement(cxl); i++) {
+      IDType *id = Vector_getElementAt(cxl, i);
+      if (qid == *id) {
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
+int GenomeDBAdaptor_checkForQueryDb(GenomeDBAdaptor *gda, GenomeDB *conGdb, 
+                                    GenomeDB *queryGdb, IDType methodLinkId) {
+
+  char key[512];
+  IDType cid = GenomeDB_getDbID(conGdb);
+  IDType qid = GenomeDB_getDbID(queryGdb);
+  
+  sprintf(key,IDFMTSTR ":" IDFMTSTR, qid, methodLinkId);
+  
+  if (StringHash_contains(gda->genomeQueryXrefList,key)) {
+    int i;
+    Vector *qxl = StringHash_getValue(gda->genomeQueryXrefList, key);
+
+    for (i=0; i<Vector_getNumElement(qxl); i++) {
+      IDType *id = Vector_getElementAt(qxl, i);
+      if (cid == *id) {
 	return 1;
       }
     }
@@ -254,41 +288,8 @@ int GenomeDBAdaptor_checkForConsensusDb(GenomeDBAdaptor *gda, GenomeDB *queryGdb
 }
 
 
-=head2 check_for_query_db
 
-  Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
-  Arg[2]     : Bio::EnsEMBL::Compara::GenomeDB $consensus_genomedb
-  Arg[3]     : int $method_link_id
-  Example    : none
-  Description: Checks to see whether a query genome database has been
-               analysed against the specific consensus genome database.
-               Returns the dbID of the database of the consensus 
-               genomeDB if one is found.  A 0 is returned if no match is
-               found.
-  Returntype : int ( 0 or 1 )
-  Exceptions : none
-  Caller     : Bio::EnsEMBL::Compara::GenomeDB.pm
-
-=cut
-
-int GenomeDBAdaptor_checkForQueryDb(GenomeDBAdaptor *gda, GenomeDB *conGdb, GenomeDB *queryGdb, IDType methodLinkId) {
-
-  // just to make things a wee bit more readable
-  my $cid = $con_gdb->dbID;
-  my $qid = $query_gdb->dbID;
-
-  if ( exists $genome_query_xreflist{$qid .":" .$method_link_id} ) {
-    for my $i ( 0 .. $#{$genome_query_xreflist{$qid .":" .$method_link_id}} ) {
-      if ( $cid == $genome_query_xreflist{$qid .":" .$method_link_id}[$i] ) {
-	return 1;
-      }
-    }
-  }
-  return 0;
-}
-
-
-
+/*
 =head2 get_all_db_links
 
   Arg[1]     : Bio::EnsEMBL::Compara::GenomeDB $query_genomedb
@@ -304,29 +305,40 @@ int GenomeDBAdaptor_checkForQueryDb(GenomeDBAdaptor *gda, GenomeDB *conGdb, Geno
   Caller     : Bio::EnsEMBL::Compara::GenomeDB.pm
 
 =cut
+*/
 
-sub GenomeDBAdaptor_getAllDbLinks(GenomeDBAdaptor *gda, GenomeDB *refGdb, IDType methodLinkId) {
-  my ( $self, $ref_gdb,$method_link_id ) = @_;
-  
-  my $id = $ref_gdb->dbID;
-  my @gdb_list;
+Vector *GenomeDBAdaptor_getAllDbLinks(GenomeDBAdaptor *gda, GenomeDB *refGdb, IDType methodLinkId) {
+  IDType id = GenomeDB_getDbID(refGdb);
+  Vector *gdbList = Vector_new();
+  char key[512];
+
+  sprintf(key, IDFMTSTR ":" IDFMTSTR, id, methodLinkId);
 
   // check for occurences of the db we are interested in
   // in the consensus list of dbs
-  if ( exists $genome_consensus_xreflist{$id . ":" .$method_link_id} ) {
-    for my $i ( 0 .. $#{ $genome_consensus_xreflist{$id . ":" .$method_link_id} } ) {
-      push @gdb_list, $self->{'_cache'}->{$genome_consensus_xreflist{$id . ":" .$method_link_id}[$i]};
+
+  if (StringHash_contains(gda->genomeConsensusXrefList, key)) {
+    int i;
+    Vector *cxl = StringHash_getValue(gda->genomeConsensusXrefList, key);
+
+    for (i=0; i<Vector_getNumElement(cxl); i++) {
+      IDType *id = Vector_getElementAt(cxl, i);
+      Vector_addElement(gdbList, IDHash_getValue(gda->genomeDBCache, *id));
     }
   }
 
   // and check for occurences of the db we are interested in
   // in the query list of dbs
-  if ( exists $genome_query_xreflist{$id . ":" .$method_link_id} ) {
-    for my $i ( 0 .. $#{ $genome_query_xreflist{$id . ":" .$method_link_id} } ) {
-      push @gdb_list, $self->{'_cache'}->{$genome_query_xreflist{$id . ":" .$method_link_id}[$i]};
+  if (StringHash_contains(gda->genomeQueryXrefList, key)) {
+    int i;
+    Vector *qxl = StringHash_getValue(gda->genomeQueryXrefList, key);
+
+    for (i=0; i<Vector_getNumElement(qxl); i++) {
+      IDType *id = Vector_getElementAt(qxl, i);
+      Vector_addElement(gdbList, IDHash_getValue(gda->genomeDBCache, *id));
     }
   }
 
-  return \@gdb_list;
+  return gdbList;
 }
 

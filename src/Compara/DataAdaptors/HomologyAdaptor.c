@@ -1,39 +1,35 @@
 #include "HomologyAdaptor.h"
+#include "StrUtil.h"
 
 
-HomologyAdaptor *HomologyAdaptor_new() {
+HomologyAdaptor *HomologyAdaptor_new(ComparaDBAdaptor *dba) {
+  HomologyAdaptor *ha;
+
+  if ((ha = (HomologyAdaptor *)calloc(1,sizeof(HomologyAdaptor))) == NULL) {
+    fprintf(stderr,"Error: Failed allocating ha\n");
+    exit(1);
+  }
+  BaseComparaAdaptor_init((BaseComparaAdaptor *)ha, dba, HOMOLOGY_ADAPTOR);
+
+  return ha;
 }
 
-package Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor;
-use vars qw(@ISA);
-use strict;
-use Bio::Root::Object;
-use DBI;
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-use Bio::EnsEMBL::Compara::Homology;
-@ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
-
-=head2 fetch_homologues_of_gene_in_species
-
- Title   : fetch_homologues_of_gene_in_species
- Usage   : $db->fetch_homologues_of_gene_in_species('Homo_sapiens','ENSG00000218116','Mus_musculus')
- Function: finds homologues, in a certain species, of a given gene
- Example :
- Returns : array of homology objects (Bio::EnsEMBL::Compara::Homology)
- Args    : species gene is from, gene stable name, species to find homology in
-
-=cut
 
 Vector *HomologyAdaptor_fetchHomologuesOfGeneInSpecies(HomologyAdaptor *ha, 
-                          char *species, char *gene, char *hSpecies) {
+                          char *sp, char *gene, char *hSp) {
   char qStr[1024];
   Vector *genes;
   IDType *relationshipIds;
   int nRelationship;
   int i;
+  char *hSpecies;
+  char *species;
 
-  $hspecies =~ tr/_/ /;
-  $species  =~ tr/_/ /;
+  species = StrUtil_copyString(&species,sp,0);
+  species = StrUtil_strReplChr(species,'_',' ');
+
+  hSpecies = StrUtil_copyString(&hSpecies,hSp,0);
+  hSpecies = StrUtil_strReplChr(hSpecies,'_',' ');
 
   sprintf(qStr,
            "select grm.gene_relationship_id "
@@ -44,7 +40,7 @@ Vector *HomologyAdaptor_fetchHomologuesOfGeneInSpecies(HomologyAdaptor *ha,
            " and    grm.member_stable_id = '%s' "
            " group by grm.gene_relationship_id", species, gene);
 
-  nRelationship = HomologyAdaptor_getRelationships(qStr,&relationshipIds);
+  nRelationship = HomologyAdaptor_getRelationships(ha,qStr,&relationshipIds);
 
   genes = Vector_new();
   for (i=0;i<nRelationship;i++) {
@@ -54,26 +50,23 @@ Vector *HomologyAdaptor_fetchHomologuesOfGeneInSpecies(HomologyAdaptor *ha,
   }
 
   free(relationshipIds);
+  free(species);
+  free(hSpecies);
 
   return genes;
 }
 
 
-=head2 fetch_homologues_of_gene
-
- Title   : fetch_homologues_of_gene
- Usage   : $db->fetch_homologues_of_gene('Homo_sapiens','ENSG00000218116')
- Function: finds homologues of a given gene
- Example :
- Returns : an array of homology objects
- Args    : species gene is from, gene stable name
-
-=cut
-
-Vector *HomologyAdaptor_fetchHomologuesOfGene(HomologyAdaptor *ha, char *species, char *gene) {
+Vector *HomologyAdaptor_fetchHomologuesOfGene(HomologyAdaptor *ha, char *sp, char *gene) {
   char qStr[1024];
+  char *species;
+  int nRelationship;
+  IDType *relationshipIds;
+  Vector *genes;
+  int i;
 
-    $species  =~ tr/_/ /;
+  species = StrUtil_copyString(&species,sp,0);
+  species = StrUtil_strReplChr(species,'_',' ');
 
   sprintf(qStr,
             "select grm.gene_relationship_id "
@@ -84,21 +77,21 @@ Vector *HomologyAdaptor_fetchHomologuesOfGene(HomologyAdaptor *ha, char *species
             " and    grm.member_stable_id = '%s' "
             " group by grm.gene_relationship_id", species, gene);
 
-  nRelationship = HomologyAdaptor_getRelationships(qStr,&relationshipIds);
+  nRelationship = HomologyAdaptor_getRelationships(ha, qStr,&relationshipIds);
 
   genes = Vector_new();
   for (i=0;i<nRelationship;i++) {
     Vector *homols;
     sprintf(qStr,
-               "select   grm.member_stable_id,
-               "         gd.name,
-               "         grm.chromosome,
-               "         grm.chrom_start,
-               "         grm.chrom_end
-               " from    gene_relationship_member grm,
-               "         genome_db gd
+               "select   grm.member_stable_id,"
+               "         gd.name,"
+               "         grm.chromosome,"
+               "         grm.chrom_start,"
+               "         grm.chrom_end"
+               " from    gene_relationship_member grm,"
+               "         genome_db gd"
                " where   grm.gene_relationship_id = " IDFMTSTR 
-               " and     grm.genome_db_id = gd.genome_db_id 
+               " and     grm.genome_db_id = gd.genome_db_id "
                " and NOT (grm.member_stable_id = '%s')", relationshipIds[i], gene);
 
     homols = HomologyAdaptor_getHomologues(ha, qStr);
@@ -107,35 +100,26 @@ Vector *HomologyAdaptor_fetchHomologuesOfGene(HomologyAdaptor *ha, char *species
   }
 
   free(relationshipIds);
+  free(species);
 
   return genes;
 }
 
-
-=head2 fetch_homologues_by_chr_start_in_species
-
- Title   : fetch_homologues_by_chr_start_in_species
- Usage   : $db->fetch_homologues_by_chr_start_in_species(   'Homo_sapiens',
-                                                            'X',
-                                                            1000,
-                                                            'Mus_musculus', 
-                                                            10)
-        Will return 10 human genes in order from 1000bp on chrX along with 10 homologues from mouse.  If no homologue, homologue will be "no known homologue"
- Function: finds a list of homologues with a given species
- Example :
- Returns : a hash of species names against arrays of homology objects
- Args    : species from, chr, start, second spp, number of homologues to fetch
-
-=cut
-
 Vector **HomologyAdaptor_fetchHomologuesByChrStartInSpecies(HomologyAdaptor *ha, 
-                   char *species, char *chr, int start, char *hspecies, int num) {
+                   char *sp, char *chr, int start, char *hSp, int num) {
   char qStr[1024];
   Vector **genesPair;
   int i;
+  char *hSpecies;
+  char *species;
+  int nRelationship;
+  IDType *relationshipIds;
 
-    $hspecies =~ tr/_/ /;
-    $species =~ tr/_/ /;
+  species = StrUtil_copyString(&species,sp,0);
+  species = StrUtil_strReplChr(species,'_',' ');
+
+  hSpecies = StrUtil_copyString(&hSpecies,hSp,0);
+  hSpecies = StrUtil_strReplChr(hSpecies,'_',' ');
 
   sprintf(qStr, 
           "select  grm.gene_relationship_id"
@@ -149,7 +133,7 @@ Vector **HomologyAdaptor_fetchHomologuesByChrStartInSpecies(HomologyAdaptor *ha,
           "   order by grm.chrom_start"
           "   limit %d", species, chr, start, num);
 
-  nRelationship = HomologyAdaptor_getRelationships(qStr,&relationshipIds);
+  nRelationship = HomologyAdaptor_getRelationships(ha,qStr,&relationshipIds);
 
   if ((genesPair = calloc(2,sizeof(Vector *))) == NULL) {
     fprintf(stderr,"Error: Failed allocating genesPair\n");
@@ -171,32 +155,21 @@ Vector **HomologyAdaptor_fetchHomologuesByChrStartInSpecies(HomologyAdaptor *ha,
     Vector_free(homols, NULL);
   }
 
+  free(species);
+  free(hSpecies);
+
   return genesPair;
 }                               
 
-
-
-=head2 list_stable_ids_from_species
-
- Title   : list_stable_ids_from_species
- Usage   : $db->list_stable_ids_from_species('Homo_sapiens')
- Function: Find all the stable ids in the gene_relationship_member table 
-           from a specified species 
- Example :
- Returns : array from transcript stable ids
- Args    : species
-
-=cut
-
-sub HomologyAdaptor_listStableIdsFromSpecies(HomologyAdaptor *ha, char *species)  {
+Vector *HomologyAdaptor_listStableIdsFromSpecies(HomologyAdaptor *ha, char *sp)  {
   StatementHandle *sth;
   ResultRow *row;
   Vector *genes;
-
-
-    $species =~ tr/_/ /;
-
   char qStr[1024];
+  char *species;
+
+  species = StrUtil_copyString(&species,sp,0);
+  species = StrUtil_strReplChr(species,'_',' ');
 
   sprintf(qStr,
           "select  grm.member_stable_id "
@@ -206,7 +179,7 @@ sub HomologyAdaptor_listStableIdsFromSpecies(HomologyAdaptor *ha, char *species)
           " and     gd.name = '%s'", species);
 
 
-  sth = ((BaseAdaptor *)ha)->prepare(qStr);
+  sth = ha->prepare((BaseAdaptor *)ha, qStr, strlen(qStr));
   sth->execute(sth);
 
   genes = Vector_new();
@@ -216,6 +189,8 @@ sub HomologyAdaptor_listStableIdsFromSpecies(HomologyAdaptor *ha, char *species)
     Vector_addElement(genes,StrUtil_copyString(&tmpStr, row->getStringAt(row,0),0));
   }
   sth->finish(sth);
+
+  free(species);
 
   return genes;
 }                               
@@ -236,7 +211,7 @@ Vector *HomologyAdaptor_fetchHomologuesBySpeciesRelationshipId(HomologyAdaptor *
            " where   gd.genome_db_id = grm.genome_db_id "
            " and     gd.name = '%s' "
            " and     grm.gene_relationship_id = " IDFMTSTR,
-         hSpecies,internalID);
+         hSpecies,internalId);
 
   return HomologyAdaptor_getHomologues(ha, qStr);
 }
@@ -246,17 +221,17 @@ Vector *HomologyAdaptor_getHomologues(HomologyAdaptor *ha, char *qStr) {
   ResultRow *row;
   Vector *genes;
 
-  sth = ((BaseAdaptor *)ha)->prepare(qStr);
+  sth = ha->prepare((BaseAdaptor *)ha, qStr, strlen(qStr));
   sth->execute(sth);
 
   genes = Vector_new();
   while ((row = sth->fetchRow(sth))) {
     Homology *homol = Homology_new();
-    Homology_setSpecies(homol, row->getStringAt(->species($ref->{'name'});
-    Homology_setStableId(homol, row->getStringAt(->stable_id($ref->{'member_stable_id'});
-    Homology_setChromosome(homol, row->getStringAt(->chromosome($ref->{'chromosome'});
-    Homology_setChrStart(homol, row->getIntAt(->chrom_start($ref->{'chrom_start'});
-    Homology_setChrEnd(homol, row->getIntAt(->chrom_end($ref->{'chrom_end'});
+    Homology_setSpecies(homol, row->getStringAt(row,1));
+    Homology_setStableId(homol, row->getStringAt(row,0));
+    Homology_setChromosome(homol, row->getStringAt(row,2));
+    Homology_setChrStart(homol, row->getIntAt(row,3));
+    Homology_setChrEnd(homol, row->getIntAt(row,4));
         
     Vector_addElement(genes,homol);
   }
@@ -274,7 +249,7 @@ int HomologyAdaptor_getRelationships(HomologyAdaptor *ha, char *qStr, IDType **i
   int nAlloced = 2;
   int nId = 0;
 
-  sth = ((BaseAdaptor *)ha)->prepare(qStr);
+  sth = ha->prepare((BaseAdaptor *)ha, qStr, strlen(qStr));
   sth->execute(sth);
 
   if ((*idsP = (IDType *)calloc(nAlloced,sizeof(IDType))) == NULL) {
@@ -292,7 +267,7 @@ int HomologyAdaptor_getRelationships(HomologyAdaptor *ha, char *qStr, IDType **i
       }
     }
 
-    (*idsP)[nId++] = row->getLongLongAt(row,0)); 
+    (*idsP)[nId++] = row->getLongLongAt(row,0); 
   }
   sth->finish(sth);
 
@@ -306,13 +281,13 @@ IDType HomologyAdaptor_getRelationship(HomologyAdaptor *ha, char *qStr) {
   IDType relId;
   
 
-  sth = ((BaseAdaptor *)ha)->prepare(qStr);
+  sth = ha->prepare((BaseAdaptor *)ha, qStr, strlen(qStr));
   sth->execute(sth);
 
   if ((row = sth->fetchRow(sth))) {
     relId = row->getLongLongAt(row,0);
   } else {
-    fprintf(stderr, "Error: No relationship found by %s\n,qStr);
+    fprintf(stderr, "Error: No relationship found by %s\n",qStr);
     relId = 0;
   }
 

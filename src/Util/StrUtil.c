@@ -451,6 +451,33 @@ char *StrUtil_strReplChr(char *str, char fromCh, char toCh) {
   return str;
 }
 
+char *StrUtil_strReplChrs(char *str, char *fromChs, char *toChs) {
+  char *chP;
+  int nFrom = strlen(fromChs);
+  int nTo   = strlen(toChs);
+  int i;
+
+  if (nFrom != nTo) {
+    fprintf(stderr, "Error: Different numbers of from and to chars in strReplChrs\n");
+    exit(1);
+  }
+
+  for (i=0; i<nFrom; i++) {
+    charMap[fromChs[i]] = toChs[i];
+  }
+
+  for (chP=str;*chP!='\0';chP++) {
+    *chP = charMap[*chP];
+  }
+
+// Revert up the charMap
+  for (i=0; i<nFrom; i++) {
+    charMap[fromChs[i]] = fromChs[i];
+  }
+
+  return str;
+}
+
 /******************************************************************************/
 /* Routine   :                                                                */
 /*            gettok()                                                        */

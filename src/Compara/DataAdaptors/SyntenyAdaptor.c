@@ -1,5 +1,18 @@
 #include "SyntenyAdaptor.h"
 
+#include "StrUtil.h"
+
+SyntenyAdaptor *SyntenyAdaptor_new(ComparaDBAdaptor *dba) {
+  SyntenyAdaptor *sa;
+
+  if ((sa = (SyntenyAdaptor *)calloc(1,sizeof(SyntenyAdaptor))) == NULL) {
+    fprintf(stderr,"Error: Failed allocating sa\n");
+    exit(1);
+  }
+  BaseComparaAdaptor_init((BaseComparaAdaptor *)sa, dba, SYNTENY_ADAPTOR);
+
+  return sa;
+}
 
 void SyntenyAdaptor_setSpecies(SyntenyAdaptor *sa, char *species1, char *species2) {
 
@@ -10,10 +23,12 @@ void SyntenyAdaptor_setSpecies(SyntenyAdaptor *sa, char *species1, char *species
 }
 
 // if chr = NULL return all synteny pairs
-Vector *SyntenyApdaptor_getSyntenyForChromosome(SyntenyAdaptor *sa, char *chromosome, int *startP, int *endP) {
+Vector *SyntenyApdaptor_getSyntenyForChromosome(SyntenyAdaptor *sa, char *chr, int *startP, int *endP) {
   Vector *data;
   char extraSql[128] = "";
   char qStr[2048];
+  ResultRow *row;
+  StatementHandle *sth;
 
   if (!strcmp(SyntenyAdaptor_getSpeciesMain(sa), SyntenyAdaptor_getSpeciesSecondary(sa))) { 
     return emptyVector;
@@ -47,8 +62,8 @@ Vector *SyntenyApdaptor_getSyntenyForChromosome(SyntenyAdaptor *sa, char *chromo
         "       dfr.synteny_region_id   = sr.synteny_region_id and"
         "       dfr_h.synteny_region_id = sr.synteny_region_id %s"
         " order by df.name, dfr.seq_start", 
-          DNAAlignFeatureAdaptor_getSpeciesMain(dafa),
-          DNAAlignFeatureAdaptor_getSpeciesSecondary(dafa),
+          SyntenyAdaptor_getSpeciesMain(sa),
+          SyntenyAdaptor_getSpeciesSecondary(sa),
           extraSql);
 
   sth = sa->prepare((BaseAdaptor *)sa, qStr, strlen(qStr));
@@ -57,21 +72,27 @@ Vector *SyntenyApdaptor_getSyntenyForChromosome(SyntenyAdaptor *sa, char *chromo
   while ((row = sth->fetchRow(sth))) {
     SyntenyRegion *sr = SyntenyRegion_new();
 
-            'synteny_id'    => $Q->[0],
-            'seq_type'      => $Q->[1],
-            'chr_name'      => $Q->[2],
-            'start'         => $Q->[3],
-            'end'           => $Q->[4],
-            'chr_start'     => $Q->[3],
-            'chr_end'       => $Q->[4],
-            'start'         => $Q->[3]-$start+1, 
-            'end'           => $Q->[4]-$start+1,
-            'hit_seq_type'  => $Q->[5],
-            'hit_chr_name'  => $Q->[6],
-            'hit_chr_start' => $Q->[7],
-            'hit_chr_end'   => $Q->[8],
-            'rel_ori'       => $Q->[9]
+    SyntenyRegion_setDbID(sr, row->getLongLongAt(row,0));
+    SyntenyRegion_setSeqType(sr, row->getStringAt(row,1));
+    SyntenyRegion_setChrName(sr, row->getStringAt(row,2));
+    SyntenyRegion_setChrStart(sr, row->getIntAt(row,3));
+    SyntenyRegion_setChrEnd(sr, row->getIntAt(row,4));
+    if (*startP && *endP) {
+      SyntenyRegion_setStart(sr, row->getIntAt(row,3)- *startP +1);
+      SyntenyRegion_setEnd(sr, row->getIntAt(row,4)- *startP +1);
+    } else {
+      SyntenyRegion_setStart(sr, row->getIntAt(row,3));
+      SyntenyRegion_setEnd(sr, row->getIntAt(row,4));
+    }
+    SyntenyRegion_setHitSeqType(sr, row->getStringAt(row,5));
+    SyntenyRegion_setHitChrName(sr, row->getStringAt(row,6));
+    SyntenyRegion_setHitChrStart(sr, row->getIntAt(row,7));
+    SyntenyRegion_setHitChrEnd(sr, row->getIntAt(row,8));
+    SyntenyRegion_setRelOri(sr, row->getIntAt(row,9));
+
     Vector_addElement(data, sr);
   }
+
+  sth->finish(sth);
   return data;
 }
