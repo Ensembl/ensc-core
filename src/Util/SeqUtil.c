@@ -6,6 +6,7 @@
 #include "Stream.h"
 #include "FileUtil.h"
 
+#include <ctype.h>
 #include <stdlib.h>
 
 char *SeqUtil_reverseComplement(char *seqStr, int lenSeqStr) {
@@ -14,7 +15,7 @@ char *SeqUtil_reverseComplement(char *seqStr, int lenSeqStr) {
   StrUtil_reverseString(seqStr,lenSeqStr);
 
   for (i=0;i<lenSeqStr;i++) {
-    switch (seqStr[i]) {
+    switch (toupper(seqStr[i])) {
       case 'A':
         seqStr[i]='T';
         break;
@@ -61,7 +62,7 @@ char *SeqUtil_reverseComplement(char *seqStr, int lenSeqStr) {
         seqStr[i]='B';
         break;
       default:
-        fprintf(stderr,"ERROR: Failed reverse complementing\n");
+        fprintf(stderr,"ERROR: Failed reverse complementing char = %c\n", seqStr[i]);
         return NULL;
     }
   }
