@@ -1,7 +1,9 @@
 #include <ctype.h>
 #include <string.h>
 
+#define __STRUTIL_MAIN__
 #include "StrUtil.h"
+#undef __STRUTIL_MAIN__
 #include "Error.h"
 
 char *StrUtil_appendString(char *to, char *from) {

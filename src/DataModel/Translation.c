@@ -9,6 +9,8 @@ Translation *Translation_new() {
     return NULL;
   }
 
+  Translation_setVersion(t,-1);
+
   return t;
 }
 
@@ -24,7 +26,7 @@ char *Translation_getStableId(Translation *translation) {
 int Translation_getVersion(Translation *translation) {
   TranslationAdaptor *ta = (TranslationAdaptor *)Translation_getAdaptor(translation);
 
-  if (StableIdInfo_getVersion(&(translation->si)) == NULL && ta) {
+  if (StableIdInfo_getVersion(&(translation->si)) == -1 && ta) {
     TranslationAdaptor_getStableEntryInfo(ta,translation);
   }
   return StableIdInfo_getVersion(&(translation->si));

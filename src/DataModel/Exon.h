@@ -15,6 +15,7 @@ struct ExonStruct {
   StableIdInfo si;
   FeatureSet components;
   int stickyRank;
+  FeatureSet supportingFeatures;
 
 };
 
@@ -70,8 +71,12 @@ time_t Exon_getModified(Exon *exon);
 #define Exon_isSticky(e) FeatureSet_getNumFeature(&((e)->components))
 #define Exon_getComponentExonAt(e,ind) FeatureSet_getFeatureAt(&((e)->components),(ind))
 #define Exon_getComponents(e) FeatureSet_getFeatures(&((e)->components))
-
 #define Exon_getNumComponentExon(e) FeatureSet_getNumFeature(&((e)->components))
+
+#define Exon_addSupportingFeature(e, sf) FeatureSet_addFeature(&((e)->supportingFeatures),(sf))
+#define Exon_getSupportingFeatureAt(e,ind) FeatureSet_getFeatureAt(&((e)->supportingFeatures),(ind))
+#define Exon_getSupportingFeatures(e) FeatureSet_getFeatures(&((e)->supportingFeatures))
+#define Exon_getNumSupportingFeature(e) FeatureSet_getNumFeature(&((e)->supportingFeatures))
 
 void Exon_sortByStickyRank(Exon *exon);
 

@@ -9,6 +9,8 @@ Transcript *Transcript_new() {
     return NULL;
   }
 
+  Transcript_setVersion(transcript,-1);
+
   return transcript;
 }
 
@@ -35,7 +37,7 @@ char *Transcript_getStableId(Transcript *transcript) {
 int Transcript_getVersion(Transcript *transcript) {
   TranscriptAdaptor *ta = (TranscriptAdaptor *)Transcript_getAdaptor(transcript);
 
-  if (StableIdInfo_getVersion(&(transcript->si)) == NULL && ta) {
+  if (StableIdInfo_getVersion(&(transcript->si)) == -1 && ta) {
     TranscriptAdaptor_getStableEntryInfo(ta,transcript);
   }
   return StableIdInfo_getVersion(&(transcript->si));

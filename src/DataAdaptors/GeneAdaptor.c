@@ -374,3 +374,129 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
   return geneSet;
 }
 
+IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene) {
+  TranscriptAdaptor *ta;
+  AnalysisAdaptor *aa;
+  IDType analysisId;
+  IDType xrefId;
+  IDType geneId;
+  int transCount;
+  char *type = NULL;
+  Analysis *analysis;
+  StatementHandle *sth;
+  char qStr[1024];
+  int i;
+
+
+  ta = DBAdaptor_getTranscriptAdaptor(ga->dba);
+/* NIY
+   if( !defined $gene || !ref $gene || !$gene->isa('Bio::EnsEMBL::Gene') ) {
+       $self->throw("Must store a gene object, not a $gene");
+   }
+*/
+
+  if ( Gene_getAnalysis(gene)) {
+    fprintf(stderr,"Genes must have an analysis object!");
+    exit(1);
+  }
+
+  aa = DBAdaptor_getAnalysisAdaptor(ga->dba);
+  analysis = Gene_getAnalysis(gene);
+  analysisId = AnalysisAdaptor_analysisExists(aa, analysis);
+
+  if (analysisId) {
+    Analysis_setDbID(analysis, analysisId);
+  } else {
+    AnalysisAdaptor_store(aa, analysis);
+    analysisId = Analysis_getDbID(analysis);
+  }
+
+  transCount = Gene_getTranscriptCount(gene);
+
+  if (Gene_getType(gene)) {
+    type = Gene_getType(gene);
+  } else {
+    type = emptyString; /* static "" */
+  }
+
+  // assuming that the store is used during the Genebuil process, set
+  // the display_xref_id to 0.  This ought to get re-set during the protein
+  // pipeline run.  This probably update to the gene table has yet to be
+  // implemented.
+
+  xrefId = 0;
+  sprintf(qStr,
+         "INSERT INTO gene(type, analysis_id, transcript_count, display_xref_id) "
+         "VALUES('%s'," IDFMTSTR ", %d, " IDFMTSTR ")",
+         type, (IDType)analysisId, transCount, (IDType)xrefId);
+
+  sth = ga->prepare((BaseAdaptor *)ga,qStr,strlen(qStr));
+  sth->execute(sth);
+
+  geneId = sth->getInsertId(sth);
+  sth->finish(sth);
+
+  if (Gene_getStableId(gene)) {
+    if (!Gene_getCreated(gene) ||
+        !Gene_getModified(gene) ||
+        Gene_getVersion(gene) == -1) {
+      fprintf(stderr,"Error: Trying to store incomplete stable id information for gene\n");
+      exit(1);
+    }
+    sprintf(qStr,"INSERT INTO gene_stable_id(gene_id," 
+                              "version, stable_id, created, modified)"
+                      " VALUES(" IDFMTSTR ",%d, '%s'," 
+                               "FROM_UNIXTIME(%d),"
+                               "FROM_UNIXTIME(%d))",
+                  geneId, 
+                  Gene_getVersion(gene),
+                  Gene_getStableId(gene),
+                  Gene_getCreated(gene),
+                  Gene_getModified(gene));
+    sth = ga->prepare((BaseAdaptor *)ga,qStr,strlen(qStr));
+    sth->execute(sth);
+    sth->finish(sth);
+  }
+
+
+  // 
+  // store the dbentries associated with this gene
+  //
+/* NIY
+  my $dbEntryAdaptor = $self->db->get_DBEntryAdaptor();
+
+  foreach my $dbl ( @{$gene->get_all_DBLinks} ) {
+    $dbEntryAdaptor->store( $dbl, $gene_dbID, "Gene" );
+  }
+*/
+
+  // 
+  // Update the genes display xref if it is set
+  //
+/* NIY
+  my $display_xref = $gene->display_xref;
+  if($display_xref) {
+    if(my $dbe_id = $dbEntryAdaptor->exists($display_xref)) {
+      my $dispxref_sth = $self->prepare('UPDATE gene SET display_xref_id = ?
+                                        WHERE gene_id = ?');
+      $dispxref_sth->execute($dbe_id, $gene_dbID);
+    }
+  }
+*/
+
+
+  // write exons transcripts and exon_transcript table
+
+  for (i=0; i<Gene_getTranscriptCount(gene); i++) {
+    Transcript *t = Gene_getTranscriptAt(gene,i);
+    // force lazy loading of translations before new exon dbIDs are set
+    Transcript_getTranslation(t);
+    TranscriptAdaptor_store(ta, t, geneId);
+  }
+
+  Gene_setAdaptor(gene, (BaseAdaptor *)ga);
+  Gene_setDbID(gene,geneId);
+
+  return Gene_getDbID(gene);
+}
+

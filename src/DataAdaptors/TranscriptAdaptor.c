@@ -103,3 +103,123 @@ int TranscriptAdaptor_getStableEntryInfo(TranscriptAdaptor *ta, Transcript *tran
   return 1;
 }
 
+IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, IDType geneId) { 
+  char qStr[1024];
+  StatementHandle *sth;
+  int i;
+  Translation *translation;
+  IDType transcriptId;
+  IDType xrefId;
+  TranslationAdaptor *translAdaptor;
+  ExonAdaptor *ea;
+  int rank;
+  int exonCount;
+  
+
+/* NIY
+   if( ! ref $transcript || !$transcript->isa('Bio::EnsEMBL::Transcript') ) {
+       $self->throw("$transcript is not a EnsEMBL transcript - not dumping!");
+   }
+*/
+
+   // store translation 
+   // then store the transcript 
+   // then store the exon_transcript table
+
+  translation = Transcript_getTranslation(transcript);
+
+  ea = DBAdaptor_getExonAdaptor(ta->dba);
+  translAdaptor = DBAdaptor_getTranscriptAdaptor(ta->dba);
+
+  exonCount = Transcript_getExonCount(transcript);
+
+  for (i=0;i<Transcript_getExonCount(transcript);i++) {
+    Exon *exon = Transcript_getExonAt(transcript,i);
+    ExonAdaptor_store(ea,exon);
+  }
+
+  if (translation) {
+    TranslationAdaptor_store(translAdaptor, translation);
+  }
+
+
+  // assuming that the store is used during the Genebuil process, set
+  // the display_xref_id to 0.  This ought to get re-set during the protein
+  // pipeline run.  This probably update to the gene table has yet to be
+  // implemented.
+  xrefId = 0;
+
+  // ok - now load this line in
+  if (translation) {
+    sprintf(qStr,
+       "insert into transcript ( gene_id, translation_id, exon_count, display_xref_id )"
+       " values ( " IDFMTSTR ", " IDFMTSTR ", %d, 0)",geneId, Translation_getDbID(translation),exonCount);
+  } else {
+    sprintf(qStr,
+       "insert into transcript ( gene_id, translation_id, exon_count, display_xref_id)"
+       " values ( " IDFMTSTR ", 0, %d, 0)",geneId, exonCount);
+  }
+  sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
+        
+  sth->execute(sth);
+
+  transcriptId = sth->getInsertId(sth);
+  sth->finish(sth);
+
+/* NIY
+   #print STDERR "Going to look at gene links\n";
+   my $dbEntryAdaptor = $self->db->get_DBEntryAdaptor();
+
+   foreach my $dbl ( @{$transcript->get_all_DBLinks} ) {
+     $dbEntryAdaptor->store( $dbl, $transc_dbID, "Transcript" );
+   }
+*/
+
+   // 
+   // Update transcript to point to display xref if it is set
+   // 
+/* NIY
+   if(my $dxref = $transcript->display_xref) {
+     if(my $dxref_id = $dbEntryAdaptor->exists($dxref)) {
+       $self->prepare( "update transcript set display_xref_id = ".
+                   $dxref_id . " where transcript_id = ".$transc_dbID);
+       $self->execute();
+       $dxref->dbID($dxref_id);
+       $dxref->adaptor($dbEntryAdaptor);
+     }
+   }
+*/
+
+
+  sprintf(qStr, "insert into exon_transcript (exon_id,transcript_id,rank) values (%" IDFMTSTR ",%" IDFMTSTR ",%d)");
+  sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
+  rank = 1;
+  for (i=0; i<exonCount; i++) {
+    Exon *exon = Transcript_getExonAt(transcript,i);
+    sth->execute(sth, (IDType)Exon_getDbID(exon), (IDType)transcriptId, rank);
+    rank++;
+  }
+  sth->finish(sth);
+
+  if (Transcript_getStableId(transcript)) {
+    if (Transcript_getVersion(transcript) == -1) {
+      fprintf(stderr, "Error: Trying to store incomplete stable id information for transcript\n");
+    }
+
+    sprintf(qStr, "INSERT INTO transcript_stable_id(transcript_id," 
+                      "stable_id,version)"
+                      " VALUES(" IDFMTSTR ", '%s', %d)",
+                      transcriptId,
+                      Transcript_getStableId(transcript),
+                      Transcript_getVersion(transcript));
+    sth = ta->prepare((BaseAdaptor *)ta, qStr, strlen(qStr));
+    sth->execute(sth);
+    sth->finish(sth);
+  }
+
+  Transcript_setDbID(transcript, transcriptId);
+  Transcript_setAdaptor(transcript, ta);
+
+  return transcriptId;
+}
+

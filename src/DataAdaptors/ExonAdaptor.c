@@ -7,6 +7,9 @@
 #include "StatementHandle.h"
 #include "ResultRow.h"
 
+#include "Class.h"
+#include "BaseAlignFeature.h"
+
 
 Exon *ExonAdaptor_exonFromRow(ExonAdaptor *ea, ResultRow *row);
 
@@ -218,5 +221,225 @@ int ExonAdaptor_getStableEntryInfo(ExonAdaptor *ea, Exon *exon) {
   sth->finish(sth);
 
   return 1;
+}
+
+char *protType = "protein_align_feature";
+char *dnaType = "dna_align_feature";
+
+IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
+  StatementHandle *sth;
+  StatementHandle *sth2;
+  char qStr[1024];
+  int i;
+  int exonId;
+  DNAAlignFeatureAdaptor *dafa;
+  ProteinAlignFeatureAdaptor *pafa;
+  char *type;
+  int nExon;
+  
+
+/* NIY
+  if( ! $exon->isa('Bio::EnsEMBL::Exon') ) {
+    $self->throw("$exon is not a EnsEMBL exon - not dumping!");
+  }
+*/
+
+  if (Exon_getDbID(exon) && Exon_getAdaptor(exon) && Exon_getAdaptor(exon) == (BaseAdaptor *)ea) {
+    return Exon_getDbID(exon);
+  }
+
+  if( ! Exon_getStart(exon)  || ! Exon_getEnd(exon) ||
+      ! Exon_getStrand(exon) || ! Exon_getPhase(exon)) {
+    fprintf(stderr,"ERROR: Exon does not have all attributes to store");
+    exit(1);
+  }
+
+  // trap contig_id separately as it is likely to be a common mistake
+
+// HACK modified duplicate of query for first exon (with no setting of exonId
+  sprintf(qStr,
+    "INSERT into exon (exon_id, contig_id, contig_start,"
+                      "contig_end, contig_strand, phase,"
+                      "end_phase, sticky_rank) "
+    " VALUES ( %" IDFMTSTR ", %" IDFMTSTR ", %%d, %%d, %%d, %%d, %%d, %%d )");
+
+
+  sth = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
+
+  sprintf(qStr,
+    "INSERT into exon (contig_id, contig_start,"
+                      "contig_end, contig_strand, phase,"
+                      "end_phase, sticky_rank) "
+    " VALUES ( %" IDFMTSTR ", %%d, %%d, %%d, %%d, %%d, %%d )");
+
+  sth2 = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
+
+  exonId = 0;
+
+  if (Exon_isSticky(exon)) {
+    // sticky storing. Sticky exons contain normal exons ...
+
+    for (i=0; i<Exon_getNumComponentExon(exon); i++) {
+      Exon *componentExon = Exon_getComponentExonAt(exon,i);
+      RawContig *contig = Exon_getContig(componentExon);
+
+      if (!contig || !RawContig_getDbID(contig)) {
+        fprintf(stderr,"Component Exon does not have an attached contig "
+                       "with a valid set database id. "
+                       "Needs to have one set\n");
+        exit(1);
+      }
+
+      if (!exonId) {
+        sth->execute( sth2,
+                      (IDType)RawContig_getDbID(contig),
+                      Exon_getStart(componentExon),
+                      Exon_getEnd(componentExon),
+                      Exon_getStrand(componentExon),
+                      Exon_getPhase(componentExon),
+                      Exon_getEndPhase(componentExon),
+                      Exon_getStickyRank(componentExon));
+        exonId = sth->getInsertId(sth);
+      } else {
+        sth->execute( sth,
+                      (IDType)exonId,
+                      (IDType)RawContig_getDbID(contig),
+                      Exon_getStart(componentExon),
+                      Exon_getEnd(componentExon),
+                      Exon_getStrand(componentExon),
+                      Exon_getPhase(componentExon),
+                      Exon_getEndPhase(componentExon),
+                      Exon_getStickyRank(componentExon));
+      }
+    }
+  } else {
+    // normal storing
+    RawContig *contig = Exon_getContig(exon);
+
+    if (!contig || !RawContig_getDbID(contig)) {
+      fprintf(stderr,"Exon does not have an attached contig with a valid " 
+                     "database id.  Needs to have one set\n");
+      exit(1);
+    }
+
+    sth->execute( sth2,
+                  (IDType)RawContig_getDbID(contig),
+                  Exon_getStart(exon),
+                  Exon_getEnd(exon),
+                  Exon_getStrand(exon),
+                  Exon_getPhase(exon),
+                  Exon_getEndPhase(exon),
+                  Exon_getStickyRank(exon));
+    exonId = sth->getInsertId(sth);
+  }
+  sth->finish(sth);
+
+  if (Exon_getStableId(exon)) {
+    if (!Exon_getCreated(exon) ||
+        !Exon_getModified(exon) ||
+        Exon_getVersion(exon) == -1) {
+      fprintf(stderr, "Error: Trying to store incomplete stable id information for exon\n");
+      exit(1);
+    }
+
+    sprintf(qStr,
+        "INSERT INTO exon_stable_id(exon_id," 
+        "version, stable_id, created, modified)"
+                    " VALUES(" IDFMTSTR ",%d,'%s',FROM_UNIXTIME(%d),FROM_UNIXTIME(%d))",
+         exonId,
+         Exon_getVersion(exon),
+         Exon_getStableId(exon),
+         Exon_getCreated(exon),
+         Exon_getModified(exon));
+
+
+     sth = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
+     sth->execute(sth);
+     sth->finish(sth);
+   }
+
+
+  // Now the supporting evidence
+  // should be stored from featureAdaptor
+#ifdef DONE 
+  sprintf(qStr,
+         "insert into supporting_feature (exon_id, feature_id, feature_type) "
+         "values(%" IDFMTSTR ", %" IDFMTSTR ", %%s)");
+
+  sth = ea->prepare((BaseAdaptor *)ea, qStr, strlen(qStr));
+
+  dafa = DBAdaptor_getDNAAlignFeatureAdaptor(ea->dba);
+  pafa = DBAdaptor_getProteinAlignFeatureAdaptor(ea->dba);
+
+  if (Exon_isSticky(exon)) {
+    nExon = Exon_getNumComponentExon(exon);
+  } else {
+    nExon = 1;
+  }
+
+/* nExon is 1 for non sticky and nComponent for sticky */
+  for (i=0;i<nExon;i++) {
+    int j;
+    Exon *e;
+
+    if (Exon_isSticky(exon)) {
+      e = Exon_getComponentExonAt(exon,i);
+    } else {
+      e = exon;
+    }
+
+    for (j=0; j<Exon_getNumSupportingFeatures(e); j++) {
+      BaseAlignFeature *sf = Exon_getSupportingFeatureAt(e,j);
+
+/* NIY
+      unless($sf->isa("Bio::EnsEMBL::BaseAlignFeature")){
+        $self->throw("$sf must be an align feature otherwise" .
+                     "it can't be stored");
+      }
+*/
+
+      // sanity check
+/* NIY
+      if (!BaseAlignFeature_validate(sf)) {
+        fprintf(stderr,"Warning: Supporting feature invalid. Skipping feature\n");
+        continue;
+      }
+*/
+
+      BaseAlignFeature_setContig(sf, Exon_getContig(e));
+
+      if (Class_isDescendent(CLASS_DNADNAALIGNFEATURE, sf->objectType)) {
+        DNAAlignFeatureAdaptor_store(dafa,sf);
+        type = dnaType;
+      } else if (Class_isDescendent(CLASS_DNAPROTALIGNFEATURE, sf->objectType)) {
+        ProteinAlignFeatureAdaptor_store(pafa,sf);
+        type = protType;
+      } else {
+        fprintf(stderr,"Warning: Supporting feature of unknown type. Skipping\n");
+        continue;
+      }
+
+      sth->execute(sth, (IDType)exonId, BaseAlignFeature_getDbID(sf), type);
+    }
+  }
+
+  sth->finish(sth);
+#endif
+
+  // 
+  // Finally, update the dbID and adaptor of the exon (and any component exons)
+  // to point to the new database
+  // 
+
+  for (i=0; i<Exon_getNumComponentExon(exon); i++) {
+    Exon *e = Exon_getComponentExonAt(exon,i);
+    Exon_setDbID(e,exonId);
+    Exon_setAdaptor(e,(BaseAdaptor *)ea);
+  }
+
+  Exon_setAdaptor(exon,(BaseAdaptor *)ea);
+  Exon_setDbID(exon, exonId);
+
+  return Exon_getDbID(exon);
 }
 

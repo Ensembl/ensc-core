@@ -11,5 +11,11 @@ char *StrUtil_appendString(char *to, char *from);
 void StrUtil_reverseString(char *string, int len);
 int StrUtil_strupr(char *string);
 
+#ifdef __STRUTIL_MAIN__
+ char *emptyString = "";
+#else
+ extern char *emptyString;
+#endif
+
 
 #endif

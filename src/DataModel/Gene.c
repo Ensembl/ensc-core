@@ -10,6 +10,10 @@ Gene *Gene_new() {
     return NULL;
   }
 
+  Gene_setModified(gene,0);
+  Gene_setCreated(gene,0);
+  Gene_setVersion(gene,-1);
+
   return gene;
 }
 

@@ -117,3 +117,63 @@ int TranslationAdaptor_getStableEntryInfo(TranslationAdaptor *ta, Translation *t
   return 1;
 }
 
+IDType TranslationAdaptor_store(TranslationAdaptor *ta, Translation *translation) {
+  Exon *startExon = Translation_getStartExon(translation);
+  Exon *endExon   = Translation_getEndExon(translation);
+  char qStr[1024];
+  StatementHandle *sth;
+  IDType translId = 0;
+
+  if (!startExon || !endExon || !Exon_getDbID(startExon) || !Exon_getDbID(endExon)) {
+    fprintf(stderr,"Attempting to write a translation where the dbIDs of the " 
+                   "start and exons are not set. This is most likely to be " 
+                   "because you assigned the exons for translation start_exon " 
+                   "and translation end_exon to be different in memory " 
+                   "objects from your transcript exons - although it could " 
+                   "also be an internal error in the adaptors. For your " 
+                   "info the exon memory locations are %d and %d",
+                   startExon, endExon);
+    exit(1);
+  }
+
+  sprintf(qStr,
+    "INSERT INTO translation(seq_start, start_exon_id,"
+                             "seq_end, end_exon_id)"
+                             " VALUES( %d," IDFMTSTR ",%d," IDFMTSTR ")",
+    Translation_getStart(translation),
+    Exon_getDbID(startExon),
+    Translation_getEnd(translation),
+    Exon_getDbID(endExon));
+
+  sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr)); 
+
+  sth->execute(sth);
+
+  translId = sth->getInsertId(sth);
+
+  sth->finish(sth);
+
+  if (Translation_getStableId(translation)) {
+    if (Translation_getVersion(translation) == -1) {
+      fprintf(stderr,"Error: Trying to store incomplete stable id information for translation\n");
+      exit(1);
+    }
+
+    sprintf(qStr, "INSERT INTO translation_stable_id(translation_id," 
+                                   "stable_id,version)"
+                                   " VALUES(" IDFMTSTR ",'%s',%d)",
+                           translId, 
+                           Translation_getStableId(translation),
+                           Translation_getVersion(translation));
+    sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr)); 
+    sth->execute(sth);
+    sth->finish(sth);
+  }
+
+  Translation_setDbID(translation,translId);
+  Translation_setAdaptor(translation,(BaseAdaptor *)ta);
+
+  return translId;
+}
+
+
