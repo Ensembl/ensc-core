@@ -12,7 +12,7 @@ struct BaseAlignFeatureStruct {
 
 BaseAlignFeature *BaseAlignFeature_new(void);
 
-char *BaseAlignFeature_setCigarString(char *ciggy);
+char *BaseAlignFeature_setCigarString(BaseAlignFeature *fp, char *ciggy);
 #define BaseAlignFeature_getCigarString(fp)  (fp)->cigarString;
 
 #define BaseAlignFeature_setStableId(fp,stableId)  SeqFeature_setStableId(&((fp)->sf1),stableId)

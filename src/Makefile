@@ -62,6 +62,7 @@ libensc.a	: \
 	objectfiles/DataModel/Chromosome.o \
 	objectfiles/DataModel/Class.o \
 	objectfiles/DataModel/Clone.o \
+	objectfiles/DataModel/DNAAlignFeature.o \
 	objectfiles/DataModel/EnsC.o \
 	objectfiles/DataModel/Exon.o \
 	objectfiles/DataModel/FeatureSet.o \
