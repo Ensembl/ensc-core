@@ -29,4 +29,6 @@ struct BaseContigStruct {
 #define BaseContig_setContigType(bc,ct) (bc)->contigType = (ct)
 #define BaseContig_getContigType(bc) (bc)->contigType
 
+char *BaseContig_getName(BaseContig *bc);
+
 #endif

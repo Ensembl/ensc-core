@@ -8,8 +8,6 @@
 Exon *StickyExon_transformToSlice(Exon *exon, Slice *slice)  {
   BaseContig *contig;
 
-  fprintf(stderr, "ERROR: Calling transform on sticky exon\n");
-
   contig = Exon_getContig(exon);
   
   if (contig && BaseContig_getContigType(contig) == RAWCONTIG) {
@@ -44,7 +42,9 @@ Exon *StickyExon_transformToSlice(Exon *exon, Slice *slice)  {
       MapperRange *mrange;
       MapperCoordinate *mcoord;
 
+/*
       fprintf(stderr," component exon %s",Exon_getStableId(exon));
+*/
 
       mapped = AssemblyMapper_mapCoordinatesToAssembly(assMapper,
 	 BaseContig_getDbID(Exon_getContig(compExon)),
@@ -53,7 +53,9 @@ Exon *StickyExon_transformToSlice(Exon *exon, Slice *slice)  {
 	 Exon_getStrand(compExon)
 	);
       
+/*
       fprintf(stderr, "\nStickyExon transform method:\n"); 
+*/
       
       // exons should always transform so in theory no error check
       // necessary
@@ -76,10 +78,12 @@ Exon *StickyExon_transformToSlice(Exon *exon, Slice *slice)  {
 
       mcoord = (MapperCoordinate *)mrange;
 
+/*
       fprintf(stderr, "[Mapped start  %d ", mcoord->start);
       fprintf(stderr, "\tMapped end %d ", mcoord->end);
       fprintf(stderr, "\tMapped strand %d ",  mcoord->strand);
       fprintf(stderr, "]\nSticky rank : %d\n", Exon_getStickyRank(compExon));
+*/
 
 #ifdef DONE
       // add the supporting features from the exons
@@ -139,10 +143,12 @@ Exon *StickyExon_transformToSlice(Exon *exon, Slice *slice)  {
 	  compositeExonEndPhase = Exon_getEndPhase(compExon);
 	}
       }
+      MapperRangeSet_free(mapped);
     }
     
     // now build the new composite exon
     newExon = Exon_new();
+// NIY free old exons
 
     if(Slice_getStrand(slice) == 1) {
       Exon_setStart(newExon, mappedStart - Slice_getChrStart(slice) + 1);
@@ -170,7 +176,9 @@ Exon *StickyExon_transformToSlice(Exon *exon, Slice *slice)  {
 
     Exon_setPhase(newExon, compositeExonPhase );
     Exon_setEndPhase(newExon, compositeExonEndPhase );
+/*
     fprintf(stderr, "transformed exon %s\n",Exon_getStableId(newExon));
+*/
     return newExon;
 
   } else {

@@ -14,6 +14,9 @@ struct GeneStruct {
   SeqFeature sf;
   StableIdInfo si;
   char *type;
+  char startIsSet;
+  char endIsSet;
+  char strandIsSet;
 };
 
 Gene *Gene_new(void);
@@ -30,6 +33,15 @@ char *Gene_getStableId(Gene *gene);
 char *Gene_setType(Gene *gene, char *type);
 #define Gene_getType(gene)  (gene)->type
 
+#define Gene_setStartIsSet(gene, flag)  (gene)->startIsSet = (flag)
+#define Gene_getStartIsSet(gene)  (gene)->startIsSet
+
+#define Gene_setEndIsSet(gene, flag)  (gene)->endIsSet = (flag)
+#define Gene_getEndIsSet(gene)  (gene)->endIsSet
+
+#define Gene_setStrandIsSet(gene, flag)  (gene)->strandIsSet = (flag)
+#define Gene_getStrandIsSet(gene)  (gene)->strandIsSet
+
 #define Gene_setCreated(gene,cd)  StableIdInfo_setCreated(&((gene)->si),cd)
 #define Gene_getCreated(gene)  StableIdInfo_getCreated(&((gene)->si))
 
@@ -39,8 +51,8 @@ char *Gene_setType(Gene *gene, char *type);
 #define Gene_setVersion(gene,ver)  StableIdInfo_setVersion(&((gene)->si),ver)
 #define Gene_getVersion(gene)  StableIdInfo_getVersion(&((gene)->si))
 
-#define Gene_setStart(gene,start) SeqFeature_setStart(&((gene)->sf),start)
-#define Gene_getStart(gene) SeqFeature_getStart(&((gene)->sf))
+int Gene_setStart(Gene *gene,int start);
+int Gene_getStart(Gene *gene);
 
 #define Gene_setAnalysis(gene,ana) SeqFeature_setAnalysis(&((gene)->sf),ana)
 #define Gene_getAnalysis(gene) SeqFeature_getAnalysis(&((gene)->sf))

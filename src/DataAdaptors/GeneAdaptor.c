@@ -288,10 +288,15 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
     return emptySet;
   }
 
-  qStr = StrUtil_CopyString(
+  qStr = StrUtil_copyString(&qStr, 
     "SELECT distinct(t.gene_id)"
     " FROM   transcript t,exon_transcript et,exon e, gene g"
-    " WHERE e.contig_id in (");
+    " WHERE e.contig_id in (", 0);
+
+  if (!qStr) {
+    Error_trace("fetch_all_by_Slice",NULL);
+    return emptySet;
+  }
 
   for (i=0; i<nContigId; i++) {
     char numStr[256];
@@ -300,10 +305,10 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
     } else {
       sprintf(numStr,"%d",contigIds[i]);
     }
-    qStr = StrUtil_AppendString(qStr, numStr);
+    qStr = StrUtil_appendString(qStr, numStr);
   }
 
-  qStr = StrUtil_AppendString(qStr, 
+  qStr = StrUtil_appendString(qStr, 
               ") AND   et.exon_id = e.exon_id"
               " AND   et.transcript_id = t.transcript_id"
               " AND   g.gene_id = t.gene_id");
@@ -321,7 +326,7 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
 
     sprintf(analStr," AND g.analysis_id = %d", Analysis_getDbID(analysis));
    
-    qStr = StrUtil_AppendString(qStr,analStr); 
+    qStr = StrUtil_appendString(qStr,analStr); 
   }
 
   geneSet = Set_new();

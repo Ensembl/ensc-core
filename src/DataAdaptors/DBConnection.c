@@ -1,5 +1,6 @@
 #include "DBConnection.h"
 #include "StrUtil.h"
+#include "Error.h"
 
 DBConnection *DBConnection_new(char *host, char *user, char *pass, 
                                char *dbname, unsigned int port) {
@@ -7,24 +8,34 @@ DBConnection *DBConnection_new(char *host, char *user, char *pass,
   MYSQL *mysql;
 
   if ((dbc = (DBConnection *)calloc(1,sizeof(DBConnection))) == NULL) {
-    fprintf(stderr,"ERROR: Failed allocating DBConnection\n");
+    Error_write(ECALLERR,"DBConnection_new",ERR_SEVERE,"dbc");
     return NULL;
   }
 
   mysql = mysql_init(NULL);
 
   if ((mysql = mysql_real_connect(mysql,host, user, pass, dbname, port, NULL, 0)) == NULL) {
-    fprintf(stderr,"ERROR: Failed connecting to database %s (host %s user %s pass %s port %d)\n",
-            dbname,host,user,pass,port);
+    Error_write(EMYSQLCONN, "DBConnection_new", ERR_SEVERE,
+                " dbname %s (host %s user %s pass %s port %d)",
+                dbname,host,user,pass,port);
     return NULL;
   }
 
-  dbc->host    = StrUtil_CopyString(host);
-  dbc->user    = StrUtil_CopyString(user);
-  if (pass) dbc->pass    = StrUtil_CopyString(pass);
-  dbc->dbname  = StrUtil_CopyString(dbname);
+  StrUtil_copyString(&(dbc->host), host, 0);
+  StrUtil_copyString(&(dbc->user), user, 0);
+  if (pass) StrUtil_copyString(&(dbc->pass), pass, 0);
+  StrUtil_copyString(&(dbc->dbname), dbname, 0);
+
   dbc->mysql   = mysql;
   dbc->prepare = DBConnection_prepare;
+
+  if (!dbc->host   || 
+      !dbc->user   || 
+      !dbc->dbname ||
+      (pass && !dbc->pass)) {
+    Error_trace("DBConnnection_new",NULL);
+    return NULL;
+  } 
  
   return dbc;
 }

@@ -141,7 +141,7 @@ char *SequenceAdaptor_fetchByAssemblyLocation(SequenceAdaptor *sa,
                                                       chrStart, chrEnd, strand );
 
   // for each of the pieces get sequence
-  seq = StrUtil_CopyString("");
+  seq = StrUtil_copyString(seq, "", 0);
   for (i=0; i<MapperRangeSet_getNumRange(coordSet); i++) {
     MapperRange *segment = MapperRangeSet_getRangeAt(coordSet,i);
 
@@ -150,7 +150,7 @@ char *SequenceAdaptor_fetchByAssemblyLocation(SequenceAdaptor *sa,
       RawContig *contig = RawContigAdaptor_fetchByDbID(ra, mc->id);
       char *contigSeq = SequenceAdaptor_fetchByRawContigStartEndStrand(sa, contig,
                                       mc->start, mc->end, mc->strand); 
-      seq = StrUtil_AppendString(seq,contigSeq);
+      seq = StrUtil_appendString(seq,contigSeq);
       free(contigSeq);
     } else {
       // its a gap

@@ -33,6 +33,45 @@ char *Gene_setType(Gene *g, char *type) {
   return g->type;
 }
 
+int Gene_setStart(Gene *gene, int start) {
+  SeqFeature_setStart(&(gene->sf),start);
+  Gene_setStartIsSet(gene,TRUE);
+}
+
+int Gene_getStart(Gene *gene) {
+  int multiFlag = 0;
+
+  if (Gene_getStartIsSet(gene) == FALSE) {
+    char *lastContig = NULL;
+    int i;
+    Set *exonSet = Gene_getAllExons(gene);
+
+    for (i=0; i<Set_getNumElement(exonSet); i++) {
+      Exon *exon = Set_getElementAt(exonSet,i);
+
+      if (!Gene_getStartIsSet(gene) || 
+          Exon_getStart(exon) < SeqFeature_getStart(&(gene->sf))) {
+        Gene_setStart(gene, Exon_getStart(exon));
+      }
+      if (multiFlag || 
+          (lastContig && strcmp(lastContig, BaseContig_getName(Exon_getContig(exon))))) {
+        multiFlag = 1;
+      }
+      lastContig =  BaseContig_getName(Exon_getContig(exon));
+    }
+    Gene_setStartIsSet(gene,TRUE);
+    Set_free(exonSet,NULL);
+  }
+
+  if (multiFlag) {
+    fprintf(stderr, "WARNING: Gene_getStart - Gene spans multiple contigs."
+                "The return value from getStart may not be what you want");
+  }
+
+  return SeqFeature_getStart(&(gene->sf));
+}
+
+
 Set *Gene_getAllExons(Gene *gene) {
   IDHash *exonHash = IDHash_new(IDHASH_SMALL);
   int i;

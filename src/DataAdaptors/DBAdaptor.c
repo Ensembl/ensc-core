@@ -21,7 +21,7 @@ DBAdaptor *DBAdaptor_new(char *host, char *user, char *pass, char *dbname,
 }
 
 char *DBAdaptor_setAssemblyType(DBAdaptor *dba, char *type) {
-  StrUtil_CopyString(dba->assemblyType,type);
+  StrUtil_copyString(dba->assemblyType,type);
 
   return dba->assemblyType;
 }
