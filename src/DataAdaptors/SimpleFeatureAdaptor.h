@@ -12,7 +12,7 @@ struct SimpleFeatureAdaptorStruct {
 SimpleFeatureAdaptor *SimpleFeatureAdaptor_new(DBAdaptor *dba);
 
 int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *baf, Set *features);
-char ***SimpleFeatureAdaptor_getTables(void);
+NameTableType *SimpleFeatureAdaptor_getTables(void);
 char *SimpleFeatureAdaptor_getColumns(void);
 Set *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf,
                                                      StatementHandle *sth,
@@ -22,5 +22,7 @@ Set *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf,
 
 
 #define SimpleFeatureAdaptor_fetchByDbID(sfa, id) BaseFeatureAdaptor_fetchByDbID((BaseFeatureAdaptor *)(sfa), (id))
+#define SimpleFeatureAdaptor_fetchAllBySliceAndScore(sfa, slice, score, lname) \
+          BaseFeatureAdaptor_fetchAllBySliceAndScore((BaseFeatureAdaptor *)(sfa), (slice), (score), (lname))
 
 #endif

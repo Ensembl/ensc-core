@@ -3,7 +3,7 @@
 #include "RawContigAdaptor.h"
 #include "AnalysisAdaptor.h"
 
-char *SimpleFeatureAdaptor_tableNames[][2] = {{"simple_feature","sf"}};
+NameTableType SimpleFeatureAdaptor_tableNames = {{"simple_feature","sf"},{NULL,NULL}};
 
 SimpleFeatureAdaptor *SimpleFeatureAdaptor_new(DBAdaptor *dba) {
   SimpleFeatureAdaptor *sfa;
@@ -65,11 +65,11 @@ int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *baf, Set *features) {
 */
 }
 
-char ***SimpleFeatureAdaptor_getTables() {
-  return SimpleFeatureAdaptor_tableNames;
+NameTableType *SimpleFeatureAdaptor_getTables(void) {
+  return &SimpleFeatureAdaptor_tableNames;
 }
 
-char *SimpleFeatureAdaptor_getColumns() {
+char *SimpleFeatureAdaptor_getColumns(void) {
   return "sf.simple_feature_id," 
 	 "sf.contig_id,"
          "sf.contig_start,"

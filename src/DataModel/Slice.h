@@ -57,6 +57,8 @@ char *Slice_setChrName(Slice *sl,char *chrName);
 
 ECOSTRING Slice_getName(Slice *sl);
 Set *Slice_getAllGenes(Slice *slice, char *logicName);
+Set *Slice_getAllSimpleFeatures(Slice *slice, char *logicName, double *score);
+
 
 
 #endif

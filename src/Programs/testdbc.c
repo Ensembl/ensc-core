@@ -29,6 +29,24 @@ int main(int argc, char *argv[]) {
   printf("Assembly type %s\n",DBAdaptor_getAssemblyType(dba));
 
   {
+    SimpleFeatureAdaptor *sfa = DBAdaptor_getSimpleFeatureAdaptor(dba);
+    SimpleFeature *sf = (SimpleFeature *)SimpleFeatureAdaptor_fetchByDbID(sfa,1);
+    printf("Simple feature: %d-%d id " INT64FMTSTR "\n", SimpleFeature_getStart(sf), 
+           SimpleFeature_getEnd(sf), SimpleFeature_getDbID(sf));
+  }
+  {
+    SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
+    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);
+    Set *sSet = Slice_getAllSimpleFeatures(slice,NULL,NULL);
+    int i;
+
+    for (i=0;i<Set_getNumElement(sSet);i++) {
+      SimpleFeature *sf = Set_getElementAt(sSet,i);
+      printf("Simple feature: %d-%d id " INT64FMTSTR "\n", SimpleFeature_getStart(sf), 
+             SimpleFeature_getEnd(sf), SimpleFeature_getDbID(sf));
+    }
+  }
+  {
     GeneAdaptor *ga = DBAdaptor_getGeneAdaptor(dba);
     int64 *geneIds;
     int   nGeneId;
@@ -131,11 +149,5 @@ int main(int argc, char *argv[]) {
 
     sliceSeq = SequenceAdaptor_fetchBySliceStartEndStrand(sa,slice,1,100,1);
     printf("Slice Seq = %s\n",sliceSeq);
-  }
-  {
-    SimpleFeatureAdaptor *sfa = DBAdaptor_getSimpleFeatureAdaptor(dba);
-    SimpleFeature *sf = (SimpleFeature *)SimpleFeatureAdaptor_fetchByDbID(sfa,1);
-    printf("Simple feature: %d-%d id " INT64FMTSTR, SimpleFeature_getStart(sf), 
-           SimpleFeature_getEnd(sf), SimpleFeature_getDbID(sf));
   }
 }

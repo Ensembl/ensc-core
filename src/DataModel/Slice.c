@@ -3,6 +3,7 @@
 #undef __SLICE_C__
 #include "Gene.h"
 #include "GeneAdaptor.h"
+#include "SimpleFeatureAdaptor.h"
 #include "SliceAdaptor.h"
 #include "ChromosomeAdaptor.h"
 #include "Set.h"
@@ -74,6 +75,14 @@ Set *Slice_getAllGenes(Slice *slice, char *logicName) {
 
   return GeneAdaptor_fetchAllBySlice(ga,slice,logicName);
 }
+
+Set *Slice_getAllSimpleFeatures(Slice *slice, char *logicName, double *score) {
+
+  SimpleFeatureAdaptor *sfa = DBAdaptor_getSimpleFeatureAdaptor(Slice_getAdaptor(slice)->dba);
+
+  return SimpleFeatureAdaptor_fetchAllBySliceAndScore(sfa, slice, score, logicName);
+}
+
 
 char *Slice_setChrName(Slice *sl, char *chrName) {
   if ((sl->chrName = (char *)malloc(strlen(chrName)+1)) == NULL) {
