@@ -579,7 +579,7 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
 
 // Done as two separate seq features which are set as feature1 and feature2 
   BaseAlignFeature_setStart(baf, f1Start);
-  BaseAlignFeature_setStart(baf, f1End);
+  BaseAlignFeature_setEnd(baf, f1End);
   BaseAlignFeature_setStrand(baf, strand);
   BaseAlignFeature_setScore(baf, score);
   BaseAlignFeature_setPercId(baf, percent);
