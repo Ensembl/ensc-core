@@ -19,7 +19,7 @@ TranslationAdaptor *TranslationAdaptor_new(DBAdaptor *dba) {
   return ta;
 }
 
-Translation *TranslationAdaptor_fetchByDbID(TranslationAdaptor *ta, int64 dbID, Transcript *transcript) {
+Translation *TranslationAdaptor_fetchByDbID(TranslationAdaptor *ta, IDType dbID, Transcript *transcript) {
   Translation *translation;
   char qStr[256];
   StatementHandle *sth;
@@ -27,8 +27,8 @@ Translation *TranslationAdaptor_fetchByDbID(TranslationAdaptor *ta, int64 dbID, 
   Exon *startExon = NULL;
   Exon *endExon = NULL;
   int i;
-  int64 startExonId;
-  int64 endExonId;
+  IDType startExonId;
+  IDType endExonId;
 
   if (!transcript) {
     fprintf(stderr, "ERROR: Translations make no sense outside of their " 
@@ -41,7 +41,7 @@ Translation *TranslationAdaptor_fetchByDbID(TranslationAdaptor *ta, int64 dbID, 
     "SELECT translation_id tlid, seq_start,"
     "       start_exon_id, seq_end, end_exon_id"
     " FROM   translation"
-    " WHERE  translation_id = " INT64FMTSTR, dbID);
+    " WHERE  translation_id = " IDFMTSTR, dbID);
 
   sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
   sth->execute(sth);
@@ -98,7 +98,7 @@ int TranslationAdaptor_getStableEntryInfo(TranslationAdaptor *ta, Translation *t
   sprintf(qStr,
           "SELECT stable_id, version"
           " FROM translation_stable_id"
-          " WHERE translation_id = " INT64FMTSTR,Translation_getDbID(translation));
+          " WHERE translation_id = " IDFMTSTR,Translation_getDbID(translation));
 
   sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
   sth->execute(sth);

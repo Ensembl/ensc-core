@@ -17,12 +17,12 @@ RepeatConsensusAdaptor *RepeatConsensusAdaptor_new(DBAdaptor *dba) {
   return rca;
 }
 
-RepeatConsensus *RepeatConsensusAdaptor_fetchByDbID(RepeatConsensusAdaptor *rca, int64 dbID) {
+RepeatConsensus *RepeatConsensusAdaptor_fetchByDbID(RepeatConsensusAdaptor *rca, IDType dbID) {
   char constraintStr[256];
   Set *rcSet;
   RepeatConsensus *rc;
   
-  sprintf(constraintStr,"repeat_consensus_id = " INT64FMTSTR, dbID);
+  sprintf(constraintStr,"repeat_consensus_id = " IDFMTSTR, dbID);
   rcSet = RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
 
   rc = Set_getElementAt(rcSet,1);
@@ -117,7 +117,7 @@ int RepeatConsensusAdaptor_store(RepeatConsensusAdaptor *rca, Set *consensi) {
     
   for (i=0; i<Set_getNumElement(consensi); i++) {
     RepeatConsensus *rc = Set_getElementAt(consensi,i);
-    int64 dbID; 
+    IDType dbID; 
     char *name;
     char *class;
     char *seq;

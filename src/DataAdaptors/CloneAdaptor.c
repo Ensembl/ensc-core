@@ -18,7 +18,7 @@ CloneAdaptor *CloneAdaptor_new(DBAdaptor *dba) {
   return ca;
 }
 
-Clone *CloneAdaptor_fetchByDbID(CloneAdaptor *ca, int64 dbID) {
+Clone *CloneAdaptor_fetchByDbID(CloneAdaptor *ca, IDType dbID) {
   Clone *clone;
   char qStr[256];
   StatementHandle *sth;
@@ -33,7 +33,7 @@ Clone *CloneAdaptor_fetchByDbID(CloneAdaptor *ca, int64 dbID) {
     "       created, parameters"
     " FROM   clone"
     " WHERE  clone_id = "
-    INT64FMTSTR, dbID);
+    IDFMTSTR, dbID);
 
   sth = ca->prepare((BaseAdaptor *)ca,qStr,strlen(qStr));
   sth->execute(sth);

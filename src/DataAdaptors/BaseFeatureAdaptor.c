@@ -48,7 +48,7 @@ Set *BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *bfa, char *constraint,
     AnalysisAdaptor *aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
     Analysis *analysis;
     char *syn;
-    int64 analysisId;
+    IDType analysisId;
 
     //determine the analysis id via the logic_name
     analysis = AnalysisAdaptor_fetchByLogicName(aa, logicName);
@@ -64,9 +64,9 @@ Set *BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *bfa, char *constraint,
     syn = (*tables)[0][SYN];
 
     if (constraint[0]) {
-      sprintf(allConstraints,"%s  AND %s.analysis_id = " INT64FMTSTR, constraint, syn, analysisId);
+      sprintf(allConstraints,"%s  AND %s.analysis_id = " IDFMTSTR, constraint, syn, analysisId);
     } else {
-      sprintf(allConstraints," %s.analysis_id = " INT64FMTSTR, syn, analysisId);
+      sprintf(allConstraints," %s.analysis_id = " IDFMTSTR, syn, analysisId);
     }
   } 
 
@@ -124,14 +124,14 @@ Set *BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *bfa, char *constraint,
   return features;
 }
 
-SeqFeature *BaseFeatureAdaptor_fetchByDbID(BaseFeatureAdaptor *bfa, int64 dbID) {
+SeqFeature *BaseFeatureAdaptor_fetchByDbID(BaseFeatureAdaptor *bfa, IDType dbID) {
   Set *features;
   SeqFeature *sf;
   char constraintStr[256];
   NameTableType *tables = bfa->getTables();
 
   //construct a constraint like 't1.table1_id = 1'
-  sprintf(constraintStr,"%s.%s_id = " INT64FMTSTR, (*tables)[0][SYN], (*tables)[0][NAME], dbID);
+  sprintf(constraintStr,"%s.%s_id = " IDFMTSTR, (*tables)[0][SYN], (*tables)[0][NAME], dbID);
 
   //return first element of _generic_fetch list
   features = BaseFeatureAdaptor_genericFetch(bfa, constraintStr, "", NULL, NULL);
@@ -144,7 +144,7 @@ SeqFeature *BaseFeatureAdaptor_fetchByDbID(BaseFeatureAdaptor *bfa, int64 dbID) 
 
 Set *BaseFeatureAdaptor_fetchAllByRawContigConstraint(BaseFeatureAdaptor *bfa, RawContig *contig,
                                                       char *constraint, char *logicName)  {
-  int64 cid;
+  IDType cid;
   char allConstraints[256];
   NameTableType *tables = bfa->getTables();
 
@@ -156,9 +156,9 @@ Set *BaseFeatureAdaptor_fetchAllByRawContigConstraint(BaseFeatureAdaptor *bfa, R
   cid = RawContig_getDbID(contig);
 
   if (constraint[0]) {
-    sprintf(allConstraints,"%s AND %s.contig_id = " INT64FMTSTR, constraint, (*tables)[0][SYN], cid);
+    sprintf(allConstraints,"%s AND %s.contig_id = " IDFMTSTR, constraint, (*tables)[0][SYN], cid);
   } else {
-    sprintf(allConstraints,"%s.contig_id = " INT64FMTSTR, (*tables)[0][SYN], cid);
+    sprintf(allConstraints,"%s.contig_id = " IDFMTSTR, (*tables)[0][SYN], cid);
   }
 
   return BaseFeatureAdaptor_genericFetch(bfa, allConstraints, logicName, NULL, NULL);
@@ -216,7 +216,7 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice
   int sliceStrand;
   NameTableType *tables = bfa->getTables();
   int nContigId;
-  int64 *contigIds;
+  IDType *contigIds;
   char tmpStr[512];
   AssemblyMapper *assMapper;
   AssemblyMapperAdaptor *ama;
@@ -268,9 +268,9 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice
   for (i=0; i<nContigId; i++) {
     char numStr[256];
     if (i!=(nContigId-1)) {
-      sprintf(numStr,INT64FMTSTR ",",contigIds[i]);
+      sprintf(numStr,IDFMTSTR ",",contigIds[i]);
     } else {
-      sprintf(numStr,INT64FMTSTR,contigIds[i]);
+      sprintf(numStr,IDFMTSTR,contigIds[i]);
     }
     allConstraints = StrUtil_appendString(allConstraints, numStr);
   }
@@ -302,7 +302,7 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice
   for (i=0;i<Set_getNumElement(features); i++) {
     //since feats were obtained in contig coords, attached seq is a contig
     SeqFeature *f = Set_getElementAt(features, i);
-    int64 contigId = RawContig_getDbID(SeqFeature_getContig(f));
+    IDType contigId = RawContig_getDbID(SeqFeature_getContig(f));
     MapperCoordinate fRange;
   
     int mapSucceeded = AssemblyMapper_fastToAssembly(assMapper, contigId, 
@@ -356,7 +356,7 @@ int BaseFeatureAdaptor_remove(BaseFeatureAdaptor *bfa, SeqFeature *feature) {
   }
 
 
-  sprintf(qStr,"DELETE FROM %s WHERE %s_id = " INT64FMTSTR,tableName,tableName,SeqFeature_getDbID(feature));
+  sprintf(qStr,"DELETE FROM %s WHERE %s_id = " IDFMTSTR,tableName,tableName,SeqFeature_getDbID(feature));
 
   sth = bfa->prepare((BaseAdaptor *)bfa, qStr,strlen(qStr));
   sth->execute(sth);
@@ -382,7 +382,7 @@ int BaseFeatureAdaptor_removeByRawContig(BaseFeatureAdaptor *bfa, RawContig *con
   }
 
 
-  sprintf(qStr, "DELETE FROM %s WHERE contig_id = " INT64FMTSTR, tableName, RawContig_getDbID(contig));
+  sprintf(qStr, "DELETE FROM %s WHERE contig_id = " IDFMTSTR, tableName, RawContig_getDbID(contig));
 
   sth = bfa->prepare((BaseAdaptor *)bfa,qStr,strlen(qStr));
   sth->execute(sth);

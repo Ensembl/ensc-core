@@ -15,7 +15,7 @@ typedef struct MysqlStatementHandleStruct MysqlStatementHandle;
 #endif
 
 ResultRow *MysqlStatementHandle_fetchRow(StatementHandle *sth);
-int64 MysqlStatementHandle_getInsertId(StatementHandle *sth);
+IDType MysqlStatementHandle_getInsertId(StatementHandle *sth);
 void MysqlStatementHandle_finish(StatementHandle *sth);
 
 

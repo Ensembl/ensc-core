@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
   {
     SimpleFeatureAdaptor *sfa = DBAdaptor_getSimpleFeatureAdaptor(dba);
     SimpleFeature *sf = (SimpleFeature *)SimpleFeatureAdaptor_fetchByDbID(sfa,1);
-    printf("Simple feature: %d-%d id " INT64FMTSTR "\n", SimpleFeature_getStart(sf), 
+    printf("Simple feature: %d-%d id " IDFMTSTR "\n", SimpleFeature_getStart(sf), 
            SimpleFeature_getEnd(sf), SimpleFeature_getDbID(sf));
   }
   {
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 
     for (i=0;i<Set_getNumElement(ptSet);i++) {
       PredictionTranscript *pt = Set_getElementAt(ptSet,i);
-      printf("PredictionTranscript feature: %s %d-%d id " INT64FMTSTR "\n", 
+      printf("PredictionTranscript feature: %s %d-%d id " IDFMTSTR "\n", 
              PredictionTranscript_getStableId(pt), 
              PredictionTranscript_getStart(pt), PredictionTranscript_getEnd(pt), 
              PredictionTranscript_getDbID(pt));
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
 
     for (i=0;i<Set_getNumElement(rfSet);i++) {
       RepeatFeature *rf = Set_getElementAt(rfSet,i);
-      printf("Repeat feature: %d-%d id " INT64FMTSTR "\n", RepeatFeature_getStart(rf), 
+      printf("Repeat feature: %d-%d id " IDFMTSTR "\n", RepeatFeature_getStart(rf), 
              RepeatFeature_getEnd(rf), RepeatFeature_getDbID(rf));
     }
   }
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
 
     for (i=0;i<Set_getNumElement(sSet);i++) {
       SimpleFeature *sf = Set_getElementAt(sSet,i);
-      printf("Simple feature: %d-%d id " INT64FMTSTR "\n", SimpleFeature_getStart(sf), 
+      printf("Simple feature: %d-%d id " IDFMTSTR "\n", SimpleFeature_getStart(sf), 
              SimpleFeature_getEnd(sf), SimpleFeature_getDbID(sf));
     }
   }
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
     int i;
     for (i=0;i<Set_getNumElement(sSet);i++) {
       SimpleFeature *sf = Set_getElementAt(sSet,i);
-      printf("Simple feature: %d-%d id " INT64FMTSTR "\n", SimpleFeature_getStart(sf), 
+      printf("Simple feature: %d-%d id " IDFMTSTR "\n", SimpleFeature_getStart(sf), 
              SimpleFeature_getEnd(sf), SimpleFeature_getDbID(sf));
     }
     
@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
     int i;
     for (i=0;i<Set_getNumElement(sSet);i++) {
       PredictionTranscript *pt = Set_getElementAt(sSet,i);
-      printf("Prediction transcript: %d-%d id " INT64FMTSTR "\n", PredictionTranscript_getStart(pt), 
+      printf("Prediction transcript: %d-%d id " IDFMTSTR "\n", PredictionTranscript_getStart(pt), 
              PredictionTranscript_getEnd(pt), PredictionTranscript_getDbID(pt));
     }
   }
@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
     int i;
     for (i=0;i<Set_getNumElement(sSet);i++) {
       RepeatFeature *rf = Set_getElementAt(sSet,i);
-      printf("Prediction transcrirf: %d-%d id " INT64FMTSTR "\n", RepeatFeature_getStart(rf), 
+      printf("Prediction transcrirf: %d-%d id " IDFMTSTR "\n", RepeatFeature_getStart(rf), 
              RepeatFeature_getEnd(rf), RepeatFeature_getDbID(rf));
     }
   }
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
 
     for (i=0;i<Set_getNumElement(dafSet);i++) {
       DNAAlignFeature *daf = Set_getElementAt(dafSet,i);
-      printf("DNA align feature: %d-%d id " INT64FMTSTR "\n", DNAAlignFeature_getStart(daf), 
+      printf("DNA align feature: %d-%d id " IDFMTSTR "\n", DNAAlignFeature_getStart(daf), 
              DNAAlignFeature_getEnd(daf), DNAAlignFeature_getDbID(daf));
     }
   }
@@ -139,13 +139,13 @@ int main(int argc, char *argv[]) {
 
     for (i=0;i<Set_getNumElement(dpafSet);i++) {
       DNAPepAlignFeature *dpaf = Set_getElementAt(dpafSet,i);
-      printf("Pep align feature: %d-%d id " INT64FMTSTR "\n", DNAPepAlignFeature_getStart(dpaf), 
+      printf("Pep align feature: %d-%d id " IDFMTSTR "\n", DNAPepAlignFeature_getStart(dpaf), 
              DNAPepAlignFeature_getEnd(dpaf), DNAPepAlignFeature_getDbID(dpaf));
     }
   }
   {
     GeneAdaptor *ga = DBAdaptor_getGeneAdaptor(dba);
-    int64 *geneIds;
+    IDType *geneIds;
     int   nGeneId;
     int   i;
     Gene *gene;
@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
 
     for (i=1;i<5;i++) {
       gene = GeneAdaptor_fetchByDbID(ga,i,FALSE);
-      if (gene) printf("Gene %s " INT64FMTSTR "\n",Gene_getStableId(gene), Gene_getDbID(gene));
+      if (gene) printf("Gene %s " IDFMTSTR "\n",Gene_getStableId(gene), Gene_getDbID(gene));
     }
   }
   {
@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
     TranscriptAdaptor *ta = DBAdaptor_getTranscriptAdaptor(dba);
     Transcript *t = TranscriptAdaptor_fetchByDbID(ta,1);
 
-    printf("Transcript " INT64FMTSTR " translation id = " INT64FMTSTR "\n",Transcript_getDbID(t), Transcript_getTranslationId(t));
+    printf("Transcript " IDFMTSTR " translation id = " IDFMTSTR "\n",Transcript_getDbID(t), Transcript_getTranslationId(t));
   }
   {
     ExonAdaptor *ea = DBAdaptor_getExonAdaptor(dba);
@@ -189,7 +189,7 @@ int main(int argc, char *argv[]) {
     printf("NExon = %d\n",nExon);
     for (i=0;i<nExon;i++) {
       e = exons[i];
-      printf("Exon " INT64FMTSTR " %d %d %d\n",Exon_getDbID(e), Exon_getStart(e), Exon_getEnd(e), Exon_getStrand(e));
+      printf("Exon " IDFMTSTR " %d %d %d\n",Exon_getDbID(e), Exon_getStart(e), Exon_getEnd(e), Exon_getStrand(e));
     }
   }
   {

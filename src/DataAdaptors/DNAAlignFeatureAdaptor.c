@@ -36,8 +36,8 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
   sprintf(qStr,"INSERT INTO dna_align_feature(contig_id, contig_start, contig_end,"
                        "contig_strand, hit_start, hit_end, hit_strand, hit_name," 
                        "cigar_line, analysis_id,score, evalue, perc_ident) "
-                       "VALUES (%" INT64FMTSTR ",%%d,%%d,%%d,%%d,%%d,%%d,'%%s','%%s',%" 
-                                INT64FMTSTR ",%%f,%%f,%%f)");
+                       "VALUES (%" IDFMTSTR ",%%d,%%d,%%d,%%d,%%d,%%d,'%%s','%%s',%" 
+                                IDFMTSTR ",%%f,%%f,%%f)");
 
   sth = bfa->prepare((BaseAdaptor *)bfa, qStr,strlen(qStr));
   printf("%s\n",qStr);

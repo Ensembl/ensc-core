@@ -21,7 +21,7 @@ ChromosomeAdaptor *ChromosomeAdaptor_new(DBAdaptor *dba) {
   return ca;
 }
 
-Chromosome *ChromosomeAdaptor_fetchByDbID(ChromosomeAdaptor *ca, int64 dbID) {
+Chromosome *ChromosomeAdaptor_fetchByDbID(ChromosomeAdaptor *ca, IDType dbID) {
   Chromosome *chromosome;
   char qStr[256];
   StatementHandle *sth;
@@ -35,7 +35,7 @@ Chromosome *ChromosomeAdaptor_fetchByDbID(ChromosomeAdaptor *ca, int64 dbID) {
     sprintf(qStr,"SELECT chromosome_id, name, length"
       " FROM chromosome"
       " WHERE  chromosome_id = "
-      INT64FMTSTR, dbID);
+      IDFMTSTR, dbID);
   
     sth = ca->prepare((BaseAdaptor *)ca,qStr,strlen(qStr));
     sth->execute(sth);

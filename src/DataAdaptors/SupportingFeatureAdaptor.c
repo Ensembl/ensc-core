@@ -42,7 +42,7 @@ Set *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, Exon
 
   sprintf(qStr,"SELECT sf.feature_type, sf.feature_id "
                "FROM   supporting_feature sf "
-               "WHERE  exon_id = " INT64FMTSTR, Exon_getDbID(exon));
+               "WHERE  exon_id = " IDFMTSTR, Exon_getDbID(exon));
 
   sth = sfa->prepare((BaseAdaptor *)sfa, qStr, strlen(qStr));
 

@@ -36,19 +36,19 @@ char *AssemblyMapper_setType(AssemblyMapper *am, char *type);
 
 AssemblyMapper *AssemblyMapper_new(AssemblyMapperAdaptor *ama, char *type);
 char *AssemblyMapper_setType(AssemblyMapper *am, char *type);
-MapperRangeSet *AssemblyMapper_mapCoordinatesToAssembly(AssemblyMapper *am, int64 contigId,
+MapperRangeSet *AssemblyMapper_mapCoordinatesToAssembly(AssemblyMapper *am, IDType contigId,
                                                         int start, int end, int strand);
-int AssemblyMapper_fastToAssembly(AssemblyMapper *am, int64 contigId,
+int AssemblyMapper_fastToAssembly(AssemblyMapper *am, IDType contigId,
                                   int start, int end, int strand, MapperCoordinate *retRange);
-MapperRangeSet *AssemblyMapper_mapCoordinatesToRawContig(AssemblyMapper *am, int64 chrId,
+MapperRangeSet *AssemblyMapper_mapCoordinatesToRawContig(AssemblyMapper *am, IDType chrId,
                               int start, int end, int strand);
-int AssemblyMapper_listContigIds(AssemblyMapper *am, int64 chrId, int start, int end, int64 **ids);
-void AssemblyMapper_registerRegion(AssemblyMapper *am, int64 chrId, int start, int end);
-int AssemblyMapper_registerRegionAroundContig(AssemblyMapper *am, int64 contigId, int left, int right);
-int AssemblyMapper_haveRegisteredContig(AssemblyMapper *am, int64 id);
-void AssemblyMapper_registerContig(AssemblyMapper *am, int64 id);
+int AssemblyMapper_listContigIds(AssemblyMapper *am, IDType chrId, int start, int end, IDType **ids);
+void AssemblyMapper_registerRegion(AssemblyMapper *am, IDType chrId, int start, int end);
+int AssemblyMapper_registerRegionAroundContig(AssemblyMapper *am, IDType contigId, int left, int right);
+int AssemblyMapper_haveRegisteredContig(AssemblyMapper *am, IDType id);
+void AssemblyMapper_registerContig(AssemblyMapper *am, IDType id);
 int AssemblyMapper_getChunkSize(AssemblyMapper *am);
-void AssemblyMapper_chunkRegisterRegion(AssemblyMapper *am, int64 chrId,
+void AssemblyMapper_chunkRegisterRegion(AssemblyMapper *am, IDType chrId,
                      int firstChunk, int lastChunk);
 
 

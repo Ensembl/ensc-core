@@ -9,7 +9,7 @@ long MysqlUtil_getLong(MYSQL_ROW row, int col) {
   return atol(row[col]);
 }
 
-int64 MysqlUtil_getLongLong(MYSQL_ROW row, int col) {
+IDType MysqlUtil_getLongLong(MYSQL_ROW row, int col) {
   long long val;
 
 #ifdef __osf__

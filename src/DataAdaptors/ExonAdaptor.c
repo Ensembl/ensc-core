@@ -22,7 +22,7 @@ ExonAdaptor *ExonAdaptor_new(DBAdaptor *dba) {
   return ea;
 }
 
-Exon *ExonAdaptor_fetchByDbID(ExonAdaptor *ea, int64 dbID) {
+Exon *ExonAdaptor_fetchByDbID(ExonAdaptor *ea, IDType dbID) {
   Exon *exon;
   char qStr[256];
   StatementHandle *sth;
@@ -39,7 +39,7 @@ Exon *ExonAdaptor_fetchByDbID(ExonAdaptor *ea, int64 dbID) {
     " , sticky_rank"
     " FROM   exon"
     " WHERE  exon_id = "
-    INT64FMTSTR
+    IDFMTSTR
     " ORDER BY sticky_rank DESC", 
     dbID);
 
@@ -131,7 +131,7 @@ Exon *ExonAdaptor_exonFromRow(ExonAdaptor *ea, ResultRow *row) {
   return exon; 
 }
 
-int ExonAdaptor_fetchAllByGeneId(ExonAdaptor *ea, int64 geneId, Exon ***retExons) {
+int ExonAdaptor_fetchAllByGeneId(ExonAdaptor *ea, IDType geneId, Exon ***retExons) {
   Exon **exons;
   char qStr[512];
   StatementHandle *sth;
@@ -156,7 +156,7 @@ int ExonAdaptor_fetchAllByGeneId(ExonAdaptor *ea, int64 geneId, Exon ***retExons
     "  , exon_transcript et"
     "  , transcript t"
     " WHERE t.gene_id = "
-    INT64FMTSTR
+    IDFMTSTR
     "  AND et.transcript_id = t.transcript_id"
     "  AND e.exon_id = et.exon_id"
     " ORDER BY t.transcript_id,e.exon_id"
@@ -198,7 +198,7 @@ int ExonAdaptor_getStableEntryInfo(ExonAdaptor *ea, Exon *exon) {
           "SELECT stable_id, UNIX_TIMESTAMP(created),"
           "                  UNIX_TIMESTAMP(modified), version"
           " FROM exon_stable_id"
-          " WHERE exon_id = " INT64FMTSTR, Exon_getDbID(exon));
+          " WHERE exon_id = " IDFMTSTR, Exon_getDbID(exon));
 
   sth = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
   sth->execute(sth);

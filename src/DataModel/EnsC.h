@@ -20,11 +20,11 @@ typedef enum CopyDepthEnum {
   DEEP_DEPTH
 } CopyDepth;
 
-typedef long long int64;
+typedef long long IDType;
 #ifdef __osf__
- #define INT64FMTSTR "%Ld"
+ #define IDFMTSTR "%Ld"
 #else
- #define INT64FMTSTR "%qd"
+ #define IDFMTSTR "%qd"
 #endif
 
 #define EXTREMELEN 65536

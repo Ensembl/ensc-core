@@ -63,7 +63,7 @@ long MysqlResultRow_getLongAt(ResultRow *row, int ind) {
   return MysqlUtil_getLong(m_row->mysql_row, ind);
 }
 
-int64 MysqlResultRow_getLongLongAt(ResultRow *row, int ind) {
+IDType MysqlResultRow_getLongLongAt(ResultRow *row, int ind) {
   MysqlResultRow *m_row;
 
   Class_assertType(CLASS_MYSQLRESULTROW, row->objectType);

@@ -10,7 +10,7 @@ struct ExonAdaptorStruct {
 };
 
 ExonAdaptor *ExonAdaptor_new(DBAdaptor *dba);
-Exon *ExonAdaptor_fetchByDbID(ExonAdaptor *ea, int64 dbID);
+Exon *ExonAdaptor_fetchByDbID(ExonAdaptor *ea, IDType dbID);
 Exon *ExonAdaptor_exonFromResults(ExonAdaptor *ea, StatementHandle *sth, ResultRow *row);
 Exon *ExonAdaptor_exonFromRow(ExonAdaptor *ea, ResultRow *row);
 

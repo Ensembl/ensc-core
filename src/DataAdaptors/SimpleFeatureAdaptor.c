@@ -37,8 +37,8 @@ int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
                                            " contig_end, contig_strand,"
                                            "display_label, analysis_id,"
                                            "score) VALUES (%"
-                                           INT64FMTSTR ",%%d,%%d,%%d,\'%%s\',%"
-                                           INT64FMTSTR ",%%f)");
+                                           IDFMTSTR ",%%d,%%d,%%d,\'%%s\',%"
+                                           IDFMTSTR ",%%f)");
   sth = bfa->prepare((BaseAdaptor *)bfa, qStr,strlen(qStr));
   printf("%s\n",qStr);
 

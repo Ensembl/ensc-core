@@ -35,18 +35,18 @@ int PredictionTranscriptAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
                                          "contig_id, contig_start, contig_end, "
                                          "contig_strand, start_phase, score, "
                                          "p_value, analysis_id, exon_count ) "
-        " VALUES ( %" INT64FMTSTR ", %%d, %" INT64FMTSTR 
-                  ", %%d, %%d, %%d, %%d, %%f, %%f, %" INT64FMTSTR ", %%d)"); 
+        " VALUES ( %" IDFMTSTR ", %%d, %" IDFMTSTR 
+                  ", %%d, %%d, %%d, %%d, %%f, %%f, %" IDFMTSTR ", %%d)"); 
 
   sth = bfa->prepare((BaseAdaptor *)bfa,qStr,strlen(qStr));
 
   for (i=0; i<Set_getNumElement(features); i++) {
     PredictionTranscript *predTrans = Set_getElementAt(features, i);
     int j;
-    int64 exonId = 0;
-    int64 dbID = 0;
+    IDType exonId = 0;
+    IDType dbID = 0;
     int rank = 1;
-    int64 analysisId = Analysis_getDbID(PredictionTranscript_getAnalysis(predTrans));
+    IDType analysisId = Analysis_getDbID(PredictionTranscript_getAnalysis(predTrans));
     int nExon = PredictionTranscript_getExonCount(predTrans);
 
 /* NIY
@@ -64,7 +64,7 @@ int PredictionTranscriptAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
 
     for (j=0; j<nExon; j++) {
       Exon *exon = PredictionTranscript_getExonAt(predTrans, j);
-      int64 contigId;
+      IDType contigId;
       int contigStart;
       int contigEnd;
       int contigStrand;
@@ -141,7 +141,7 @@ Set *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *
   int sliceStart;
   int sliceStrand;
   int sliceLen;
-  int64 ptId = -1;
+  IDType ptId = -1;
   PredictionTranscript *predTrans = NULL;
   int transcriptSliceStart;
   int transcriptSliceEnd;
@@ -166,9 +166,9 @@ Set *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *
   }
 
   while(row = sth->fetchRow(sth)) {
-    int64 predictionTranscriptId = row->getLongLongAt(row,0);
+    IDType predictionTranscriptId = row->getLongLongAt(row,0);
     int contigId    = row->getLongLongAt(row,1);
-    int64 analysisId= row->getLongLongAt(row,2);
+    IDType analysisId= row->getLongLongAt(row,2);
     int contigStart = row->getIntAt(row,3);
     int contigEnd   = row->getIntAt(row,4);
     int contigStrand= row->getIntAt(row,5);

@@ -152,6 +152,7 @@ Tests/StrUtilTest: \
 clean	:	
 	rm -f libensc.a
 	find ./ -name "*.o" -exec rm {} \;
+	find ./Tests ! -name "*.c" ! -name "*.h" -type f -perm -0700 -exec rm {} \;
 
 #DO NOT REMOVE THIS LINE OR ADD ANYTHING AFTER IT - ADDMAKE DEPENDS ON IT FOR MAKING DEPENDENCIES
 

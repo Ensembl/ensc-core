@@ -52,7 +52,7 @@ Analysis **AnalysisAdaptor_fetchAll(AnalysisAdaptor *aa) {
 }
 
 
-Analysis *AnalysisAdaptor_fetchByDbID(AnalysisAdaptor *aa, int64 dbID) {
+Analysis *AnalysisAdaptor_fetchByDbID(AnalysisAdaptor *aa, IDType dbID) {
   Analysis *anal;
   char qStr[256];
   StatementHandle *sth;
@@ -71,7 +71,7 @@ Analysis *AnalysisAdaptor_fetchByDbID(AnalysisAdaptor *aa, int64 dbID) {
       "       created, parameters"
       " FROM   analysis"
       " WHERE  analysis_id = "
-      INT64FMTSTR, dbID);
+      IDFMTSTR, dbID);
   
     
     sth = aa->prepare((BaseAdaptor *)aa,qStr,strlen(qStr));
@@ -156,8 +156,8 @@ Analysis *AnalysisAdaptor_analysisFromRow(AnalysisAdaptor *aa, ResultRow *row) {
   return anal;
 }
 
-int64 AnalysisAdaptor_store(AnalysisAdaptor *aa, Analysis *analysis) {
-  int64 dbID = Analysis_getDbID(analysis);
+IDType AnalysisAdaptor_store(AnalysisAdaptor *aa, Analysis *analysis) {
+  IDType dbID = Analysis_getDbID(analysis);
   StatementHandle *sth;
   char qStr[1024];
   
@@ -250,7 +250,7 @@ int64 AnalysisAdaptor_store(AnalysisAdaptor *aa, Analysis *analysis) {
     if (dbID) {
       ResultRow *row;
 
-      sprintf(qStr,"SELECT created FROM analysis WHERE analysis_id = " INT64FMTSTR, dbID); 
+      sprintf(qStr,"SELECT created FROM analysis WHERE analysis_id = " IDFMTSTR, dbID); 
       sth = aa->prepare((BaseAdaptor *)aa,qStr,strlen(qStr));
       sth->execute(sth);
       row = sth->fetchRow(sth);
@@ -287,10 +287,10 @@ sub remove {
 }
 */
 
-int64 AnalysisAdaptor_analysisExists(AnalysisAdaptor *aa, Analysis *anal) {
-  int64 *keys;
+IDType AnalysisAdaptor_analysisExists(AnalysisAdaptor *aa, Analysis *anal) {
+  IDType *keys;
   int i;
-  int64 cacheId = 0;
+  IDType cacheId = 0;
 
 
   // objects with already have this adaptor are store here.

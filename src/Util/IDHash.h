@@ -10,7 +10,7 @@ typedef enum IDHashSizesEnum {
 } IDHashSizes;
 
 typedef struct IDKeyValuePairStruct {
-  int64 key;
+  IDType key;
   void *value;
 } IDKeyValuePair;
 
@@ -23,12 +23,12 @@ typedef struct IDHashStruct {
 
 
 IDHash *IDHash_new(IDHashSizes size);
-int     IDHash_add(IDHash *idHash, int64 id, void *val);
-int     IDHash_contains(IDHash *idHash, int64 id);
+int     IDHash_add(IDHash *idHash, IDType id, void *val);
+int     IDHash_contains(IDHash *idHash, IDType id);
 void    IDHash_free(IDHash *idHash, int freeFunc());
 int     IDHash_getNumValues(IDHash *idHash);
-int64 * IDHash_getKeys(IDHash *idHash);
-void *  IDHash_getValue(IDHash *idHash, int64 id);
+IDType * IDHash_getKeys(IDHash *idHash);
+void *  IDHash_getValue(IDHash *idHash, IDType id);
 void *  IDHash_getValues(IDHash *idHash);
 
 #endif

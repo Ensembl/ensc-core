@@ -9,7 +9,7 @@ typedef struct ResultRowStruct ResultRow;
 typedef char *    (*ResultRow_getStringAtFunc)(ResultRow *row, int ind);
 typedef int       (*ResultRow_getIntAtFunc)(ResultRow *row, int ind);
 typedef long      (*ResultRow_getLongAtFunc)(ResultRow *row, int ind);
-typedef int64     (*ResultRow_getLongLongAtFunc)(ResultRow *row, int ind);
+typedef IDType     (*ResultRow_getLongLongAtFunc)(ResultRow *row, int ind);
 typedef double    (*ResultRow_getDoubleAtFunc)(ResultRow *row, int ind);
 typedef char *    (*ResultRow_colFunc)(ResultRow *row,int ind);
 

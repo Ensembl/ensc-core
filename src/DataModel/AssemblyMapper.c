@@ -36,7 +36,7 @@ char *AssemblyMapper_setType(AssemblyMapper *am, char *type) {
   return am->type;
 }
 
-MapperRangeSet *AssemblyMapper_mapCoordinatesToAssembly(AssemblyMapper *am, int64 contigId, 
+MapperRangeSet *AssemblyMapper_mapCoordinatesToAssembly(AssemblyMapper *am, IDType contigId, 
                                                         int start, int end, int strand) {
   if( !IDHash_contains(AssemblyMapper_getContigRegister(am), contigId)) {
     AssemblyMapper_registerRegionAroundContig(am,contigId, 0, 0 );
@@ -47,7 +47,7 @@ MapperRangeSet *AssemblyMapper_mapCoordinatesToAssembly(AssemblyMapper *am, int6
 }
 
 
-int AssemblyMapper_fastToAssembly(AssemblyMapper *am, int64 contigId, 
+int AssemblyMapper_fastToAssembly(AssemblyMapper *am, IDType contigId, 
                                   int start, int end, int strand, MapperCoordinate *retRange) {
   if (!IDHash_contains(AssemblyMapper_getContigRegister(am), contigId)) {
     AssemblyMapper_registerRegionAroundContig(am,contigId, 0, 0 );
@@ -58,7 +58,7 @@ int AssemblyMapper_fastToAssembly(AssemblyMapper *am, int64 contigId,
 }
 
 
-MapperRangeSet *AssemblyMapper_mapCoordinatesToRawContig(AssemblyMapper *am, int64 chrId, 
+MapperRangeSet *AssemblyMapper_mapCoordinatesToRawContig(AssemblyMapper *am, IDType chrId, 
                               int start, int end, int strand) {
   AssemblyMapper_registerRegion(am,chrId, start, end);
   
@@ -67,7 +67,7 @@ MapperRangeSet *AssemblyMapper_mapCoordinatesToRawContig(AssemblyMapper *am, int
 }
 
 
-int AssemblyMapper_listContigIds(AssemblyMapper *am, int64 chrId, int start, int end, int64  **ids) {
+int AssemblyMapper_listContigIds(AssemblyMapper *am, IDType chrId, int start, int end, IDType  **ids) {
   MapperPairSet *pairs;
   int nPair;
   int i;
@@ -77,7 +77,7 @@ int AssemblyMapper_listContigIds(AssemblyMapper *am, int64 chrId, int start, int
   pairs = Mapper_listPairs(AssemblyMapper_getMapper(am), chrId, 
                            start, end, ASSEMBLY_COORDS);
   
-  if ((*ids = (int64 *)calloc(MapperPairSet_getNumPair(pairs),sizeof(int64))) == NULL) {
+  if ((*ids = (IDType *)calloc(MapperPairSet_getNumPair(pairs),sizeof(IDType))) == NULL) {
     fprintf(stderr,"ERROR: Failed allocating ids array\n");
     exit(1);
   }
@@ -93,7 +93,7 @@ int AssemblyMapper_listContigIds(AssemblyMapper *am, int64 chrId, int start, int
 }
 
 
-void AssemblyMapper_registerRegion(AssemblyMapper *am, int64 chrId, int start, int end) {
+void AssemblyMapper_registerRegion(AssemblyMapper *am, IDType chrId, int start, int end) {
   int firstChunk = (int)(start / AssemblyMapper_getChunkSize(am));
   int lastChunk  = (int)(end / AssemblyMapper_getChunkSize(am));
   
@@ -102,7 +102,7 @@ void AssemblyMapper_registerRegion(AssemblyMapper *am, int64 chrId, int start, i
 
 
 
-int AssemblyMapper_registerRegionAroundContig(AssemblyMapper *am, int64 contigId, int left, int right) {
+int AssemblyMapper_registerRegionAroundContig(AssemblyMapper *am, IDType contigId, int left, int right) {
   GenomicRange *range; 
 
   if (AssemblyMapper_haveRegisteredContig(am, contigId) && 
@@ -129,7 +129,7 @@ int AssemblyMapper_registerRegionAroundContig(AssemblyMapper *am, int64 contigId
 
 
 
-int AssemblyMapper_haveRegisteredContig(AssemblyMapper *am, int64 id) {
+int AssemblyMapper_haveRegisteredContig(AssemblyMapper *am, IDType id) {
 
   if( IDHash_contains(AssemblyMapper_getContigRegister(am),id)) {
     return 1;
@@ -139,7 +139,7 @@ int AssemblyMapper_haveRegisteredContig(AssemblyMapper *am, int64 id) {
 }
 
 
-void AssemblyMapper_registerContig(AssemblyMapper *am, int64 id) {
+void AssemblyMapper_registerContig(AssemblyMapper *am, IDType id) {
   IDHash_add(AssemblyMapper_getContigRegister(am),id,DEFINED);
 }
 
@@ -147,7 +147,7 @@ int AssemblyMapper_getChunkSize(AssemblyMapper *am) {
   return 1000000;
 }
 
-void AssemblyMapper_chunkRegisterRegion(AssemblyMapper *am,int64 chrId,
+void AssemblyMapper_chunkRegisterRegion(AssemblyMapper *am,IDType chrId,
                      int firstChunk, int lastChunk) {
   int i;
   IDHash *chunkHash = AssemblyMapper_getChrChunkHash(am);

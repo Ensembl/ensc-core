@@ -48,13 +48,13 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
                         ", repeat_end"
                         ", score"
                         ", analysis_id )"
-      " VALUES(NULL, %" INT64FMTSTR ",%%d,%%d,%%d,%" INT64FMTSTR ",%%d,%%d,%%f,%" INT64FMTSTR ")");
+      " VALUES(NULL, %" IDFMTSTR ",%%d,%%d,%%d,%" IDFMTSTR ",%%d,%%d,%%f,%" IDFMTSTR ")");
 
   for (i=0; i<Set_getNumElement(features); i++) {
     RepeatFeature *rf = Set_getElementAt(features,i);
-    int64 dbID;
-    int64 analId;
-    int64 consId;
+    IDType dbID;
+    IDType analId;
+    IDType consId;
     RawContig *contig;
 
     if (!RepeatFeature_getConsensus(rf)) {
@@ -204,7 +204,7 @@ Set *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
     RepeatFeature *rf;
     Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,2));
     RawContig *contig = RawContigAdaptor_fetchByDbID(rca, row->getLongLongAt(row,1));
-    int64 repeatConsensusId = row->getLongLongAt(row,6);
+    IDType repeatConsensusId = row->getLongLongAt(row,6);
     RepeatConsensus *rc;
 
     //create a repeat consensus object

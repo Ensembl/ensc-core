@@ -125,9 +125,9 @@ ResultRow *MysqlStatementHandle_fetchRow(StatementHandle *sth) {
   return (ResultRow *)m_row;
 }
 
-int64 MysqlStatementHandle_getInsertId(StatementHandle *sth) {
+IDType MysqlStatementHandle_getInsertId(StatementHandle *sth) {
   MysqlStatementHandle *m_sth;
-  int64 insertId;
+  IDType insertId;
 
   Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);
 

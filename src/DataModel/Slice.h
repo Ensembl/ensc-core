@@ -15,7 +15,7 @@ struct SliceStruct {
   char emptyFlag;
   char *chrName;
   char *assemblyType;
-  int64 chrId;
+  IDType chrId;
 };
 
 #ifdef __SLICE_C__
@@ -26,7 +26,7 @@ struct SliceStruct {
 #endif
 
 Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
-                 SliceAdaptor *sa, int64 dbID, int empty);
+                 SliceAdaptor *sa, IDType dbID, int empty);
 
 #define Slice_setDbID(s,dbID) BaseContig_setDbID((s),(dbID))
 #define Slice_getDbID(s) BaseContig_getDbID((s))

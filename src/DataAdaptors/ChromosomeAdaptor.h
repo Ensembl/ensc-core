@@ -14,7 +14,7 @@ struct ChromosomeAdaptorStruct {
 };
 
 ChromosomeAdaptor *ChromosomeAdaptor_new(DBAdaptor *dba);
-Chromosome *ChromosomeAdaptor_fetchByDbID(ChromosomeAdaptor *ca, int64 dbID);
+Chromosome *ChromosomeAdaptor_fetchByDbID(ChromosomeAdaptor *ca, IDType dbID);
 Chromosome *ChromosomeAdaptor_fetchByChrName(ChromosomeAdaptor *ca, char *chrName);
 Chromosome *ChromosomeAdaptor_chromosomeFromRow(ChromosomeAdaptor *ca, ResultRow  *row);
 

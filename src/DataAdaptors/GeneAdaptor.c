@@ -26,7 +26,7 @@ GeneAdaptor *GeneAdaptor_new(DBAdaptor *dba) {
   return ga;
 }
 
-int GeneAdaptor_listGeneIds(GeneAdaptor *ga, int64 **geneIds) {
+int GeneAdaptor_listGeneIds(GeneAdaptor *ga, IDType **geneIds) {
   char *qStr = "SELECT gene_id from gene";
   StatementHandle *sth = ga->prepare((BaseAdaptor *)ga,qStr,strlen(qStr));
   ResultRow *row;
@@ -38,7 +38,7 @@ int GeneAdaptor_listGeneIds(GeneAdaptor *ga, int64 **geneIds) {
   
   while ((row = sth->fetchRow(sth))) {
     if (!idCount || !(idCount%10)) {
-      if ((*geneIds = (int64 *)realloc(*geneIds,(idCount+10)*sizeof(int64))) == NULL) {
+      if ((*geneIds = (IDType *)realloc(*geneIds,(idCount+10)*sizeof(IDType))) == NULL) {
         fprintf(stderr,"ERROR: Failed allocating geneIds\n");
         return -1;
       }
@@ -54,10 +54,10 @@ int GeneAdaptor_listGeneIds(GeneAdaptor *ga, int64 **geneIds) {
 
 typedef struct TranscriptExonsStruct {
   int nExon;
-  int64 exonIds[MAXEXON];
+  IDType exonIds[MAXEXON];
 } TranscriptExons;
 
-Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, int64 geneId, int chrCoords) {
+Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
   Gene *gene;
   ExonAdaptor *ea;
   TranscriptAdaptor *ta;
@@ -69,7 +69,7 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, int64 geneId, int chrCoords) {
   IDHash *exonHash;
   IDHash *translationHash;
   IDHash *transcriptExonsHash;
-  int64 *transcriptIds;
+  IDType *transcriptIds;
   int nTranscriptId;
   int i;
   char qStr[512];
@@ -108,7 +108,7 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, int64 geneId, int chrCoords) {
     " WHERE gene.gene_id = tscript.gene_id"
     "  AND tscript.transcript_id = e_t.transcript_id"
     "  AND gene.gene_id = "
-    INT64FMTSTR
+    IDFMTSTR
     " ORDER BY tscript.gene_id"
     "  , tscript.transcript_id"
     "  , e_t.rank",geneId);
@@ -122,7 +122,7 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, int64 geneId, int chrCoords) {
   while (row = sth->fetchRow(sth)) {
     // building a gene
     TranscriptExons *tes = NULL;
-    int64 transcriptId;
+    IDType transcriptId;
 
     if( first ) {
       gene = Gene_new();
@@ -184,8 +184,8 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, int64 geneId, int chrCoords) {
   
   for (i=0;i<nTranscriptId;i++) {
     Transcript *transcript = Transcript_new();
-    int64 transcriptId = transcriptIds[i];
-    int64 translationId;
+    IDType transcriptId = transcriptIds[i];
+    IDType translationId;
     TranscriptExons *tes = IDHash_getValue(transcriptExonsHash,transcriptId);
     int i;
     sscanf((char *)IDHash_getValue(translationHash,transcriptId),"%qd",&translationId);
@@ -242,7 +242,7 @@ int GeneAdaptor_getStableEntryInfo(GeneAdaptor *ga, Gene *gene) {
           "                  UNIX_TIMESTAMP(modified), version"
           " FROM gene_stable_id"
           " WHERE gene_id = "
-          INT64FMTSTR, Gene_getDbID(gene));
+          IDFMTSTR, Gene_getDbID(gene));
 
   sth = ga->prepare((BaseAdaptor *)ga,qStr,strlen(qStr));
   sth->execute(sth);
@@ -270,7 +270,7 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
   char sliceCacheKey[512];
   AssemblyMapperAdaptor *ama;
   AssemblyMapper *assMapper;
-  int64 *contigIds;
+  IDType *contigIds;
   int nContigId;
   int i;
   char *qStr;
@@ -317,9 +317,9 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
   for (i=0; i<nContigId; i++) {
     char numStr[256];
     if (i!=(nContigId-1)) {
-      sprintf(numStr,INT64FMTSTR ",",contigIds[i]);
+      sprintf(numStr,IDFMTSTR ",",contigIds[i]);
     } else {
-      sprintf(numStr,INT64FMTSTR,contigIds[i]);
+      sprintf(numStr,IDFMTSTR,contigIds[i]);
     }
     qStr = StrUtil_appendString(qStr, numStr);
   }
@@ -340,7 +340,7 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
       return emptySet;
     }
 
-    sprintf(analStr," AND g.analysis_id = " INT64FMTSTR , Analysis_getDbID(analysis));
+    sprintf(analStr," AND g.analysis_id = " IDFMTSTR , Analysis_getDbID(analysis));
    
     qStr = StrUtil_appendString(qStr,analStr); 
   }
@@ -352,7 +352,7 @@ Set *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName)
   sth->execute(sth);
 
   while (row = sth->fetchRow(sth)) {
-    int64 geneId = row->getLongLongAt(row,0);
+    IDType geneId = row->getLongLongAt(row,0);
     Gene *gene  = GeneAdaptor_fetchByDbID(ga, geneId, NULL );
     Gene *newGene = Gene_transformToSlice(gene, slice);
 

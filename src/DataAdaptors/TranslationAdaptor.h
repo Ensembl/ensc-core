@@ -12,7 +12,7 @@ struct TranslationAdaptorStruct {
 
 TranslationAdaptor *TranslationAdaptor_new(DBAdaptor *dba);
 int TranslationAdaptor_getStableEntryInfo(TranslationAdaptor *ta, Translation *translation);
-Translation *TranslationAdaptor_fetchByDbID(TranslationAdaptor *ta, int64 dbID, Transcript *transcript);
+Translation *TranslationAdaptor_fetchByDbID(TranslationAdaptor *ta, IDType dbID, Transcript *transcript);
 
 
 

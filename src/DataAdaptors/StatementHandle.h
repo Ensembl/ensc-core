@@ -9,7 +9,7 @@
 typedef void (*StatementHandle_ExecuteFunc)(StatementHandle *sth, ...);
 typedef ResultRow *(*StatementHandle_FetchRowFunc)(StatementHandle *sth);
 typedef void (*StatementHandle_FinishFunc)(StatementHandle *sth);
-typedef int64 (*StatementHandle_GetInsertIdFunc)(StatementHandle *sth);
+typedef IDType (*StatementHandle_GetInsertIdFunc)(StatementHandle *sth);
 
 #define STATEMENTHANDLE_DATA \
   OBJECT_DATA \

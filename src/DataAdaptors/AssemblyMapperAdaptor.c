@@ -35,7 +35,7 @@ AssemblyMapper *AssemblyMapperAdaptor_fetchByType(AssemblyMapperAdaptor *ama, ch
 void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama, 
                                           AssemblyMapper *assMapper,
                                           char *assemblyType,
-                                          int64 chrId,
+                                          IDType chrId,
                                           int chrStart,
                                           int chrEnd) {
   char qStr[512];
@@ -56,7 +56,7 @@ void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama,
     "    chromosome chr"
     " where"
     "    chr.chromosome_id = "
-    INT64FMTSTR
+    IDFMTSTR
     " and "
     "    ass.chromosome_id = chr.chromosome_id and"
     "    %d <= ass.chr_end  and"
@@ -68,7 +68,7 @@ void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama,
   sth->execute(sth);
 
   while (row = sth->fetchRow(sth)) {
-    int64 contigId = row->getLongLongAt(row,2);
+    IDType contigId = row->getLongLongAt(row,2);
 
     if (!AssemblyMapper_haveRegisteredContig(assMapper,contigId)) {
       Mapper *mapper = AssemblyMapper_getMapper(assMapper);
@@ -93,7 +93,7 @@ void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama,
 GenomicRange *AssemblyMapperAdaptor_registerContig(AssemblyMapperAdaptor *ama, 
                                           AssemblyMapper *assMapper,
                                           char *assemblyType,
-                                          int64 contigId) {
+                                          IDType contigId) {
   char qStr[512];
   StatementHandle *sth;
   ResultRow *row;
@@ -111,7 +111,7 @@ GenomicRange *AssemblyMapperAdaptor_registerContig(AssemblyMapperAdaptor *ama,
     "  chromosome c"
     " where"
     "   contig_id = "
-    INT64FMTSTR
+    IDFMTSTR
     " and"
     "   type = '%s' and"
     "   c.chromosome_id = a.chromosome_id",

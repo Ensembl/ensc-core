@@ -11,7 +11,7 @@ MysqlResultRow *MysqlResultRow_new();
 char *    MysqlResultRow_getStringAt(ResultRow *row, int ind);
 int       MysqlResultRow_getIntAt(ResultRow *row, int ind);
 long      MysqlResultRow_getLongAt(ResultRow *row, int ind);
-int64     MysqlResultRow_getLongLongAt(ResultRow *row, int ind);
+IDType     MysqlResultRow_getLongLongAt(ResultRow *row, int ind);
 double    MysqlResultRow_getDoubleAt(ResultRow *row, int ind);
 char *    MysqlResultRow_col(ResultRow *row, int ind);
 

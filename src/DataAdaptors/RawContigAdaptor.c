@@ -22,7 +22,7 @@ RawContigAdaptor *RawContigAdaptor_new(DBAdaptor *dba) {
 }
 
 /* Lazy filling */
-RawContig *RawContigAdaptor_fetchByDbID(RawContigAdaptor *rca, int64 dbID) {
+RawContig *RawContigAdaptor_fetchByDbID(RawContigAdaptor *rca, IDType dbID) {
   RawContig *rawContig;
 
   if (IDHash_contains(rca->rawContigCache,dbID)) {
@@ -46,7 +46,7 @@ void RawContigAdaptor_fetchAttributes(RawContigAdaptor *rca, RawContig *rc) {
           "SELECT contig_id, name, clone_id, length,"
           " embl_offset, dna_id "
           "FROM contig "
-          "WHERE contig_id = " INT64FMTSTR, RawContig_getDbID(rc));
+          "WHERE contig_id = " IDFMTSTR, RawContig_getDbID(rc));
 
   sth = rca->prepare((BaseAdaptor *)rca,qStr,strlen(qStr));
   sth->execute(sth);
