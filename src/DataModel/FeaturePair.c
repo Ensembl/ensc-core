@@ -1,6 +1,6 @@
-#define __BASEALIGNFEATURE_MAIN__
+#define __FEATUREPAIR_MAIN__
 #include "FeaturePair.h"
-#undef __BASEALIGNFEATURE_MAIN__
+#undef __FEATUREPAIR_MAIN__
 #include "StrUtil.h"
 
 FeaturePair *FeaturePair_new(void) {

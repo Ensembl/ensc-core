@@ -1,6 +1,6 @@
-#define __SLICE_C__
+#define __SLICE_MAIN__
 #include "Slice.h"
-#undef __SLICE_C__
+#undef __SLICE_MAIN__
 
 #include "ChromosomeAdaptor.h"
 #include "DNAAlignFeatureAdaptor.h"
@@ -26,6 +26,7 @@ Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
   }
 
   slice->objectType = CLASS_SLICE;
+  slice->funcs = &sliceFuncs;
 
   if (!empty) {
     if( !chr || !assemblyType) {
@@ -151,3 +152,30 @@ char *Slice_setAssemblyType(Slice *sl, char *assemblyType) {
 
   return sl->assemblyType;
 }
+
+char *Slice_getSeq(Slice *slice) {
+  SequenceAdaptor *sa;
+
+  sa = DBAdaptor_getSequenceAdaptor(Slice_getAdaptor(slice)->dba);
+
+  return SequenceAdaptor_fetchBySliceStartEndStrand(sa,slice,1,-1,1);
+}
+
+
+char *Slice_getSubSeq(Slice *slice, int start, int end, int strand) {
+  SequenceAdaptor *sa;
+
+  if (end < start) {
+    fprintf(stderr,"Error: End coord is less then start coord\n");
+    exit(1);
+  }
+
+  if (strand != -1 && strand != 1 ) {
+    fprintf(stderr,"Error: Invalid strand [%d] in call to Slice subseq.\n",strand);
+    exit(1);
+  }
+
+  sa = DBAdaptor_getSequenceAdaptor(Slice_getAdaptor(slice)->dba);
+  return SequenceAdaptor_fetchBySliceStartEndStrand(sa,slice,start,end,strand);
+}
+

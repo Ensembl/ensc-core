@@ -11,42 +11,44 @@
 
 #include "EnsRoot.h"
 
-typedef int (*SeqFeature_GetStartFunc)(SeqFeature *);
-typedef int (*SeqFeature_SetStartFunc)(SeqFeature *, int start);
-typedef int (*SeqFeature_GetEndFunc)(SeqFeature *);
-typedef int (*SeqFeature_SetEndFunc)(SeqFeature *, int end);
-typedef int (*SeqFeature_GetStrandFunc)(SeqFeature *);
-typedef int (*SeqFeature_SetStrandFunc)(SeqFeature *, int strand);
-typedef Sequence * (*SeqFeature_GetSeqFunc)(SeqFeature *);
-typedef Sequence * (*SeqFeature_SetSeqFunc)(SeqFeature *, Sequence *seq);
-typedef int (*SeqFeature_GetLengthFunc)(SeqFeature *);
-typedef void (*SeqFeature_ReverseComplementFunc)(SeqFeature *);
-typedef Vector * (*SeqFeature_TransformToRawContigFunc)(SeqFeature *sf);
-typedef Vector * (*SeqFeature_TransformSliceToRawContigFunc)(SeqFeature *sf);
-typedef SeqFeature * (*SeqFeature_TransformToSliceFunc)(SeqFeature *sf, Slice *slice);
-typedef SeqFeature * (*SeqFeature_TransformRawContigToSliceFunc)(SeqFeature *sf, Slice *slice);
-typedef SeqFeature * (*SeqFeature_TransformSliceToSliceFunc)(SeqFeature *sf, Slice *slice);
+#define SEQFEATUREFUNC_TYPES(CLASSTYPE) \
+typedef int (*CLASSTYPE ## _GetStartFunc)(CLASSTYPE *); \
+typedef int (*CLASSTYPE ## _SetStartFunc)(CLASSTYPE *, int start); \
+typedef int (*CLASSTYPE ## _GetEndFunc)(CLASSTYPE *); \
+typedef int (*CLASSTYPE ## _SetEndFunc)(CLASSTYPE *, int end); \
+typedef int (*CLASSTYPE ## _GetStrandFunc)(CLASSTYPE *); \
+typedef int (*CLASSTYPE ## _SetStrandFunc)(CLASSTYPE *, int strand); \
+typedef Sequence * (*CLASSTYPE ## _GetSeqFunc)(CLASSTYPE *); \
+typedef Sequence * (*CLASSTYPE ## _SetSeqFunc)(CLASSTYPE *, Sequence *seq); \
+typedef int (*CLASSTYPE ## _GetLengthFunc)(CLASSTYPE *); \
+typedef void (*CLASSTYPE ## _ReverseComplementFunc)(CLASSTYPE *); \
+typedef Vector * (*CLASSTYPE ## _TransformToRawContigFunc)(CLASSTYPE *sf); \
+typedef Vector * (*CLASSTYPE ## _TransformSliceToRawContigFunc)(CLASSTYPE *sf); \
+typedef CLASSTYPE * (*CLASSTYPE ## _TransformToSliceFunc)(CLASSTYPE *sf, Slice *slice); \
+typedef CLASSTYPE * (*CLASSTYPE ## _TransformRawContigToSliceFunc)(CLASSTYPE *sf, Slice *slice); \
+typedef CLASSTYPE * (*CLASSTYPE ## _TransformSliceToSliceFunc)(CLASSTYPE *sf, Slice *slice);
 
-#define SEQFEATUREFUNCS_DATA \
-  SeqFeature_GetStartFunc getStart; \
-  SeqFeature_SetStartFunc setStart; \
-  SeqFeature_GetEndFunc getEnd; \
-  SeqFeature_SetEndFunc setEnd; \
-  SeqFeature_GetStrandFunc getStrand; \
-  SeqFeature_SetStrandFunc setStrand; \
-  SeqFeature_GetSeqFunc getSeq; \
-  SeqFeature_SetSeqFunc setSeq; \
-  SeqFeature_GetLengthFunc getLength; \
-  SeqFeature_ReverseComplementFunc reverseComplement; \
-  SeqFeature_TransformToRawContigFunc transformToRawContig; \
-  SeqFeature_TransformToSliceFunc transformToSlice; \
-  SeqFeature_TransformRawContigToSliceFunc transformRawContigToSlice; \
-  SeqFeature_TransformSliceToRawContigFunc transformSliceToRawContig; \
-  SeqFeature_TransformSliceToSliceFunc transformSliceToSlice;
+#define SEQFEATUREFUNCS_DATA(CLASSTYPE) \
+  CLASSTYPE ## _GetStartFunc getStart; \
+  CLASSTYPE ## _SetStartFunc setStart; \
+  CLASSTYPE ## _GetEndFunc getEnd; \
+  CLASSTYPE ## _SetEndFunc setEnd; \
+  CLASSTYPE ## _GetStrandFunc getStrand; \
+  CLASSTYPE ## _SetStrandFunc setStrand; \
+  CLASSTYPE ## _GetSeqFunc getSeq; \
+  CLASSTYPE ## _SetSeqFunc setSeq; \
+  CLASSTYPE ## _GetLengthFunc getLength; \
+  CLASSTYPE ## _ReverseComplementFunc reverseComplement; \
+  CLASSTYPE ## _TransformToRawContigFunc transformToRawContig; \
+  CLASSTYPE ## _TransformToSliceFunc transformToSlice; \
+  CLASSTYPE ## _TransformRawContigToSliceFunc transformRawContigToSlice; \
+  CLASSTYPE ## _TransformSliceToRawContigFunc transformSliceToRawContig; \
+  CLASSTYPE ## _TransformSliceToSliceFunc transformSliceToSlice;
 
+SEQFEATUREFUNC_TYPES(SeqFeature)
 
 typedef struct SeqFeatureFuncsStruct {
-  SEQFEATUREFUNCS_DATA
+  SEQFEATUREFUNCS_DATA(SeqFeature)
 } SeqFeatureFuncs;
 
 #define SEQFEATURE_DATA \
@@ -75,19 +77,19 @@ struct SeqFeatureStruct {
 SeqFeature *SeqFeature_new(void);
 
 #define SeqFeature_setStart(sf,s) ((sf)->funcs->setStart == NULL ? ((sf)->start = (s)) : \
-                                                                   ((sf)->funcs->setStart((SeqFeature *)(sf),(s))))
+                                                                   ((sf)->funcs->setStart((sf),(s))))
 #define SeqFeature_getStart(sf) ((sf)->funcs->getStart == NULL ? ((sf)->start) : \
-                                                                 ((sf)->funcs->getStart((SeqFeature *)(sf))))
+                                                                 ((sf)->funcs->getStart((sf))))
 #define SeqFeature_setEnd(sf,e) ((sf)->funcs->setEnd == NULL ? ((sf)->end = (e)) : \
-                                                                   ((sf)->funcs->setEnd((SeqFeature *)(sf),(e))))
+                                                                   ((sf)->funcs->setEnd((sf),(e))))
 #define SeqFeature_getEnd(sf) ((sf)->funcs->getEnd == NULL ? ((sf)->end) : \
-                                                                 ((sf)->funcs->getEnd((SeqFeature *)(sf))))
+                                                                 ((sf)->funcs->getEnd((sf))))
 #define SeqFeature_setStrand(sf,s) ((sf)->funcs->setStrand == NULL ? ((sf)->strand = (s)) : \
-                                                                   ((sf)->funcs->setStrand((SeqFeature *)(sf),(s))))
+                                                                   ((sf)->funcs->setStrand((sf),(s))))
 #define SeqFeature_getStrand(sf) ((sf)->funcs->getStrand == NULL ? ((sf)->strand) : \
-                                                                 ((sf)->funcs->getStrand((SeqFeature *)(sf))))
+                                                                 ((sf)->funcs->getStrand((sf))))
 #define SeqFeature_getLength(sf) ((sf)->funcs->getLength == NULL ? (SeqFeature_getEnd((sf)) - SeqFeature_getStart((sf)) + 1) : \
-                                                                 ((sf)->funcs->getLength((SeqFeature *)(sf))))
+                                                                 ((sf)->funcs->getLength((sf))))
 
 #define SeqFeature_setScore(sf,s) (sf)->score = (s)
 #define SeqFeature_getScore(sf) (sf)->score
@@ -144,6 +146,7 @@ SeqFeature *SeqFeature_transformRawContigToSlice(SeqFeature *sf, Slice *slice);
                       NULL, // getSeq
                       NULL, // setSeq
                       NULL, // getLength
+                      NULL, // reverseComplement
                       SeqFeature_transformToRawContig,
                       SeqFeature_transformToSlice,
                       SeqFeature_transformRawContigToSlice,

@@ -1,4 +1,6 @@
+#define __STICKYEXON_MAIN__
 #include "StickyExon.h"
+#undef __STICKYEXON_MAIN__
 #include "AssemblyMapperAdaptor.h"
 #include "ChromosomeAdaptor.h"
 #include "SliceAdaptor.h"
@@ -372,6 +374,24 @@ sub StickyExon_getSeq(StickyExon *stickyExon) {
 }
 #endif
 
+char *StickyExon_getSeqString(StickyExon *stickyExon) {
+  int i;
+  char *seqString = NULL;
+
+  if (StickyExon_getSeqCacheString(stickyExon)) {
+    return StickyExon_getSeqCacheString(stickyExon);
+  } else {
+    for (i=0; i<StickyExon_getComponentExonCount(stickyExon); i++) {
+      Exon *cExon = StickyExon_getComponentExonAt(stickyExon, i);
+      StrUtil_appendString(&seqString, Exon_getSeqString(cExon));
+    }
+  }
+
+  StickyExon_setSeqCacheString(stickyExon, seqString);
+
+  return seqString;
+}
+
 
 #ifdef DONE
 sub peptide {
@@ -430,8 +450,11 @@ Vector *StickyExon_getAllSupportingFeatures(StickyExon *stickyExon) {
 
   for (i=0; i<StickyExon_getComponentExonCount(stickyExon); i++) {
     Exon *subExon = StickyExon_getComponentExonAt(stickyExon, i);
+    int j;
 
-    Vector_append(out, Exon_getAllSupportingFeatures(subExon));
+    for (j=0;j<Exon_getSupportingFeatureCount(subExon);j++) {
+      Vector_addElement(out, Exon_getSupportingFeatureAt(subExon,j));
+    }
   }
 
   return out;

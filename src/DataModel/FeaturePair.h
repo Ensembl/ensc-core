@@ -4,11 +4,13 @@
 #include "DataModelTypes.h"
 #include "SeqFeature.h"
 
-#define FEATUREPAIRFUNCS_DATA \
-  SEQFEATUREFUNCS_DATA
+#define FEATUREPAIRFUNCS_DATA(CLASSTYPE) \
+  SEQFEATUREFUNCS_DATA(CLASSTYPE)
+
+SEQFEATUREFUNC_TYPES(FeaturePair)
 
 typedef struct FeaturePairFuncsStruct {
-  FEATUREPAIRFUNCS_DATA
+  FEATUREPAIRFUNCS_DATA(FeaturePair)
 } FeaturePairFuncs;
   
 

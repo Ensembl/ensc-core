@@ -8,6 +8,9 @@
 #include "RepeatFeatureAdaptor.h"
 #include "SimpleFeatureAdaptor.h"
 
+#include "StrUtil.h"
+#include "SeqUtil.h"
+
 RawContig *RawContig_new() {
   RawContig *rc;
 
@@ -130,3 +133,67 @@ Vector *RawContig_getAllProteinAlignFeatures(RawContig *rc, char *logicName, dou
   pafa = DBAdaptor_getProteinAlignFeatureAdaptor(rca->dba);
   return ProteinAlignFeatureAdaptor_fetchAllByRawContigAndScore(pafa,rc,scoreP,logicName);
 }
+
+char *RawContig_setSeq(RawContig *contig, char *seq) {
+  // Sequence can be set manually
+  StrUtil_copyString(&(contig->seq),seq,0);
+
+  return contig->seq;
+}
+
+char *RawContig_getSeq(RawContig *contig) {
+
+  if (contig->seq) {
+    return contig->seq;
+  }
+
+  //or retrieved from the database
+  if (RawContig_getAdaptor(contig)) {
+    DBAdaptor *dnadba;
+    SequenceAdaptor *sa;
+
+    
+    dnadba = RawContig_getAdaptor(contig)->dba->dnadb;
+    sa = DBAdaptor_getSequenceAdaptor(dnadba);
+    return SequenceAdaptor_fetchByRawContigStartEndStrand(sa, contig, 1, -1, 1);
+  }
+
+  fprintf(stderr,"Warning: RawContig seq not set, and no db is available\n");
+
+  return emptyString;
+}
+
+char *RawContig_getSubSeq(RawContig *contig, int start, int end, int strand) { 
+  SequenceAdaptor *sa;
+
+  if (end < start) {
+    fprintf(stderr, "Error: End coord is less then start coord to call on RawContig subseq.");
+    exit(1);
+  }
+
+  if (strand != -1 && strand != 1) {
+    strand = 1;
+  }
+
+  // if the sequence of this contig has been manually set retrieve its substring
+  if (contig->seq) {
+    char *str = StrUtil_substr(contig->seq, start-1, end - start + 1);
+
+    if (strand == -1) {
+      SeqUtil_reverseComplement(str,strlen(str));
+    }
+    return str;
+  }
+
+  if (!RawContig_getAdaptor(contig)) {
+    fprintf(stderr, "Error: RawContig subseq no sequence set and no db available\n");
+    return emptyString;
+  }
+
+  sa = DBAdaptor_getSequenceAdaptor(RawContig_getAdaptor(contig)->dba->dnadb);
+
+  return SequenceAdaptor_fetchByRawContigStartEndStrand(sa, contig, start, end, strand);
+
+}
+
+

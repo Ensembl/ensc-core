@@ -6,12 +6,14 @@
 #include "Slice.h"
 #include "EnsC.h"
 
+EXONFUNC_TYPES(StickyExon)
+
 typedef struct StickyExonFuncsStruct {
-  ANNOTATEDSEQFEATUREFUNCS_DATA
+  EXONFUNCS_DATA(StickyExon)
 } StickyExonFuncs;
 
 #define STICKYEXON_DATA \
-  ANNOTATEDSEQFEATURE_DATA \
+  EXON_DATA \
   FeatureSet components;
 
 #define FUNCSTRUCTTYPE StickyExonFuncs
@@ -23,11 +25,26 @@ struct StickyExonStruct {
 #define StickyExon_setStart(exon,start) Exon_setStart((exon),(start))
 #define StickyExon_getStart(exon) Exon_getStart((exon))
 
+#define StickyExon_setSeqCacheString(exon,seq) Exon_setSeqCacheString((exon),(seq))
+#define StickyExon_getSeqCacheString(exon) Exon_getSeqCacheString((exon))
+
 #define StickyExon_setEnd(exon,end) Exon_setEnd((exon),(end))
 #define StickyExon_getEnd(exon) Exon_getEnd((exon))
 
 #define StickyExon_setScore(exon,score) Exon_setScore((exon),(score))
 #define StickyExon_getScore(exon) Exon_getScore((exon))
+
+#define StickyExon_setStableId(exon,sid) Exon_setStableId((exon),(sid))
+#define StickyExon_getStableId(exon) Exon_getStableId((exon))
+
+#define StickyExon_setVersion(exon,ver) Exon_setVersion((exon),(ver))
+#define StickyExon_getVersion(exon) Exon_getVersion((exon))
+
+#define StickyExon_setModified(exon,mod) Exon_setModified((exon),(mod))
+#define StickyExon_getModified(exon) Exon_getModified((exon))
+
+#define StickyExon_setCreated(exon,cd) Exon_setCreated((exon),(cd))
+#define StickyExon_getCreated(exon) Exon_getCreated((exon))
 
 #define StickyExon_setpValue(exon,pValue) Exon_setEValue((exon),(pValue))
 #define StickyExon_getpValue(exon) Exon_getEValue((exon))

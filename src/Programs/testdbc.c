@@ -242,8 +242,8 @@ int main(int argc, char *argv[]) {
 
       fprintf(stderr,"Gene %s from %d to %d\n",
               Gene_getStableId(gene),
-              Gene_getStart((SeqFeature *)gene),
-              Gene_getEnd((SeqFeature *)gene));
+              Gene_getStart(gene),
+              Gene_getEnd(gene));
       for (j=0;j<Gene_getTranscriptCount(gene);j++) {
         Transcript *trans = Gene_getTranscriptAt(gene,j);
         int k;
@@ -252,8 +252,8 @@ int main(int argc, char *argv[]) {
 
         fprintf(stderr," Transcript %s from %d to %d\n",
                 Transcript_getStableId(trans),
-                Transcript_getStart((SeqFeature *)trans),
-                Transcript_getEnd((SeqFeature *)trans));
+                Transcript_getStart(trans),
+                Transcript_getEnd(trans));
         for (k=0;k<Transcript_getExonCount(trans);k++) {
           Exon *exon = (Exon *)Transcript_getExonAt(trans,k);
           fprintf(stderr,"  Exon %s %d %d %d\n",

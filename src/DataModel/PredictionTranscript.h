@@ -7,7 +7,15 @@
 #include "FeatureSet.h"
 #include "StableIdInfo.h"
 
-#define FUNCSTRUCTTYPE AnnotatedSeqFeatureFuncs
+ANNOTATEDSEQFEATUREFUNC_TYPES(PredictionTranscript)
+
+typedef struct PredictionTranscriptFuncsStruct {
+  ANNOTATEDSEQFEATUREFUNCS_DATA(PredictionTranscript)
+} PredictionTranscriptFuncs;
+
+
+
+#define FUNCSTRUCTTYPE PredictionTranscriptFuncs
 struct PredictionTranscriptStruct {
   ANNOTATEDSEQFEATURE_DATA
   FeatureSet fs;
@@ -50,5 +58,37 @@ PredictionTranscript *PredictionTranscript_new(void);
 void PredictionTranscript_flushExons(PredictionTranscript *transcript);
 
 void PredictionTranscript_free(PredictionTranscript *transcript);
+
+int PredictionTranscript_getLength(PredictionTranscript *trans);
+
+
+#ifdef __PREDICTIONTRANSCRIPT_MAIN__
+  PredictionTranscriptFuncs 
+    predictionTranscriptFuncs = {
+ /* Not done yet
+                       PredictionTranscript_getStart,
+                       PredictionTranscript_setStart,
+                       PredictionTranscript_getEnd,
+                       PredictionTranscript_setEnd,
+ */
+                       NULL, // getStart  
+                       NULL, // setStart 
+                       NULL, // getEnd
+                       NULL, // setEnd
+                       NULL, // getStrand
+                       NULL, // setStrand
+                       NULL, // getSeq
+                       NULL, // setSeq
+                       PredictionTranscript_getLength,
+                       NULL, // reverseComplement
+                       NULL, // transformToRawContig
+                       NULL, // transformToSlice
+                       NULL, // transformRawContigToSlice
+                       NULL, // transformSliceToRawContig
+                       NULL  // transformSliceToSlice
+                      };
+#else
+  extern PredictionTranscriptFuncs predictionTranscriptFuncs;
+#endif
 
 #endif

@@ -5,14 +5,13 @@
 #include "Storable.h"
 #include "BaseContig.h"
 #include "Vector.h"
+#include "SequenceAdaptor.h"
 
 #define FUNCSTRUCTTYPE BaseContigFuncs
 struct RawContigStruct {
   BASECONTIG_DATA
-  int length;
   int emblOffset;
   IDType cloneId;
-  char *name;  
 };
 #undef FUNCSTRUCTTYPE
 

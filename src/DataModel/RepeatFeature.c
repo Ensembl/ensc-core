@@ -1,4 +1,6 @@
+#define __REPEATFEATURE_MAIN__
 #include "RepeatFeature.h"
+#undef __REAPEATFEATURE_MAIN__
 
 RepeatFeature *RepeatFeature_new() {
   RepeatFeature *rf;
@@ -10,7 +12,7 @@ RepeatFeature *RepeatFeature_new() {
 
   rf->objectType = CLASS_REPEATFEATURE;
 
-  rf->funcs = &seqFeatureFuncs;
+  rf->funcs = &repeatFeatureFuncs;
 
   return rf;
 }

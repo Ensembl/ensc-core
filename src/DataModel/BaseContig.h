@@ -4,19 +4,24 @@
 #include "DataModelTypes.h"
 #include "Storable.h"
 #include "EnsRoot.h"
+#include "Sequence.h"
 
-typedef char * (*BaseContig_GetNameFunc)(BaseContig *bc);
+#define BASECONTIGFUNC_TYPES(CLASSTYPE) \
+  SEQUENCEFUNC_TYPES(CLASSTYPE)
 
-#define BASECONTIGFUNCS_DATA \
-  BaseContig_GetNameFunc *getName;
+#define BASECONTIGFUNCS_DATA(CLASSTYPE) \
+  SEQUENCEFUNCS_DATA(CLASSTYPE)
   
+
   
+BASECONTIGFUNC_TYPES(BaseContig)
+
 typedef struct BaseContigFuncsStruct {
-  BASECONTIGFUNCS_DATA
+  BASECONTIGFUNCS_DATA(BaseContig)
 } BaseContigFuncs;
 
 #define BASECONTIG_DATA \
-  ENSROOT_DATA \
+  SEQUENCE_DATA \
   Storable st; \
   int start; \
   int end;
@@ -37,5 +42,13 @@ struct BaseContigStruct {
 char *BaseContig_getName(BaseContig *bc);
 
 #define BaseContig_getObjectType(bc) (bc)->objectType
+
+#define BaseContig_getSubSeq(seq,start,end,strand) ((seq)->funcs->getSubSeq == NULL ? fprintf(stderr,"Error: Null pointer for getSubSeq - bye\n"), exit(1), NULL : \
+                                                                 ((seq)->funcs->getSubSeq((seq),(start),(end),(strand))))
+#define BaseContig_getSeq(seq) ((seq)->funcs->getSeq == NULL ? ((seq)->seq) : \
+                                                                 ((seq)->funcs->getSeq((seq))))
+#define BaseContig_getName(seq) ((seq)->funcs->getName == NULL ? ((seq)->name) : \
+                                                                 ((seq)->funcs->getName((seq))))
+
 
 #endif

@@ -5,7 +5,16 @@
 #include "SeqFeature.h"
 #include "RepeatConsensus.h"
 
-#define FUNCSTRUCTTYPE SeqFeatureFuncs
+
+SEQFEATUREFUNC_TYPES(RepeatFeature)
+
+typedef struct RepeatFeatureFuncsStruct {
+  SEQFEATUREFUNCS_DATA(RepeatFeature)
+} RepeatFeatureFuncs;
+
+
+
+#define FUNCSTRUCTTYPE RepeatFeatureFuncs
 struct RepeatFeatureStruct {
   SEQFEATURE_DATA 
   int hitStart;
@@ -54,5 +63,28 @@ struct RepeatFeatureStruct {
 #define RepeatFeature_getConsensus(repeat) (repeat)->repeatConsensus
 
 RepeatFeature *RepeatFeature_new();
+
+#ifdef __REPEATFEATURE_MAIN__
+ RepeatFeatureFuncs 
+   repeatFeatureFuncs = {
+                      NULL, // getStart
+                      NULL, // setStart
+                      NULL, // getEnd
+                      NULL, // setEnd
+                      NULL, // getStrand
+                      NULL, // setStrand
+                      NULL, // getSeq
+                      NULL, // setSeq
+                      NULL, // getLength
+                      NULL, // reverseComplement
+                      (RepeatFeature_TransformToRawContigFunc)SeqFeature_transformToRawContig,
+                      (RepeatFeature_TransformToSliceFunc)SeqFeature_transformToSlice,
+                      (RepeatFeature_TransformRawContigToSliceFunc)SeqFeature_transformRawContigToSlice,
+                      (RepeatFeature_TransformSliceToRawContigFunc)SeqFeature_transformSliceToRawContig,
+                      NULL // transformSliceToSlice
+                     };
+#else
+ extern RepeatFeatureFuncs repeatFeatureFuncs;
+#endif
 
 #endif

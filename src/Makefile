@@ -5,7 +5,7 @@ CC = cc
 MYSQLCFLAGS=${shell mysql_config --cflags}
 MYSQLLIBS=${shell mysql_config --libs}
 
-CFLAGS = -Wall -g -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic $(MYSQLCFLAGS)
+CFLAGS =  -g -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS)
 
 BINDIR=../bin
@@ -19,6 +19,7 @@ all	: directories \
           Tests/DBAdaptorTest \
           Tests/EcoStringTest \
           Tests/SeqUtilTest \
+          Tests/SliceAdaptorTest \
           Tests/StreamTest \
           Tests/StrUtilTest \
           Tests/TranslateTest
@@ -152,6 +153,11 @@ Tests/SeqUtilTest: \
 	libensc.a \
 	Tests/SeqUtilTest.c
 	$(CC) $(CFLAGS) -o Tests/SeqUtilTest Tests/SeqUtilTest.c -L. -lensc $(LDFLAGS)
+
+Tests/SliceAdaptorTest: \
+	libensc.a \
+	Tests/SliceAdaptorTest.c
+	$(CC) $(CFLAGS) -o Tests/SliceAdaptorTest Tests/SliceAdaptorTest.c -L. -lensc $(LDFLAGS)
 
 Tests/StreamTest: \
 	libensc.a \

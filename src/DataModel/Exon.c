@@ -359,6 +359,31 @@ sub Exon_getSeq(Exon *exon) {
                        -moltype => 'dna');
 }
 #endif
+char  *Exon_getSeqString(Exon *exon) {
+  char *seq;
+
+  if (Exon_getSeqCacheString(exon)) {
+    return Exon_getSeqCacheString(exon);
+  }
+
+  if (!Exon_getContig(exon)) {
+    fprintf(stderr, "Warning: this exon doesn't have a contig you won't get a seq\n");
+    return NULL;
+  } else {
+
+    seq = BaseContig_getSubSeq(Exon_getContig(exon), 
+                               Exon_getStart(exon), 
+                               Exon_getEnd(exon),
+                               1);
+
+    if (Exon_getStrand(exon) == -1){
+      SeqUtil_reverseComplement(seq,strlen(seq));
+    }
+  }
+  Exon_setSeqCacheString(exon, seq);
+
+  return Exon_getSeqCacheString(exon);
+}
 
 Exon *Exon_transformSliceToRawContig(Exon *exon) {
   SliceAdaptor *sa;
@@ -498,16 +523,16 @@ Exon *Exon_transformSliceToRawContig(Exon *exon) {
     StickyExon_setEnd(stickyExon, stickyLength);
     StickyExon_setStrand(stickyExon, 1);
     if (Exon_getStableId(exon)) {
-      StickyExon_setStableId(Exon_getStableId(exon));
+      StickyExon_setStableId(stickyExon, Exon_getStableId(exon));
     }
     if (Exon_getVersion(exon)) {
-      StickyExon_setVersion(Exon_getVersion(exon));
+      StickyExon_setVersion(stickyExon, Exon_getVersion(exon));
     }
     if (Exon_getModified(exon)) {
-      StickyExon_setModified(Exon_getModified(exon));
+      StickyExon_setModified(stickyExon, Exon_getModified(exon));
     }
     if (Exon_getCreated(exon)) {
-      StickyExon_setCreated(Exon_getCreated(exon));
+      StickyExon_setCreated(stickyExon, Exon_getCreated(exon));
     }
     return (Exon *)stickyExon;
 

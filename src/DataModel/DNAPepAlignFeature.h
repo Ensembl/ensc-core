@@ -4,7 +4,13 @@
 #include "DataModelTypes.h"
 #include "BaseAlignFeature.h"
 
-#define FUNCSTRUCTTYPE BaseAlignFeatureFuncs
+BASEALIGNFEATUREFUNC_TYPES(DNAPepAlignFeature)
+
+typedef struct DNAPepAlignFeatureFuncsStruct {
+  BASEALIGNFEATUREFUNCS_DATA(DNAPepAlignFeature)
+} DNAPepAlignFeatureFuncs;
+  
+#define FUNCSTRUCTTYPE DNAPepAlignFeatureFuncs
 struct DNAPepAlignFeatureStruct {
   BASEALIGNFEATURE_DATA
 };
@@ -54,8 +60,12 @@ DNAPepAlignFeature *DNAPepAlignFeature_new(void);
 #define DNAPepAlignFeature_setPercId(fp,pid) BaseAlignFeature_setPercId((fp),(pid))
 #define DNAPepAlignFeature_getPercId(fp) BaseAlignFeature_getPercId((fp))
 
+int DNAPepAlignFeature_getHitUnit(void);
+int DNAPepAlignFeature_getQueryUnit(void);
+
+
 #ifdef __DNAPEPALIGNFEATURE_MAIN__
-  BaseAlignFeatureFuncs
+  DNAPepAlignFeatureFuncs
     dnaPepAlignFeatureFuncs = {
                              NULL, // getStart
                              NULL, // setStart
@@ -66,17 +76,17 @@ DNAPepAlignFeature *DNAPepAlignFeature_new(void);
                              NULL, // getSeq
                              NULL, // setSeq
                              NULL, // getLength
-                             BaseAlignFeature_reverseComplement,
-                             SeqFeature_transformToRawContig,
-                             SeqFeature_transformToSlice,
-                             BaseAlignFeature_transformRawContigToSlice,
-                             BaseAlignFeature_transformSliceToRawContig,
+                             (DNAPepAlignFeature_ReverseComplementFunc)BaseAlignFeature_reverseComplement,
+                             (DNAPepAlignFeature_TransformToRawContigFunc)SeqFeature_transformToRawContig,
+                             (DNAPepAlignFeature_TransformToSliceFunc)SeqFeature_transformToSlice,
+                             (DNAPepAlignFeature_TransformRawContigToSliceFunc)SeqFeature_transformRawContigToSlice,
+                             (DNAPepAlignFeature_TransformSliceToRawContigFunc)BaseAlignFeature_transformSliceToRawContig,
                              NULL, // transformSliceToSlice
                              DNAPepAlignFeature_getHitUnit,
                              DNAPepAlignFeature_getQueryUnit
                             };
 #else
-  extern BaseAlignFeatureFuncs dnaPepAlignFeatureFuncs;
+  extern DNAPepAlignFeatureFuncs dnaPepAlignFeatureFuncs;
 #endif
 
 #endif

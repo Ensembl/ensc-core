@@ -4,6 +4,7 @@
 #include "BaseAdaptor.h"
 #include "AdaptorTypes.h"
 #include "Exon.h"
+#include "StickyExon.h"
 
 struct ExonAdaptorStruct {
   BASEADAPTOR_DATA

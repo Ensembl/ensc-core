@@ -1,4 +1,8 @@
+#define __PREDICTIONTRANSCRIPT_MAIN__
 #include "PredictionTranscript.h"
+#undef  __PREDICTIONTRANSCRIPT_MAIN__
+
+#include "Exon.h"
 
 PredictionTranscript *PredictionTranscript_new() {
   PredictionTranscript *transcript;
@@ -9,7 +13,7 @@ PredictionTranscript *PredictionTranscript_new() {
   }
 
   transcript->objectType = CLASS_PREDICTIONTRANSCRIPT;
-  transcript->funcs = &annotatedSeqFeatureFuncs;
+  transcript->funcs = &predictionTranscriptFuncs;
   return transcript;
 }
 
@@ -32,3 +36,16 @@ void PredictionTranscript_flushExons(PredictionTranscript *trans) {
 void PredictionTranscript_free(PredictionTranscript *trans) {
   printf("PredictionTranscript_free not implemented\n");
 }
+
+int PredictionTranscript_getLength(PredictionTranscript *trans) {
+    int length = 0;
+    int i;
+
+    for (i=0;i<PredictionTranscript_getExonCount(trans); i++) {
+      Exon *ex = PredictionTranscript_getExonAt(trans,i);
+ // Check stickies
+      if (ex) length += Exon_getLength(ex);
+    }
+    return length;
+}
+

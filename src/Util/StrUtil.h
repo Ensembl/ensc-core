@@ -22,15 +22,7 @@ char *StrUtil_copyTString(char **to, char *from,int Start);
 int StrUtil_stripnewline(char *str);
 int StrUtil_gettok(char *str,char **out_pp,char *in_p,int MaxLen);
 
-
-
-
-
-
-
-
-
-
+char *StrUtil_substr(char *from, int start, int length);
 
 
 #ifdef __STRUTIL_MAIN__

@@ -6,11 +6,19 @@
 #include "SeqFeature.h"
 #include "Slice.h"
 
+SEQFEATUREFUNC_TYPES(SimpleFeature)
+
+typedef struct SimpleFeatureFuncsStruct {
+  SEQFEATUREFUNCS_DATA(SimpleFeature)
+} SimpleFeatureFuncs;
+
+
+
 #define SIMPLEFEATURE_DATA \
   SEQFEATURE_DATA \
   char *displayLabel;
 
-#define FUNCSTRUCTTYPE SeqFeatureFuncs
+#define FUNCSTRUCTTYPE SimpleFeatureFuncs
 struct SimpleFeatureStruct {
   SIMPLEFEATURE_DATA
 };
@@ -54,6 +62,29 @@ SimpleFeature *SimpleFeature_new();
 
 char *SimpleFeature_setDisplayLabel(SimpleFeature *sf, char *label);
 #define SimpleFeature_getDisplayLabel(simpleFeature) (simpleFeature)->displayLabel
+
+#ifdef __SIMPLEFEATURE_MAIN__
+ SimpleFeatureFuncs
+   simpleFeatureFuncs = {
+                      NULL, // getStart
+                      NULL, // setStart
+                      NULL, // getEnd
+                      NULL, // setEnd
+                      NULL, // getStrand
+                      NULL, // setStrand
+                      NULL, // getSeq
+                      NULL, // setSeq
+                      NULL, // getLength
+                      NULL, // reverseComplement
+                      (SimpleFeature_TransformToRawContigFunc)SeqFeature_transformToRawContig,
+                      (SimpleFeature_TransformToSliceFunc)SeqFeature_transformToSlice,
+                      (SimpleFeature_TransformRawContigToSliceFunc)SeqFeature_transformRawContigToSlice,
+                      (SimpleFeature_TransformSliceToRawContigFunc)SeqFeature_transformSliceToRawContig,
+                      NULL // transformSliceToSlice
+                     };
+#else
+ extern SimpleFeatureFuncs simpleFeatureFuncs;
+#endif
 
 
 #endif

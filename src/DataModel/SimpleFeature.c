@@ -1,4 +1,6 @@
+#define __SIMPLEFEATURE_MAIN__
 #include "SimpleFeature.h"
+#undef __SIMPLEFEATURE__MAIN__
 #include "StrUtil.h"
 
 SimpleFeature *SimpleFeature_new() {
@@ -11,7 +13,7 @@ SimpleFeature *SimpleFeature_new() {
 
   sf->objectType = CLASS_SIMPLEFEATURE;
 
-  sf->funcs = &seqFeatureFuncs;
+  sf->funcs = &simpleFeatureFuncs;
  
   return sf;
 }

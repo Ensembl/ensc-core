@@ -1,4 +1,4 @@
-#defeine __DNAPEPALIGNFEATURE_MAIN__
+#define __DNAPEPALIGNFEATURE_MAIN__
 #include "DNAPepAlignFeature.h"
 #undef __DNAPEPALIGNFEATURE_MAIN__
 

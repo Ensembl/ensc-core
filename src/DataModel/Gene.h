@@ -9,8 +9,10 @@
 #include "Transcript.h"
 #include "Vector.h"
 
+ANNOTATEDSEQFEATUREFUNC_TYPES(Gene)
+
 typedef struct GeneFuncsStruct {
-  ANNOTATEDSEQFEATUREFUNCS_DATA
+  ANNOTATEDSEQFEATUREFUNCS_DATA(Gene)
 } GeneFuncs;
 
 #define FUNCSTRUCTTYPE GeneFuncs
@@ -57,17 +59,17 @@ char *Gene_setType(Gene *gene, char *type);
 #define Gene_setVersion(gene,ver)  StableIdInfo_setVersion(&((gene)->si),ver)
 #define Gene_getVersion(gene)  StableIdInfo_getVersion(&((gene)->si))
 
-int Gene_setStart(SeqFeature *gene,int start);
-int Gene_getStart(SeqFeature *gene);
+int Gene_setStart(Gene *gene,int start);
+int Gene_getStart(Gene *gene);
 
 #define Gene_setAnalysis(gene,ana) AnnotatedSeqFeature_setAnalysis((gene),ana)
 #define Gene_getAnalysis(gene) AnnotatedSeqFeature_getAnalysis((gene))
 
-int Gene_setEnd(SeqFeature *gene,int end);
-int Gene_getEnd(SeqFeature *gene);
+int Gene_setEnd(Gene *gene,int end);
+int Gene_getEnd(Gene *gene);
 
-int Gene_setStrand(SeqFeature *gene,int strand);
-int Gene_getStrand(SeqFeature *gene);
+int Gene_setStrand(Gene *gene,int strand);
+int Gene_getStrand(Gene *gene);
 
 #define Gene_addTranscript(gene,trans) FeatureSet_addFeature(&((gene)->fs),trans)
 #define Gene_getTranscriptAt(gene,ind) (Transcript *)FeatureSet_getFeatureAt(&((gene)->fs),ind)
@@ -99,6 +101,7 @@ int Gene_addDBLink(Gene *gene, DBEntry *dbe);
                  NULL, // getSeq
                  NULL, // setSeq
                  NULL, // getLength,
+                 NULL, // reverseComplement
                  Gene_transformToRawContig,
                  Gene_transformToSlice,
                  NULL, // transformRawContigToSlice

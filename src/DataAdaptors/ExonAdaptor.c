@@ -68,41 +68,44 @@ Exon *ExonAdaptor_exonFromResults(ExonAdaptor *ea, StatementHandle *sth, ResultR
   if (maxRank > 1) {
     int stickyLength = 0;
     Exon *component;
+    StickyExon *stickyExon;
     
     fprintf(stderr, "ERROR: Sticky exons not implemented yet\n");
 
     // sticky exon
-    exon = Exon_new();
-    Exon_setDbID(exon, row->getLongLongAt(row,0));
+    stickyExon = StickyExon_new();
+    exon = (Exon *)stickyExon;
+
+    StickyExon_setDbID(exon, row->getLongLongAt(row,0));
 
     // make first component exon
     component = ExonAdaptor_exonFromRow(ea, row);
 
-    Exon_addComponentExon(exon,component);
+    StickyExon_addComponentExon(stickyExon,component);
     stickyLength += Exon_getLength(component);
 
-    Exon_setPhase(exon,Exon_getPhase(component));
-    Exon_setEndPhase(exon,Exon_getEndPhase(component));
-    Exon_setAdaptor(exon,(BaseAdaptor *)ea);
+    StickyExon_setPhase(stickyExon,Exon_getPhase(component));
+    StickyExon_setEndPhase(stickyExon,Exon_getEndPhase(component));
+    StickyExon_setAdaptor(stickyExon,(BaseAdaptor *)ea);
 
     // continue while loop until we hit sticky_rank 1
     while ((row = sth->fetchRow(sth))) {
       component = ExonAdaptor_exonFromRow(ea, row);
   
-      Exon_addComponentExon(exon,component);
+      StickyExon_addComponentExon(stickyExon,component);
       stickyLength += Exon_getLength(component);
 
       if( Exon_getStickyRank(component) == 1 ) {
-        Exon_setContig(exon, Exon_getContig(component));
+        StickyExon_setContig(stickyExon, Exon_getContig(component));
         break;
       }
     }
 
-    Exon_sortByStickyRank(exon);
+    StickyExon_sortByStickyRank(stickyExon);
 
-    Exon_setStart(exon,1);
-    Exon_setEnd(exon,stickyLength);
-    Exon_setStrand(exon, 1 );
+    StickyExon_setStart(stickyExon,1);
+    StickyExon_setEnd(stickyExon,stickyLength);
+    StickyExon_setStrand(stickyExon, 1 );
 
   } else {
     exon = ExonAdaptor_exonFromRow(ea, row);
@@ -236,6 +239,7 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
   ProteinAlignFeatureAdaptor *pafa;
   char *type;
   int nExon;
+  StickyExon *stickyExon = NULL;
   
 
 /* NIY
@@ -276,11 +280,12 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
 
   exonId = 0;
 
-  if (Exon_isSticky(exon)) {
+  if (exon->objectType == CLASS_STICKYEXON) {
+    stickyExon = (StickyExon *)exon;
     // sticky storing. Sticky exons contain normal exons ...
 
-    for (i=0; i<Exon_getNumComponentExon(exon); i++) {
-      Exon *componentExon = Exon_getComponentExonAt(exon,i);
+    for (i=0; i<StickyExon_getComponentExonCount(stickyExon); i++) {
+      Exon *componentExon = StickyExon_getComponentExonAt(stickyExon,i);
       RawContig *contig = Exon_getContig(componentExon);
 
       if (!contig || !RawContig_getDbID(contig)) {
@@ -371,8 +376,8 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
   dafa = DBAdaptor_getDNAAlignFeatureAdaptor(ea->dba);
   pafa = DBAdaptor_getProteinAlignFeatureAdaptor(ea->dba);
 
-  if (Exon_isSticky(exon)) {
-    nExon = Exon_getNumComponentExon(exon);
+  if (stickyExon) {
+    nExon = StickyExon_getComponentExonCount(stickyExon);
   } else {
     nExon = 1;
   }
@@ -382,13 +387,13 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
     int j;
     Exon *e;
 
-    if (Exon_isSticky(exon)) {
-      e = Exon_getComponentExonAt(exon,i);
+    if (stickyExon) {
+      e = StickyExon_getComponentExonAt(stickyExon,i);
     } else {
       e = exon;
     }
 
-    for (j=0; j<Exon_getNumSupportingFeatures(e); j++) {
+    for (j=0; j<Exon_getSupportingFeatureCount(e); j++) {
       BaseAlignFeature *sf = Exon_getSupportingFeatureAt(e,j);
 
 /* NIY
@@ -431,10 +436,12 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
   // to point to the new database
   // 
 
-  for (i=0; i<Exon_getNumComponentExon(exon); i++) {
-    Exon *e = Exon_getComponentExonAt(exon,i);
-    Exon_setDbID(e,exonId);
-    Exon_setAdaptor(e,(BaseAdaptor *)ea);
+  if (stickyExon) {
+    for (i=0; i<StickyExon_getComponentExonCount(stickyExon); i++) {
+      Exon *e = StickyExon_getComponentExonAt(stickyExon,i);
+      Exon_setDbID(e,exonId);
+      Exon_setAdaptor(e,(BaseAdaptor *)ea);
+    }
   }
 
   Exon_setAdaptor(exon,(BaseAdaptor *)ea);

@@ -3,6 +3,7 @@
 #include "RawContig.h"
 
 /* Needs to do polymorphic call as Slice name is auto generated */
+#ifdef OLD
 char *BaseContig_getName(BaseContig *bc) {
   switch (BaseContig_getObjectType(bc)) {
     case CLASS_RAWCONTIG:
@@ -16,3 +17,5 @@ char *BaseContig_getName(BaseContig *bc) {
       exit(1);
   }
 }
+#endif
+

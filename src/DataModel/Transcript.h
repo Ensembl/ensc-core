@@ -11,8 +11,10 @@
 #include "Vector.h"
 #include "Mapper.h"
 
+ANNOTATEDSEQFEATUREFUNC_TYPES(Transcript)
+
 typedef struct TranscriptFuncsStruct {
-  ANNOTATEDSEQFEATUREFUNCS_DATA
+  ANNOTATEDSEQFEATUREFUNCS_DATA(Transcript)
 } TranscriptFuncs;
 
 #define FUNCSTRUCTTYPE TranscriptFuncs
@@ -100,11 +102,11 @@ Transcript *Transcript_transform(Transcript *transcript, IDHash *exonTransforms)
 
 void Transcript_sort(Transcript *trans);
 
-int Transcript_setStart(SeqFeature *sf, int start);
-int Transcript_getStart(SeqFeature *sf);
+int Transcript_setStart(Transcript *sf, int start);
+int Transcript_getStart(Transcript *sf);
 
-int Transcript_setEnd(SeqFeature *sf, int end);
-int Transcript_getEnd(SeqFeature *sf);
+int Transcript_setEnd(Transcript *sf, int end);
+int Transcript_getEnd(Transcript *sf);
 
 int Transcript_getCodingRegionEnd(Transcript *trans);
 int Transcript_setCodingRegionEnd(Transcript *trans, int end);
@@ -137,6 +139,7 @@ Mapper *Transcript_getcDNACoordMapper(Transcript *trans);
                        NULL, // getSeq
                        NULL, // setSeq
                        Transcript_getLength,
+                       NULL, // reverseComplement
                        NULL, // transformToRawContig
                        NULL, // transformToSlice
                        NULL, // transformRawContigToSlice

@@ -140,8 +140,8 @@ int main(int argc, char **argv) {
         if (!gene) {
           continue;
         }
-        if (DNAAlignFeature_getEnd(snp) >= Gene_getStart((SeqFeature *)gene) && 
-            DNAAlignFeature_getStart(snp) <= Gene_getEnd((SeqFeature *)gene)) {
+        if (DNAAlignFeature_getEnd(snp) >= Gene_getStart(gene) && 
+            DNAAlignFeature_getStart(snp) <= Gene_getEnd(gene)) {
           int k;
   
           if (codingType == UNDEFINED) codingType = INTRONIC;
@@ -155,8 +155,8 @@ int main(int argc, char **argv) {
                    Transcript_getCodingRegionEnd(trans)); 
             */
   
-            if (DNAAlignFeature_getEnd(snp) >= Transcript_getStart((SeqFeature *)trans) && 
-                DNAAlignFeature_getStart(snp) <= Transcript_getEnd((SeqFeature *)trans)) {
+            if (DNAAlignFeature_getEnd(snp) >= Transcript_getStart(trans) && 
+                DNAAlignFeature_getStart(snp) <= Transcript_getEnd(trans)) {
               int m;
        
               for (m=0; m<Transcript_getExonCount(trans) && !done; m++) {
@@ -176,9 +176,9 @@ int main(int argc, char **argv) {
               }
             }
           }
-        } else if (Gene_getStart((SeqFeature *)gene) > DNAAlignFeature_getEnd(snp)) {
+        } else if (Gene_getStart(gene) > DNAAlignFeature_getEnd(snp)) {
           done = 1;
-        } else if (Gene_getEnd((SeqFeature *)gene) < DNAAlignFeature_getStart(snp)) {
+        } else if (Gene_getEnd(gene) < DNAAlignFeature_getStart(snp)) {
           /* 
           printf("Removing gene %s with extent %d to %d\n", 
                  Gene_getStableId(gene), 

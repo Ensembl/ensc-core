@@ -118,15 +118,13 @@ void Transcript_flushExons(Transcript *trans) {
 // NIY caches 
 }
 
-int Transcript_setStart(SeqFeature *sf, int start) {
-  Transcript *trans = (Transcript *)sf;
+int Transcript_setStart(Transcript *trans, int start) {
   trans->start = start;
   Transcript_setStartIsSet(trans,TRUE);
   return trans->start;
 }
 
-int Transcript_getStart(SeqFeature *sf) {
-  Transcript *trans = (Transcript *)sf;
+int Transcript_getStart(Transcript *trans) {
   if (!Transcript_getStartIsSet(trans)) {
     int start;
     int strand = Exon_getStrand(Transcript_getStartExon(trans));
@@ -144,15 +142,13 @@ int Transcript_getStart(SeqFeature *sf) {
 }
 
 
-int Transcript_setEnd(SeqFeature *sf, int end) {
-  Transcript *trans = (Transcript *)sf;
+int Transcript_setEnd(Transcript *trans, int end) {
   trans->end = end;
   Transcript_setEndIsSet(trans,TRUE);
   return trans->end;
 }
 
-int Transcript_getEnd(SeqFeature *sf) {
-  Transcript *trans = (Transcript *)sf;
+int Transcript_getEnd(Transcript *trans) {
   if (!Transcript_getEndIsSet(trans)) {
     int end;
     int strand = Exon_getStrand(Transcript_getStartExon(trans));

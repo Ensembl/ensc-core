@@ -8,8 +8,13 @@
 #include "Vector.h"
 #include "EcoString.h"
 
+BASECONTIGFUNC_TYPES(Slice)
 
-#define FUNCSTRUCTTYPE BaseContigFuncs
+typedef struct SliceFuncsStruct {
+  BASECONTIGFUNCS_DATA(Slice)
+} SliceFuncs;
+
+#define FUNCSTRUCTTYPE SliceFuncs
 struct SliceStruct {
   BASECONTIG_DATA
   int strand;
@@ -20,8 +25,8 @@ struct SliceStruct {
 };
 #undef FUNCSTRUCTTYPE
 
-#ifdef __SLICE_C__
- Slice emptySliceData = {CLASS_SLICE,0,NULL,{-1,NULL},-1,-1,0,1,NULL,NULL,-1};
+#ifdef __SLICE_MAIN__
+ Slice emptySliceData = {CLASS_SLICE,0,NULL,NULL,NULL,0,{-1,NULL},-1,-1,0,1,NULL,NULL,-1};
  Slice *emptySlice = &emptySliceData;
 #else
  extern Slice *emptySlice;
@@ -69,6 +74,19 @@ Vector *Slice_getAllRepeatFeatures(Slice *slice, char *logicName);
 
 Vector *Slice_getAllGenesByType(Slice *slice, char *type);
 
+char *Slice_getSubSeq(Slice *slice, int start, int end, int strand);
+char *Slice_getSeq(Slice *slice);
+
+
+#ifdef __SLICE_MAIN__
+  SliceFuncs sliceFuncs = {
+                           Slice_getName, 
+                           Slice_getSeq,
+                           Slice_getSubSeq
+                          };
+#else
+  extern SliceFuncs sliceFuncs;
+#endif
 
 
 #endif

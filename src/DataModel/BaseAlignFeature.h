@@ -6,16 +6,21 @@
 
 #include "EnsRoot.h"
 
-typedef int (*BaseAlignFeature_GetHitUnitFunc)(BaseAlignFeature *baf);
-typedef int (*BaseAlignFeature_GetQueryUnitFunc)(BaseAlignFeature *baf);
+#define BASEALIGNFEATUREFUNC_TYPES(CLASSTYPE) \
+ SEQFEATUREFUNC_TYPES(CLASSTYPE) \
+ typedef int (* CLASSTYPE ## _GetHitUnitFunc)(void); \
+ typedef int (* CLASSTYPE ## _GetQueryUnitFunc)(void);
 
-#define BASEALIGNFEATUREFUNCS_DATA \
-  FEATUREPAIRFUNCS_DATA \
-  BaseAlignFeature_GetHitUnitFunc getHitUnit; \
-  BaseAlignFeature_GetQueryUnitFunc getQueryUnit;
+#define BASEALIGNFEATUREFUNCS_DATA(CLASSTYPE) \
+  FEATUREPAIRFUNCS_DATA(CLASSTYPE) \
+  CLASSTYPE ## _GetHitUnitFunc getHitUnit; \
+  CLASSTYPE ## _GetQueryUnitFunc getQueryUnit;
+
+
+BASEALIGNFEATUREFUNC_TYPES(BaseAlignFeature)
 
 typedef struct BaseAlignFeatureFuncsStruct {
-  BASEALIGNFEATUREFUNCS_DATA
+  BASEALIGNFEATUREFUNCS_DATA(BaseAlignFeature)
 } BaseAlignFeatureFuncs;
   
 
@@ -82,14 +87,12 @@ char *BaseAlignFeature_setCigarString(BaseAlignFeature *fp, char *ciggy);
 
 Vector *BaseAlignFeature_parseCigar(BaseAlignFeature *baf);
 Vector *BaseAlignFeature_transformSliceToRawContig(BaseAlignFeature *baf);
-int BaseAlignFeature_getHitUnit(BaseAlignFeature *baf);
-int BaseAlignFeature_getQueryUnit(BaseAlignFeature *baf);
+int BaseAlignFeature_getHitUnit(void);
+int BaseAlignFeature_getQueryUnit(void);
 Vector *BaseAlignFeature_transformFeatureSliceToRawContig(BaseAlignFeature *baf, FeaturePair *fp);
 Vector *BaseAlignFeature_getUngappedFeatures(BaseAlignFeature *baf);
 void BaseAlignFeature_reverseComplement(BaseAlignFeature *baf);
 int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features);
-
-
 
 
 
@@ -106,9 +109,9 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features);
                              NULL, // setSeq
                              NULL, // getLength
                              BaseAlignFeature_reverseComplement,
-                             SeqFeature_transformToRawContig,
-                             SeqFeature_transformToSlice,
-                             SeqFeature_transformRawContigToSlice, // Que???
+                             (BaseAlignFeature_TransformToRawContigFunc)SeqFeature_transformToRawContig,
+                             (BaseAlignFeature_TransformToSliceFunc)SeqFeature_transformToSlice,
+                             (BaseAlignFeature_TransformRawContigToSliceFunc)SeqFeature_transformRawContigToSlice, // Que???
                              BaseAlignFeature_transformSliceToRawContig,
                              NULL, // transformSliceToSlice
                              BaseAlignFeature_getHitUnit,

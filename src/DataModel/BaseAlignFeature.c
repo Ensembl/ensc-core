@@ -90,8 +90,8 @@ void BaseAlignFeature_reverseComplement(BaseAlignFeature *baf) {
 }
 
 Vector *BaseAlignFeature_parseCigar(BaseAlignFeature *baf) {
-  int queryUnit = BaseAlignFeature_getQueryUnit(baf);
-  int hitUnit   = BaseAlignFeature_getHitUnit(baf);
+  int queryUnit = BaseAlignFeature_getQueryUnit();
+  int hitUnit   = BaseAlignFeature_getHitUnit();
   char *string  = BaseAlignFeature_getCigarString(baf);
   Vector *features;
   int strand1;
@@ -253,8 +253,8 @@ Vector *BaseAlignFeature_parseCigar(BaseAlignFeature *baf) {
 
 
 int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
-  int queryUnit = BaseAlignFeature_getQueryUnit(baf);
-  int hitUnit   = BaseAlignFeature_getHitUnit(baf);
+  int queryUnit = BaseAlignFeature_getQueryUnit();
+  int hitUnit   = BaseAlignFeature_getHitUnit();
   int f1Start;
   int f1End;
   int f2Start;
@@ -597,6 +597,8 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
   BaseAlignFeature_setHitSeqName(baf, hname);
 
   BaseAlignFeature_setCigarString(baf, string);
+
+  return 1;
 }
 
 
@@ -681,20 +683,22 @@ Vector *BaseAlignFeature_transformSliceToRawContig(BaseAlignFeature *baf) {
   return out;
 }
 
-int BaseAlignFeature_getHitUnit(BaseAlignFeature *baf) {
+int BaseAlignFeature_getHitUnit(void) {
   fprintf(stderr, "Error: Abstract method call!" );
   exit(1);
+  return 0;
 }
 
 
-int BaseAlignFeature_getQueryUnit(BaseAlignFeature *baf) {
+int BaseAlignFeature_getQueryUnit(void) {
   fprintf(stderr, "Error: Abstract method call!" );
   exit(1);
+  return 0;
 }
 
 Vector *BaseAlignFeature_transformFeatureSliceToRawContig(BaseAlignFeature *baf, FeaturePair *fp) {
-  int queryUnit = BaseAlignFeature_getQueryUnit(baf);
-  int hitUnit   = BaseAlignFeature_getHitUnit(baf);
+  int queryUnit = BaseAlignFeature_getQueryUnit();
+  int hitUnit   = BaseAlignFeature_getHitUnit();
   Slice *slice = (Slice *)FeaturePair_getContig(fp);
   Slice *bafSlice = (Slice *)BaseAlignFeature_getContig(baf);
   SliceAdaptor *sa;

@@ -541,3 +541,29 @@ int StrUtil_gettok(char *str,char **out_pp,char *in_p,int MaxLen) {
   return 1; 
 }
 
+char *StrUtil_substr(char *from, int start, int length) {
+  int lenFrom = strlen(from);
+  int end;
+  char *toString;
+
+  if (start > lenFrom) {
+    fprintf(stderr,"Error: substr called with start greater than length of string start=%d str=%s\n",start,from);
+    exit(1);
+  }
+  if (length > 0) {
+    end = start + length - 1;
+    if (end >= lenFrom) {
+      end = lenFrom-1;
+    }
+  } else if (length == 0) {
+    end = start-1;
+  } else { // length is negative
+    end = lenFrom+length-1;
+    if (end < start) {
+      fprintf(stderr,"Error: substr called with negative length which resulted in end < start start=%d length=%d str=%s\n",
+              start, length, from);
+      exit(1);
+    }
+  }
+  return StrUtil_copyNString(&toString, from, start, end-start+1);
+}

@@ -4,7 +4,15 @@
 #include "DataModelTypes.h"
 #include "BaseAlignFeature.h"
 
-#define FUNCSTRUCTTYPE BaseAlignFeatureFuncs
+BASEALIGNFEATUREFUNC_TYPES(DNAAlignFeature)
+
+typedef struct DNAAlignFeatureFuncsStruct {
+  BASEALIGNFEATUREFUNCS_DATA(DNAAlignFeature)
+} DNAAlignFeatureFuncs;
+  
+
+
+#define FUNCSTRUCTTYPE DNAAlignFeatureFuncs
 struct DNAAlignFeatureStruct {
   BASEALIGNFEATURE_DATA
 };
@@ -59,7 +67,7 @@ int DNAAlignFeature_getQueryUnit(void);
 
 
 #ifdef __DNAALIGNFEATURE_MAIN__
-  BaseAlignFeatureFuncs 
+  DNAAlignFeatureFuncs 
     dnaAlignFeatureFuncs = {
                              NULL, // getStart
                              NULL, // setStart
@@ -70,17 +78,17 @@ int DNAAlignFeature_getQueryUnit(void);
                              NULL, // getSeq
                              NULL, // setSeq
                              NULL, // getLength
-                             BaseAlignFeature_reverseComplement,
-                             SeqFeature_transformToRawContig,
-                             SeqFeature_transformToSlice,
-                             SeqFeature_transformRawContigToSlice,
-                             BaseAlignFeature_transformSliceToRawContig,
+                             (DNAAlignFeature_ReverseComplementFunc)BaseAlignFeature_reverseComplement,
+                             (DNAAlignFeature_TransformToRawContigFunc)SeqFeature_transformToRawContig,
+                             (DNAAlignFeature_TransformToSliceFunc)SeqFeature_transformToSlice,
+                             (DNAAlignFeature_TransformRawContigToSliceFunc)SeqFeature_transformRawContigToSlice,
+                             (DNAAlignFeature_TransformSliceToRawContigFunc)BaseAlignFeature_transformSliceToRawContig,
                              NULL, // transformSliceToSlice
                              DNAAlignFeature_getHitUnit,
                              DNAAlignFeature_getQueryUnit
                             };
 #else 
-  extern BaseAlignFeatureFuncs dnaAlignFeatureFuncs;
+  extern DNAAlignFeatureFuncs dnaAlignFeatureFuncs;
 #endif
 
 #endif

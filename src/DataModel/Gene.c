@@ -69,15 +69,13 @@ char *Gene_setType(Gene *g, char *type) {
   return g->type;
 }
 
-int Gene_setStart(SeqFeature *sf, int start) {
-  Gene *gene = (Gene *)sf;
+int Gene_setStart(Gene *gene, int start) {
   gene->start = start;
   Gene_setStartIsSet(gene,TRUE);
   return gene->start;
 }
 
-int Gene_getStart(SeqFeature *sf) {
-  Gene *gene = (Gene *)sf;
+int Gene_getStart(Gene *gene) {
   int multiFlag = 0;
 
   if (Gene_getStartIsSet(gene) == FALSE) {
@@ -110,15 +108,13 @@ int Gene_getStart(SeqFeature *sf) {
   return gene->start;
 }
 
-int Gene_setEnd(SeqFeature *sf, int end) {
-  Gene *gene = (Gene *)sf;
+int Gene_setEnd(Gene *gene, int end) {
   gene->end = end;
   Gene_setEndIsSet(gene,TRUE);
   return gene->end;
 }
 
-int Gene_getEnd(SeqFeature *sf) {
-  Gene *gene = (Gene *)sf;
+int Gene_getEnd(Gene *gene) {
   int multiFlag = 0;
 
   if (Gene_getEndIsSet(gene) == FALSE) {
@@ -151,15 +147,13 @@ int Gene_getEnd(SeqFeature *sf) {
   return gene->end;
 }
 
-int Gene_setStrand(SeqFeature *sf, int strand) {
-  Gene *gene = (Gene *)sf;
+int Gene_setStrand(Gene *gene, int strand) {
   gene->strand = strand;
   Gene_setStrandIsSet(gene,TRUE);
   return gene->strand;
 }
 
-int Gene_getStrand(SeqFeature *sf) {
-  Gene *gene = (Gene *)sf;
+int Gene_getStrand(Gene *gene) {
   int multiFlag = 0;
 
   if (Gene_getStrandIsSet(gene) == FALSE) {
@@ -183,14 +177,16 @@ int Gene_getStrand(SeqFeature *sf) {
       lastContig =  BaseContig_getName(Exon_getContig(exon));
     }
 
-    Vector_free(exonVector,NULL);
 
     if (multiFlag) {
       fprintf(stderr, "WARNING: Gene_getStrand - Gene spans multiple contigs."
                   "The return value from getStrand may not be what you want");
+      Vector_free(exonVector,NULL);
       return 0;
     }
+
     Gene_setStrand(gene, Exon_getStrand((Exon *)Vector_getElementAt(exonVector,0)));
+    Vector_free(exonVector,NULL);
   }
 
   return gene->strand;
@@ -247,7 +243,7 @@ Gene *Gene_transformToSlice(Gene *gene, Slice *slice) {
     // need to grab the translation before starting to
     // re-jiggle the exons
 
-    Transcript_transformToSlice(trans, exonTransforms);
+    Transcript_transform(trans, exonTransforms);
   }
 
   // unset the start, end, and strand - they need to be recalculated
@@ -265,6 +261,7 @@ Gene *Gene_transformToSlice(Gene *gene, Slice *slice) {
 }
 
 Gene *Gene_transformToRawContig(Gene *gene) {
+  IDHash *exonTransforms = IDHash_new(IDHASH_SMALL);
   int i;
   Vector *exons = Gene_getAllExons(gene);
 
@@ -273,6 +270,7 @@ Gene *Gene_transformToRawContig(Gene *gene) {
     Exon *exon = Vector_getElementAt(exons,i);
      
     Exon *newExon = Exon_transformToRawContig(exon);
+    IDHash_add(exonTransforms, (IDType)exon, newExon);
   }
 
   // now need to re-jiggle the transcripts and their
@@ -284,16 +282,20 @@ Gene *Gene_transformToRawContig(Gene *gene) {
     // need to grab the translation before starting to
     // re-jiggle the exons
 
-    Transcript_transformToRawContig(trans);
+// Transcript transforming is ODD
+    Transcript_transform(trans, exonTransforms);
   }
 
-#ifdef DONE
   // unset the start, end, and strand - they need to be recalculated
-  $self->{start} = undef;
-  $self->{end} = undef;
-  $self->{strand} = undef;
+  Gene_setStartIsSet(gene,FALSE);
+  Gene_setEndIsSet(gene,FALSE);
+  Gene_setStrandIsSet(gene,FALSE);
+
+#ifdef DONE
   $self->{_chr_name} = undef;
 #endif
+
+  IDHash_free(exonTransforms, NULL);
 
   return gene;
 }
