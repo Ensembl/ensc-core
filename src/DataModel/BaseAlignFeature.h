@@ -20,6 +20,7 @@ char *BaseAlignFeature_setCigarString(BaseAlignFeature *fp, char *ciggy);
 #define BaseAlignFeature_getStableId(fp)  SeqFeature_getStableId(&((fp)->sf1))
 
 char *BaseAlignFeature_setCigarString(BaseAlignFeature *fp, char *hid);
+
 #define BaseAlignFeature_getHitId(fp)  (fp)->hitId
 
 #define BaseAlignFeature_setStart(fp,start) SeqFeature_setStart(&((fp)->sf1),(start))

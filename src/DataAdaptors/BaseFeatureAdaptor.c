@@ -205,7 +205,7 @@ Set *BaseFeatureAdaptor_fetchAllBySliceAndScore(BaseFeatureAdaptor *bfa, Slice *
 Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice *slice,
                                                   char *constraint, char *logicName) {
 
-  char cacheKey[256];
+  char cacheKey[EXTREMELEN];
   void *val;
   Set *features;
   Set *out;
@@ -225,6 +225,7 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice
   // check the cache and return if we have already done this query
 
   sprintf(cacheKey,"%s%s%s",Slice_getName(slice), constraint, logicName);
+  printf("cacheKey = %s\n",cacheKey);
   StrUtil_strupr(cacheKey);
 
   if ((val = Cache_findElem(bfa->sliceFeatureCache, cacheKey)) != NULL) {
@@ -288,7 +289,7 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice
     SeqFeature *sf = (SeqFeature *)Set_getElementAt(features,0);
     if (bfa->adaptorType == PREDICTIONTRANSCRIPT_ADAPTOR || SeqFeature_getContig(sf) == (BaseContig *)slice) {
       // features have been converted to slice coords already, cache and return
-      Cache_addElement(bfa->sliceFeatureCache, out);
+      Cache_addElement(bfa->sliceFeatureCache, cacheKey, out, NULL);
       return features;
     }
   } 
@@ -334,7 +335,7 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice
   }
     
   //update the cache
-  Cache_addElement(bfa->sliceFeatureCache, out);
+  Cache_addElement(bfa->sliceFeatureCache, cacheKey, out, NULL);
   return out;
 }
 

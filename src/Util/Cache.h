@@ -26,6 +26,8 @@ void Cache_empty(Cache *cache);
 
 
 CacheElement *CacheElement_new(char *key, void *val, Cache_FreeFunc freeFunc);
+int Cache_addElement(Cache *cache, char *key, void *data, Cache_FreeFunc freeFunc);
+
 int CacheElement_free(CacheElement *ce);
 
 #endif

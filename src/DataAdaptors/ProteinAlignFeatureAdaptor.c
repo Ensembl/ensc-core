@@ -25,49 +25,72 @@ ProteinAlignFeatureAdaptor *ProteinAlignFeatureAdaptor_new(DBAdaptor *dba) {
 }
 
 int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
-/*
-   my ($self ,@sf) = @_;
+  char qStr[512];
+  StatementHandle *sth;
+  int i;
+  
+  if (!Set_getNumElement(features)) {
+    fprintf(stderr, "Warning: ProteinAlignFeatureAdaptor_store called with no features\n");
+    return 0;
+  }
+  
 
-   if( scalar(@sf) == 0 ) {
-       $self->throw("Must call store with list of sequence features");
-   }
 
-   my $sth = $self->prepare(
-        "INSERT INTO protein_align_feature(contig_id, contig_start, contig_end,
-                                           contig_strand, hit_start, hit_end,
-                                           hit_name, cigar_line, analysis_id,
-                                           score, evalue, perc_ident) 
-         VALUES (?,?,?,?,?,?,?,?,?,?, ?, ?)");
+  sprintf(qStr,"INSERT INTO protein_align_feature(contig_id, contig_start, contig_end,"
+                       "contig_strand, hit_start, hit_end,hit_name," 
+                       "cigar_line, analysis_id,score, evalue, perc_ident) "
+                       "VALUES (%" INT64FMTSTR ",%%d,%%d,%%d,%%d,%%d,'%%s','%%s',%" 
+                                INT64FMTSTR ",%%f,%%f,%%f)");
 
-   foreach my $sf ( @sf ) {
-     if( !ref $sf || !$sf->isa("Bio::EnsEMBL::DnaPepAlignFeature") ) {
-       $self->throw("Feature must be a Bio::EnsEMBL::DnaPepAlignFeature, " .
-                    "not a [$sf]");
-     }
+  sth = bfa->prepare((BaseAdaptor *)bfa, qStr,strlen(qStr));
+  printf("%s\n",qStr);
+
+  for (i=0; i<Set_getNumElement(features); i++) {
+    DNAPepAlignFeature *sf = Set_getElementAt(features, i);
+    Analysis *analysis = DNAPepAlignFeature_getAnalysis(sf);
+    AnalysisAdaptor *aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
+    RawContig *contig;
+
+/* NIY
+    if( !ref $sf || !$sf->isa("Bio::EnsEMBL::DNAPepAlignFeature") ) {
+      $self->throw("Feature must be a Bio::EnsEMBL::DNAPepAlignFeature, " .
+                   "not a [$sf]");
+    }
+*/
      
-     if( !defined $sf->analysis ) {
-       $self->throw("Cannot store sequence features without analysis");
-     }
+    if (!analysis) {
+      fprintf(stderr,"Cannot store sequence features without analysis");
+      exit(1);
+    }
 
-     # will only store if object is not already stored in this database
-     $self->db()->get_AnalysisAdaptor()->store( $sf->analysis() );
+    // will only store if object is not already stored in this database
+    //AnalysisAdaptor_store(analysis);
 
-     my $contig = $sf->entire_seq();
-     #print STDERR $contig."\n";
+    contig = DNAPepAlignFeature_getContig(sf);
+
+/* NIY
      unless(defined $contig && $contig->isa("Bio::EnsEMBL::RawContig")) { 
        $self->throw("Cannot store feature without Contig attached via " .
                     "attach_seq\n");
      }   
-     
-     $sth->execute($contig->dbID(), $sf->start, $sf->end,
-                   $sf->strand, $sf->hstart, $sf->hend,
-                   $sf->hseqname, $sf->cigar_string, $sf->analysis->dbID,
-                   $sf->score, $sf->p_value, $sf->percent_id);
-     
-     $sf->dbID($sth->{'mysql_insertid'});
-   }
 */
-
+     
+    sth->execute(sth, (long long)RawContig_getDbID(contig), 
+                      DNAPepAlignFeature_getStart(sf), 
+                      DNAPepAlignFeature_getEnd(sf), 
+                      DNAPepAlignFeature_getStrand(sf), 
+                      DNAPepAlignFeature_getHitStart(sf), 
+                      DNAPepAlignFeature_getHitEnd(sf),
+                      DNAPepAlignFeature_getHitId(sf), 
+                      DNAPepAlignFeature_getCigarString(sf),
+                      (long long)Analysis_getDbID(analysis),
+                      DNAPepAlignFeature_getScore(sf), 
+                      DNAPepAlignFeature_getEValue(sf), 
+                      DNAPepAlignFeature_getPercId(sf));
+     
+    //DNAPepAlignFeature_setDbID(sth->getInsertId());
+  }
+  return 1;
 }
 
 
