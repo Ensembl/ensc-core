@@ -9,7 +9,11 @@ CFLAGS = -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic 
 
 BINDIR=../bin
 
-all	: libensc.a Tests/EcoStringTest
+all	: directories libensc.a Tests/EcoStringTest Tests/StreamTest
+
+directories	:
+	mkdir -p objectfiles/{DataAdaptors,DataModel,Util,Programs,Tests}
+	mkdir -p objectfiles/DataModel/{Basic,Mapper}
 
 objectfiles/%.o: %.c
 	$(CC) -c $(CFLAGS) -o $@ $<
@@ -73,6 +77,11 @@ Tests/EcoStringTest: \
 	libensc.a \
 	Tests/EcoStringTest.c
 	cc $(CFLAGS) -o Tests/EcoStringTest Tests/EcoStringTest.c -L. -lensc
+
+Tests/StreamTest: \
+	libensc.a \
+	Tests/StreamTest.c
+	cc $(CFLAGS) -o Tests/StreamTest Tests/StreamTest.c -L. -lensc
 
 # deletes compiled class files
 clean	:	
