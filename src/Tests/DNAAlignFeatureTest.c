@@ -38,7 +38,6 @@ int main(int argc, char *argv[]) {
     Vector *ungapped;
     char *oldCigar = DNAAlignFeature_getCigarString(daf);
 
-    printf("in loop hit strand = %d\n",DNAAlignFeature_getHitStrand(daf));
     ungapped = DNAAlignFeature_getUngappedFeatures((BaseAlignFeature *)daf);
     if (!ungapped) failed = 1;
     printf(" cigar = %s num ungapped %d\n",DNAAlignFeature_getCigarString(daf), Vector_getNumElement(ungapped));

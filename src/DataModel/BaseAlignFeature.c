@@ -36,7 +36,6 @@ Vector *BaseAlignFeature_getUngappedFeatures(BaseAlignFeature *baf) {
   Vector *features;
 
   if (BaseAlignFeature_getCigarString(baf)) {
-    printf("hit strand in getUngappedFeatures %d\n",BaseAlignFeature_getHitStrand(baf));
     features = BaseAlignFeature_parseCigar(baf);
     return features;
   } else {
@@ -105,7 +104,6 @@ Vector *BaseAlignFeature_parseCigar(BaseAlignFeature *baf) {
  
   *pieceP = '\0';
 
-        printf("baf  hit strand in parseCigar =  %d\n",BaseAlignFeature_getHitStrand(baf));
 
   if (!string) {
     fprintf(stderr, "Error: No cigar string defined in object.  This should be caught"
@@ -209,10 +207,8 @@ Vector *BaseAlignFeature_parseCigar(BaseAlignFeature *baf) {
         FeaturePair_setHitStart(fp,a);
         FeaturePair_setHitEnd(fp,b);
         FeaturePair_setHitStrand(fp, BaseAlignFeature_getHitStrand(baf));
-        printf("Set featurepair hit strand from %d to %d\n",BaseAlignFeature_getHitStrand(baf), FeaturePair_getHitStrand(fp));
   // NIY memory
         FeaturePair_setHitSeqName(fp, BaseAlignFeature_getHitSeqName(baf));
-        printf("Set featurepair hit seqname from %s to %s\n",BaseAlignFeature_getHitSeqName(baf), FeaturePair_getHitSeqName(fp));
   
         FeaturePair_setContig(fp,BaseAlignFeature_getContig(baf));
         FeaturePair_setAnalysis(fp,BaseAlignFeature_getAnalysis(baf));
@@ -397,7 +393,6 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
               name, FeaturePair_getSeqName(f));
       exit(1);
     }
-    printf("hname = %s\n",hname);
     if (strcmp(hname,FeaturePair_getHitSeqName(f))) {
       fprintf(stderr,"Error: Inconsistent hnames in feature array [%s - %s]\n", 
               hname, FeaturePair_getHitSeqName(f));

@@ -18,6 +18,7 @@ all	: directories \
           Tests/ClassTest \
           Tests/DBAdaptorTest \
           Tests/DNAAlignFeatureTest \
+          Tests/DNAPepAlignFeatureTest \
           Tests/EcoStringTest \
           Tests/SeqUtilTest \
           Tests/SliceAdaptorTest \
@@ -149,6 +150,11 @@ Tests/DNAAlignFeatureTest: \
 	libensc.a \
 	Tests/DNAAlignFeatureTest.c
 	$(CC) $(CFLAGS) -o Tests/DNAAlignFeatureTest Tests/DNAAlignFeatureTest.c -L. -lensc $(LDFLAGS)
+
+Tests/DNAPepAlignFeatureTest: \
+	libensc.a \
+	Tests/DNAPepAlignFeatureTest.c
+	$(CC) $(CFLAGS) -o Tests/DNAPepAlignFeatureTest Tests/DNAPepAlignFeatureTest.c -L. -lensc $(LDFLAGS)
 
 Tests/EcoStringTest: \
 	libensc.a \

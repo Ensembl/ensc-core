@@ -42,8 +42,8 @@ DNAPepAlignFeature *DNAPepAlignFeature_new(void);
 #define DNAPepAlignFeature_setStrand(fp,strand) BaseAlignFeature_setStrand((fp),(strand))
 #define DNAPepAlignFeature_getStrand(fp) BaseAlignFeature_getStrand((fp))
 
-#define DNAPepAlignFeature_setHitStrand(fp,strand) BaseAlignFeature_setStrand((fp),(strand))
-#define DNAPepAlignFeature_getHitStrand(fp) BaseAlignFeature_getStrand((fp))
+#define DNAPepAlignFeature_setHitStrand(fp,strand) BaseAlignFeature_setHitStrand((fp),(strand))
+#define DNAPepAlignFeature_getHitStrand(fp) BaseAlignFeature_getHitStrand((fp))
 
 #define DNAPepAlignFeature_setDbID(fp,dbID) BaseAlignFeature_setDbID((fp),(dbID))
 #define DNAPepAlignFeature_getDbID(fp) BaseAlignFeature_getDbID((fp))

@@ -19,7 +19,6 @@ FeaturePair *FeaturePair_new(void) {
 }
 
 char *FeaturePair_setHitSeqName(FeaturePair *fp, char *str) {
-  printf("Setting hit name to %s\n",str);
   fp->hitId = StrUtil_copyString(&(fp->hitId),str,0);
 
   return fp->hitId;
