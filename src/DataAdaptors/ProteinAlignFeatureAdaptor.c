@@ -1,7 +1,7 @@
 #include "ProteinAlignFeatureAdaptor.h"
 
 
-char ***ProteinAlignFeatureAdaptor_tableNames = {{"protein_align_feature","paf"}};
+NameTableType ProteinAlignFeatureAdaptor_tableNames = {{"protein_align_feature","paf"},{NULL,NULL}};
 
 ProteinAlignFeatureAdaptor *ProteinAlignFeatureAdaptor_new(DBAdaptor *dba) {
   ProteinAlignFeatureAdaptor *pafa;
@@ -67,8 +67,8 @@ int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *baf, Set *features) {
 }
 
 
-char ***ProteinAlignFeatureAdaptor_getTables() {
-  return ProteinAlignFeatureAdaptor_tableNames;
+NameTableType *ProteinAlignFeatureAdaptor_getTables() {
+  return &ProteinAlignFeatureAdaptor_tableNames;
 }
 
 char *ProteinAlignFeatureAdaptor_getColumns() {

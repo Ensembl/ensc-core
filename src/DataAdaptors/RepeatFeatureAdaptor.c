@@ -1,8 +1,9 @@
 #include "RepeatFeatureAdaptor.h"
 
 
-char ***RepeatFeatureAdaptor_tableNames = {{"repeat_feature","r"},
-                                           {"repeat_consensus","rc"}};
+NameTableType RepeatFeatureAdaptor_tableNames = {{"repeat_feature","r"},
+                                                 {"repeat_consensus","rc"},
+                                                 {NULL,NULL}};
 
 RepeatFeatureAdaptor *RepeatFeatureAdaptor_new(DBAdaptor *dba) {
   RepeatFeatureAdaptor *rfa;
@@ -130,8 +131,8 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *baf, Set *features) {
 */
 }
 
-char ***RepeatFeatureAdaptor_getTables() {
-  return RepeatFeatureAdaptor_tableNames;
+NameTableType *RepeatFeatureAdaptor_getTables() {
+  return &RepeatFeatureAdaptor_tableNames;
 }
 
 char *RepeatFeatureAdaptor_getColumns() {
@@ -151,8 +152,9 @@ char *RepeatFeatureAdaptor_getColumns() {
 }
 
 Set *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf,
-                                                     StatementHandle *sth) {
-sub _objs_from_sth {
+                                                     StatementHandle *sth,
+                                                     AssemblyMapper *mapper,
+                                                     Slice *slice) {
   my ($self, $sth) = @_;
 
   my $rca = $self->db()->get_RepeatConsensusAdaptor();

@@ -1,7 +1,8 @@
 #include "PredictionTranscriptAdaptor.h"
 
 
-char ***PredictionTranscriptAdaptor_tableNames = {{"prediction_transcript","p"}};
+NameTableType PredictionTranscriptAdaptor_tableNames = {{"prediction_transcript","p"},
+                                                        {NULL,NULL}};
 
 PredictionTranscriptAdaptor *PredictionTranscriptAdaptor_new(DBAdaptor *dba) {
   PredictionTranscriptAdaptor *pta;
@@ -91,8 +92,8 @@ int PredictionTranscriptAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
 }
 
 
-char ***PredictionTranscriptAdaptor_getTables() {
-  return PredictionTranscriptAdaptor_tableNames;
+NameTableType *PredictionTranscriptAdaptor_getTables() {
+  return &PredictionTranscriptAdaptor_tableNames;
 }
 
 char *PredictionTranscriptAdaptor_getColumns() {

@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
     Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);
-    Set *sSet = Slice_getAllSimpleFeatures(slice,NULL,NULL);
+    Set *sSet = Slice_getAllSimpleFeatures(slice,"",NULL);
     int i;
 
     for (i=0;i<Set_getNumElement(sSet);i++) {

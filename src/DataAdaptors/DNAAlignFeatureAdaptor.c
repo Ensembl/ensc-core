@@ -1,7 +1,7 @@
 #include "DNAAlignFeatureAdaptor.h"
 
 
-char ***DNAAlignFeatureAdaptor_tableNames = {{"dna_align_feature","daf"}};
+NameTableType DNAAlignFeatureAdaptor_tableNames = {{"dna_align_feature","daf"},{NULL, NULL}};
 
 DNAAlignFeatureAdaptor *DNAAlignFeatureAdaptor_new(DBAdaptor *dba) {
   DNAAlignFeatureAdaptor *dafa;
@@ -67,8 +67,8 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
 }
 
 
-char ***DNAAlignFeatureAdaptor_getTables() {
-  return DNAAlignFeatureAdaptor_tableNames;
+NameTableType *DNAAlignFeatureAdaptor_getTables() {
+  return &DNAAlignFeatureAdaptor_tableNames;
 }
 
 char *DNAAlignFeatureAdaptor_getColumns() {
@@ -202,7 +202,6 @@ Set *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
                      '_database_id'   =>  $dna_align_feature_id}); 
 
     }
-    
   }
   
   return \@features;

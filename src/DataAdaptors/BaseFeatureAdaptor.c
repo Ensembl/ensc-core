@@ -28,6 +28,7 @@ void BaseFeatureAdaptor_init(BaseFeatureAdaptor *bfa, DBAdaptor *dba, int adapto
 
 Set *BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *bfa, char *constraint,
                                      char *logicName, AssemblyMapper *mapper, Slice *slice) {
+/* HACK HACK HACK */
   char qStr[65500]; 
   NameTableType *tables = bfa->getTables();
   char *columns = bfa->getColumns();
@@ -41,9 +42,9 @@ Set *BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *bfa, char *constraint,
   int i;
   
   allConstraints[0] = '\0';
-  if (constraint) strcpy(allConstraints,constraint);
+  if (constraint[0]) strcpy(allConstraints,constraint);
   
-  if (logicName) {
+  if (logicName[0]) {
     AnalysisAdaptor *aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
     Analysis *analysis;
     char *syn;
@@ -62,7 +63,7 @@ Set *BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *bfa, char *constraint,
     // get the synonym for the primary table
     syn = (*tables)[0][SYN];
 
-    if(constraint) {
+    if (constraint[0]) {
       sprintf(allConstraints,"%s  AND %s.analysis_id = " INT64FMTSTR, constraint, syn, analysisId);
     } else {
       sprintf(allConstraints," %s.analysis_id = " INT64FMTSTR, syn, analysisId);
@@ -102,17 +103,17 @@ Set *BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *bfa, char *constraint,
     printf("qStr = %s allConstraints = %s\n",qStr,allConstraints);
     sprintf(tmpStr," where %s", allConstraints);
     strcat(qStr,tmpStr);
-    if (bfa->defaultWhereClause()) {
+    if ((bfa->defaultWhereClause())[0]) {
       sprintf(tmpStr," and %s", bfa->defaultWhereClause());
       strcat(qStr,tmpStr);
     }
-  } else if (bfa->defaultWhereClause()) {
+  } else if ((bfa->defaultWhereClause())[0]) {
     sprintf(tmpStr," where %s", bfa->defaultWhereClause());
     strcat(qStr,tmpStr);
   }
 
   //append additional clauses which may have been defined
-  if (bfa->finalClause()) strcat(qStr, bfa->finalClause());
+  if ((bfa->finalClause())[0]) strcat(qStr, bfa->finalClause());
 
   sth = bfa->prepare((BaseAdaptor *)bfa,qStr,strlen(qStr));
   sth->execute(sth);  
@@ -133,7 +134,7 @@ SeqFeature *BaseFeatureAdaptor_fetchByDbID(BaseFeatureAdaptor *bfa, int64 dbID) 
   sprintf(constraintStr,"%s.%s_id = " INT64FMTSTR, (*tables)[0][SYN], (*tables)[0][NAME], dbID);
 
   //return first element of _generic_fetch list
-  features = BaseFeatureAdaptor_genericFetch(bfa, constraintStr, NULL, NULL, NULL);
+  features = BaseFeatureAdaptor_genericFetch(bfa, constraintStr, "", NULL, NULL);
   sf = Set_getElementAt(features, 0);
 // NIY free func
   Set_free(features, NULL);
@@ -154,7 +155,7 @@ Set *BaseFeatureAdaptor_fetchAllByRawContigConstraint(BaseFeatureAdaptor *bfa, R
 
   cid = RawContig_getDbID(contig);
 
-  if (constraint) {
+  if (constraint[0]) {
     sprintf(allConstraints,"%s AND %s.contig_id = " INT64FMTSTR, constraint, (*tables)[0][SYN], cid);
   } else {
     sprintf(allConstraints,"%s.contig_id = " INT64FMTSTR, (*tables)[0][SYN], cid);
@@ -165,7 +166,7 @@ Set *BaseFeatureAdaptor_fetchAllByRawContigConstraint(BaseFeatureAdaptor *bfa, R
 
 Set *BaseFeatureAdaptor_fetchAllByRawContig(BaseFeatureAdaptor *bfa, RawContig *contig,
                                             char *logicName) {
-  return BaseFeatureAdaptor_fetchAllByRawContigConstraint(bfa,contig,NULL,logicName);
+  return BaseFeatureAdaptor_fetchAllByRawContigConstraint(bfa,contig,"",logicName);
 }
 
 Set *BaseFeatureAdaptor_fetchAllByRawContigAndScore(BaseFeatureAdaptor *bfa, RawContig *contig,
@@ -184,7 +185,7 @@ Set *BaseFeatureAdaptor_fetchAllByRawContigAndScore(BaseFeatureAdaptor *bfa, Raw
 
 Set *BaseFeatureAdaptor_fetchAllBySlice(BaseFeatureAdaptor *bfa, Slice *slice,
                                         char *logicName) {
-  return BaseFeatureAdaptor_fetchAllBySliceConstraint(bfa, slice, NULL, logicName);
+  return BaseFeatureAdaptor_fetchAllBySliceConstraint(bfa, slice, "", logicName);
 }
 
 Set *BaseFeatureAdaptor_fetchAllBySliceAndScore(BaseFeatureAdaptor *bfa, Slice *slice,
@@ -198,8 +199,7 @@ Set *BaseFeatureAdaptor_fetchAllBySliceAndScore(BaseFeatureAdaptor *bfa, Slice *
     sprintf(constraintStr,"%s.score > %f",(*tables)[0][SYN], *scoreP);
   }
 
-  //return BaseFeatureAdaptor_fetchAllBySliceConstraint(bfa, slice, constraintStr, logicName);
-  return BaseFeatureAdaptor_fetchAllBySliceConstraint(bfa, slice, NULL, logicName);
+  return BaseFeatureAdaptor_fetchAllBySliceConstraint(bfa, slice, constraintStr, logicName);
 }  
 
 Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice *slice,
@@ -251,7 +251,7 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice
   }
 
   //construct the SQL constraint for the contig ids 
-  if (constraint) {
+  if (constraint[0]) {
     sprintf(tmpStr,"%s AND %s.contig_id IN (", constraint, (*tables)[0][SYN]);
   } else {
     sprintf(tmpStr,"%s.contig_id IN (", (*tables)[0][SYN]);
@@ -401,7 +401,7 @@ char *BaseFeatureAdaptor_getColumns(void) {
 
 /* Actually added to default where */
 char *BaseFeatureAdaptor_defaultWhereClause(void) {
-  return NULL;
+  return "";
 }
 
 /* Overridden in Markers and Qtls (not implemented in C) */
@@ -411,7 +411,7 @@ char **BaseFeatureAdaptor_leftJoin(void) {
 
 /* Overridden in PredictionTranscriptAdaptor */
 char *BaseFeatureAdaptor_finalClause(void) {
-  return NULL;
+  return "";
 }
 
 Set *BaseFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa, StatementHandle *sth, 
