@@ -143,7 +143,7 @@ int main(int argc, char **argv){
   bi = BioIndex_generate_flat(index_dir,data_dir,file_prefix,data_dir,primary_def,
                               secondary_defs); 
 
-  printf("Completed Indexing");
+  printf("Completed Indexing\n");
   return 0;
 }
 
