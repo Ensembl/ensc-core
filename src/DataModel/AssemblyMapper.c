@@ -49,7 +49,7 @@ MapperRangeSet *AssemblyMapper_mapCoordinatesToAssembly(AssemblyMapper *am, long
 
 int AssemblyMapper_fastToAssembly(AssemblyMapper *am, long contigId, 
                                   int start, int end, int strand, MapperCoordinate *retRange) {
-  if( !IDHash_contains(AssemblyMapper_getContigRegister(am), contigId)) {
+  if (!IDHash_contains(AssemblyMapper_getContigRegister(am), contigId)) {
     AssemblyMapper_registerRegionAroundContig(am,contigId, 0, 0 );
   }
 
@@ -82,13 +82,14 @@ int AssemblyMapper_listContigIds(AssemblyMapper *am, long chrId, int start, int 
     exit(1);
   }
   
+  nPair = MapperPairSet_getNumPair(pairs);
   for (i=0;i<MapperPairSet_getNumPair(pairs);i++) {
     (*ids)[i] = MapperPair_getUnit(MapperPairSet_getPairAt(pairs,i),MAPPER_FROM_IND)->id;
   }
 
- // NIY free pairs 
+  MapperPairSet_free(pairs,FALSE);
 
-  return MapperPairSet_getNumPair(pairs);
+  return nPair;
 }
 
 

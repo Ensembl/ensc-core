@@ -13,6 +13,8 @@ Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
     return NULL;
   }
 
+  slice->contigType = SLICE;
+
   if (!empty) {
     if( !chr || !assemblyType) {
       fprintf(stderr,"ERROR: Do not have all the parameters for slice\n");
@@ -60,8 +62,9 @@ char *Slice_getName(Slice *slice, char *retStr) {
 /* logicName is optional - set to NULL if you want them all */
 Gene **Slice_getAllGenes(Slice *slice, char *logicName) {
   GeneAdaptor *ga = DBAdaptor_getGeneAdaptor(Slice_getAdaptor(slice)->dba);
+  Gene **genes;
 
-  return GeneAdaptor_fetchAllBySlice(ga,slice,logicName);
+  return GeneAdaptor_fetchAllBySlice(ga,slice,logicName,&genes);
 }
 
 char *Slice_setChrName(Slice *sl, char *chrName) {

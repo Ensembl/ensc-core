@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
   }
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
-    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,1500000);
+    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,10000000);
     Gene **genes = Slice_getAllGenes(slice,NULL);
   }
   {

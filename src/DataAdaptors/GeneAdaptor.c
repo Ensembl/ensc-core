@@ -250,8 +250,8 @@ int GeneAdaptor_getStableEntryInfo(GeneAdaptor *ga, Gene *gene) {
 }
 
 
-Gene **GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName) {
-  Gene **out;
+int GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName, Gene ***outP) {
+  Gene **out = *outP;
   char sliceName[256];
   char sliceCacheKey[512];
   AssemblyMapperAdaptor *ama;
@@ -259,6 +259,9 @@ Gene **GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNam
   long *contigIds;
   int nContigId;
   int i;
+  char *qStr;
+  MYSQL_RES *results;
+  MYSQL_ROW row;
 
   if (logicName) {
     sprintf(sliceCacheKey,"%s:%s",Slice_getName(slice,sliceName),logicName);
@@ -281,56 +284,68 @@ Gene **GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNam
                                            Slice_getChrEnd(slice),
                                            &contigIds);
 
-  printf("Num Contigs = %d\n",nContigId);
+
+  if (!nContigId) {
+    return 0;
+  }
+
+  qStr = StrUtil_CopyString(
+    "SELECT distinct(t.gene_id)"
+    " FROM   transcript t,exon_transcript et,exon e, gene g"
+    " WHERE e.contig_id in (");
+
   for (i=0; i<nContigId; i++) {
-    printf("Contig %d\n",contigIds[i]);
+    char numStr[256];
+    if (i!=(nContigId-1)) {
+      sprintf(numStr,"%d,",contigIds[i]);
+    } else {
+      sprintf(numStr,"%d",contigIds[i]);
+    }
+    qStr = StrUtil_AppendString(qStr, numStr);
   }
-/*
-  # no genes found so return
-  if ( scalar (@cids) == 0 ) {
-    return [];
-  }
 
-  my $str = "(".join( ",",@cids ).")";
+  qStr = StrUtil_AppendString(qStr, 
+              ") AND   et.exon_id = e.exon_id"
+              " AND   et.transcript_id = t.transcript_id"
+              " AND   g.gene_id = t.gene_id");
 
-  my $where = "WHERE e.contig_id in $str
-               AND   et.exon_id = e.exon_id
-               AND   et.transcript_id = t.transcript_id
-               AND   g.gene_id = t.gene_id";
+  if (logicName) {
+    // determine analysis id via logic_name
+    AnalysisAdaptor *aa = DBAdaptor_getAnalysisAdaptor(ga->dba);
+    Analysis *analysis = AnalysisAdaptor_fetchByLogicName(aa,logicName);
+    char analStr[256];
 
-  if($logic_name) {
-    #determine analysis id via logic_name
-    my $analysis =
-      $self->db->get_AnalysisAdaptor()->fetch_by_logic_name($logic_name);
-    unless(defined($analysis) && $analysis->dbID()) {
-      $self->warn("No analysis for logic name $logic_name exists");
-      return [];
+    if (!analysis || !Analysis_getDbID(analysis)) {
+      fprintf(stderr,"WARNING: No analysis for logic name %s exists\n",logicName);
+      return 0;
     }
 
-    my $analysis_id = $analysis->dbID;
-    $where .= " AND g.analysis_id = $analysis_id";
+    sprintf(analStr," AND g.analysis_id = %d", Analysis_getDbID(analysis));
+   
+    qStr = StrUtil_AppendString(qStr,analStr); 
   }
 
-  my $sql = "
-    SELECT distinct(t.gene_id)
-    FROM   transcript t,exon_transcript et,exon e, gene g
-    $where";
 
-  my $sth = $self->db->prepare($sql);
-  $sth->execute;
+  results = ga->prepare((BaseAdaptor *)ga, qStr, strlen(qStr) );
 
-  while( my ($geneid) = $sth->fetchrow ) {
-    my $gene = $self->fetch_by_dbID( $geneid );
-    my $newgene = $gene->transform( $slice );
+  while (row = mysql_fetch_row(results)) {
+    long geneId = MysqlUtil_getLong(row,0);
+    Gene *gene  = GeneAdaptor_fetchByDbID(ga, geneId, NULL );
+    Gene *newGene = Gene_transformToSlice(gene, slice);
 
-    if( $newgene->start() <= $slice->length() &&
-        $newgene->end() >= 1 ) {
-      # only take the gene if its really overlapping the Slice
+/*
+    if (Gene_getStart(newgene) <= Slice_getLength(slice) &&
+        Gene_getEnd(gene) >= 1 ) {
+      // only take the gene if its really overlapping the Slice
       push( @out, $newgene );
     }
- }
+*/
+  }
 
-  #place the results in an LRU cache
+  free(qStr);
+
+  //place the results in an LRU cache
+/*
   $self->{'_slice_gene_cache'}{$key} = \@out;
 
   return \@out;

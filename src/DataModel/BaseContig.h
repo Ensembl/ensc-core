@@ -4,6 +4,7 @@
 typedef struct BaseContigStruct BaseContig;
 
 typedef enum ContigTypeEnum {
+  CONTIGTYPE_NONE,
   RAWCONTIG,
   SLICE
 } ContigType;

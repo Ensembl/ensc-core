@@ -11,3 +11,9 @@ MapperPair *MapperPair_new() {
 
   return mp;
 }
+
+void MapperPair_free(MapperPair *mp) {
+  free(mp->units[0]);
+  free(mp->units[1]);
+  free(mp);
+}

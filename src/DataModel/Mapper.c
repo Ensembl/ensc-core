@@ -489,14 +489,14 @@ void Mapper_sort(Mapper *m) {
   sets = (MapperPairSet **)IDHash_getValues(fromHash);
   nSet = IDHash_getNumValues(fromHash);
   for (i=0;i<nSet;i++) {
-    MapperPairSet_sort(sets[i]); 
+    MapperPairSet_sort(sets[i],MAPPER_FROM_IND); 
   }
   free(sets);
 
   sets = (MapperPairSet **)IDHash_getValues(toHash);
   nSet = IDHash_getNumValues(toHash);
   for (i=0;i<nSet;i++) {
-    MapperPairSet_sort(sets[i]); 
+    MapperPairSet_sort(sets[i],MAPPER_TO_IND); 
   }
   free(sets);
 

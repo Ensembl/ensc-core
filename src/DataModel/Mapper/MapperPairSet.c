@@ -24,24 +24,38 @@ void MapperPairSet_addPair(MapperPairSet *mps, MapperPair *pair) {
   mps->pairs[mps->nPair++] = pair;
 }
 
+static int sortInd;
 
 int MapperPairCompFunc(const void *a, const void *b) {
   MapperPair **mp1 = (MapperPair **)a;
   MapperPair **mp2 = (MapperPair **)b;
 
-  printf("Comparing %d %d\n",MapperPair_getUnit(*mp1,MAPPER_TO_IND)->start,
-         MapperPair_getUnit(*mp2,MAPPER_TO_IND)->start);
-  if (MapperPair_getUnit(*mp1,MAPPER_TO_IND)->start >
-      MapperPair_getUnit(*mp2,MAPPER_TO_IND)->start) {
+  printf("Comparing %d %d\n",MapperPair_getUnit(*mp1,sortInd)->start,
+         MapperPair_getUnit(*mp2,sortInd)->start);
+  if (MapperPair_getUnit(*mp1,sortInd)->start >
+      MapperPair_getUnit(*mp2,sortInd)->start) {
     return 1;
-  } else if (MapperPair_getUnit(*mp1,MAPPER_TO_IND)->start <
-             MapperPair_getUnit(*mp2,MAPPER_TO_IND)->start) {
+  } else if (MapperPair_getUnit(*mp1,sortInd)->start <
+             MapperPair_getUnit(*mp2,sortInd)->start) {
     return -1;
   } else {
     return 0;
   }
 }
 
-void MapperPairSet_sort(MapperPairSet *mps) {
+void MapperPairSet_sort(MapperPairSet *mps, int sInd) {
+  sortInd = sInd;
   qsort(mps->pairs,(size_t)mps->nPair,sizeof(MapperPair *),MapperPairCompFunc);
+}
+
+void MapperPairSet_free(MapperPairSet *mps, int freePairsFlag) {
+  int i;
+ 
+  if (freePairsFlag) {
+    for (i=0;i<mps->nPair;i++) {
+      MapperPair_free(mps->pairs[i]);
+    }
+  }
+  free(mps->pairs);
+  free(mps);
 }

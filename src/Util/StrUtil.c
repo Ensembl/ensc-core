@@ -16,6 +16,21 @@ char *StrUtil_CopyString(char *str) {
   return copy;
 }
 
+char *StrUtil_AppendString(char *to, char *from) {
+  int lenTo = strlen(to);
+  int lenFrom = strlen(from);
+
+  if ((to = (char *)realloc(to,lenTo+lenFrom+1))== NULL) {
+    fprintf(stderr,"ERROR: Failed reallocating string\n");
+    exit(1);
+  }
+
+  strcat(to,from);
+  to[lenTo+lenFrom] = '\0';
+
+  return to;
+}
+
 void StrUtil_ReverseString(char *string, int len) {
   int i;
   char *chPUp,*chPDown;
