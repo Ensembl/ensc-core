@@ -5,6 +5,8 @@
 
 char *SeqUtil_reverseComplement(char *seq, int len);
 char *SeqUtil_addNs(char *seq, int length);
+char *SeqUtil_addGaps(char *seq, int length);
+char *SeqUtil_addRes(char *seq, int length, char res);
 void SeqUtil_printConvTable(int *convTable);
 
 

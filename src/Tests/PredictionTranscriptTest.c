@@ -35,8 +35,11 @@ int main(int argc, char *argv[]) {
   failed = 0;
   for (i=0;i<Vector_getNumElement(features) && !failed;i++) {
     PredictionTranscript *pt = Vector_getElementAt(features,i);
-    int start = PredictionTranscript_getStart(pt);
-    int end   = PredictionTranscript_getEnd(pt);
+    printf("PT %s\n", PredictionTranscript_getStableId(pt));
+    printf(" from %d to %d\n",
+           PredictionTranscript_getStart(pt),
+           PredictionTranscript_getEnd(pt));
+    printf(" translation = %s\n",PredictionTranscript_translate(pt));
   }
   ok(5, !failed);
   return 0;

@@ -161,6 +161,8 @@ Vector *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdapto
     sliceEnd   = Slice_getChrEnd(slice);
     sliceStrand= Slice_getStrand(slice);
     sliceLen   = Slice_getLength(slice);
+    transcriptSliceStart = sliceLen+1;
+    transcriptSliceEnd = -1;
   }
 
   while ((row = sth->fetchRow(sth))) {
@@ -191,7 +193,7 @@ Vector *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdapto
         } else {
           // set the stable_id of the previous prediction
           char tmpStr[256]; 
-          sprintf(tmpStr,"%s.%d.%d\n",stableCtg,stableStart,stableEnd);
+          sprintf(tmpStr,"%s.%d.%d",stableCtg,stableStart,stableEnd);
           PredictionTranscript_setStableId(predTrans,tmpStr);
           Vector_addElement(out,predTrans);
         }
@@ -212,6 +214,9 @@ Vector *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdapto
       stableStart = -1;
       stableEnd   = -1;
       stableCtg   = NULL;
+
+      transcriptSliceStart = sliceLen+1;
+      transcriptSliceEnd = -1;
 
       nExon = 0;
     }
@@ -296,7 +301,7 @@ Vector *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdapto
     } else {
       // set the stable_id of the previous prediction
       char tmpStr[256]; 
-      sprintf(tmpStr,"%s.%d.%d\n",stableCtg,stableStart,stableEnd);
+      sprintf(tmpStr,"%s.%d.%d",stableCtg,stableStart,stableEnd);
       PredictionTranscript_setStableId(predTrans,tmpStr);
       Vector_addElement(out,predTrans);
     }

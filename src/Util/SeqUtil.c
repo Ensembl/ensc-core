@@ -70,7 +70,15 @@ char *SeqUtil_reverseComplement(char *seqStr, int lenSeqStr) {
   return seqStr;
 }
 
+char *SeqUtil_addGaps(char *seq, int length) {
+  return SeqUtil_addRes(seq,length,'-');
+}
+
 char *SeqUtil_addNs(char *seq, int length) {
+  return SeqUtil_addRes(seq,length,'N');
+}
+
+char *SeqUtil_addRes(char *seq, int length, char res) {
 // NIY Make fast
   int seqlen = strlen(seq);
   char *chP;
@@ -85,7 +93,7 @@ char *SeqUtil_addNs(char *seq, int length) {
   }
   chP = &(seq[seqlen]);
   for (i=seqlen; i<seqlen+length; i++) {
-    *chP = 'N';
+    *chP = res;
     chP++;
   }
   *chP = '\0';

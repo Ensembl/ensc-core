@@ -66,4 +66,8 @@ char *GenomicAlign_setAlignmentType(GenomicAlign *ga, char *at);
 
 GenomicAlign *GenomicAlign_new();
 
+#define GENOMICALIGN_CONSENSUS    1<<1
+#define GENOMICALIGN_ALIGNSLICES  1<<2
+#define GENOMICALIGN_FIXCONSENSUS 1<<3
+#define GENOMICALIGN_FIXQUERY     1<<4
 #endif

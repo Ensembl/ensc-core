@@ -30,9 +30,11 @@ void *Vector_getLastElement(Vector *v) {
 }
 
 void *Vector_setElementAt(Vector *v, int ind, void *elem) {
-  if (ind < 0 || ind >= v->nElement) {
+  if (ind < 0) {
     fprintf(stderr,"ERROR: Invalid element index %d\n",ind);
     exit(1);
+  } else if (ind >= v->nElement) {
+    Vector_setNumElement(v, ind+1);
   }
 /* NIY free old one
 */
@@ -75,12 +77,7 @@ void *Vector_addElement(Vector *v, void *elem) {
 
   if (!v->nElement) v->elements = NULL;
 
-  v->nElement++;
-  if ((v->elements = (void **)realloc(v->elements,
-               v->nElement*sizeof(void *))) == NULL) {
-    fprintf(stderr,"ERROR: Failed allocating space for elem array\n");
-    return NULL;
-  }
+  Vector_setNumElement(v,v->nElement+1);
 
   v->elements[v->nElement-1] = elem;
 
@@ -88,18 +85,26 @@ void *Vector_addElement(Vector *v, void *elem) {
 }
 
 void Vector_setNumElement(Vector *v, int nElem) {
+  void **tmp;
+  int i;
+
+  if ((tmp = (void **)calloc(nElem,sizeof(void *))) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for elem array\n");
+    return;
+  }
+
+  for (i=0;i<v->nElement;i++) {
+    tmp[i] = v->elements[i];
+  }
+  free(v->elements);
 
   v->nElement = nElem;
-  if ((v->elements = (void **)realloc(v->elements,
-               v->nElement*sizeof(void *))) == NULL) {
-    fprintf(stderr,"ERROR: Failed allocating space for elem array\n");
-    return NULL;
-  }
+  v->elements = tmp;
 
   return;
 }
 
-void Vector_free(Vector *v, int freeFunc()) {
+void Vector_free(Vector *v, void freeFunc()) {
   int i;
 
   if (v->isSpecial) {

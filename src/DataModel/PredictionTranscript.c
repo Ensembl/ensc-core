@@ -103,7 +103,7 @@ int PredictionTranscript_getStart(PredictionTranscript *trans) {
 
   if (!PredictionTranscript_getStartIsSet(trans)) {
     //if the coding start is not defined, use the start of the transcript
-    fprintf(stderr, "Error: Trying to call PT getEnd before its set\n");
+    fprintf(stderr, "Error: Trying to call PT getStart before its set\n");
     exit(1);
   }
 

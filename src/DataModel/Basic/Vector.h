@@ -26,7 +26,7 @@ Vector *Vector_new();
 void *Vector_addElement(Vector *vector, void *elem);
 #define Vector_getNumElement(v) (v)->nElement
 void *Vector_getElementAt(Vector *v, int ind);
-void Vector_free(Vector *vector, int freeFunc());
+void Vector_free(Vector *vector, void freeFunc());
 
 void Vector_append(Vector *dest, Vector *src);
 void Vector_reverse(Vector *v);
