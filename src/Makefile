@@ -54,6 +54,7 @@ libensc.a	: \
 	objectfiles/DataAdaptors/SequenceAdaptor.o \
 	objectfiles/DataAdaptors/SimpleFeatureAdaptor.o \
 	objectfiles/DataAdaptors/SliceAdaptor.o \
+	objectfiles/DataAdaptors/SupportingFeatureAdaptor.o \
 	objectfiles/DataAdaptors/TranscriptAdaptor.o \
 	objectfiles/DataAdaptors/TranslationAdaptor.o \
 	objectfiles/DataModel/Analysis.o \

@@ -1,5 +1,12 @@
 #include "RepeatFeatureAdaptor.h"
 
+#include "IDHash.h"
+#include "RepeatConsensusAdaptor.h"
+#include "AnalysisAdaptor.h"
+#include "RawContigAdaptor.h"
+
+#include "Repeat.h"
+#include "RepeatConsensus.h"
 
 NameTableType RepeatFeatureAdaptor_tableNames = {{"repeat_feature","r"},
                                                  {"repeat_consensus","rc"},
@@ -138,13 +145,13 @@ NameTableType *RepeatFeatureAdaptor_getTables() {
 char *RepeatFeatureAdaptor_getColumns() {
   return "r.repeat_feature_id,"
          "r.contig_id,"
+         "r.analysis_id,"
          "r.contig_start,"
          "r.contig_end,"
          "r.contig_strand,"
          "r.repeat_consensus_id,"
          "r.repeat_start,"
          "r.repeat_end,"
-         "r.analysis_id,"
          "r.score,"
          "rc.repeat_name,"
          "rc.repeat_class,"
@@ -155,74 +162,73 @@ Set *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf,
                                                      StatementHandle *sth,
                                                      AssemblyMapper *mapper,
                                                      Slice *slice) {
-  my ($self, $sth) = @_;
+  AnalysisAdaptor *aa;
+  RawContigAdaptor *rca;
+  RepeatConsensusAdaptor *rpca;
+  Set *features;
+  ResultRow *row;
+  int i;
+  IDHash *rcHash;
 
-  my $rca = $self->db()->get_RepeatConsensusAdaptor();
-  my $ca = $self->db()->get_RawContigAdaptor();
-  my $aa = $self->db->get_AnalysisAdaptor();
+  aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
+  rca = DBAdaptor_getRawContigAdaptor(bfa->dba);
+  rpca = DBAdaptor_getRepeatConsensusAdaptor(bfa->dba);
 
-  my @features;
-  my %rc_hash;
-  my %analysis_hash;
-  my %contig_hash;
 
-  my($repeat_feature_id, $contig_id, $contig_start, $contig_end, 
-     $contig_strand, $repeat_consensus_id, $repeat_start, $repeat_end,
-     $analysis_id, $score, $repeat_name, $repeat_class,
-     $repeat_consensus);
-  
-  $sth->bind_columns( \$repeat_feature_id, \$contig_id, \$contig_start, 
-                      \$contig_end, \$contig_strand, \$repeat_consensus_id, 
-                      \$repeat_start,\$repeat_end, \$analysis_id, \$score, 
-                      \$repeat_name, \$repeat_class,
-                      \$repeat_consensus );
+  features = Set_new();
+  rcHash = IDHash_new(IDHASH_SMALL);
+
 
   my $rc;
   my $contig;
   my $analysis;
 
-  while($sth->fetch()) {
-    #create a repeat consensus object
-    unless($rc = $rc_hash{$repeat_consensus_id}) {
-      $rc = new Bio::EnsEMBL::RepeatConsensus;
-      $rc->dbID($repeat_consensus_id);
-      $rc->repeat_class($repeat_class);
-      $rc->name($repeat_name);
-      $rc->repeat_consensus($repeat_consensus);
-      $rc->adaptor($rca);
+  while (row = sth->fetchRow(sth)) {
+    RepeatFeature *rf;
+    Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,2));
+    RawContig *contig = RawContigAdaptor_fetchByDbID(rca, row->getLongLongAt(row,1));
+    int64 repeatConsensusId = row->getLongLongAt(row,6);
+    RepeatConsensus *rc;
 
-      $rc_hash{$repeat_consensus_id} = $rc;
+  $sth->bind_columns( \$repeat_feature_id, \$contig_id, \$analysis_id, \$contig_start, 
+                      \$contig_end, \$contig_strand, \$repeat_consensus_id, 
+                      \$repeat_start,\$repeat_end, \$score, 
+                      \$repeat_name, \$repeat_class,
+                      \$repeat_consensus );
+
+    //create a repeat consensus object
+    if (!IDHash_constains(rcHash, repeatConsensusId)) {
+      rc = RepeatConsensus_new();
+      RepeatConsensus_setDbID(rc, repeatConsensusId);
+      RepeatConsensus_setName(rc, row->getStringAt(10));
+      RepeatConsensus_setRepeatClass(rc, row->getStringAt(11));
+      RepeatConsensus_setConsensus(rc, row->getStringAt(12));
+      RepeatConsensus_setAdaptor(rpca);
+
+      IDHash_add(rcHash,repeatConsensusId);
+    } else {
+      rc = IDHash_get(rcHash,repeatConsensusId);
     }
     
-    unless($analysis = $analysis_hash{$analysis_id}) {
-      $analysis = $aa->fetch_by_dbID($analysis_id);
-      $analysis_hash{$analysis_id} = $analysis;
-    }
-
-    unless($contig = $contig_hash{$contig_id}) {
-      $contig = $ca->fetch_by_dbID($contig_id);
-      $contig_hash{$contig_id} = $contig;
-    }
-
-    #create the new repeat feature
+    //create the new repeat feature
     push @features, Bio::EnsEMBL::RepeatFeature->new_fast(
-                    { '_gsf_tag_hash'  =>  {},
-                      '_gsf_sub_array' =>  [],
-                              '_parse_h'       =>  {},
-                              '_analysis'      =>  $analysis,
-                              '_gsf_start'         =>  $contig_start,
-                              '_gsf_end'           =>  $contig_end,
-                              '_gsf_strand'        =>  $contig_strand,
-                              '_gsf_score'         =>  $score,
-                              '_hstart'        =>  $repeat_start,
-                              '_hend'          =>  $repeat_end,
-                              '_repeat_consensus' => $rc,
+                      '_analysis'      =>  $analysis,
+                      '_gsf_start'         =>  $contig_start,
+                      '_gsf_end'           =>  $contig_end,
+                      '_gsf_strand'        =>  $contig_strand,
+                      '_gsf_score'         =>  $score,
+                      '_hstart'        =>  $repeat_start,
+                      '_hend'          =>  $repeat_end,
+                      '_repeat_consensus' => $rc,
                       '_adaptor'       =>  $self,
                       '_gsf_seq'       =>  $contig,
-                              '_db_id'         =>  $repeat_feature_id } );
+                      '_db_id'         =>  $repeat_feature_id } );
+    Set_addElement(features,rf);
   }
 
-  return \@features;
+  IDHash_free(rcHash);
+
+  return features;
 }
 
 char *RepeatFeatureAdaptor_defaultWhereClause() {

@@ -32,6 +32,7 @@ RawContigAdaptor            *DBAdaptor_getRawContigAdaptor(DBAdaptor *dba);
 RepeatFeatureAdaptor        *DBAdaptor_getRepeatFeatureAdaptor(DBAdaptor *dba);
 SliceAdaptor                *DBAdaptor_getSliceAdaptor(DBAdaptor *dba); 
 SimpleFeatureAdaptor        *DBAdaptor_getSimpleFeatureAdaptor(DBAdaptor *dba); 
+SupportingFeatureAdaptor    *DBAdaptor_getSupportingFeatureAdaptor(DBAdaptor *dba);
 SequenceAdaptor             *DBAdaptor_getSequenceAdaptor(DBAdaptor *dba); 
 TranscriptAdaptor           *DBAdaptor_getTranscriptAdaptor(DBAdaptor *dba);
 

@@ -68,6 +68,14 @@ SimpleFeatureAdaptor *DBAdaptor_getSimpleFeatureAdaptor(DBAdaptor *dba) {
   return (SimpleFeatureAdaptor *)DBConnection_getAdaptor(dba->dbc,SIMPLEFEATURE_ADAPTOR);
 }
 
+SupportingFeatureAdaptor *DBAdaptor_getSupportingFeatureAdaptor(DBAdaptor *dba) {
+  if (!DBConnection_getAdaptor(dba->dbc,SUPPORTINGFEATURE_ADAPTOR)) {
+    DBConnection_addAdaptor(dba->dbc,
+                            (BaseAdaptor *)SupportingFeatureAdaptor_new(dba));
+  }
+  return (SupportingFeatureAdaptor *)DBConnection_getAdaptor(dba->dbc,SUPPORTINGFEATURE_ADAPTOR);
+}
+
 DNAAlignFeatureAdaptor *DBAdaptor_getDNAAlignFeatureAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,DNAALIGNFEATURE_ADAPTOR)) {
     DBConnection_addAdaptor(dba->dbc,

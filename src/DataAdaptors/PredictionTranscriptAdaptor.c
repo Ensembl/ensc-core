@@ -267,9 +267,6 @@ Set *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *
   return \@out;
 }
 
-
-}
-
 char *PredictionTranscriptAdaptor_finalClause(void) {
   return  "order by p.prediction_transcript_id, p.exon_rank";
 }

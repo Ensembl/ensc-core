@@ -22,6 +22,7 @@ typedef struct RepeatConsensusAdaptorStruct RepeatConsensusAdaptor;
 typedef struct RepeatFeatureAdaptorStruct RepeatFeatureAdaptor;
 typedef struct SequenceAdaptorStruct SequenceAdaptor;
 typedef struct SimpleFeatureAdaptorStruct SimpleFeatureAdaptor;
+typedef struct SupportingFeatureAdaptorStruct SupportingFeatureAdaptor;
 typedef struct SliceAdaptorStruct SliceAdaptor;
 typedef struct TranscriptAdaptorStruct TranscriptAdaptor;
 typedef struct TranslationAdaptorStruct TranslationAdaptor;
