@@ -4,7 +4,7 @@
 char *SeqUtil_reverseComplement(char *seqStr, int lenSeqStr) {
   int i;
 
-  StrUtil_ReverseString(seqStr,lenSeqStr);
+  StrUtil_reverseString(seqStr,lenSeqStr);
 
   for (i=0;i<lenSeqStr;i++) {
     switch (seqStr[i]) {

@@ -3,9 +3,13 @@
 
 #include <stdio.h>
 
-char *StrUtil_CopyString(char *str);
-char *StrUtil_AppendString(char *to, char *from);
-void StrUtil_ReverseString(char *string, int len);
+#define EXTREMELEN 65536
+#define MAXSTRLEN 1024
+
+char *StrUtil_copyString(char **to, char *from,int Start);
+char *StrUtil_appendString(char *to, char *from);
+void StrUtil_reverseString(char *string, int len);
+int StrUtil_strupr(char *string);
 
 
 #endif

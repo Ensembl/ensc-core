@@ -132,7 +132,11 @@ int StringHash_add(StringHash *stringHash, char *key, void *val) {
       }
     }
     
-    stringHash->buckets[bucketNum][count].key = StrUtil_CopyString(key);
+    StrUtil_copyString(&(stringHash->buckets[bucketNum][count].key), key, 0);
+    if (!stringHash->buckets[bucketNum][count].key) {
+      Error_trace("StringHash_add",NULL);
+      return 0;
+    }
     stringHash->buckets[bucketNum][count].value = val;
 
     stringHash->nValue++;
