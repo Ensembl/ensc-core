@@ -96,7 +96,7 @@ Vector *BaseAlignFeature_parseCigar(BaseAlignFeature *baf) {
 
   features = Vector_new();
 
-  Vector_setFreeFunc(features,FeaturePair_freeImpl);
+  Vector_setFreeFunc(features,Object_freeImpl);
 
   strand1 = BaseAlignFeature_getStrand(baf);
   if (!strand1) strand1 = 1;

@@ -493,6 +493,7 @@ Vector *DBEntryAdaptor_fetchByObjectType(DBEntryAdaptor *dbea, IDType ensObj, ch
 }
 
 #ifdef DONE
+/*
 =head2 list_gene_ids_by_extids
 
   Arg [1]    : string $external_id
@@ -612,6 +613,7 @@ sub _type_by_external_id{
   }
   return keys %hash;
 }
+*/
 #endif
 
 

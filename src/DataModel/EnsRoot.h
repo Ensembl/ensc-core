@@ -5,4 +5,6 @@
 
 #define ENSROOT_DATA OBJECT_DATA
 
+#define EnsRoot_free(ef) Object_free((ef))
+
 #endif

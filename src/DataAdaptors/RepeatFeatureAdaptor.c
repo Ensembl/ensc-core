@@ -75,7 +75,7 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
 // NIY This is a terribly slow way to do this - f**king consensi
 
       Vector *match = RepeatConsensusAdaptor_fetchByClassAndSeq(rca, "trf", RepeatConsensus_getConsensus(cons)); 
-      Vector_setFreeFunc(match,RepeatConsensus_free);
+      Vector_setFreeFunc(match,Object_freeImpl);
       if (Vector_getNumElement(match)) {
         RepeatConsensus *matchedCons = Vector_getElementAt(match,0);
         RepeatConsensus_setDbID(cons,RepeatConsensus_getDbID(matchedCons));

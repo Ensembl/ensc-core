@@ -160,10 +160,8 @@ ECOSTRING SeqFeature_getSeqName(SeqFeature *sf);
          (fprintf(stderr,"Error: Null pointer for transformRawContigToSlice - bye\n"),  exit(1), (void *)NULL) : \
          ((sf)->funcs->transformRawContigToSlice((sf),(slice))))
 
-#define SeqFeature_free(sf) \
-      ((sf)->funcs->free == NULL ? \
-         (fprintf(stderr,"Error: Null pointer for free func - bye\n"),  exit(1), (void *)NULL) : \
-         ((sf)->funcs->free((sf)), (void *)NULL))
+#define SeqFeature_free(sf) EnsRoot_free((sf))
+
 
 #ifdef __SEQFEATURE_MAIN__
  SeqFeatureFuncs 

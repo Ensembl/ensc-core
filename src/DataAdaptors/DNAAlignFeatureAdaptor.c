@@ -126,7 +126,7 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
 
   features = Vector_new();
 
-  Vector_setFreeFunc(features,DNAAlignFeature_freeImpl);
+  Vector_setFreeFunc(features,Object_freeImpl);
 
   if (slice) {
     int featStart, featEnd, featStrand;
