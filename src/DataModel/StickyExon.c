@@ -10,6 +10,7 @@
 #include "Mapper.h"
 #include "RawContigAdaptor.h"
 #include "StrUtil.h"
+#include "BaseAlignFeature.h"
 
 StickyExon *StickyExon_new(void) {
   StickyExon *stickyExon;
@@ -69,17 +70,14 @@ Exon *StickyExon_transformRawContigToSlice(StickyExon *exon, Slice *slice)  {
     Exon *firstCompEx = NULL; // Used for setting storable info on new exon
     BaseAdaptor *adaptor;
     Exon *newExon;
+    Vector *supportingFeatures = Vector_new();
+    Vector *mappedFeatures = Vector_new();
 
     adaptor = Slice_getAdaptor(slice);
 
     ama = DBAdaptor_getAssemblyMapperAdaptor(Slice_getAdaptor(slice)->dba);
     assMapper = AssemblyMapperAdaptor_fetchByType(ama,Slice_getAssemblyType(slice));
 
-
-#ifdef DONE
-    my @supporting_features;
-#endif
-    
     // sort the component exons
     StickyExon_sortByStickyRank(exon); 
     
@@ -132,12 +130,11 @@ Exon *StickyExon_transformRawContigToSlice(StickyExon *exon, Slice *slice)  {
       fprintf(stderr, "]\nSticky rank : %d\n", Exon_getStickyRank(compExon));
 */
 
-#ifdef DONE
       // add the supporting features from the exons
       // each exon has the pieces of the supporting features that fall in the corresponding contig
       // they've been split before and at the moment they are not re-combined
-      push @supporting_features, @{$compExon->get_all_supporting_features()}; 
-#endif
+// NIY Sticky exon vector free??
+      Vector_append(supportingFeatures, Exon_getAllSupportingFeatures(compExon));
       
 
       // now pull out the start and end points of the newly concatenated sequence
@@ -210,14 +207,12 @@ Exon *StickyExon_transformRawContigToSlice(StickyExon *exon, Slice *slice)  {
 
     Exon_setContig(newExon, slice);
     
-#ifdef DONE
     // copy each of the supporting features and transform them
-    my @feats;
-    foreach my $sf (@supporting_features) {
-      push @feats, $sf->transform($slice);
+    for (i=0; i<Vector_getNumElement(supportingFeatures); i++) {
+      BaseAlignFeature *baf = Vector_getElementAt(supportingFeatures,i);
+      Vector_addElement(mappedFeatures, BaseAlignFeature_transformToSlice(baf,slice));
     }
-    $newexon->add_supporting_features(@feats);
-#endif
+    Exon_addSupportingFeatures(newExon, mappedFeatures);
 
     Exon_setPhase(newExon, compositeExonPhase );
     Exon_setEndPhase(newExon, compositeExonEndPhase );
@@ -303,7 +298,6 @@ Exon *StickyExon_adjustStartEnd(StickyExon *stickyExon, int startAdjust, int end
     Exon_setStrand(newExon,coord->strand);
 
 //Is just pointer to contig
-    //rc = RawContigAdaptor_fetchByDbID(rca, coord->id);
     Exon_setContig(newExon, (BaseContig *)coord->id);
 
   } else {
@@ -334,7 +328,6 @@ Exon *StickyExon_adjustStartEnd(StickyExon *stickyExon, int startAdjust, int end
       Exon_setEnd(cex,    coord->end);
       Exon_setStrand(cex, coord->strand);
 // Is just pointer to contig
-      //rc = RawContigAdaptor_fetchByDbID(rca, coord->id);
       Exon_setContig(cex, (BaseContig *)coord->id);
 
       StickyExon_addComponentExon((StickyExon *)newExon, cex);

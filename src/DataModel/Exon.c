@@ -10,6 +10,7 @@
 #include "StickyExon.h"
 #include "RawContigAdaptor.h"
 #include "StrUtil.h"
+#include "BaseAlignFeature.h"
 
 Exon *Exon_new() {
   Exon *exon;
@@ -379,6 +380,7 @@ sub Exon_getSeq(Exon *exon) {
                        -moltype => 'dna');
 }
 #endif
+
 char  *Exon_getSeqStringImpl(Exon *exon) {
   char *seq;
 
@@ -416,6 +418,7 @@ Exon *Exon_transformSliceToRawContigImpl(Exon *exon) {
   int exonChrEnd;
   RawContigAdaptor *rca;
   MapperRangeSet *mapped;
+  StringHash *SFHash = NULL;
 
   slice = (Slice *)Exon_getContig(exon);
 
@@ -462,29 +465,35 @@ Exon *Exon_transformSliceToRawContigImpl(Exon *exon) {
   }
 
   // transform the supporting features to raw contig coords (hashed on contig)
-#ifdef DONE
-  my %sf_hash;
 
-  if( exists $self->{_supporting_evidence} ) {
-    my $sfs = $self->get_all_supporting_features();
-  SUPPORTING:foreach my $sf (@$sfs) {
-      my @mapped_feats;
-      eval{
-        @mapped_feats = $sf->transform;
-      };
-      if($@){
+// NOTE: Deliberately direct access 
+  if (exon->supportingFeatures) {
+    SFHash = StringHash_new(STRINGHASH_SMALL);
+    Vector *sfs = Exon_getAllSupportingFeatures(exon);
+    int i;
+    for (i=0;i<Vector_getNumElement(sfs);i++) {
+      BaseAlignFeature *baf = Vector_getElementAt(sfs,i);
+      int j;
+// NIY No eval
+      Vector *mappedFeats = BaseAlignFeature_transformToRawContig(baf);
+/*
+      if ($@){
         $self->warn("Supporting feature didn't mapped ignoring $@");
         next SUPPORTING;
       }
-      foreach my $mapped_feat (@mapped_feats) {
-        unless(exists $sf_hash{$mapped_feat->contig->name}) {
-          $sf_hash{$mapped_feat->contig->name} = [];
+*/
+      for (j=0; j<Vector_getNumElement(mappedFeats); j++) {
+        BaseAlignFeature *rcbaf = Vector_getElementAt(mappedFeats,j);
+        char *contigName = BaseContig_getName(BaseAlignFeature_getContig(rcbaf));
+        Vector *rcVect;
+        if (!StringHash_contains(SFHash, contigName)) {
+          StringHash_add(SFHash, contigName, Vector_new());
         }
-        push @{$sf_hash{$mapped_feat->contig->name}}, $mapped_feat;
+        rcVect = StringHash_getValue(SFHash,contigName);
+        Vector_addElement(rcVect, rcbaf);
       }
     }
   }
-#endif
 
   if (mapped->nRange > 1 ) {
     int stickyLength = 0;
@@ -531,11 +540,10 @@ Exon *Exon_transformSliceToRawContigImpl(Exon *exon) {
       Exon_setAdaptor(componentExon, Exon_getAdaptor(exon));
 
       // add the supporting features on this contig to the component exon
-#ifdef DONE
-      if(exists $sf_hash{$rawContig->name}) {
-        $componentExon->add_supporting_features(@{$sf_hash{$rawContig->name}});
+      if (StringHash_contains(SFHash, RawContig_getName(rawContig))) {
+        Vector *sfVect = StringHash_getValue(SFHash, RawContig_getName(rawContig));
+        Exon_addSupportingFeatures(componentExon, sfVect);
       }
-#endif
 
       StickyExon_addComponentExon(stickyExon, componentExon);
       stickyLength += ( mc->end - mc->start + 1 );
@@ -586,12 +594,15 @@ Exon *Exon_transformSliceToRawContigImpl(Exon *exon) {
     Exon_setContig(newExon, rawContig);
 
     // replace old supporting feats with transformed supporting feats
-#ifdef DONE
-    $newExon->add_supporting_features(@{$sf_hash{$rawContig->name}});
-#endif
+    if (StringHash_contains(SFHash, RawContig_getName(rawContig))) {
+      Vector *sfVect = StringHash_getValue(SFHash, RawContig_getName(rawContig));
+      Exon_addSupportingFeatures(newExon, sfVect);
+    }
 
     return newExon;
   }
+// NIY freeing old exons, old supporting features, SFHash Vectors
+  if (SFHash) StringHash_free(SFHash, NULL);
 }
 
 void Exon_loadGenomicMapperImpl(Exon *exon, Mapper *mapper, IDType id, int start) {

@@ -2,6 +2,7 @@
 
 #include "DNAAlignFeatureAdaptor.h"
 #include "ProteinAlignFeatureAdaptor.h"
+#include "BaseAlignFeature.h"
 #include "DBAdaptor.h"
 
 #include <string.h>
@@ -66,16 +67,16 @@ Vector *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, E
       exit(1);
     }
 
-//NIY transforming
-#ifdef DONE
-    if ($exon->contig()->isa("Bio::EnsEMBL::Slice")) {
+    if (Exon_getContig(exon)->objectType == CLASS_SLICE) {
       //tranform to slice coords
-      $feature->transform($exon->contig());
+      BaseAlignFeature_transformToSlice(baf, (Slice *)Exon_getContig(exon));
     } else {
       //we might have to convert the features coordinate system
-      next unless($feature->contig->dbID == $exon->contig->dbID);
+      if (BaseContig_getDbID(BaseAlignFeature_getContig(baf)) != BaseContig_getDbID(Exon_getContig(exon))) {
+        fprintf(stderr,"Error: Free for different contig skip not implemented\n");
+        continue;
+      }
     }
-#endif
 
     Vector_addElement(out,baf);
   }

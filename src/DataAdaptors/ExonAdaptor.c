@@ -243,11 +243,7 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
   StickyExon *stickyExon = NULL;
   
 
-/* NIY
-  if( ! $exon->isa('Bio::EnsEMBL::Exon') ) {
-    $self->throw("$exon is not a EnsEMBL exon - not dumping!");
-  }
-*/
+  Class_assertType(CLASS_EXON, exon->objectType);
 
   if (Exon_getDbID(exon) && Exon_getAdaptor(exon) && Exon_getAdaptor(exon) == (BaseAdaptor *)ea) {
     return Exon_getDbID(exon);
@@ -381,7 +377,6 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
 
   // Now the supporting evidence
   // should be stored from featureAdaptor
-#ifdef DONE 
   sprintf(qStr,
          "insert into supporting_feature (exon_id, feature_id, feature_type) "
          "values(%" IDFMTSTR ", %" IDFMTSTR ", %%s)");
@@ -401,6 +396,7 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
   for (i=0;i<nExon;i++) {
     int j;
     Exon *e;
+    Vector *supportingFeatures;
 
     if (stickyExon) {
       e = StickyExon_getComponentExonAt(stickyExon,i);
@@ -408,15 +404,12 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
       e = exon;
     }
 
-    for (j=0; j<Exon_getSupportingFeatureCount(e); j++) {
-      BaseAlignFeature *sf = Exon_getSupportingFeatureAt(e,j);
+    supportingFeatures = Exon_getAllSupportingFeatures(e);
 
-/* NIY
-      unless($sf->isa("Bio::EnsEMBL::BaseAlignFeature")){
-        $self->throw("$sf must be an align feature otherwise" .
-                     "it can't be stored");
-      }
-*/
+    for (j=0; j<Vector_getNumElement(supportingFeatures); j++) {
+      BaseAlignFeature *sf = Vector_getElementAt(supportingFeatures, j);
+
+      Class_assertType(CLASS_BASEALIGNFEATURE, sf->objectType);
 
       // sanity check
 /* NIY
@@ -431,7 +424,7 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
       if (Class_isDescendent(CLASS_DNADNAALIGNFEATURE, sf->objectType)) {
         DNAAlignFeatureAdaptor_store(dafa,sf);
         type = dnaType;
-      } else if (Class_isDescendent(CLASS_DNAPROTALIGNFEATURE, sf->objectType)) {
+      } else if (Class_isDescendent(CLASS_DNAPEPALIGNFEATURE, sf->objectType)) {
         ProteinAlignFeatureAdaptor_store(pafa,sf);
         type = protType;
       } else {
@@ -442,9 +435,7 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
       sth->execute(sth, (IDType)exonId, BaseAlignFeature_getDbID(sf), type);
     }
   }
-
   sth->finish(sth);
-#endif
 
   // 
   // Finally, update the dbID and adaptor of the exon (and any component exons)
