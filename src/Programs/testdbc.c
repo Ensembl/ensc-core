@@ -39,7 +39,6 @@ int main(int argc, char *argv[]) {
 
   printf("Assembly type %s\n",DBAdaptor_getAssemblyType(dba));
 
-/*
   {
     SimpleFeatureAdaptor *sfa = DBAdaptor_getSimpleFeatureAdaptor(dba);
     SimpleFeature *sf = (SimpleFeature *)SimpleFeatureAdaptor_fetchByDbID(sfa,1);
@@ -231,7 +230,6 @@ int main(int argc, char *argv[]) {
       printf("Exon " IDFMTSTR " %d %d %d\n",Exon_getDbID(e), Exon_getStart(e), Exon_getEnd(e), Exon_getStrand(e));
     }
   }
-*/
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
     Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);

@@ -87,8 +87,8 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
                       DNAAlignFeature_getPercId(sf));
      
     DNAAlignFeature_setDbID(sf,sth->getInsertId(sth));
-    sth->finish(sth);
   }
+  sth->finish(sth);
   return 1;
 }
 

@@ -3,6 +3,7 @@
 
 #include "mysql.h"
 #include "StatementHandle.h"
+#include "MysqlResultRow.h"
 
 typedef struct MysqlStatementHandleStruct MysqlStatementHandle;
 
@@ -22,7 +23,8 @@ void MysqlStatementHandle_finish(StatementHandle *sth);
 
 #define MYSQLSTATEMENTHANDLE_DATA \
   STATEMENTHANDLE_DATA \
-  MYSQL_RES *results;
+  MYSQL_RES *results; \
+  MysqlResultRow *m_row;
 
 struct MysqlStatementHandleStruct {
   MYSQLSTATEMENTHANDLE_DATA

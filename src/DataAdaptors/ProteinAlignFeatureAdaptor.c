@@ -87,8 +87,8 @@ int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) 
                       DNAPepAlignFeature_getPercId(sf));
      
     DNAPepAlignFeature_setDbID(sf,sth->getInsertId(sth));
-    sth->finish(sth);
   }
+  sth->finish(sth);
   return 1;
 }
 

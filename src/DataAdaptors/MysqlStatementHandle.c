@@ -24,6 +24,8 @@ StatementHandle *MysqlStatementHandle_new(DBConnection *dbc, char *query) {
   sth->getInsertId = MysqlStatementHandle_getInsertId;
 
   sth->dbc = dbc;
+ 
+  sth->m_row = MysqlResultRow_new();
 
   if ((sth->statementFormat = StrUtil_copyString(&(sth->statementFormat),
                                                  query,0)) == NULL) {
@@ -121,10 +123,10 @@ ResultRow *MysqlStatementHandle_fetchRow(StatementHandle *sth) {
   if (mysql_row == NULL) {
     return NULL;
   }
-  m_row = MysqlResultRow_new();
-  m_row->mysql_row = mysql_row;
+  //m_row = MysqlResultRow_new();
+  m_sth->m_row->mysql_row = mysql_row;
 
-  return (ResultRow *)m_row;
+  return (ResultRow *)(m_sth->m_row);
 }
 
 IDType MysqlStatementHandle_getInsertId(StatementHandle *sth) {
@@ -150,4 +152,11 @@ void MysqlStatementHandle_finish(StatementHandle *sth) {
   Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);
 
   m_sth = (MysqlStatementHandle *)sth;
+
+  if (m_sth->results) mysql_free_result(m_sth->results);
+
+  if (m_sth->statementFormat) free(m_sth->statementFormat);
+  if (m_sth->m_row) free(m_sth->m_row);
+
+  free(m_sth);
 }
