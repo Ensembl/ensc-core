@@ -42,6 +42,18 @@ void *Vector_setElementAt(Vector *v, int ind, void *elem) {
   return v->elements[ind];
 }
 
+void Vector_reverse(Vector *v) {
+  int up =0;
+  int down = v->nElement-1;
+  void *tmp;
+
+  for (; up<down; up++, down--) {
+    tmp = v->elements[up];
+    v->elements[up] = v->elements[down];
+    v->elements[down] = tmp;
+  }
+}
+
 void Vector_append(Vector *dest, Vector *src) {
   int i;
 

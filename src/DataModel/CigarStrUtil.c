@@ -1,5 +1,6 @@
 #include "CigarStrUtil.h"
 #include <stdio.h>
+#include "StrUtil.h"
 
 char *CigarStrUtil_reverse(char *oldCigarString, int len) {
   char *newCigarString;
@@ -31,4 +32,29 @@ char *CigarStrUtil_reverse(char *oldCigarString, int len) {
     *newChP++;
   }
   return newCigarString;
+}
+
+Vector *CigarStrUtil_getPieces(char *cigarString) {
+  Vector *pieces = Vector_new();
+  char *chP = cigarString;
+  char piece[128];
+  char *pieceP = piece;
+
+  while (*chP != '\0') {
+    if (*chP == 'M' || *chP == 'D' || *chP == 'I') {
+      char *tmpP;
+
+      *pieceP = *chP;
+      pieceP++;
+      *pieceP = '\0';
+      tmpP = StrUtil_copyString(&tmpP, piece, 0);
+      Vector_addElement(pieces, tmpP);
+
+    } else {
+      *pieceP = *chP;
+      pieceP++;
+    }
+    chP++; 
+  }
+  return pieces;
 }

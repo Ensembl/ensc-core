@@ -2,6 +2,10 @@
 #include "StrUtil.h"
 #include "CigarStrUtil.h"
 #include "DNAFragAdaptor.h"
+#include "IDHash.h"
+
+void GenomicAlignAdaptor_nextCig(GenomicAlignAdaptor *gaa,
+    Vector *cigList, int *cigListPos, int *cs, int *ce, int *qs, int *qe);
 
 #define DEFAULT_MAX_ALIGNMENT 20000
 
@@ -250,7 +254,7 @@ Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect( GenomicAlignAdaptor
 =cut
 */
 
-Vector *GenomicAlignAdaptor_fetchAllbyDNAFragGenomeDB(GenomicAlignAdaptor *gaa,
+Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDB(GenomicAlignAdaptor *gaa,
                DNAFrag *dnaFrag, GenomeDB *targetGenome, int *startP, int *endP, 
                char *alignmentType) {
 
@@ -355,8 +359,46 @@ Vector *GenomicAlignAdaptor_fetchAllbyDNAFragGenomeDB(GenomicAlignAdaptor *gaa,
 =cut
 */
 
-Vector *GenomicAlignAdaptor_mergeAlignsets(GenomicAlignAdaptor *gaa, Vector *alignSet1, Vector *alignSet2) {
+typedef struct GenomicAlignListElemStruct {
+  IDType queryDbID;
+  double queryStart;
+  GenomicAlign *align;
+  int setNum;
+} GenomicAlignListElem;
 
+GenomicAlignListElem *GenomicAlignListElem_new(IDType id, int start, GenomicAlign *ga, int setNum) {
+  GenomicAlignListElem *gale;
+
+  if ((gale = (GenomicAlignListElem *)calloc(1,sizeof(GenomicAlignListElem))) == NULL) {
+    fprintf(stderr, "Error: Failed allocating gale\n");
+    exit(1);
+  }
+  gale->queryDbID = id;
+  gale->queryStart = start;
+  gale->align = ga;
+  gale->setNum = setNum;
+ 
+  return gale;
+}
+
+int GenomicAlignListElem_compFunc(const void *a, const void *b) {
+  GenomicAlignListElem **one = (GenomicAlignListElem **)a; 
+  GenomicAlignListElem **two = (GenomicAlignListElem **)b; 
+
+  if ((*one)->queryDbID == (*two)->queryDbID) {
+    if ((*one)->queryStart < (*two)->queryStart) {
+      return -1;
+    } else if ((*one)->queryStart > (*two)->queryStart) {
+      return 1;
+    } else {
+      return 0;
+    }
+  } else if ((*one)->queryDbID < (*two)->queryDbID) {
+    return -1;
+  } else {
+    return 1;
+  }
+}
   // sorting of both sets
   // walking through and finding overlapping GAs
   // create GA from overlapping GA
@@ -368,59 +410,71 @@ Vector *GenomicAlignAdaptor_mergeAlignsets(GenomicAlignAdaptor *gaa, Vector *ali
   // set the first time they appear and they are removed the
   // second time they appear. Scanline algorithm
 
-#ifdef DONE
-  my @biglist = ();
-  for my $align ( @$alignset1 ) {
-    push( @biglist, 
-          [ $align->query_dnafrag()->dbID(), 
-            $align->query_start(), $align, 0 ] );
-    push( @biglist, 
-          [ $align->query_dnafrag()->dbID(), 
-            $align->query_end()+.5, $align, 0 ] );
+Vector *GenomicAlignAdaptor_mergeAlignsets(GenomicAlignAdaptor *gaa, Vector *alignSet1, Vector *alignSet2) {
+  int i;
+  Vector *bigList = Vector_new();
+  IDHash *overlappingSets[2];
+  Vector *mergedAligns;
+
+
+  for (i=0;i<Vector_getNumElement(alignSet1); i++) {
+    GenomicAlign *align = Vector_getElementAt(alignSet1, i);
+    Vector_addElement(bigList, GenomicAlignListElem_new(DNAFrag_getDbID(GenomicAlign_getQueryDNAFrag(align)),
+                                                        GenomicAlign_getQueryStart(align), align, 0));
+    Vector_addElement(bigList, GenomicAlignListElem_new(DNAFrag_getDbID(GenomicAlign_getQueryDNAFrag(align)),
+                                                        GenomicAlign_getQueryEnd(align)+0.5, align, 0));
   }
 
-  for my $align ( @$alignset2 ) {
-    push( @biglist, 
-          [ $align->consensus_dnafrag()->dbID(), 
-            $align->consensus_start(), $align, 1 ] );
-    push( @biglist, 
-          [ $align->consensus_dnafrag()->dbID(), 
-            $align->consensus_end()+.5, $align, 1 ] );
+  for (i=0;i<Vector_getNumElement(alignSet2); i++) {
+    GenomicAlign *align = Vector_getElementAt(alignSet2, i);
+    Vector_addElement(bigList, GenomicAlignListElem_new(DNAFrag_getDbID(GenomicAlign_getConsensusDNAFrag(align)),
+                                                        GenomicAlign_getConsensusStart(align), align, 1));
+    Vector_addElement(bigList, GenomicAlignListElem_new(DNAFrag_getDbID(GenomicAlign_getConsensusDNAFrag(align)),
+                                                        GenomicAlign_getConsensusEnd(align)+0.5, align, 1));
   }
   
-  my @sortlist = sort { $a->[0] <=> $b->[0] ||
-                        $a->[1] <=> $b->[1] } @biglist;
+  Vector_sort(bigList, GenomicAlignListElem_compFunc);
 
   // walking from start to end through sortlist and keep track of the 
   // currently overlapping set of Alignments
  
-  my @overlapping_sets = ( {}, {} ); 
-  my ($align, $setno);
-  my $merged_aligns = [];
+  overlappingSets[0] = IDHash_new(IDHASH_SMALL);
+  overlappingSets[1] = IDHash_new(IDHASH_SMALL);
 
-  for my $aligninfo ( @sortlist ) {
-    $align = $aligninfo->[2];
-    $setno = $aligninfo->[3];
+  mergedAligns = Vector_new();
 
-    if( exists $overlapping_sets[ $setno ]->{ $align } ) {
+  for (i=0; i<Vector_getNumElement(bigList); i++) {
+    GenomicAlignListElem *gale  = Vector_getElementAt(bigList,i);
+
+    GenomicAlign *align = gale->align;
+    int setNo           = gale->setNum;
+
+    if (IDHash_contains(overlappingSets[setNo], align)) {
       // remove from current overlapping set
-      delete $overlapping_sets[ $setno ]->{ $align };
+      IDHash_remove(overlappingSets[setNo], align, NULL);
     } else {
+      int j;
+      void **values = IDHash_getValues(overlappingSets[1-setNo]);
+
       // insert into the set and do all the overlap business
-      $overlapping_sets[ $setno ]->{ $align } = $align;
+      IDHash_add(overlappingSets[setNo], align, align);
+
       // the other set contains everything this align overlaps with
-      for my $align2 ( values %{$overlapping_sets[ 1 - $setno ]} ) {
-        if( $setno == 0 ) {
+      for (j=0; j<IDHash_getNumValues(overlappingSets[1-setNo]); j++) {
+        GenomicAlign *align2 = values[j];
+        if (setNo == 0) {
           GenomicAlignAdaptor_addDerivedAlignments(gaa, mergedAligns, align, align2);
         } else {
           GenomicAlignAdaptor_addDerivedAlignments(gaa, mergedAligns, align2, align);
         }
       }
+      free(values);
     }
   }
 
+// NIY Free gale
+
   return mergedAligns;
-#endif
 }
 
 /*
@@ -439,30 +493,28 @@ Vector *GenomicAlignAdaptor_mergeAlignsets(GenomicAlignAdaptor *gaa, Vector *ali
 */
 
 void GenomicAlignAdaptor_addDerivedAlignments(GenomicAlignAdaptor *gaa, 
-                     Vector *mergedAligns, Vector *alignA, Vector *alignB) {
+                     Vector *mergedAligns, GenomicAlign *alignA, GenomicAlign *alignB) {
 
   // variable name explanation
   // q - query c - consensus s - start e - end l - last
   // o, ov overlap j - jump_in_
   // r - result
 
-#ifdef DONE
-
-  my ( $qs, $qe, $lqs, $lqe, $cs, $ce, $lcs, $lce,
-       $ocs, $oce, $oqs, $oqe, $jc, $jq, $ovs, $ove,
-       $rcs, $rce, $rqs, $rqe);
+  int  qs, qe, lqs, lqe, cs, ce, lcs, lce,
+       ocs, oce, oqs, oqe, jc, jq, ovs, ove,
+       rcs, rce, rqs, rqe;
+  int currentMatch = 0;
+  int newMatch;
+  int cigAPos = 0, cigBPos = 0;
+  char *resultCig;
+  char tmpStr[128];
 
   // initialization phase
-  
+  Vector *cigA = CigarStrUtil_getPieces(GenomicAlign_getCigarString(alignA));
+  Vector *cigB = CigarStrUtil_getPieces(GenomicAlign_getCigarString(alignB));
 
-  my @cigA = ( $alignA->cigar_line =~ /(\d*[MDI])/g );
-  my @cigB;
-  my $line = $alignB->cigar_line();
-
-  if( $alignA->query_strand == -1 ) {
-    @cigB = reverse ( $line =~ /(\d*[MDI])/g ); 
-  } else {
-    @cigB = ( $line =~ /(\d*[MDI])/g ); 
+  if (GenomicAlign_getQueryStrand(alignA) == -1 ) {
+    Vector_reverse(cigB);
   }
 
   // need a 'normalized' start for qs, qe, oxs so I dont 
@@ -471,230 +523,266 @@ void GenomicAlignAdaptor_addDerivedAlignments(GenomicAlignAdaptor *gaa,
   // consensus is strand 1 and is not compared to anything,
   // can keep its original coordinate system
  
-  $lce = $alignA->consensus_start() - 1;
-  $ce = $lce;
-  $cs = $ce + 1;
+  lce = GenomicAlign_getConsensusStart(alignA) - 1;
+  ce = lce;
+  cs = ce + 1;
   
   // alignBs query can be + or - just keep relative coords for now
-  $lqe = 0; $lqs = 1;
-  $qe = 0; $qs = 1;
+  lqe = 0; lqs = 1;
+  qe = 0; qs = 1;
 
   // ocs will be found relative to oce and has to be comparable
   // to oqs. But it could be that we have to move downwards if we
   // are not - strand. thats why coordinates are trnaformed here
 
-  if( $alignA->query_strand == -1 ) {
+  if (GenomicAlign_getQueryStrand(alignA) == -1 ) {
     // query_end is first basepair of alignment
-    if( $alignA->query_end() < $alignB->consensus_end() ) {
-      // oqs/e = 0 ocs/e = difference
-      $oce = 0; $ocs = 1;
-      $oqe = $alignB->consensus_end() - $alignA->query_end();
-      $oqs = $oqe + 1;
+    if (GenomicAlign_getQueryEnd(alignA) < GenomicAlign_getConsensusEnd(alignB)) {
+      oce = 0; ocs = 1;
+      oqe = GenomicAlign_getConsensusEnd(alignB) - GenomicAlign_getQueryEnd(alignA);
+      oqs = oqe + 1;
     } else {
-      $oqe = 0; $oqs = 1;
-      $oce = $alignA->query_end() - $alignB->consensus_end();
-      $ocs = $oce + 1;
+      oqe = 0; oqs = 1;
+      oce = GenomicAlign_getQueryEnd(alignA) - GenomicAlign_getConsensusEnd(alignB);
+      ocs = oce + 1;
     }
   } else {
     // in theory no coordinate magic necessary :-)
-    $oqs = $alignA->query_start();
-    $oqe = $oqs - 1; 
-    $ocs = $alignB->consensus_start();
-    $oce = $ocs - 1;
+    oqs = GenomicAlign_getQueryStart(alignA);
+    oqe = oqs - 1; 
+    ocs = GenomicAlign_getConsensusStart(alignB);
+    oce = ocs - 1;
   }
 
   // initializing result
-  $rcs = $rce = $rqs = $rqe = 0;
-  my @result_cig= ();
+  rcs = rce = rqs = rqe = 0;
+  resultCig= StrUtil_copyString(&resultCig,"",0);
 
-  my $current_match = 0;
-  my $new_match;
-  
-
-  while( 1 ) {
-    // print "ocs $ocs oce $oce oqs $oqs oqe $oqe\n";
-    // print "cs $cs ce $ce qs $qs qe $qe\n";
-    // print "rcs $rcs rce $rce rqs $rqs rqe $rqe\n";
-    // print "\n";
-
+  while (1) {
+    int newGa;
     // exit if you request a new piece of alignment and the cig list is 
     // empty
 
-    if( $oce < $ocs || $oce < $oqs ) {
+    if (oce < ocs || oce < oqs) {
       // next M area in cigB
-      last unless @cigB;
-      $self->_next_cig( \@cigB, \$ocs, \$oce, \$qs, \$qe ); 
-      next;
+      if (cigBPos == Vector_getNumElement(cigB)) break;
+      GenomicAlignAdaptor_nextCig(gaa, cigB, &cigBPos, &ocs, &oce, &qs, &qe ); 
+      continue;
     }
-    if( $oqe < $oqs || $oqe < $ocs ) {
+    if (oqe < oqs || oqe < ocs) {
       // next M area in cigA
-      last unless @cigA;
-      $self->_next_cig( \@cigA, \$cs, \$ce, \$oqs, \$oqe );
-      next;
+      if (cigAPos == Vector_getNumElement(cigA)) break;
+      GenomicAlignAdaptor_nextCig(gaa, cigA, &cigAPos, &cs, &ce, &oqs, &oqe );
+      continue;
     }
 
     // now matching region overlap in reference genome
-    $ovs = $ocs < $oqs ? $oqs : $ocs;
-    $ove = $oce < $oqe ? $oce : $oqe;
+    ovs = ocs < oqs ? oqs : ocs;
+    ove = oce < oqe ? oce : oqe;
     
-    if( $current_match ) {
-      $jc = $cs + ( $ovs - $oqs ) - $lce - 1;
-      $jq = $qs + ( $ovs - $ocs ) - $lqe - 1;
+    if (currentMatch) {
+      jc = cs + (ovs - oqs) - lce - 1;
+      jq = qs + (ovs - ocs) - lqe - 1;
     } else {
-      $jc = $jq = 0;
+      jc = jq = 0;
     }
 
-    $new_match = $ove - $ovs + 1;
-    my $new_ga = 0;
+    newMatch = ove - ovs + 1;
+    newGa = 0;
 
-    if( $jc == 0 ) {
-      if( $jq == 0 ) {
-	$current_match += $new_match;
+    if (jc==0) {
+      if (jq==0) {
+	currentMatch += newMatch;
       } else {
         // store current match;
-	push( @result_cig, $current_match."M" );
-	$jq = "" if ($jq == 1); 
+        sprintf(tmpStr,"%dM",currentMatch);
+        resultCig = StrUtil_appendString(resultCig,tmpStr);
+
 	// jq deletions;
-	push( @result_cig, $jq."D" );
-	$current_match = $new_match;
+	if (jq == 1) {
+          resultCig = StrUtil_appendString(resultCig,"D");
+        } else {
+          sprintf(tmpStr,"%dD",jq);
+          resultCig = StrUtil_appendString(resultCig,tmpStr);
+        }
+	currentMatch = newMatch;
       }
     } else {
-      if( $jq == 0 ) {
+      if (jq==0) {
         // store current match;
-	push( @result_cig, $current_match."M" );
+        sprintf(tmpStr,"%dM",currentMatch);
+        resultCig = StrUtil_appendString(resultCig,tmpStr);
+
 	// jc insertions;
-	$jc = "" if( $jc == 1 );
-	push( @result_cig, $jc."I" );
-	$current_match = $new_match;
+	if (jc==1) {
+          resultCig = StrUtil_appendString(resultCig,"I");
+        } else {
+          sprintf(tmpStr,"%dI",jc);
+          resultCig = StrUtil_appendString(resultCig,tmpStr);
+        }
+	currentMatch = newMatch;
          
       } else {
+        double percId;
+        double score;
+        GenomicAlign *ga;
 
-	push( @result_cig, $current_match."M" );
+        sprintf(tmpStr,"%dM",currentMatch);
+        resultCig = StrUtil_appendString(resultCig,tmpStr);
+
 	// new GA
-	my $query_strand = $alignA->query_strand() * $alignB->query_strand();
-	my ( $query_start, $query_end );
-	if( $query_strand == 1 ) {
-	  $query_start = $rqs + $alignB->query_start() - 1;
-	  $query_end = $rqe + $alignB->query_start() - 1;
+	int queryStrand = GenomicAlign_getQueryStrand(alignA) * GenomicAlign_getQueryStrand(alignB);
+	int queryStart, queryEnd;
+	if (queryStrand == 1) {
+	  queryStart = rqs + GenomicAlign_getQueryStart(alignB) - 1;
+	  queryEnd = rqe + GenomicAlign_getQueryStart(alignB) - 1;
 	} else {
-	  $query_end = $alignB->query_end() - $rqs + 1;
-	  $query_start = $alignB->query_end() - $rqe + 1;
+	  queryEnd = GenomicAlign_getQueryEnd(alignB) - rqs + 1;
+	  queryStart = GenomicAlign_getQueryEnd(alignB) - rqe + 1;
 	}
       
-	my $score = ( $alignA->score() < $alignB->score()) ? 
-	  $alignA->score() : $alignB->score();
-	my $perc_id =  int( $alignA->perc_id() * $alignB->perc_id() / 100 );
+        score = (GenomicAlign_getScore(alignA) < GenomicAlign_getScore(alignB)) ? 
+          GenomicAlign_getScore(alignA) : GenomicAlign_getScore(alignB);
+        percId =  (int)(GenomicAlign_getPercentId(alignA)*GenomicAlign_getPercentId(alignB)/100.0);
+        
+        ga = GenomicAlign_new();
+    
+        GenomicAlign_setConsensusDNAFrag(ga, GenomicAlign_getConsensusDNAFrag(alignA));
+        GenomicAlign_setQueryDNAFrag(ga, GenomicAlign_getQueryDNAFrag(alignB));
+        GenomicAlign_setCigarString(ga, resultCig);
+        GenomicAlign_setConsensusStart(ga, rcs);
+        GenomicAlign_setConsensusEnd(ga, rce);
+        GenomicAlign_setQueryStrand(ga, queryStrand);
+        GenomicAlign_setQueryStart(ga, queryStart);
+        GenomicAlign_setQueryEnd(ga, queryEnd);
+        GenomicAlign_setAdaptor(ga, (BaseAdaptor *)gaa);
+        GenomicAlign_setPercentId(ga, percId);
+        GenomicAlign_setScore(ga, score);
 
-	my $ga = Bio::EnsEMBL::Compara::GenomicAlign->new
-	  ( -consensus_dnafrag => $alignA->consensus_dnafrag,
-	    -query_dnafrag => $alignB->query_dnafrag,
-	    -cigar_line => join("",@result_cig),
-	    -consensus_start => $rcs,
-	    -consensus_end => $rce,
-	    -query_strand => $query_strand, 
-	    -query_start => $query_start,
-	    -query_end => $query_end,
-	    -adaptor => $self,
-	    -perc_id => $perc_id,
-	    -score => $score
-	  );
-	push( @$merged_aligns, $ga );
-	$rcs = $rce = $rqs = $rqe = 0;
-	@result_cig = ();
+	Vector_addElement(mergedAligns, ga);
+
+        rcs = rce = rqs = rqe = 0;
+	resultCig[0] = '\0';
 	
-	$current_match = $new_match;
+	currentMatch = newMatch;
       }
     }
 
 
     
-    $rcs = $cs+($ovs-$oqs) unless $rcs;
-    $rce = $cs+($ove-$oqs);
-    $rqs = $qs+($ovs-$ocs) unless $rqs;
-    $rqe = $qs+($ove-$ocs);
+    if (!rcs) rcs = cs+(ovs-oqs);
+    rce = cs+(ove-oqs);
+    if (!rqs) rqs = qs+(ovs-ocs);
+    rqe = qs+(ove-ocs);
 
     // update the last positions
-    $lce = $rce; 
-    $lqe = $rqe;
+    lce = rce; 
+    lqe = rqe;
 
     // next piece on the one that end earlier
-    my $cmp = ( $oce <=> $oqe );
  
-    if( $cmp <= 0 ) {
+    if (oce <= oqe) {
       // next M area in cigB
-      last unless @cigB;
-      $self->_next_cig( \@cigB, \$ocs, \$oce, \$qs, \$qe ); 
+      if (cigBPos == Vector_getNumElement(cigB)) break;
+      GenomicAlignAdaptor_nextCig(gaa, cigB, &cigBPos, &ocs, &oce, &qs, &qe ); 
     }
-    if( $cmp >= 0 ) {
+    if (oce >= oqe) {
       // next M area in cigA
-      last unless @cigA;
-      $self->_next_cig( \@cigA, \$cs, \$ce, \$oqs, \$oqe );
+      if (cigAPos == Vector_getNumElement(cigA)) break;
+      GenomicAlignAdaptor_nextCig(gaa, cigA, &cigAPos, &cs, &ce, &oqs, &oqe );
     } 
   } // end of while loop
 
   // if there is a last floating current match
-  if( $current_match ) {
-    push( @result_cig, $current_match."M" );
+  if (currentMatch) {
+    
     // new GA
-    my $query_strand = $alignA->query_strand() * $alignB->query_strand();
-    my ( $query_start, $query_end );
-    if( $query_strand == 1 ) {
-      $query_start = $rqs + $alignB->query_start() - 1;
-      $query_end = $rqe + $alignB->query_start() - 1;
+    int queryStrand = GenomicAlign_getQueryStrand(alignA) * GenomicAlign_getQueryStrand(alignB);
+    int queryStart, queryEnd;
+    double percId;
+    double score;
+    GenomicAlign *ga;
+
+    sprintf(tmpStr,"%dM",currentMatch);
+    resultCig = StrUtil_appendString(resultCig, tmpStr);
+
+    if (queryStrand == 1) {
+      queryStart = rqs + GenomicAlign_getQueryStart(alignB) - 1;
+      queryEnd = rqe + GenomicAlign_getQueryStart(alignB) - 1;
     } else {
-      $query_end = $alignB->query_end() - $rqs + 1;
-      $query_start = $alignB->query_end() - $rqe + 1;
+      queryEnd = GenomicAlign_getQueryEnd(alignB) - rqs + 1;
+      queryStart = GenomicAlign_getQueryEnd(alignB) - rqe + 1;
     }
   
-    my $score = ( $alignA->score() < $alignB->score()) ? 
-      $alignA->score() : $alignB->score();
-    my $perc_id =  int( $alignA->perc_id() * $alignB->perc_id() / 100  );
+    score = (GenomicAlign_getScore(alignA) < GenomicAlign_getScore(alignB)) ? 
+      GenomicAlign_getScore(alignA) : GenomicAlign_getScore(alignB);
+    percId =  (int)(GenomicAlign_getPercentId(alignA)*GenomicAlign_getPercentId(alignB)/100.0);
     
-    my $ga = Bio::EnsEMBL::Compara::GenomicAlign->new
-      ( -consensus_dnafrag => $alignA->consensus_dnafrag,
-	-query_dnafrag => $alignB->query_dnafrag,
-	-cigar_line => join("",@result_cig),
-	-consensus_start => $rcs,
-	-consensus_end => $rce,
-	-query_strand => $query_strand, 
-	-query_start => $query_start,
-	-query_end => $query_end,
-	-adaptor => $self,
-	-perc_id => $perc_id,
-	-score => $score
-      );
-    push( @$merged_aligns, $ga );
-  // nothing to return all in merged_aligns
+    ga = GenomicAlign_new();
+
+    GenomicAlign_setConsensusDNAFrag(ga, GenomicAlign_getConsensusDNAFrag(alignA));
+    GenomicAlign_setQueryDNAFrag(ga, GenomicAlign_getQueryDNAFrag(alignB));
+    GenomicAlign_setCigarString(ga, resultCig);
+    GenomicAlign_setConsensusStart(ga, rcs);
+    GenomicAlign_setConsensusEnd(ga, rce);
+    GenomicAlign_setQueryStrand(ga, queryStrand);
+    GenomicAlign_setQueryStart(ga, queryStart);
+    GenomicAlign_setQueryEnd(ga, queryEnd);
+    GenomicAlign_setAdaptor(ga, (BaseAdaptor *)gaa);
+    GenomicAlign_setPercentId(ga, percId);
+    GenomicAlign_setScore(ga, score);
+
+    Vector_addElement(mergedAligns, ga);
   }
-#endif
 
+  free(resultCig);
+// NIY freeing pieces
+  // nothing to return all in merged_aligns
 }
 
 
-#ifdef DONE
-void GenomicAlignAdaptor_nextCig(GenomicAlignAdaptor *gaa,  {
-  my ( $self, $ciglist, $cs, $ce, $qs, $qe ) = @_;
+void GenomicAlignAdaptor_nextCig(GenomicAlignAdaptor *gaa,
+    Vector *cigList, int *cigListPos, int *cs, int *ce, int *qs, int *qe)  {
+  int count;
+  char type;
+  char *cigElem;
+  int lenElem;
   
-  my ( $cig_elem, $type, $count );
   do {
-    $cig_elem = shift( @$ciglist );
-    ( $count ) = ($cig_elem =~ /(\d*)/);
-    $count || ( $count = 1 );
+    cigElem = Vector_getElementAt(cigList, *cigListPos);
+    (*cigListPos)++;
+    lenElem = strlen(cigElem);
+    type = cigElem[lenElem-1];
 
-    ( $type ) = ( $cig_elem =~ /(.)$/ );
-    if( $type eq 'D' ) {
-      $$qe += $count;
-    } elsif( $type eq 'I' ) {
-      $$ce += $count;
+    
+    if (type!='M' && type!='I' && type!='D') {
+      fprintf(stderr,"Error: Cigar string format error for %s\n",cigElem);
+      exit(1);
+    }
+  
+    if (lenElem > 1) {
+      cigElem[lenElem-1] = '\0';
+      count = atol(cigElem);
     } else {
-      $$cs = $$ce + 1;
-      $$ce = $$cs + $count - 1;
-      $$qs = $$qe + 1;
-      $$qe = $$qs + $count - 1;
+      count = 1;
+    }
+
+
+    switch (type) {
+      case 'D':
+        *qe += count;
+        break;
+      case 'I':
+        *ce += count;
+        break;
+      case 'M':
+        *cs = *ce + 1;
+        *ce = *cs + count - 1;
+        *qs = *qe + 1;
+        *qe = *qs + count - 1;
     } 
-  } until ( $type eq 'M' || ! ( @$ciglist ));
+  } while (type != 'M' && *cigListPos!=Vector_getNumElement(cigList));
 }
-#endif
 
 Vector *GenomicAlignAdaptor_objectsFromStatementHandle(GenomicAlignAdaptor *gaa, StatementHandle *sth,
                                                        int reverse) {
@@ -713,8 +801,6 @@ Vector *GenomicAlignAdaptor_objectsFromStatementHandle(GenomicAlignAdaptor *gaa,
   double score;
   double percId;
   char *cigarString;
-
-
 
   dfa = ComparaDBAdaptor_getDNAFragAdaptor(gaa->dba);
 

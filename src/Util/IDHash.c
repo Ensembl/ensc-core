@@ -40,7 +40,7 @@ int IDHash_getNumValues(IDHash *idHash) {
   return idHash->nValue;
 }
 
-void *IDHash_getValues(IDHash *idHash) {
+void **IDHash_getValues(IDHash *idHash) {
   int i;
   int j;
   void **values;
@@ -120,6 +120,37 @@ int IDHash_contains(IDHash *idHash, IDType id) {
     }
   }
 
+  return 0;
+}
+
+int IDHash_remove(IDHash *idHash, IDType id, void freeFunc()) {
+  int bucketNum = IDHash_getBucketNum(idHash,id);
+  int i;
+  int cnt = 0;
+  void *toRemove = NULL;
+
+  for (i=0; i<idHash->bucketCounts[bucketNum]; i++) {
+    if (id == idHash->buckets[bucketNum][i].key) {
+      if (toRemove) {
+        fprintf(stderr,"Error: " IDFMTSTR " found more than once in hash\n",id);
+        exit(1);
+      }
+      toRemove = idHash->buckets[bucketNum][i].value;
+    } else {
+      idHash->buckets[bucketNum][cnt].key   = idHash->buckets[bucketNum][i].key;
+      idHash->buckets[bucketNum][cnt].value = idHash->buckets[bucketNum][i].value;
+      cnt++;
+    }
+  }
+
+  if (toRemove) {
+    idHash->bucketCounts[bucketNum]--;
+  }
+
+  if (freeFunc) {
+    freeFunc(toRemove);
+  }
+  
   return 0;
 }
 

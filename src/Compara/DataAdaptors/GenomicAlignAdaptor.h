@@ -19,7 +19,7 @@ Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDB(GenomicAlignAdaptor *gaa,
 Vector *GenomicAlignAdaptor_objectsFromStatementHandle(GenomicAlignAdaptor *gaa, StatementHandle *sth,
                                                        int reverse);
 void GenomicAlignAdaptor_addDerivedAlignments(GenomicAlignAdaptor *gaa,
-                     Vector *mergedAligns, Vector *alignA, Vector *alignB);
+                     Vector *mergedAligns, GenomicAlign *alignA, GenomicAlign *alignB);
 IDType GenomicAlignAdaptor_methodLinkIdByAlignmentType(GenomicAlignAdaptor *gaa, char *alignmentType);
 char *GenomicAlignAdaptor_alignmentTypeByMethodLinkId(GenomicAlignAdaptor *gaa, IDType methodLinkId);
 

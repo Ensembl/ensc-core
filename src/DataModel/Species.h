@@ -10,6 +10,7 @@ struct SpeciesStruct {
   ENSROOT_DATA
   Vector *classification;
   char *commonName;
+  char *binomialName;
 };
 #undef FUNCSTRUCTTYPE
 
