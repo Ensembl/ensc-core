@@ -92,6 +92,14 @@ RepeatFeatureAdaptor *DBAdaptor_getRepeatFeatureAdaptor(DBAdaptor *dba) {
   return (RepeatFeatureAdaptor *)DBConnection_getAdaptor(dba->dbc,REPEATFEATURE_ADAPTOR);
 }
 
+RepeatConsensusAdaptor *DBAdaptor_getRepeatConsensusAdaptor(DBAdaptor *dba) {
+  if (!DBConnection_getAdaptor(dba->dbc,REPEATCONSENSUS_ADAPTOR)) {
+    DBConnection_addAdaptor(dba->dbc,
+                            (BaseAdaptor *)RepeatConsensusAdaptor_new(dba));
+  }
+  return (RepeatConsensusAdaptor *)DBConnection_getAdaptor(dba->dbc,REPEATCONSENSUS_ADAPTOR);
+}
+
 TranscriptAdaptor *DBAdaptor_getTranscriptAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,TRANSCRIPT_ADAPTOR)) {
     DBConnection_addAdaptor(dba->dbc,

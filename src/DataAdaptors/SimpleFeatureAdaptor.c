@@ -15,21 +15,6 @@ SimpleFeatureAdaptor *SimpleFeatureAdaptor_new(DBAdaptor *dba) {
   return sfa;
 }
 
-
-=head2 store
-
-  Arg [1]    : list of Bio::EnsEMBL::SimpleFeatures @sf
-               the simple features to store in the database
-  Example    : $simple_feature_adaptor->store(1234, @simple_feats);
-  Description: Stores a list of simple feature objects in the database
-  Returntype : none
-  Exceptions : thrown if @sf is not defined, if any of the features do not
-               have an attached contig object, 
-               or if any elements of @sf are not Bio::EnsEMBL::SeqFeatures 
-  Caller     : general
-
-=cut
-
 int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *baf, Set *features) {
 /*
   my ($self,@sf) = @_;
@@ -72,59 +57,20 @@ int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *baf, Set *features) {
 */
 }
 
-
-=head2 _tablename
-
-  Arg [1]    : none
-  Example    : none
-  Description: PROTECTED implementation of superclass abstract method
-               returns the names, aliases of the tables to use for queries
-  Returntype : list of listrefs of strings
-  Exceptions : none
-  Caller     : internal
-
-=cut
-
 char ***SimpleFeatureAdaptor_getTables() {
   return SimpleFeatureAdaptor_tableNames;
 }
 
-
-=head2 _columns
-
-  Arg [1]    : none
-  Example    : none
-  Description: PROTECTED implementation of superclass abstract method
-               returns a list of columns to use for queries
-  Returntype : list of strings
-  Exceptions : none
-  Caller     : internal
-
-=cut
-
 char *SimpleFeatureAdaptor_getColumns() {
-  return "sf.simple_feature_id " 
-	 "sf.contig_id "
-         "sf.contig_start "
-         "sf.contig_end "
-         "sf.contig_strand "
-	 "sf.display_label "
-         "sf.analysis_id "
+  return "sf.simple_feature_id," 
+	 "sf.contig_id,"
+         "sf.contig_start,"
+         "sf.contig_end,"
+         "sf.contig_strand,"
+	 "sf.display_label,"
+         "sf.analysis_id,"
          "sf.score";
 }
-
-
-=head2 _objs_from_sth
-
-  Arg [1]    : hash reference $hashref
-  Example    : none
-  Description: PROTECTED implementation of superclass abstract method.
-               creates SimpleFeatures from an executed DBI statement handle.
-  Returntype : list reference to Bio::EnsEMBL::SimpleFeature objects
-  Exceptions : none
-  Caller     : internal
-
-=cut
 
 Set *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf,
                                                      StatementHandle *sth) {

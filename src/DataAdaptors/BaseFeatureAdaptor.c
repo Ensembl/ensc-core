@@ -36,7 +36,6 @@ void BaseFeatureAdaptor_init(BaseFeatureAdaptor *baf) {
   
 sub BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *baf, char *constraint,
                                     char *logicName, AssemblyMapper *mapper, Slice *slice) {
-  my ($self, $constraint, $logic_name, $mapper, $slice) = @_;
   
   my @tabs = $self->_tables;
   my $columns = join(', ', $self->_columns());
@@ -127,11 +126,6 @@ sub BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *baf, char *constraint,
 =cut
 
 sub BaseFeatureAdaptor_fetchByDbID(BaseFeatureAdaptor *baf, int64 dbID) {
-  my ($self,$id) = @_;
-  
-  unless(defined $id) {
-    $self->throw("fetch_by_dbID must have an id");
-  }
 
   my @tabs = $self->_tables;
 
@@ -167,14 +161,9 @@ sub BaseFeatureAdaptor_fetchByDbID(BaseFeatureAdaptor *baf, int64 dbID) {
 
 Set *BaseFeatureAdaptor_fetchAllByRawContigConstraint(BaseFeatureAdaptor *baf, RawContig *contig,
                                                       char *constraint, char *logicName)  {
-  my ($self, $contig, $constraint, $logic_name) = @_;
-  
-  unless( defined $contig ) {
-    $self->throw("fetch_by_Contig_constraint must have an contig");
-  }
-
-  unless( ref $contig && $contig->isa('Bio::EnsEMBL::RawContig')) {
-    $self->throw("contig argument is not a Bio::EnsEMBL::RawContig object\n");
+  if (contig == NULL) {
+    fprintf(stderr,"ERROR: fetch_by_Contig_constraint must have an contig\n");
+    exit(1);
   }
 
   my $cid = $contig->dbID();
@@ -333,14 +322,6 @@ Set *BaseFeatureAdaptor_fetchAllBySliceAndScore(BaseFeatureAdaptor *baf, Slice *
 
 Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *baf, Slice *slice,
                                                   char *constraint, char *logicName) {
-  my($self, $slice, $constraint, $logic_name) = @_;
-
-  unless(defined $slice && ref $slice && $slice->isa("Bio::EnsEMBL::Slice")) {
-    $self->throw("Slice arg must be a Bio::EnsEMBL::Slice not a [$slice]\n");
-  }
-
-  $logic_name = '' unless $logic_name;
-  $constraint = '' unless $constraint;
 
   #check the cache and return if we have already done this query
   my $key = uc(join($slice->name, $constraint, $logic_name));
@@ -421,43 +402,10 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *baf, Slice
 }
 
 
-=head2 store
-
-  Arg [1]    : list of Bio::EnsEMBL::SeqFeature
-  Example    : $adaptor->store(@feats);
-  Description: ABSTRACT  Subclasses are responsible for implementing this 
-               method.  It should take a list of features and store them in 
-               the database.
-  Returntype : none
-  Exceptions : thrown method is not implemented by subclass
-  Caller     : general
-
-=cut
-
 int BaseFeatureAdaptor_store(BaseFeatureAdaptor *baf, Set *features) {
   fprintf(stderr,"ERROR: Abstract method store not defined by implementing subclass\n");
   exit(1);
 }
-
-
-=head2 remove
-
-  Arg [1]    : A feature $feature 
-  Example    : $feature_adaptor->remove($feature);
-  Description: This removes a feature from the database.  The table the
-               feature is removed from is defined by the abstract method
-               _tablename, and the primary key of the table is assumed
-               to be _tablename() . '_id'.  The feature argument must 
-               be an object implementing the dbID method, and for the
-               feature to be removed from the database a dbID value must
-               be returned.
-  Returntype : none
-  Exceptions : thrown if $feature arg does not implement dbID(), or if 
-               $feature->dbID is not a true value               
-  Caller     : general
-
-=cut
-
 
 int BaseFeatureAdaptor_remove(BaseFeatureAdaptor *baf, SeqFeature *feature) {
   my ($self, $feature) = @_;
@@ -519,126 +467,30 @@ int BaseFeatureAdaptor_removeByRawContig(BaseFeatureAdaptor *baf, RawContig *con
   return;
 }
 
-
-
-=head2 _tables
-
-  Args       : none
-  Example    : $tablename = $self->_table_name()
-  Description: ABSTRACT PROTECTED Subclasses are responsible for implementing
-               this method.  It should list of [tablename, alias] pairs.  
-               Additionally the primary table (with the dbID, analysis_id, and
-               score) should be the first table in the list.
-               e.g:
-               ( ['repeat_feature',   'rf'],
-                 ['repeat_consensus', 'rc']);
-               used to obtain features.  
-  Returntype : list of [tablename, alias] pairs
-  Exceptions : thrown if not implemented by subclass
-  Caller     : BaseFeatureAdaptor::generic_fetch
-
-=cut
-
-char ***getTables() {
+char ***BaseFeatureAdaptor_getTables() {
   fprintf(stderr,"ERROR: Abstract method getTables not defined by implementing subclass\n");
   exit(1);
 }
 
-
-=head2 _columns
-
-  Args       : none
-  Example    : $tablename = $self->_columns()
-  Description: ABSTRACT PROTECTED Subclasses are responsible for implementing
-               this method.  It should return a list of columns to be used
-               for feature creation
-  Returntype : list of strings
-  Exceptions : thrown if not implemented by subclass
-  Caller     : BaseFeatureAdaptor::generic_fetch
-
-=cut
-
-char *getColumns() {
+char *BaseFeatureAdaptor_getColumns() {
   fprintf(stderr,"ERROR: Abstract method getColumns not defined by implementing subclass\n");
   exit(1);
 }
 
-=head2 _default_where_clause
-
-  Arg [1]    : none
-  Example    : none
-  Description: May be overridden to provide an additional where constraint to 
-               the SQL query which is generated to fetch feature records.
-               This constraint is always appended to the end of the generated
-               where clause
-  Returntype : string
-  Exceptions : none
-  Caller     : generic_fetch
-
-=cut
-
-sub _default_where_clause {
-  my $self = shift;
-
-  return '';
+/* Actually added to default where */
+char *BaseFeatureAdaptor_defaultWhereClause() {
+  return "";
 }
 
-
-
-=head2 _left_join
-
-  Arg [1]    : none
-  Example    : none
-  Description: Can be overridden by a subclass to specify any left joins
-               which should occur. The table name specigfied in the join
-               must still be present in the return values of 
-  Returntype : a {'tablename' => 'join condition'} pair 
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub _left_join {
-  my $self = shift;
-
-  return '';
+/* Overridden in Markers and Qtls (not implemented in C) */
+char **BaseFeatureAdaptor_leftJoin {
+  return NULL;
 }
 
-
-
-=head2 _final_clause
-
-  Arg [1]    : none
-  Example    : none
-  Description: May be overriden to provide an additional clause to the end
-               of the SQL query used to fetch feature records.  
-               This is useful to add a required ORDER BY clause to the 
-               query for example.
-  Returntype : string
-  Exceptions : none
-  Caller     : generic_fetch
-
-=cut
-
-sub _final_clause {
-  my $self = shift;
-
-  return '';
+/* Overridden in PredictionTranscriptAdaptor */
+char *BaseFeatureAdaptor_finalClause() {
+  return "";
 }
-
-=head2 _objs_from_sth
-
-  Arg [1]    : DBI::row_hashref $hashref containing key-value pairs 
-               for each of the columns specified by the _columns method
-  Example    : my @feats = $self->_obj_from_hashref
-  Description: ABSTRACT PROTECTED The subclass is responsible for implementing
-               this method.  It should take in a DBI row hash reference and
-               return a list of created features in contig coordinates.
-  Returntype : list of Bio::EnsEMBL::*Features in contig coordinates
-  Exceptions : thrown if not implemented by subclass
-  Caller     : BaseFeatureAdaptor::generic_fetch
-
-=cut
 
 Set *BaseFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf, StatementHandle *sth) {
   fprintf(stderr,"ERROR: Abstract method objectsFromStatementHandle not defined by implementing subclass\n");

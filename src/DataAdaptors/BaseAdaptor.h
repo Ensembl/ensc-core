@@ -28,6 +28,7 @@ char *Adaptor_TypeStrings[] = {
   "DNAALIGNFEATURE",
   "PROTEINALIGNFEATURE",
   "REPEATFEATURE"
+  "REPEATCONSENSUS"
 };
 
 #else
@@ -53,6 +54,7 @@ enum Adaptor_Types {
   DNAALIGNFEATURE_ADAPTOR,
   PROTEINALIGNFEATURE_ADAPTOR,
   REPEATFEATURE_ADAPTOR
+  REPEATCONSENSUS_ADAPTOR
 };
 
 typedef StatementHandle *(*BaseAdaptor_PrepareFunc)(BaseAdaptor *ba, char *qStr, int len);
