@@ -73,35 +73,39 @@ char *SimpleFeatureAdaptor_getColumns() {
 }
 
 Set *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf,
-                                                     StatementHandle *sth) {
-  my ($self, $sth) = @_;
+                                                     StatementHandle *sth,
+                                                     AssemblyMapper *mapper,
+                                                     Slice *slice) {
+  AnalysisAdaptor *aa;
+  RawContigAdaptor *rca;
+  Set *features;
+  ResultRow *row;
 
-  my $aa = $self->db()->get_AnalysisAdaptor();  
-  my $rca = $self->db()->get_RawContigAdaptor();
+  aa = DBAdaptor_getAnalysisAdaptor(baf->dba);
+  rca = DBAdaptor_getRawContigAdaptor(baf->dba);
 
-  my @features = ();
+  features = Set_new();
   
-  my $hashref;
-  while($hashref = $sth->fetchrow_hashref()) {
-    my $contig = $rca->fetch_by_dbID($hashref->{'contig_id'});
-    my $analysis = $aa->fetch_by_dbID($hashref->{'analysis_id'});
+  while(row = sth->fetchRow(sth)) {
+    RawContig *contig = RawContigAdaptor_fetchByDbID(rca, row->getLongLongAt(row,1));
+    Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,6));
 
-    my $out = Bio::EnsEMBL::SimpleFeature->new();
-    $out->start($hashref->{'contig_start'});
-    $out->end($hashref->{'contig_end'});
-    $out->strand($hashref->{'contig_strand'});
-    $out->analysis($analysis);
-    $out->display_label($hashref->{'display_label'});
-    $out->attach_seq($contig); 
+    SimpleFeature *sf = SimpleFeature_new();
+    SimpleFeature_setStart(sf,row->getIntAt(row,2));
+    SimpleFeature_setEnd(sf,row->getIntAt(row,3));
+    SimpleFeature_setStrand(sf,row->getIntAt(row,4));
+    SimpleFeature_setAnalysis(sf,analysis);
+    SimpleFeature_setDisplayLabel(sf,row->getStringAt(5));
+    SimpleFeature_attachSeq(sf,contig); 
 
-    if($hashref->{'score'}) {
-      $out->score($hashref->{'score'});
+    if (row->col(7)) {
+      SimpleFeature_setScore(sf,row->getDouble(7));
     }
     
-    $out->dbID($hashref->{'simple_feature_id'});
+    SimpleFeature_setDbID(sf,row->getLongLongAt(0));
 
-    push @features, $out;
+    Set_add(features,sf);
   }
 
-  return \@features;
+  return features;
 }

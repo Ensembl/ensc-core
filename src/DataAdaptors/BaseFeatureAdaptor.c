@@ -1,28 +1,27 @@
 #include "BaseFeatureAdaptor.h"
 
 
-#ifdef DONE
-$SLICE_FEATURE_CACHE_SIZE = 4;
-#endif
+int SLICE_FEATURE_CACHE_SIZE = 4;
 
 
-void BaseFeatureAdaptor_init(BaseFeatureAdaptor *baf) {
-  BaseAdaptor_init((BaseAdaptor *)baf);
+void BaseFeatureAdaptor_init(BaseFeatureAdaptor *bfa, DBAdaptor *dba, int adaptorType) {
+  BaseAdaptor_init((BaseAdaptor *)bfa,dba,adaptorType);
 
-  my $self = $class->SUPER::new(@args);
+  bfa->sliceFeatureCache = Cache_new(SLICE_FEATURE_CACHE_SIZE);
 
-  #initialize caching data structures
-  $self->{'_slice_feature_cache'} = {};
+  bfa->objectsFromStatementHandle = BaseFeatureAdaptor_objectsFromStatementHandle;
+  bfa->getTables                  = BaseFeatureAdaptor_getTables;
+  bfa->getColumns                 = BaseFeatureAdaptor_getColumns;
+  bfa->finalClause                = BaseFeatureAdaptor_finalClause;
+  bfa->leftJoin                   = BaseFeatureAdaptor_leftJoin;
+  bfa->defaultWhereClause         = BaseFeatureAdaptor_defaultWhereClause;
+  bfa->store                      = BaseFeatureAdaptor_store;
 
-  tie(%{$self->{'_slice_feature_cache'}}, 
-      'Bio::EnsEMBL::Utils::Cache',
-      $SLICE_FEATURE_CACHE_SIZE);
-
-  return $self;
+  return;
 }
 
-sub BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *baf, char *constraint,
-                                    char *logicName, AssemblyMapper *mapper, Slice *slice) {
+Set *BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *bfa, char *constraint,
+                                     char *logicName, AssemblyMapper *mapper, Slice *slice) {
   
   my @tabs = $self->_tables;
   my $columns = join(', ', $self->_columns());
@@ -95,10 +94,10 @@ sub BaseFeatureAdaptor_genericFetch(BaseFeatureAdaptor *baf, char *constraint,
   
   $sth->execute;  
 
-  return $self->_objs_from_sth($sth, $mapper, $slice);
+  return bfa->objectsFromStatementHandle(bfa, sth, mapper, slice);
 }
 
-SeqFeature *BaseFeatureAdaptor_fetchByDbID(BaseFeatureAdaptor *baf, int64 dbID) {
+SeqFeature *BaseFeatureAdaptor_fetchByDbID(BaseFeatureAdaptor *bfa, int64 dbID) {
 
   my @tabs = $self->_tables;
 
@@ -112,7 +111,7 @@ SeqFeature *BaseFeatureAdaptor_fetchByDbID(BaseFeatureAdaptor *baf, int64 dbID) 
   return $feat;
 }
 
-Set *BaseFeatureAdaptor_fetchAllByRawContigConstraint(BaseFeatureAdaptor *baf, RawContig *contig,
+Set *BaseFeatureAdaptor_fetchAllByRawContigConstraint(BaseFeatureAdaptor *bfa, RawContig *contig,
                                                       char *constraint, char *logicName)  {
   if (contig == NULL) {
     fprintf(stderr,"ERROR: fetch_by_Contig_constraint must have an contig\n");
@@ -134,19 +133,19 @@ Set *BaseFeatureAdaptor_fetchAllByRawContigConstraint(BaseFeatureAdaptor *baf, R
   return $self->generic_fetch($constraint, $logic_name);
 }
 
-Set *BaseFeatureAdaptor_fetchAllByRawContig(BaseFeatureAdaptor *baf, RawContig *contig,
+Set *BaseFeatureAdaptor_fetchAllByRawContig(BaseFeatureAdaptor *bfa, RawContig *contig,
                                             char *logicName) {
-  return BaseFeatureAdaptor_fetchAllByRawContigConstraint(baf,contig,"",logicName);
+  return BaseFeatureAdaptor_fetchAllByRawContigConstraint(bfa,contig,"",logicName);
 }
 
-Set *BaseFeatureAdaptor_fetchAllByRawContigAndScore(BaseFeatureAdaptor *baf, RawContig *contig,
+Set *BaseFeatureAdaptor_fetchAllByRawContigAndScore(BaseFeatureAdaptor *bfa, RawContig *contig,
                                                     double score, char *logicName) {
   my($self, $contig, $score, $logic_name) = @_;
 
   my $constraint;
 
   if(defined $score){
-    #get the synonym of the primary_table
+    // get the synonym of the primary_table
     my @tabs = $self->_tables;
     my $syn = $tabs[0]->[1];
     $constraint = "${syn}.score > $score";
@@ -156,18 +155,17 @@ Set *BaseFeatureAdaptor_fetchAllByRawContigAndScore(BaseFeatureAdaptor *baf, Raw
 					                  char *logicName);
 }
 
-Set *BaseFeatureAdaptor_fetchAllBySlice(BaseFeatureAdaptor *baf, Slice *slice,
+Set *BaseFeatureAdaptor_fetchAllBySlice(BaseFeatureAdaptor *bfa, Slice *slice,
                                         char *logicName) {
   return BaseFeatureAdaptor_fetchAllBySliceConstraint(slice, "", logicName);
 }
 
-Set *BaseFeatureAdaptor_fetchAllBySliceAndScore(BaseFeatureAdaptor *baf, Slice *slice,
+Set *BaseFeatureAdaptor_fetchAllBySliceAndScore(BaseFeatureAdaptor *bfa, Slice *slice,
                                                 double score, char *logicName) {
-  my ($self, $slice, $score, $logic_name) = @_;
-  my $constraint;
+  char constraint[256];
 
   if(defined $score) {
-    #get the synonym of the primary_table
+    // get the synonym of the primary_table
     my @tabs = $self->_tables;
     my $syn = $tabs[0]->[1];
     $constraint = "${syn}.score > $score";
@@ -176,10 +174,10 @@ Set *BaseFeatureAdaptor_fetchAllBySliceAndScore(BaseFeatureAdaptor *baf, Slice *
   return BaseFeatureAdaptor_fetchAllBySliceConstraint(slice, constraint, logicName);
 }  
 
-Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *baf, Slice *slice,
+Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice *slice,
                                                   char *constraint, char *logicName) {
 
-  #check the cache and return if we have already done this query
+  // check the cache and return if we have already done this query
   my $key = uc(join($slice->name, $constraint, $logic_name));
   return $self->{'_slice_feature_cache'}{$key} 
     if $self->{'_slice_feature_cache'}{$key};
@@ -257,81 +255,81 @@ Set *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *baf, Slice
   return $self->{'_slice_feature_cache'}{$key} = \@out;
 }
 
-int BaseFeatureAdaptor_store(BaseFeatureAdaptor *baf, Set *features) {
+int BaseFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
   fprintf(stderr,"ERROR: Abstract method store not defined by implementing subclass\n");
   exit(1);
 }
 
-int BaseFeatureAdaptor_remove(BaseFeatureAdaptor *baf, SeqFeature *feature) {
-  my ($self, $feature) = @_;
-
-  unless($feature->can('dbID')) {
-    $self->throw("Feature [$feature] does not implement method dbID");
+int BaseFeatureAdaptor_remove(BaseFeatureAdaptor *bfa, SeqFeature *feature) {
+  char qStr[256]
+  char *tableName = (bfa->getTables())[0][0];
+  StatementHandle *sth;
+  
+  if (!SeqFeature_getDbID(feature)) {
+    fprintf(stderr, "BaseFeatureAdaptor_remove - dbID not defined - "
+                    "feature could not be removed\n");
   }
 
-  unless($feature->dbID) {
-    $self->warn("BaseFeatureAdaptor::remove - dbID not defined - " .
-                "feature could not be removed");
-  }
 
-  my @tabs = $self->_tables;
-  my ($table) = @{$tabs[0]};
+  sprintf(qStr,"DELETE FROM %s WHERE %s_id = " INT64FMTSTR,tableName,tableName,SeqFeature_getDbID(feature));
 
-  my $sth = $self->prepare("DELETE FROM $table WHERE ${table}_id = ?");
-  $sth->execute($feature->dbID());
+  sth = bfa->prepare((BaseAdaptor *)bfa, qStr,strlen(qStr));
+  sth->execute(sth);
+  sth->finish(sth);
 
-  #unset the feature dbID
-  $feature->dbID('');
+  //unset the feature dbID
+  SeqFeature_setDbID(0);
   
   return;
 }
 
-int BaseFeatureAdaptor_removeByRawContig(BaseFeatureAdaptor *baf, RawContig *contig) {
-  my ($self, $contig) = @_;
+int BaseFeatureAdaptor_removeByRawContig(BaseFeatureAdaptor *bfa, RawContig *contig) {
+  char qStr[256]
+  char *tableName = (bfa->getTables())[0][0];
+  StatementHandle *sth;
 
-  unless($contig) {
-    $self->throw("BaseFeatureAdaptor::remove - no contig supplied: ".
-		 "Deletion of features failed.");
+  if (contig == NULL) {
+    fprintf(stderr,"BaseFeatureAdaptor_removeByRawContig - no contig supplied: "
+		   "Deletion of features failed.\n");
+    return 0;
   }
 
-  my @tabs = $self->_tables;
 
-  my ($table_name) = @{$tabs[0]};
+  sprintf(qStr, "DELETE FROM %s WHERE contig_id = " INT64FMTSTR, tableName, RawContig_getDbID(contig));
 
-  my $sth = $self->prepare("DELETE FROM $table_name
-                            WHERE contig_id = ?");
+  sth = bfa->prepare((BaseAdaptor *)bfa,qStr,strlen(qStr))
+  sth->execute(sth);
+  sth->finish(sth);
 
-  $sth->execute($contig->dbID);
-
-  return;
+  return 1;
 }
 
-char ***BaseFeatureAdaptor_getTables() {
+char ***BaseFeatureAdaptor_getTables(void) {
   fprintf(stderr,"ERROR: Abstract method getTables not defined by implementing subclass\n");
   exit(1);
 }
 
-char *BaseFeatureAdaptor_getColumns() {
+char *BaseFeatureAdaptor_getColumns(void) {
   fprintf(stderr,"ERROR: Abstract method getColumns not defined by implementing subclass\n");
   exit(1);
 }
 
 /* Actually added to default where */
-char *BaseFeatureAdaptor_defaultWhereClause() {
-  return "";
+char *BaseFeatureAdaptor_defaultWhereClause(void) {
+  return NULL;
 }
 
 /* Overridden in Markers and Qtls (not implemented in C) */
-char **BaseFeatureAdaptor_leftJoin {
+char **BaseFeatureAdaptor_leftJoin(void) {
   return NULL;
 }
 
 /* Overridden in PredictionTranscriptAdaptor */
-char *BaseFeatureAdaptor_finalClause() {
-  return "";
+char *BaseFeatureAdaptor_finalClause(void) {
+  return NULL;
 }
 
-Set *BaseFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf, StatementHandle *sth) {
+Set *BaseFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa, StatementHandle *sth) {
   fprintf(stderr,"ERROR: Abstract method objectsFromStatementHandle not defined by implementing subclass\n");
   exit(1);
 } 

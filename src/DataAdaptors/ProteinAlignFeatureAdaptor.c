@@ -12,6 +12,11 @@ ProteinAlignFeatureAdaptor *ProteinAlignFeatureAdaptor_new(DBAdaptor *dba) {
   }
   BaseFeatureAdaptor_init((BaseFeatureAdaptor *)pafa, dba, PROTEINALIGNFEATURE_ADAPTOR);
 
+  pafa->getTables = ProteinAlignFeatureAdaptor_getTables;
+  pafa->getColumns = ProteinAlignFeatureAdaptor_getColumns;
+  pafa->store = ProteinAlignFeatureAdaptor_store;
+  pafa->objectsFromStatementHandle = ProteinAlignFeatureAdaptor_objectsFromStatementHandle;
+
   return pafa;
 }
 

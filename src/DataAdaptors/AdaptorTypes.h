@@ -15,6 +15,7 @@ typedef struct DNAAlignFeatureAdaptorStruct DNAAlignFeatureAdaptor;
 typedef struct ExonAdaptorStruct ExonAdaptor;
 typedef struct GeneAdaptorStruct GeneAdaptor;
 typedef struct MetaContainerStruct MetaContainer;
+typedef struct PredictionTranscriptAdaptorStruct PredictionTranscriptAdaptor;
 typedef struct ProteinAlignFeatureAdaptorStruct ProteinAlignFeatureAdaptor;
 typedef struct RawContigAdaptorStruct RawContigAdaptor;
 typedef struct RepeatConsensusAdaptorStruct RepeatConsensusAdaptor;

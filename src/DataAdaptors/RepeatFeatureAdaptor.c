@@ -13,6 +13,12 @@ RepeatFeatureAdaptor *RepeatFeatureAdaptor_new(DBAdaptor *dba) {
   }
   BaseFeatureAdaptor_init((BaseFeatureAdaptor *)rfa, dba, REPEATFEATURE_ADAPTOR);
 
+  rfa->getTables = RepeatFeatureAdaptor_getTables;
+  rfa->getColumns = RepeatFeatureAdaptor_getColumns;
+  rfa->store = RepeatFeatureAdaptor_store;
+  rfa->objectsFromStatementHandle = RepeatFeatureAdaptor_objectsFromStatementHandle;
+  rfa->defaultWhereClause = RepeatFeatureAdaptor_defaultWhereClause;
+
   return rfa;
 }
 
@@ -217,7 +223,7 @@ sub _objs_from_sth {
   return \@features;
 }
 
-sub RepeatFeatureAdaptor_defaultWhereClause() {
+char *RepeatFeatureAdaptor_defaultWhereClause() {
   return "r.repeat_consensus_id = rc.repeat_consensus_id";
 }
 

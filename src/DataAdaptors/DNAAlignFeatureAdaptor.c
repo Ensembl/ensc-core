@@ -12,10 +12,15 @@ DNAAlignFeatureAdaptor *DNAAlignFeatureAdaptor_new(DBAdaptor *dba) {
   }
   BaseFeatureAdaptor_init((BaseFeatureAdaptor *)dafa, dba, DNAALIGNFEATURE_ADAPTOR);
 
+  dafa->getTables = DNAAlignFeatureAdaptor_getTables;
+  dafa->getColumns = DNAAlignFeatureAdaptor_getColumns;
+  dafa->store = DNAAlignFeatureAdaptor_store;
+  dafa->objectsFromStatementHandle = DNAAlignFeatureAdaptor_objectsFromStatementHandle;
+
   return dafa;
 }
 
-int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *baf, Set *features) {
+int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
 /*
   my ($self, @sf) = @_;
 
@@ -83,9 +88,10 @@ char *DNAAlignFeatureAdaptor_getColumns() {
          "daf.score";
 }
 
-Set *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf,
-                                                       StatementHandle *sth) {
- my ($self, $sth, $mapper, $slice) = @_;
+Set *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
+                                                       StatementHandle *sth,
+                                                       AssemblyMapper *mapper,
+                                                       Slice *slice) {
 
   my ($dna_align_feature_id, $contig_id, $analysis_id, $contig_start, 
       $contig_end, $contig_strand, $hit_start, $hit_end, $hit_name, 
