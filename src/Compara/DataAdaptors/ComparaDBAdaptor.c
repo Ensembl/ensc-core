@@ -1,26 +1,5 @@
 #include "ComparaDBAdaptor.h"
 
-=head2 new
-
-  Arg [..]   : list of named arguments.  See Bio::EnsEMBL::DBConnection.
-               [-CONF_FILE] optional name of a file containing configuration
-               information for comparas genome databases.  If databases are
-               not added in this way, then they should be added via the
-               method add_DBAdaptor. An example of the conf file can be found
-               in ensembl-compara/modules/Bio/EnsEMBL/Compara/Compara.conf.example
-  Example    :  $db = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
-						    -user   => 'root',
-						    -dbname => 'pog',
-						    -host   => 'caldy',
-						    -driver => 'mysql',
-                                                    -conf_file => 'conf.pl');
-  Description: Creates a new instance of a DBAdaptor for the compara database.
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
-  Exceptions : none
-  Caller     : general
-
-=cut
-
 ComparaDBAdaptor *ComparaDBAdaptor_new(char *host, char *user, char *pass, char *dbname,
                                        unsigned int port, char *confFile) {
   ComparaDBAdaptor *cdba;
@@ -32,11 +11,13 @@ ComparaDBAdaptor *ComparaDBAdaptor_new(char *host, char *user, char *pass, char 
 
   cdba->dbc = DBConnection_new(host,user,pass,dbname,port);
 
-  $self->{'genomes'} = {};
+  cdba->genomes = StringHash_new(STRINGHASH_SMALL);
+
   if (confFile) {
     fprintf(stderr,"Error: Conf file reading not implemented\n");
     exit(1);
 
+#ifdef DONE
     //read configuration file from disk
     my @conf = @{do $conf_file};
 
@@ -74,34 +55,18 @@ ComparaDBAdaptor *ComparaDBAdaptor_new(char *host, char *user, char *pass, char 
 
       $self->{'genomes'}->{"$species:$assembly"} = $db;
     }
+#endif
   }
   return cdba;
 }
-
-
-=head2 add_db_adaptor
-
-  Arg [1]    : Bio::EnsEMBL::DBSQL::DBConnection
-  Example    : $compara_db->add_db_adaptor($homo_sapiens_db);
-  Description: Adds a genome-containing database to compara.  This database
-               can be used by compara to obtain sequence for a genome on
-               on which comparative analysis has been performed.  The database
-               adaptor argument must define the get_MetaContainer argument
-               so that species name and assembly type information can be
-               extracted from the database.
-  Returntype : none
-  Exceptions : Thrown if the argument is not a Bio::EnsEMBL::DBConnection
-               or if the argument does not implement a get_MetaContainer
-               method.
-  Caller     : general
-
-=cut
 
 sub ComparaDBAdaptor_addDBAdaptor(ComparaDBAdaptor *cdba, DBAdaptor *dba) {
   char key[1024];
   char *species;
   char *assembly;
   MetaContainer *mc;
+  Species *species;
+  char *speciesName;
 
   if (!dba) {
     fprintf(stderr, "Error: dba argument must be non null\n");
@@ -110,34 +75,21 @@ sub ComparaDBAdaptor_addDBAdaptor(ComparaDBAdaptor *cdba, DBAdaptor *dba) {
 
   mc = DBAdaptor_getMetaContainer(dba);
 
-  species = $mc->get_Species->binomial;
+  species = MetaContainer_getSpecies(mc);
+  speciesName = Species_getBinomialName(species);
   assembly = MetaContainer_getDefaultAssembly(mc);
 
-  sprintf(key,"%s:%s",species,assembly);
+
+  sprintf(key,"%s:%s",speciesName,assembly);
   StringHash_add(cdba->genomes, key, dba);
+
+  Species_free(species);
+// NIY ??
+  free(assembly);
 }
 
-
-
-=head2 get_db_adaptor
-
-  Arg [1]    : string $species
-               the name of the species to obtain a genome DBAdaptor for.
-  Arg [2]    : string $assembly
-               the name of the assembly to obtain a genome DBAdaptor for.
-  Example    : $hs_db = $db->get_db_adaptor('Homo sapiens','NCBI_30');
-  Description: Obtains a DBAdaptor for the requested genome if it has been
-               specified in the configuration file passed into this objects
-               constructor, or subsequently added using the add_genome
-               method.  If the DBAdaptor is not available (i.e. has not
-               been specified by one of the abbove methods) undef is returned.
-  Returntype : Bio::EnsEMBL::DBSQL::DBConnection
-  Exceptions : none
-  Caller     : Bio::EnsEMBL::Compara::GenomeDBAdaptor
-
-=cut
-
-sub ComparaDBAdaptor_getDBAdaptor(ComparaDBAdaptor *cdba, char *species, char *assembly) {
+// Perl returns undef if not found - I throw
+DBAdaptor *ComparaDBAdaptor_getDBAdaptor(ComparaDBAdaptor *cdba, char *species, char *assembly) {
   char key[1024];
 
   if (!species || !assembly) {
@@ -211,8 +163,9 @@ ComparaDNAAlignFeatureAdaptor *ComparaDBAdaptor_getComparaDNAAlignFeatureAdaptor
 }
 
 MetaContainer *ComparaDBAdaptor_getMetaContainer(ComparaDBAdaptor *cdba)  {
+// HACK HACK HACK cast to DBAdaptor is BAD
   if (!cdba->metaContainer) {
-    cdba->metaContainer = MetaContainer_new(cdba);
+    cdba->metaContainer = MetaContainer_new((DBAdaptor *)cdba);
   }
   return cdba->metaContainer;
 }

@@ -42,6 +42,15 @@ objectfiles/%.o: %.c
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 libensc.a	: \
+	objectfiles/Compara/DataAdaptors/BaseComparaAdaptor.o \
+	objectfiles/Compara/DataAdaptors/ComparaDBAdaptor.o \
+	objectfiles/Compara/DataAdaptors/ComparaDNAAlignFeatureAdaptor.o \
+	objectfiles/Compara/DataAdaptors/DNAFragAdaptor.o \
+	objectfiles/Compara/DataAdaptors/GenomeDBAdaptor.o \
+	objectfiles/Compara/DataAdaptors/GenomicAlignAdaptor.o \
+	objectfiles/Compara/DataAdaptors/HomologyAdaptor.o \
+	objectfiles/Compara/DataAdaptors/SyntenyAdaptor.o \
+	objectfiles/Compara/DataAdaptors/SyntenyRegionAdaptor.o \
 	objectfiles/DataAdaptors/AnalysisAdaptor.o \
 	objectfiles/DataAdaptors/AssemblyMapperAdaptor.o \
 	objectfiles/DataAdaptors/BaseAdaptor.o \
@@ -103,6 +112,7 @@ libensc.a	: \
 	objectfiles/DataModel/Sequence.o \
 	objectfiles/DataModel/SimpleFeature.o \
 	objectfiles/DataModel/Slice.o \
+	objectfiles/DataModel/Species.o \
 	objectfiles/DataModel/StableIdInfo.o \
 	objectfiles/DataModel/StickyExon.o \
 	objectfiles/DataModel/Transcript.o \

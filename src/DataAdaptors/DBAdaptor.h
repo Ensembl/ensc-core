@@ -1,16 +1,15 @@
 #ifndef __DBADAPTOR_H__
 #define __DBADAPTOR_H__
 
+#include "BaseDBAdaptor.h"
 #include "DBConnection.h"
 #include "AdaptorTypes.h"
 #include "EnsC.h"
 
 struct DBAdaptorStruct {
-  DBConnection  *dbc;
-
+  BASEDBADAPTOR_DATA
   DBAdaptor     *dnadb;
   char          *assemblyType;
-  MetaContainer *metaContainer;
 };
 
 DBAdaptor *DBAdaptor_new(char *host, char *user, char *pass, char *dbname,
@@ -43,7 +42,7 @@ TranscriptAdaptor           *DBAdaptor_getTranscriptAdaptor(DBAdaptor *dba);
 #define DBAdaptor_getDNADBAdaptor(dba) (dba)->dnadb
 #define DBAdaptor_setDNADBAdaptor(dba, ddb) (dba)->dnadb = ddb
 
-#define DBAdaptor_prepare(dba,qStr,qLen) (dba)->dbc->prepare((dba)->dbc,(qStr),(qLen))
+#define DBAdaptor_prepare(dba,qStr,qLen) BaseDBAdaptor_prepare((dba),(qStr),(qLen))
 
 
 #endif
