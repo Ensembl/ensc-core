@@ -216,7 +216,7 @@ int Mapper_fastMap(Mapper *m, int64 id, int start, int end, int strand, CoordSys
   }
 
   if (!IDHash_contains(hash, id)) {
-    fprintf(stderr,"ERROR: Fastmap expects to be able to find an id. It couldnt for %d\n",id);
+    fprintf(stderr,"ERROR: Fastmap expects to be able to find an id. It couldnt for " INT64FMTSTR "\n",id);
     exit(1);
   }
 

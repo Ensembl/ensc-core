@@ -3,6 +3,8 @@
 #include "RawContigAdaptor.h"
 #include "AnalysisAdaptor.h"
 
+#include "DNAPepAlignFeature.h"
+
 NameTableType ProteinAlignFeatureAdaptor_tableNames = {{"protein_align_feature","paf"},{NULL,NULL}};
 
 ProteinAlignFeatureAdaptor *ProteinAlignFeatureAdaptor_new(DBAdaptor *dba) {
@@ -22,7 +24,7 @@ ProteinAlignFeatureAdaptor *ProteinAlignFeatureAdaptor_new(DBAdaptor *dba) {
   return pafa;
 }
 
-int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *baf, Set *features) {
+int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Set *features) {
 /*
    my ($self ,@sf) = @_;
 
@@ -69,17 +71,17 @@ int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *baf, Set *features) {
 }
 
 
-NameTableType *ProteinAlignFeatureAdaptor_getTables() {
+NameTableType *ProteinAlignFeatureAdaptor_getTables(void) {
   return &ProteinAlignFeatureAdaptor_tableNames;
 }
 
-char *ProteinAlignFeatureAdaptor_getColumns() {
+char *ProteinAlignFeatureAdaptor_getColumns(void) {
 
   return "paf.protein_align_feature_id,"
          "paf.contig_id,"
+         "paf.analysis_id,"
          "paf.contig_start,"
          "paf.contig_end,"
-         "paf.analysis_id,"
          "paf.contig_strand,"
          "paf.hit_start,"
          "paf.hit_end,"
@@ -88,124 +90,135 @@ char *ProteinAlignFeatureAdaptor_getColumns() {
          "paf.evalue,"
          "paf.perc_ident,"
          "paf.score";
-
 }
 
-Set *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf,
-                                                           StatementHandle *sth) {
-  my ($self, $sth, $mapper, $slice) = @_;
+Set *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
+                                                           StatementHandle *sth,
+                                                           AssemblyMapper *assMapper,
+                                                           Slice *slice) {
+  AnalysisAdaptor *aa;
+  RawContigAdaptor *rca;
+  Set *features;
+  ResultRow *row;
+  int i;
 
-  my ($protein_align_feature_id, $contig_id, $contig_start, $contig_end,
-      $analysis_id, $contig_strand, $hit_start, $hit_end, $hit_name, 
-      $cigar_line, $evalue, $perc_ident, $score);
-  
-  my $rca = $self->db()->get_RawContigAdaptor();
-  my $aa = $self->db()->get_AnalysisAdaptor();
-  my @features;
+  aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
+  rca = DBAdaptor_getRawContigAdaptor(bfa->dba);
 
-  my($analysis, $contig);
+  features = Set_new();
 
-  my %a_hash;
-  my %c_hash;
+  if (slice) {
+    int featStart, featEnd, featStrand;
+    int sliceChrId;
+    int sliceEnd;
+    int sliceStart;
+    int sliceStrand;
 
-  my($row_cache, $row);
 
-  $row_cache = $sth->fetchall_arrayref();
+    sliceChrId = Slice_getChrId(slice);
+    sliceStart = Slice_getChrStart(slice);
+    sliceEnd   = Slice_getChrEnd(slice);
+    sliceStrand= Slice_getStrand(slice);
 
-  if($slice) {
-    my ($chr, $start, $end, $strand);
-    my $slice_start   = $slice->chr_start();
-    my $slice_end     = $slice->chr_end();
-    my $slice_name    = $slice->name();
-    my $slice_strand = $slice->strand();
+    // Does this really need to be set ??? my $slice_name   = $slice->name();
 
-    my($feat_start, $feat_end, $feat_strand);
 
-    while($row = shift @$row_cache) {
-      ($protein_align_feature_id, $contig_id, $contig_start, $contig_end,
-      $analysis_id, $contig_strand, $hit_start, $hit_end, $hit_name, 
-      $cigar_line, $evalue, $perc_ident, $score) = @$row;
+    while (row = sth->fetchRow(sth)) {
+      DNAPepAlignFeature *dpaf;
+      int contigId    = row->getLongLongAt(row,1);
+      int contigStart = row->getIntAt(row,3);
+      int contigEnd   = row->getIntAt(row,4);
+      int contigStrand= row->getIntAt(row,5);
 
-      $analysis = $a_hash{$analysis_id} ||= $aa->fetch_by_dbID($analysis_id);
-      ($chr, $start, $end, $strand) = 
-        $mapper->fast_to_assembly($contig_id, $contig_start, 
-                                  $contig_end, $contig_strand);
+
+// Perl has a cache for analysis types but the analysis adaptor should have one
+      Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,2));
+      MapperCoordinate fRange;
+
+
+      //convert contig coordinates to assembly coordinates
+      int mapSucceeded = AssemblyMapper_fastToAssembly(assMapper, contigId, 
+                                               contigStart, 
+                                               contigEnd, 
+                                               contigStrand, 
+                                               &fRange);
+
       
-      #skip if feature maps to gap
-      next unless(defined $start);
+      // undefined start means gap
+      if (!mapSucceeded) continue;
+  
+      // maps to region outside desired area 
+      if (fRange.start > sliceEnd || fRange.end < sliceStart) continue;
 
-      #skip if feature outside of slice area
-      next if ($start > $slice_end) || ($end < $slice_start);
 
-      #convert assembly coordinates to slice coordinates
-      if($slice_strand == -1) {
-        $feat_start  = $slice_end - $end + 1;
-        $feat_end    = $slice_end - $start + 1;
-        $feat_strand = $strand * -1;
+      // convert assembly coordinates to slice coordinates
+      if(sliceStrand == -1) {
+        featStart  = sliceEnd - fRange.end + 1;
+        featEnd    = sliceEnd - fRange.start + 1;
+        featStrand = fRange.strand * -1 ;
       } else {
-        $feat_start  = $start - $slice_start + 1;
-        $feat_end    = $end   - $slice_start + 1;
-        $feat_strand = $strand;
+        featStart  = fRange.start - sliceStart + 1;
+        featEnd    = fRange.end - sliceStart + 1;
+        featStrand = fRange.strand;
       }
 
-      #use a very fast (hack) constructor - normal object construction is too
-      #slow for the number of features we are potentially dealing with
-      push @features, Bio::EnsEMBL::DnaPepAlignFeature->new_fast(
-                {'_gsf_tag_hash'  =>  {},
-                 '_gsf_sub_array' =>  [],
-                 '_parse_h'       =>  {},
-                 '_analysis'      =>  $analysis,
-                 '_gsf_start'     =>  $feat_start,
-                 '_gsf_end'       =>  $feat_end,
-                 '_gsf_strand'    =>  $feat_strand,
-                 '_gsf_score'     =>  $score,
-                 '_seqname'       =>  $slice_name,
-                 '_percent_id'    =>  $perc_ident,
-                 '_p_value'       =>  $evalue,
-                 '_hstart'        =>  $hit_start,
-                 '_hend'          =>  $hit_end,
-                 '_hstrand'       =>  1, #strand is always one for pep hits
-                 '_hseqname'      =>  $hit_name,
-                 '_gsf_seq'       =>  $slice,
-                 '_cigar_string'  =>  $cigar_line,
-                 '_id'            =>  $hit_name,
-                 '_database_id'   =>  $protein_align_feature_id});
-    }    
+      dpaf = DNAPepAlignFeature_new();
 
-  } else {
-    while($row = shift @$row_cache) {
-      ($protein_align_feature_id, $contig_id, $contig_start, $contig_end,
-      $analysis_id, $contig_strand, $hit_start, $hit_end, $hit_name, 
-      $cigar_line, $evalue, $perc_ident, $score) = @$row;
+      DNAPepAlignFeature_setDbID(dpaf,row->getLongLongAt(row,0));
+      DNAPepAlignFeature_setContig(dpaf,slice); 
+      DNAPepAlignFeature_setAnalysis(dpaf,analysis);
 
-      $analysis = $a_hash{$analysis_id} ||= $aa->fetch_by_dbID($analysis_id);
-      $contig   = $c_hash{$contig_id}   ||= $rca->fetch_by_dbID($contig_id);
+      DNAPepAlignFeature_setStart(dpaf,featStart);
+      DNAPepAlignFeature_setEnd(dpaf,featEnd);
+      DNAPepAlignFeature_setStrand(dpaf,featStrand);
+
+      DNAPepAlignFeature_setHitStart(dpaf,row->getIntAt(row,6));
+      DNAPepAlignFeature_setHitEnd(dpaf,row->getIntAt(row,7));
+      DNAPepAlignFeature_setHitId(dpaf,row->getStringAt(row,8));
+      DNAPepAlignFeature_setHitStrand(dpaf,1);
+
+      DNAPepAlignFeature_setCigarString(dpaf,row->getStringAt(row,9));
+  
+      if (row->col(row,10)) DNAPepAlignFeature_setEValue(dpaf,row->getDoubleAt(row,10));
+      if (row->col(row,11)) DNAPepAlignFeature_setPercId(dpaf,row->getDoubleAt(row,11));
+      if (row->col(row,12)) DNAPepAlignFeature_setScore(dpaf,row->getDoubleAt(row,12));
+
+      Set_addElement(features,dpaf);
+    }
+  } else { // No slice
+
+    while(row = sth->fetchRow(sth)) {
+      DNAPepAlignFeature *dpaf;
       
-      #use a very fast (hack) constructor - normal object construction is too
-      #slow for the number of features we are potentially dealing with
-      push @features, Bio::EnsEMBL::DnaPepAlignFeature->new_fast(
-                {'_gsf_tag_hash'  =>  {},
-                 '_gsf_sub_array' =>  [],
-                 '_parse_h'       =>  {},
-                 '_analysis'      =>  $analysis,
-                 '_gsf_start'     =>  $contig_start,
-                 '_gsf_end'       =>  $contig_end,
-                 '_gsf_strand'    =>  $contig_strand,
-                 '_gsf_score'     =>  $score,
-                 '_seqname'       =>  $contig->name,
-                 '_percent_id'    =>  $perc_ident,
-                 '_p_value'       =>  $evalue,
-                 '_hstart'        =>  $hit_start,
-                 '_hend'          =>  $hit_end,
-                 '_hstrand'       =>  1,  #strand is always 1 for pep hits
-                 '_hseqname'      =>  $hit_name,
-                 '_gsf_seq'       =>  $contig,
-                 '_cigar_string'  =>  $cigar_line,
-                 '_id'            =>  $hit_name,
-                 '_database_id'   =>  $protein_align_feature_id});
+// Perl has a cache for analysis types but the analysis adaptor should have one
+      Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,2));
+// Perl has a cache for contigs - maybe important
+      RawContig *contig = RawContigAdaptor_fetchByDbID(rca, row->getLongLongAt(row,1));
+
+      dpaf = DNAPepAlignFeature_new();
+
+      DNAPepAlignFeature_setDbID(dpaf,row->getLongLongAt(row,0));
+      DNAPepAlignFeature_setContig(dpaf,contig); 
+      DNAPepAlignFeature_setAnalysis(dpaf,analysis);
+
+      DNAPepAlignFeature_setStart(dpaf,row->getIntAt(row,3));
+      DNAPepAlignFeature_setEnd(dpaf,row->getIntAt(row,4));
+      DNAPepAlignFeature_setStrand(dpaf,row->getIntAt(row,5));
+
+      DNAPepAlignFeature_setHitStart(dpaf,row->getIntAt(row,6));
+      DNAPepAlignFeature_setHitEnd(dpaf,row->getIntAt(row,7));
+      DNAPepAlignFeature_setHitId(dpaf,row->getStringAt(row,8));
+      DNAPepAlignFeature_setHitStrand(dpaf,1);
+
+      DNAPepAlignFeature_setCigarString(dpaf,row->getStringAt(row,9));
+  
+      if (row->col(row,10)) DNAPepAlignFeature_setEValue(dpaf,row->getDoubleAt(row,10));
+      if (row->col(row,11)) DNAPepAlignFeature_setPercId(dpaf,row->getDoubleAt(row,11));
+      if (row->col(row,12)) DNAPepAlignFeature_setScore(dpaf,row->getDoubleAt(row,12));
+
+      Set_addElement(features,dpaf);
     }
   }
-
-
-  return \@features;
+  
+  return features;
 }

@@ -49,6 +49,7 @@ libensc.a	: \
 	objectfiles/DataAdaptors/MetaContainer.o \
 	objectfiles/DataAdaptors/MysqlResultRow.o \
 	objectfiles/DataAdaptors/MysqlStatementHandle.o \
+	objectfiles/DataAdaptors/ProteinAlignFeatureAdaptor.o \
 	objectfiles/DataAdaptors/RawContigAdaptor.o \
 	objectfiles/DataAdaptors/SequenceAdaptor.o \
 	objectfiles/DataAdaptors/SimpleFeatureAdaptor.o \
@@ -64,6 +65,7 @@ libensc.a	: \
 	objectfiles/DataModel/Class.o \
 	objectfiles/DataModel/Clone.o \
 	objectfiles/DataModel/DNAAlignFeature.o \
+	objectfiles/DataModel/DNAPepAlignFeature.o \
 	objectfiles/DataModel/EnsC.o \
 	objectfiles/DataModel/Exon.o \
 	objectfiles/DataModel/FeatureSet.o \

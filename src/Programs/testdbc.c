@@ -9,6 +9,7 @@
 #include "DNAAlignFeatureAdaptor.h"
 #include "ExonAdaptor.h"
 #include "GeneAdaptor.h"
+#include "ProteinAlignFeatureAdaptor.h"
 #include "SequenceAdaptor.h"
 #include "SimpleFeatureAdaptor.h"
 #include "SliceAdaptor.h"
@@ -17,6 +18,7 @@
 #include "RawContig.h"
 #include "SimpleFeature.h"
 #include "DNAAlignFeature.h"
+#include "DNAPepAlignFeature.h"
 
 int main(int argc, char *argv[]) {
   DBAdaptor *dba;
@@ -59,6 +61,18 @@ int main(int argc, char *argv[]) {
       DNAAlignFeature *daf = Set_getElementAt(dafSet,i);
       printf("DNA align feature: %d-%d id " INT64FMTSTR "\n", DNAAlignFeature_getStart(daf), 
              DNAAlignFeature_getEnd(daf), DNAAlignFeature_getDbID(daf));
+    }
+  }
+  {
+    SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
+    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);
+    Set *dpafSet = Slice_getAllDNAPepAlignFeatures(slice,"",NULL);
+    int i;
+
+    for (i=0;i<Set_getNumElement(dpafSet);i++) {
+      DNAPepAlignFeature *dpaf = Set_getElementAt(dpafSet,i);
+      printf("Pep align feature: %d-%d id " INT64FMTSTR "\n", DNAPepAlignFeature_getStart(dpaf), 
+             DNAPepAlignFeature_getEnd(dpaf), DNAPepAlignFeature_getDbID(dpaf));
     }
   }
   {
