@@ -15,6 +15,7 @@ all	: directories \
           Programs/testdbc \
           Programs/countsnps \
           Tests/CacheTest \
+          Tests/CigarStrUtilTest \
           Tests/ClassTest \
           Tests/DBAdaptorTest \
           Tests/DNAAlignFeatureTest \
@@ -26,7 +27,8 @@ all	: directories \
           Tests/SliceAdaptorTest \
           Tests/StreamTest \
           Tests/StrUtilTest \
-          Tests/TranslateTest
+          Tests/TranslateTest \
+          Tests/VectorTest
 
 directories	:
 	mkdir -p objectfiles
@@ -156,6 +158,11 @@ Tests/ClassTest: \
 	Tests/ClassTest.c
 	$(CC) $(CFLAGS) -o Tests/ClassTest Tests/ClassTest.c -L. -lensc $(LDFLAGS)
 
+Tests/CigarStrUtilTest: \
+	libensc.a \
+	Tests/CigarStrUtilTest.c
+	$(CC) $(CFLAGS) -o Tests/CigarStrUtilTest Tests/CigarStrUtilTest.c -L. -lensc $(LDFLAGS)
+
 Tests/DBAdaptorTest: \
 	libensc.a \
 	Tests/DBAdaptorTest.c
@@ -210,6 +217,11 @@ Tests/TranslateTest: \
 	libensc.a \
 	Tests/TranslateTest.c
 	$(CC) $(CFLAGS) -o Tests/TranslateTest Tests/TranslateTest.c -L. -lensc $(LDFLAGS)
+
+Tests/VectorTest: \
+	libensc.a \
+	Tests/VectorTest.c
+	$(CC) $(CFLAGS) -o Tests/VectorTest Tests/VectorTest.c -L. -lensc $(LDFLAGS)
 
 # deletes compiled class files
 clean	:	
