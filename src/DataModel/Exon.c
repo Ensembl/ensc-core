@@ -78,6 +78,32 @@ int ExonStickyRankCompFunc(const void *a, const void *b) {
   }
 }
 
+int Exon_forwardStrandCompFunc(const void *a, const void *b) {
+  Exon **e1 = (Exon **)a;
+  Exon **e2 = (Exon **)b;
+
+  if (Exon_getStart(*e1) > Exon_getStart(*e2)) {
+    return 1;
+  } else if (Exon_getStart(*e1) < Exon_getStart(*e2)) {
+    return -1;
+  } else {
+    return 0;
+  }
+}
+
+int Exon_reverseStrandCompFunc(const void *a, const void *b) {
+  Exon **e1 = (Exon **)a;
+  Exon **e2 = (Exon **)b;
+
+  if (Exon_getStart(*e1) < Exon_getStart(*e2)) {
+    return 1;
+  } else if (Exon_getStart(*e1) > Exon_getStart(*e2)) {
+    return -1;
+  } else {
+    return 0;
+  }
+}
+
 void Exon_sortByStickyRank(Exon *exon) {
   if (Exon_isSticky(exon)) {
     qsort(Exon_getComponents(exon), Exon_getNumComponentExon(exon), sizeof(void *), 

@@ -72,6 +72,7 @@ char *Gene_setType(Gene *g, char *type) {
 int Gene_setStart(SeqFeature *sf, int start) {
   Gene *gene = (Gene *)sf;
   gene->start = start;
+  Gene_setStartIsSet(gene,TRUE);
   return gene->start;
 }
 
@@ -107,6 +108,47 @@ int Gene_getStart(SeqFeature *sf) {
   }
 
   return gene->start;
+}
+
+int Gene_setEnd(SeqFeature *sf, int end) {
+  Gene *gene = (Gene *)sf;
+  gene->end = end;
+  Gene_setEndIsSet(gene,TRUE);
+  return gene->end;
+}
+
+int Gene_getEnd(SeqFeature *sf) {
+  Gene *gene = (Gene *)sf;
+  int multiFlag = 0;
+
+  if (Gene_getEndIsSet(gene) == FALSE) {
+    char *lastContig = NULL;
+    int i;
+    Vector *exonVector = Gene_getAllExons(gene);
+
+    for (i=0; i<Vector_getNumElement(exonVector); i++) {
+      Exon *exon = Vector_getElementAt(exonVector,i);
+
+      if (!Gene_getEndIsSet(gene) || 
+          Exon_getEnd(exon) > gene->end) {
+        gene->end = Exon_getEnd(exon);
+        Gene_setEndIsSet(gene,TRUE);
+      }
+      if (multiFlag || 
+          (lastContig && strcmp(lastContig, BaseContig_getName(Exon_getContig(exon))))) {
+        multiFlag = 1;
+      }
+      lastContig =  BaseContig_getName(Exon_getContig(exon));
+    }
+    Vector_free(exonVector,NULL);
+  }
+
+  if (multiFlag) {
+    fprintf(stderr, "WARNING: Gene_getEnd - Gene spans multiple contigs."
+                "The return value from getEnd may not be what you want");
+  }
+
+  return gene->end;
 }
 
 

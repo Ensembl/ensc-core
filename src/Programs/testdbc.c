@@ -39,6 +39,7 @@ int main(int argc, char *argv[]) {
 
   printf("Assembly type %s\n",DBAdaptor_getAssemblyType(dba));
 
+/*
   {
     SimpleFeatureAdaptor *sfa = DBAdaptor_getSimpleFeatureAdaptor(dba);
     SimpleFeature *sf = (SimpleFeature *)SimpleFeatureAdaptor_fetchByDbID(sfa,1);
@@ -230,6 +231,7 @@ int main(int argc, char *argv[]) {
       printf("Exon " IDFMTSTR " %d %d %d\n",Exon_getDbID(e), Exon_getStart(e), Exon_getEnd(e), Exon_getStrand(e));
     }
   }
+*/
   {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
     Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,2000000);
@@ -243,12 +245,17 @@ int main(int argc, char *argv[]) {
       fprintf(stderr,"Gene %s from %d to %d\n",
               Gene_getStableId(gene),
               Gene_getStart((SeqFeature *)gene),
-              Gene_getEnd(gene));
+              Gene_getEnd((SeqFeature *)gene));
       for (j=0;j<Gene_getTranscriptCount(gene);j++) {
         Transcript *trans = Gene_getTranscriptAt(gene,j);
         int k;
 
-        fprintf(stderr," Transcript %s\n",Transcript_getStableId(trans));
+        Transcript_sort(trans);
+
+        fprintf(stderr," Transcript %s from %d to %d\n",
+                Transcript_getStableId(trans),
+                Transcript_getStart((SeqFeature *)trans),
+                Transcript_getEnd((SeqFeature *)trans));
         for (k=0;k<Transcript_getExonCount(trans);k++) {
           Exon *exon = (Exon *)Transcript_getExonAt(trans,k);
           fprintf(stderr,"  Exon %s %d %d %d\n",

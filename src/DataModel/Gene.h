@@ -63,8 +63,8 @@ int Gene_getStart(SeqFeature *gene);
 #define Gene_setAnalysis(gene,ana) AnnotatedSeqFeature_setAnalysis((gene),ana)
 #define Gene_getAnalysis(gene) AnnotatedSeqFeature_getAnalysis((gene))
 
-#define Gene_setEnd(gene,end) AnnotatedSeqFeature_setEnd((gene),end)
-#define Gene_getEnd(gene) AnnotatedSeqFeature_getEnd((gene))
+int Gene_setEnd(SeqFeature *gene,int end);
+int Gene_getEnd(SeqFeature *gene);
 
 #define Gene_setStrand(gene,strand) AnnotatedSeqFeature_setStrand((gene),strand)
 #define Gene_getStrand(gene) AnnotatedSeqFeature_getStrand((gene))

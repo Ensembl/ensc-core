@@ -111,3 +111,75 @@ void Transcript_flushExons(Transcript *trans) {
   Transcript_removeAllExons(trans);
 // NIY caches 
 }
+
+int Transcript_setStart(SeqFeature *sf, int start) {
+  Transcript *trans = (Transcript *)sf;
+  trans->start = start;
+  Transcript_setStartIsSet(trans,TRUE);
+  return trans->start;
+}
+
+int Transcript_getStart(SeqFeature *sf) {
+  Transcript *trans = (Transcript *)sf;
+  if (!Transcript_getStartIsSet(trans)) {
+    int start;
+    int strand = Exon_getStrand(Transcript_getStartExon(trans));
+
+    if (strand == 1) {
+      start = Exon_getStart(Transcript_getStartExon(trans));
+    } else {
+      start = Exon_getStart(Transcript_getEndExon(trans));
+    }
+    trans->start = start;
+    Transcript_setStartIsSet(trans,TRUE);
+  }
+
+  return trans->start;
+}
+
+
+int Transcript_setEnd(SeqFeature *sf, int end) {
+  Transcript *trans = (Transcript *)sf;
+  trans->end = end;
+  Transcript_setEndIsSet(trans,TRUE);
+  return trans->end;
+}
+
+int Transcript_getEnd(SeqFeature *sf) {
+  Transcript *trans = (Transcript *)sf;
+  if (!Transcript_getEndIsSet(trans)) {
+    int end;
+    int strand = Exon_getStrand(Transcript_getStartExon(trans));
+
+    if (strand == 1) {
+      end = Exon_getEnd(Transcript_getEndExon(trans));
+    } else {
+      end = Exon_getEnd(Transcript_getStartExon(trans));
+    }
+    trans->end = end;
+    Transcript_setEndIsSet(trans,TRUE);
+  }
+
+  return trans->end;
+}
+
+void Transcript_sort(Transcript *trans) {
+  Exon *firstExon = Transcript_getExonAt(trans,0);
+  int strand = Exon_getStrand(firstExon);
+
+  if (strand == 1) {
+    qsort(Transcript_getExons(trans),Transcript_getExonCount(trans),
+          sizeof(void *),Exon_forwardStrandCompFunc);
+  } else if (strand == -1) {
+    qsort(Transcript_getExons(trans),Transcript_getExonCount(trans),
+          sizeof(void *),Exon_reverseStrandCompFunc);
+  }
+}
+
+Exon *Transcript_getStartExon(Transcript *trans) {
+  return Transcript_getExonAt(trans,0); 
+}
+
+Exon *Transcript_getEndExon(Transcript *trans) {
+  return Transcript_getExonAt(trans,Transcript_getExonCount(trans)-1); 
+}

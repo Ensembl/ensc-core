@@ -97,6 +97,9 @@ Exon *Exon_transformToSlice(Exon *exon, Slice *slice);
 Exon *Exon_new();
 Exon *Exon_copy(Exon *orig, CopyDepth depth);
 
+int Exon_reverseStrandCompFunc(const void *a, const void *b);
+int Exon_forwardStrandCompFunc(const void *a, const void *b);
+
 #ifdef __EXON_MAIN__
   ExonFuncs exonFuncs = {NULL,NULL};
 #else
