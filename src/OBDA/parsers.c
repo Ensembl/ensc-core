@@ -162,6 +162,10 @@ char *swallIDParser(char *header) {
   return tokenParser(header," \t",0,"swallIDParser");
 }
 
+char *uniprotIDParser(char *header) {
+  return tokenParser(header,".\t \n",0,"uniprotIDParser");
+}
+
 char *swallParser(char *header) {
   return tokenParser(header," \t",1,"swallParser");
 }

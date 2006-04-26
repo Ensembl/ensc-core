@@ -43,6 +43,7 @@ char *traceParser(char *header);
 char *tremblParser(char *header);
 char *rodParser(char *header);
 char *rodIDParser(char *header);
+char *uniprotIDParser(char *header);
 char *wormParser(char *header);
 char *wormIDParser(char *header);
 char *refseqProt2RNAParser(char *header);
@@ -83,6 +84,7 @@ static ParserName parserArray[] = {
   { wormIDParser, "wormIDParser" },
   { refseqProt2RNAParser, "refseqProt2RNAParser" },
   { swallMultiParser, "swallMultiParser" },
+  { uniprotIDParser, "uniprotIDParser" },
   { NULL, NULL }
 };
 
