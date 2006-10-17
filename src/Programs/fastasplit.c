@@ -2,22 +2,31 @@
 //#include <malloc.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+
 
 #define MAXSTRLEN 1024*32
 #define HEADER_ALLOC_SIZE 1000
+
+#define _FILE_OFFSET_BITS 64
+
+void printUsage(void);
 
 int main(int argc, char *argv[]) {
   FILE *InP;
   FILE *OutP = NULL;
   char outdir[MAXSTRLEN];
   char line[MAXSTRLEN];
-  long *headerPositions;
+  fpos_t **headerPositions;
   int nHeader = 0;
-  long currentPos = 0;
+  fpos_t *currentPos;
   int i;
   long randPos1;
   long randPos2;
-  long tmpPos;
+  fpos_t *tmpPos;
+  fpos_t tmp_pos;   
   long fileSize;
   long currentSize = 0;
   long nChunk;
@@ -36,24 +45,45 @@ int main(int argc, char *argv[]) {
   long remainder; 
 
   if (argc<4) {
-    fprintf(stderr,"Usage: fastasplit [-size] <fastaFile> <nchunk> <outdir>\n");
+    printUsage();
     exit(1);
   } 
 
+  databaseName[0] = '\0';
+
   argnum = 1;
-  if (!strcmp(argv[1],"-size")) {
-    bySize = 1;
-    argnum ++;
+  while (argnum < argc-3) {
+    char *arg = argv[argnum];
+    char *val;
+  
+    if (!strcmp(arg, "-s") || !strcmp(arg,"--size")) {
+      bySize = 1;
+    } else if (!strcmp(arg, "-f") || !strcmp(arg,"--file_prefix")) {
+      val = argv[++argnum];
+      strcpy(databaseName,val);
+    } else {
+      printUsage();
+      exit(1);
+    } 
+
+    argnum++;
   }
 
+  if (argc - argnum != 3) {
+    printUsage();
+    exit(1);
+  } 
   
   fileArgNum = argnum++;
   if ((InP = fopen(argv[fileArgNum],"r")) == NULL) {
     fprintf(stderr,"Error: Couldn't open file %s\n",argv[fileArgNum]);
     exit(1);
   }
-  strippath(argv[fileArgNum],baseName); 
-  stripext(baseName,databaseName); 
+
+  if (!strlen(databaseName)) {
+    strippath(argv[fileArgNum],baseName); 
+    stripext(baseName,databaseName); 
+  }
 
   chunkArgNum = argnum++;
   if (!(nChunk = atol(argv[chunkArgNum]))) {
@@ -66,25 +96,33 @@ int main(int argc, char *argv[]) {
   strcpy(outdir,argv[dirArgNum]);
 
 
-  if ((headerPositions = (long *)calloc(HEADER_ALLOC_SIZE,sizeof(long)))==NULL) {
+  if ((headerPositions = (fpos_t **)calloc(HEADER_ALLOC_SIZE,sizeof(fpos_t *)))==NULL) {
     fprintf(stderr,"Error: Allocating headerPositions array\n");
     exit(1);
   }
 
+
+  fgetpos(InP,&tmp_pos);
   while (fgets(line,MAXSTRLEN,InP)) {
     if (line[0] == '>') {
-      headerPositions[nHeader++] = currentPos;
+      fpos_t *pos;
+      pos = calloc(1,sizeof(fpos_t));
+      memcpy(pos,&tmp_pos,sizeof(fpos_t));
+      headerPositions[nHeader++] = pos;
       if (nHeader && (nHeader%HEADER_ALLOC_SIZE) == 0) {
-        if ((headerPositions = (long *)realloc(headerPositions,(nHeader+HEADER_ALLOC_SIZE)*sizeof(long)))==NULL) {
+        if ((headerPositions = (fpos_t **)realloc(headerPositions,(nHeader+HEADER_ALLOC_SIZE)*sizeof(fpos_t *)))==NULL) {
           fprintf(stderr,"Error: Allocating headerPositions array\n");
           exit(1);
         }
       }
     }
-    currentPos = ftell(InP);
+    fgetpos(InP,&tmp_pos);
   }
   if (bySize) { 
-    fileSize = currentPos/nChunk;
+    struct stat infile_stats;
+    stat(argv[fileArgNum],&infile_stats);
+    fileSize = infile_stats.st_size/nChunk;
+
   
     if (fileSize < 100) {
       fprintf(stderr,
@@ -139,20 +177,19 @@ int main(int argc, char *argv[]) {
         nPerFile--;
       }
 
-      printf("chunk file = %s\n",chunkFName);
-
       if ((OutP = fopen(chunkFName,"w")) == NULL) {
         fprintf(stderr,"Error: Couldn't open file %s\n",chunkFName);
         exit(1);
       }
     }
-    fseek(InP,headerPositions[i],SEEK_SET);
+    fsetpos(InP,headerPositions[i]);
     fgets(line,MAXSTRLEN,InP);
     if (bySize) {
       currentSize += strlen(line);
     } else {
       entryCount++;
     }
+
     fprintf(OutP,"%s",line);
     while (fgets(line,MAXSTRLEN,InP)) {
       if (line[0] == '>') break;
@@ -164,6 +201,10 @@ int main(int argc, char *argv[]) {
   }
   if (OutP) fclose(OutP);
   return 0;
+}
+
+void printUsage() {
+  fprintf(stderr,"Usage: fastasplit [-s/--size] [-f/--file_prefix <prefix>] <fastaFile> <nchunk> <outdir>\n");
 }
 
 int strippath(char *fname,char *result) {
