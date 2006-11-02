@@ -149,7 +149,7 @@ int main(int argc, char **argv){
 
 void Indicate_usage() {
   printf("indicate \n"
-         "-d --datadir Path to files to be indexed\n"
+         "-d --data_dir Path to files to be indexed\n"
          "-f --file_prefix File prefix of files to be indexed\n"
          "-i --index Output index dir name\n"
          "-p --parser Parser function used to parse the primary key line\n"
