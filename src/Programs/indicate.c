@@ -84,7 +84,11 @@ int main(int argc, char **argv){
       StrUtil_copyString(&line_prefix,val,0);
     } else if (!strcmp(arg, "-r") || !strcmp(arg,"--record_prefix")) {
       StrUtil_copyString(&record_prefix,val,0);
-    }
+    } else {
+      printf("Error in command line at %s\n\n",arg);      
+      Indicate_usage();
+    }    
+	     
 
     argNum++;
   }
@@ -110,7 +114,7 @@ int main(int argc, char **argv){
 
   printf("Primary parser = %s\n",primary_parser);
   parser = Parser_lookup(primary_parser);
-  printf("Got function = %d\n",parser);
+  printf("Got function address %d\n",parser);
   primary_def = BioIndex_Index_Definition_create(record_prefix,
                                                  line_prefix,
                                                  parser,
@@ -119,7 +123,7 @@ int main(int argc, char **argv){
   if (strlen(secondary_multi_parser)) {
     printf("Secondary multi parser = %s\n",secondary_multi_parser);
     sec_multi_parser = Parser_lookup(secondary_multi_parser);
-    printf("Got function = %d\n",secondary_parser);
+    printf("Got function address %d\n",secondary_parser);
     secondary_def = BioIndex_Index_Definition_create(record_prefix,
                                                      secondary_line_prefix,
                                                      NULL,
