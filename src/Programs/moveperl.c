@@ -353,6 +353,7 @@ char *copyAndReplace(char *fromBuf,char *toBuf,char *baseSrcName, char *baseToNa
 
       fromChP  += lenBaseSrcName;
       toChP    += lenBaseToName;
+      lenPad   = lenBaseSrcName-lenBaseToName;
       while (!iscntrl(*fromChP) && !isspace(*fromChP) && !(*fromChP==':' && type == BINARY)) {
         //printf("%c",*fromChP);
         *toChP = *fromChP;
@@ -360,17 +361,34 @@ char *copyAndReplace(char *fromBuf,char *toBuf,char *baseSrcName, char *baseToNa
         fromChP++;
       }
       if (type == BINARY) {
-        if (*fromChP!=':') {
-          lenPad += lenBaseSrcName-lenBaseToName;
-          //printf("padding with %d chars\n",lenPad);
-          for (i=0;i<lenPad;i++) {
-            (*toChP)='\0';
-            toChP++;
+        // Handling ':' separated lists in binary files - need to loop through
+        // all list elements, keeping track of how much padding we need to add
+        // at the end of the list
+        while (*fromChP==':') {
+          *toChP = *fromChP;
+          toChP++;
+          fromChP++;
+
+          if (*fromChP == baseSrcName[0] && 
+             !strncmp(baseSrcName,fromChP,lenBaseSrcName)) {
+            lenPad   += lenBaseSrcName-lenBaseToName;
+            strcpy(toChP,baseToName);
+            fromChP  += lenBaseSrcName;
+            toChP    += lenBaseToName;
           }
-          lenPad = 0;
-        } else {
-          lenPad += lenBaseSrcName-lenBaseToName;
+          while (!iscntrl(*fromChP) && !isspace(*fromChP) && !(*fromChP==':' && type == BINARY)) {
+            //printf("%c",*fromChP);
+            *toChP = *fromChP;
+            toChP++;
+            fromChP++;
+          }
         }
+        //printf("padding with %d chars\n",lenPad);
+        for (i=0;i<lenPad;i++) {
+          (*toChP)='\0';
+          toChP++;
+        }
+        lenPad = 0;
       }
       //printf("\n");
     } else {
@@ -381,6 +399,11 @@ char *copyAndReplace(char *fromBuf,char *toBuf,char *baseSrcName, char *baseToNa
   } 
   
   *toLen = toChP-toBuf;
+  if (type == BINARY && fromLen!=*toLen) {
+    fprintf(stderr, "Error: BINARY file ended up different length after modification\n");
+    fprintf(stderr, "From len = %d,  To len = %d\n",fromLen, *toLen);
+    exit(1);
+  }
   //printf("From len = %d,  To len = %d\n",fromLen, *toLen);
   return toBuf;
 }
