@@ -16,6 +16,7 @@ all	: directories \
           Programs/countsnps \
           Programs/indicate \
           Programs/fastasplit \
+          Programs/moveperl \
           Tests/CacheTest \
           Tests/CigarStrUtilTest \
           Tests/ClassTest \
@@ -176,6 +177,10 @@ Programs/countsnps: \
 	libensc.a \
 	Programs/countsnps.c
 	$(CC) $(CFLAGS) -o Programs/countsnps Programs/countsnps.c -L. -lensc $(LDFLAGS)
+
+Programs/moveperl: \
+	Programs/moveperl.c
+	$(CC) $(CFLAGS) -o Programs/moveperl Programs/moveperl.c $(LDFLAGS)
 
 Tests/CacheTest: \
 	libensc.a \
