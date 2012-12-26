@@ -34,9 +34,10 @@ int main(int argc, char *argv[]) {
   printf("Opening connection ...");
   //dba = DBAdaptor_new("localhost","root",NULL,"test_ensembl",3306,NULL);
   //dba = DBAdaptor_new("kaka.sanger.ac.uk","anonymous",NULL,"homo_sapiens_core_12_31",3306,NULL);
-  dba = DBAdaptor_new("localhost","root",NULL,"homo_sapiens_core_18_34",3306,NULL);
+  //dba = DBAdaptor_new("localhost","root",NULL,"homo_sapiens_core_18_34",3306,NULL);
   //dba = DBAdaptor_new("ecs2d.internal.sanger.ac.uk","ensro",NULL,"homo_sapiens_core_14_31",3306,NULL);
   //dba = DBAdaptor_new("ecs2d.internal.sanger.ac.uk","ensro",NULL,"rattus_norvegicus_core_15_2",3306,NULL);
+  dba = DBAdaptor_new("ens-staging.internal.sanger.ac.uk","ensro",NULL,"homo_sapiens_core_70_37",3306,NULL);
   printf(" Done\n");
 
   printf("Assembly type %s\n",DBAdaptor_getAssemblyType(dba));
@@ -210,7 +211,6 @@ int main(int argc, char *argv[]) {
 
     printf("Anal logic name = %s\n",anal->logicName);
   }
-*/
   {
     TranscriptAdaptor *ta = DBAdaptor_getTranscriptAdaptor(dba);
     Transcript *t = TranscriptAdaptor_fetchByDbID(ta,1);
@@ -263,6 +263,7 @@ int main(int argc, char *argv[]) {
         } else {
           fprintf(stderr,"No translation\n");
         }
+*/
 /*
         for (k=0;k<Transcript_getExonCount(trans);k++) {
           Exon *exon = (Exon *)Transcript_getExonAt(trans,k);
@@ -274,7 +275,6 @@ int main(int argc, char *argv[]) {
                   Exon_getContig(exon)
                  );
         }
-*/
       }
     }
   }
@@ -302,5 +302,6 @@ int main(int argc, char *argv[]) {
     sliceSeq = SequenceAdaptor_fetchBySliceStartEndStrand(sa,slice,1,100,1);
     printf("Slice Seq = %s\n",sliceSeq);
   }
+*/
   return 0;
 }

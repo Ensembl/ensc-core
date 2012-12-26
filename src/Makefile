@@ -4,6 +4,8 @@ CC = cc
 
 MYSQLCFLAGS=${shell mysql_config --cflags}
 MYSQLLIBS=${shell mysql_config --libs}
+SAMDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/bin/samtools-0.1.18
+ZLIBDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/include
 
 CFLAGS =  -g -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS)
@@ -13,6 +15,7 @@ BINDIR=../bin
 all	: directories \
           libensc.a \
           Programs/testdbc \
+          Programs/bammap \
           Programs/countsnps \
           Programs/indicate \
           Programs/fastasplit \
@@ -173,6 +176,11 @@ Programs/testdbc: \
 	Programs/testdbc.c
 	$(CC) $(CFLAGS) -o Programs/testdbc Programs/testdbc.c -L. -lensc $(LDFLAGS)
 
+Programs/bammap: \
+	libensc.a \
+	Programs/bammap.c
+	$(CC) $(CFLAGS) -I$(SAMDIR) -I$(ZLIBDIR) -o Programs/bammap Programs/bammap.c -L. -lensc  -L$(SAMDIR) -lbam $(LDFLAGS)
+
 Programs/countsnps: \
 	libensc.a \
 	Programs/countsnps.c
@@ -291,6 +299,7 @@ Tests/VectorTest: \
 clean	:	
 	rm -f libensc.a
 	rm -f Programs/testdbc
+	rm -f Programs/bammap
 	rm -f Programs/countsnps
 	rm -f Programs/indicate
 	find ./ -name "*.o" -exec rm {} \;

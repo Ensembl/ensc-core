@@ -729,12 +729,19 @@ int StrUtil_tokenizeByDelim(char ***tokens, int *ntok, char *string, char delim)
 
   while (retChP = strchr(chP,delim)) {
     StrUtil_strncpy(token,chP,retChP-chP);
-    printf("token = %s\n",token);
     if (!count || !((count+1)%10)) {
       *tokens = (char **)realloc(*tokens,(count+10)*sizeof(char *));
     }
     StrUtil_copyString(&((*tokens)[count++]),token,0);
-    chP = retChP;
+    chP = retChP+1;
+    //printf("chP = %c\n",*chP);
+  }
+// Remainder of string is last token
+  if (!count || !((count+1)%10)) {
+    *tokens = (char **)realloc(*tokens,(count+10)*sizeof(char *));
+  }
+  if (strlen(chP)) {
+    StrUtil_copyString(&((*tokens)[count++]),chP,0);
   }
   *ntok = count;
   return 1;
