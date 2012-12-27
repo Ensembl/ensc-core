@@ -311,6 +311,7 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
     regionStats->nRead++;
 
     end = bam_calend(&b->core, bam1_cigar(b));
+
     if (end > endRange || b->core.pos < begRange) {
       regionStats->nOverEnds++;
       continue;
@@ -412,6 +413,9 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
   return 0;
 }
 
+// Not a very efficient routine
+// Could do a binary search into the vector to speed up finding the right mapping
+//    Not many reads needed this call so I didn't bother
 int mapRemoteLocation(Vector **mappingVectors, int seqid, int pos) {
   Mapping *mapping = NULL;
   Vector  *mapVec = mappingVectors[seqid];
@@ -484,6 +488,8 @@ Vector **getMappingVectorsBySourceRegion(DBAdaptor *dba, samfile_t *in, char *so
   return mappingVectors;
 }
 
+// rev flag is a bit of a hack, to enable fetching by source region, but switching slices so
+// it looks like the mapping is the other way round 
 Vector *getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAssName, int rev) {
   StatementHandle *sth;
   ResultRow *row;
