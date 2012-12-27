@@ -8,15 +8,8 @@
 #include "Slice.h"
 #include "StrUtil.h"
 
-
-
 #include "sam.h"
 #include "bam.h"
-
-typedef struct {
-  int beg, end;
-  samfile_t *in;
-} tmpstruct_t;
 
 typedef struct mappingStruct {
   Slice *sourceSlice;
@@ -24,16 +17,24 @@ typedef struct mappingStruct {
   int    ori;
 } Mapping;
 
+typedef struct readMapStatsStruct {
+  int nRead;
+  int nWritten;
+  int nOverEnds;
+  int nRemoteMate;
+  int nReversed;
+  int nUnmappedMate;
+} ReadMapStats;
 
-Vector *getDestinationSlices(DBAdaptor *dba, char *assName);
-Vector *getMappings(DBAdaptor *dba, Slice *destSlice, char *fromAssName, char *toAssName);
-samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlices);
+Vector *      getDestinationSlices(DBAdaptor *dba, char *assName);
+Vector *      getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAssName, int rev);
+samfile_t *   writeBamHeader(char *inFName, char *outFName, Vector *destinationSlices);
 bam_header_t *bam_header_dup(const bam_header_t *h0);
-int mapBam(char *fName, samfile_t *out, Mapping *mapping);
-int mapLocation(Mapping *mapping, int pos);
-void Bammap_usage();
-
-int totOffEnd = 0;
+int           mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionStats, samfile_t *in, bam_index_t *idx, Vector **mappingVectors);
+int           mapLocation(Mapping *mapping, int pos);
+void          Bammap_usage();
+int           mapRemoteLocation(Vector **mappingVectors, int seqid, int pos);
+Vector **     getMappingVectorsBySourceRegion(DBAdaptor *dba, samfile_t *in, char *sourceName, char *destName);
 
 int main(int argc, char *argv[]) {
   DBAdaptor *dba;
@@ -43,7 +44,11 @@ int main(int argc, char *argv[]) {
   Vector *mappings;
   samfile_t *out;
 
-  char *gtStr = ">";
+  ReadMapStats totalStats;
+  ReadMapStats regionStats;
+
+  memset(&totalStats, 0, sizeof(ReadMapStats));
+
   char *emptyStr = "";
   int argNum = 1;
 
@@ -62,7 +67,6 @@ int main(int argc, char *argv[]) {
   initEnsC();
 
 //  primary_parser = secondary_parser = secondary_multi_parser = emptyStr;
-// line_prefix = secondary_line_prefix = record_prefix = gtStr;
 
   while (argNum < argc) {
     char *arg = argv[argNum];
@@ -87,12 +91,14 @@ int main(int argc, char *argv[]) {
       dbPort = atoi(val);
     } else if (!strcmp(arg, "-n") || !strcmp(arg,"--name")) {
       StrUtil_copyString(&dbName,val,0);
+    } else if (!strcmp(arg, "-u") || !strcmp(arg,"--user")) {
+      StrUtil_copyString(&dbUser,val,0);
     } else if (!strcmp(arg, "-s") || !strcmp(arg,"--source_ass")) {
       StrUtil_copyString(&sourceName,val,0);
     } else if (!strcmp(arg, "-d") || !strcmp(arg,"--dest_ass")) {
       StrUtil_copyString(&destName,val,0);
     } else {
-      printf("Error in command line at %s\n\n",arg);
+      fprintf(stderr,"Error in command line at %s\n\n",arg);
       Bammap_usage();
     }
 
@@ -106,42 +112,80 @@ int main(int argc, char *argv[]) {
     Bammap_usage();
   }
 
-  printf("Opening connection ...");
+  //printf("Opening connection ...");
   dba = DBAdaptor_new(dbHost,dbUser,dbPass,dbName,dbPort,NULL);
-  printf(" Done\n");
+  //printf(" Done\n");
 
   destinationSlices = getDestinationSlices(dba, destName);
 
   out = writeBamHeader(inFName,outFName,destinationSlices);
 
+  samfile_t *in = samopen(inFName, "rb", 0);
+  if (in == 0) {
+    fprintf(stderr, "Fail to open BAM file %s\n", inFName);
+    return 1;
+  }
+
+  bam_init_header_hash(in->header);
+
+  bam_index_t *idx;
+  idx = bam_index_load(inFName); // load BAM index
+  if (idx == 0) {
+    fprintf(stderr, "BAM indexing file is not available.\n");
+    return 1;
+  }
+
+  // Load all mappings into an array of vectors arranged by source region id
+  // Only used for remote mate mapping, where we don't know in advanced which
+  // region the mapping will be to
+  Vector **mappingVectors = getMappingVectorsBySourceRegion(dba, in, sourceName, destName);
+
   int i;
   for (i=0; i<Vector_getNumElement(destinationSlices); i++) {
     Slice *slice = Vector_getElementAt(destinationSlices,i);
 
+    printf("Working on '%s'\n",Slice_getChrName(slice));
     //if (!strcmp(Slice_getChrName(slice),"3")) break;
 
-    mappings = getMappings(dba,slice,sourceName,destName);
+    mappings = getMappings(dba,Slice_getChrName(slice),sourceName,destName,0);
     int j;
     for (j=0;j<Vector_getNumElement(mappings); j++) {
       Mapping *mapping = Vector_getElementAt(mappings,j);
-      printf("%s\t%d\t%d\t%s\t%d\t%d\t%d\n",Slice_getChrName(mapping->destSlice),
-                                            Slice_getChrStart(mapping->destSlice),
-                                            Slice_getChrEnd(mapping->destSlice),
-                                            Slice_getChrName(mapping->sourceSlice),
-                                            Slice_getChrStart(mapping->sourceSlice),
-                                            Slice_getChrEnd(mapping->sourceSlice),
-                                            mapping->ori);
+//      printf("%s\t%d\t%d\t%s\t%d\t%d\t%d\n",Slice_getChrName(mapping->destSlice),
+//                                            Slice_getChrStart(mapping->destSlice),
+//                                            Slice_getChrEnd(mapping->destSlice),
+//                                            Slice_getChrName(mapping->sourceSlice),
+//                                            Slice_getChrStart(mapping->sourceSlice),
+//                                            Slice_getChrEnd(mapping->sourceSlice),
+//                                            mapping->ori);
       
 //      mapBam("ftp://ngs.sanger.ac.uk/scratch/project/searle/bams/GM12878_fixed_sorted.bam",out, mapping->sourceSlice);
       //if (Slice_getChrStart(mapping->destSlice)  > 97000000 && Slice_getChrStart(mapping->destSlice) < 98000000) {
-      mapBam(inFName, out, mapping);
+      memset(&regionStats, 0, sizeof(ReadMapStats));
+
+      mapBam(inFName, out, mapping, &regionStats, in, idx, mappingVectors);
+
+      totalStats.nRead         += regionStats.nRead;
+      totalStats.nWritten      += regionStats.nWritten;
+      totalStats.nReversed     += regionStats.nReversed;
+      totalStats.nOverEnds     += regionStats.nOverEnds;
+      totalStats.nRemoteMate   += regionStats.nRemoteMate;
+      totalStats.nUnmappedMate += regionStats.nUnmappedMate;
       //}
     }
   }
 
-  printf("total off end = %d\n",totOffEnd);
+  printf(" Total reads read in mapped regions           %d\n", totalStats.nRead);
+  printf(" Total reads written in mapped regions        %d\n", totalStats.nWritten);
+  printf(" Total reads where orientation reversed       %d\n", totalStats.nReversed);
+  printf(" Total reads with remotely located mates      %d\n", totalStats.nRemoteMate);
+  printf(" Total reads extending beyond ends of region  %d (not written)\n", totalStats.nOverEnds);
+  printf(" Total reads with unmapped mates              %d (not written)\n", totalStats.nUnmappedMate);
 
   samclose(out);
+  bam_index_destroy(idx);
+
+  samclose(in);
   return 0;
 }
 
@@ -152,6 +196,7 @@ void Bammap_usage() {
          "  -o --out_file   Output BAM file to write\n"
          "  -h --host       Database host name for db containing mapping\n"
          "  -n --name       Database name for db containing mapping\n"
+         "  -u --user       Database user\n"
          "  -p --password   Database password\n"
          "  -P --port       Database port\n"
          "  -s --source_ass Assembly name to map from\n"
@@ -163,24 +208,23 @@ void Bammap_usage() {
   Take header from input BAM file, replace the seq regions, and then write it out
 */
 samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlices) {
-  tmpstruct_t tmp;
   bam_header_t *destHeader;
-  char out_mode[5];
-  samfile_t *out;
-  char line[1024];
-  char *buff = NULL;
+  char          out_mode[5];
+  samfile_t *   in;
+  samfile_t *   out;
+  char          line[1024];
+  char *        buff = NULL;
+  char **       tokens = NULL;
+  int           ntoken;
 
-  char **tokens = NULL;
-  int ntoken;
-
-  tmp.in = samopen(inFName, "rb", 0);
-  if (tmp.in == 0) {
+  in = samopen(inFName, "rb", 0);
+  if (in == 0) {
     fprintf(stderr, "Fail to open BAM file %s\n", inFName);
     return NULL;
   }
 
-  strcpy(out_mode, "wh");
-  samopen("-",out_mode,tmp.in->header);
+  //strcpy(out_mode, "wh");
+  //samopen("-",out_mode,in->header);
 
   /* Create the @SQ lines for the destination set of sequences */
   int i;
@@ -198,10 +242,10 @@ samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlic
   destHeader = bam_header_init();
 
   /* add non @SQ header lines from source header into destination header */
-  StrUtil_tokenizeByDelim(&tokens, &ntoken, tmp.in->header->text, '\n');
-  printf("ntoken = %d\n",ntoken);
+  StrUtil_tokenizeByDelim(&tokens, &ntoken, in->header->text, '\n');
+  //printf("ntoken = %d\n",ntoken);
   for (i=0;i<ntoken;i++) {
-    printf("token = %s\n",tokens[i]);
+    //printf("token = %s\n",tokens[i]);
     if (strncmp(tokens[i],"@SQ",3)) {
       /* HD must come first */
       if (!strncmp(tokens[i],"@HD",3)) {
@@ -220,46 +264,32 @@ samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlic
 
   destHeader->l_text = strlen(buff);
   destHeader->text   = buff;
-  printf("header->text = %s\n",buff);
+  //printf("header->text = %s\n",buff);
   sam_header_parse(destHeader);
 
   strcpy(out_mode, "wbh");
   out = samopen(outFName,out_mode,destHeader);
 
+/* Need this hash initialised for looking up tids */
   bam_init_header_hash(out->header);
 
-  samclose(tmp.in);
+  samclose(in);
 
   return out;
 }
 
-
 int8_t seq_comp_table[16] = { 0, 8, 4, 12, 2, 10, 9, 14, 1, 6, 5, 13, 3, 11, 7, 15 };
 
-int mapBam(char *fName, samfile_t *out, Mapping *mapping) {
-  tmpstruct_t tmp;
-  int ref;
+int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionStats, samfile_t *in, bam_index_t *idx, Vector **mappingVectors) {
+  int  ref;
+  int  begRange;
+  int  endRange;
   char region[1024];
-  int bCount;
 
-
-  tmp.in = samopen(fName, "rb", 0);
-  if (tmp.in == 0) {
-    fprintf(stderr, "Fail to open BAM file %s\n", fName);
-    return 1;
-  }
-
-  bam_index_t *idx;
-
-  idx = bam_index_load(fName); // load BAM index
-  if (idx == 0) {
-    fprintf(stderr, "BAM indexing file is not available.\n");
-    return 1;
-  }
   sprintf(region,"%s:%d-%d", Slice_getChrName(mapping->sourceSlice), 
                              Slice_getChrStart(mapping->sourceSlice), 
                              Slice_getChrEnd(mapping->sourceSlice));
-  bam_parse_region(tmp.in->header, region, &ref, &tmp.beg, &tmp.end);
+  bam_parse_region(in->header, region, &ref, &begRange, &endRange);
   if (ref < 0) {
     fprintf(stderr, "Invalid region %s %d %d\n", Slice_getChrName(mapping->sourceSlice), 
                                                  Slice_getChrStart(mapping->sourceSlice), 
@@ -267,40 +297,44 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping) {
     return 1;
   }
 
-  bCount = 0;
-  bam_iter_t iter = bam_iter_query(idx, ref, tmp.beg, tmp.end);
+  bam_iter_t iter = bam_iter_query(idx, ref, begRange, endRange);
   bam1_t *b = bam_init1();
-  int nOffEnds = 0;
-  int nMateNonLocal = 0;
 
 //  fprintf(stderr,"HERE slice chr name = %s\n", Slice_getChrName(mapping->destSlice));
 //  samopen("-","wh",out->header);
 
   int32_t newtid = bam_get_tid(out->header, Slice_getChrName(mapping->destSlice));
 
-
-  while (bam_iter_read(tmp.in->x.bam, iter, b) >= 0) {
+  while (bam_iter_read(in->x.bam, iter, b) >= 0) {
     int end;
 
-    bCount++;
+    regionStats->nRead++;
 
     end = bam_calend(&b->core, bam1_cigar(b));
-    if (end > tmp.end || b->core.pos < tmp.beg) {
-      nOffEnds++;
+    if (end > endRange || b->core.pos < begRange) {
+      regionStats->nOverEnds++;
       continue;
     }
     
     b->core.tid = newtid;
 
     if (b->core.mtid >= 0) {
-      int32_t newmtid = bam_get_tid(out->header, tmp.in->header->target_name[b->core.mtid]);
-      b->core.mtid = newmtid;
+      int32_t newmtid = bam_get_tid(out->header, in->header->target_name[b->core.mtid]);
 
-      if (!(b->core.mpos <= tmp.end && b->core.mpos >= tmp.beg && newmtid == newtid)) {
-        nMateNonLocal++;
+      if (!(b->core.mpos <= endRange && b->core.mpos >= begRange && newmtid == newtid)) {
+        regionStats->nRemoteMate++;
+        if ((b->core.mpos = mapRemoteLocation(mappingVectors, b->core.mtid, b->core.mpos+1) - 1) < 0) {
+          regionStats->nUnmappedMate++;
+          continue;
+        }
       } else {
-        b->core.mpos = mapLocation(mapping, b->core.mpos+1) - 1;
+        if ((b->core.mpos = mapLocation(mapping, b->core.mpos+1) - 1) < 0) {
+          regionStats->nUnmappedMate++;
+          continue;
+        }
       }
+
+      b->core.mtid = newmtid;
     }
 
 /* pos should be left most position on reference so is either pos or end depending on mapping orientation */
@@ -310,60 +344,44 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping) {
       b->core.pos = mapLocation(mapping, end) - 1;
     }
 
-    /* Switch strand if reverse orientation mapping */
+    /* toggle (XOR) rev com flag if reverse orientation mapping */
     /* Also have to revcom the sequence */
     /* Also have to reverse the quality */
     /* Also have to reverse the cigar */
     if (mapping->ori == -1) {
-      printf(" flag before = %d\n",b->core.flag);
       b->core.flag ^= BAM_FREVERSE;
-      printf(" flag after = %d\n",b->core.flag);
+
+      regionStats->nReversed++;
 
       uint8_t *seq;
+      uint8_t *qual;
       seq = bam1_seq(b);
+      qual = bam1_qual(b);
+
       int i;
-      uint8_t *revseq = calloc(1,(b->core.l_qseq+1)/2);
+      uint8_t *revseq  = calloc(1, (b->core.l_qseq+1)/2 + b->core.l_qseq);
+      uint8_t *revqual = revseq + (b->core.l_qseq+1)/2;
       
-/* print out existing sequence */
-/*
-      printf("forward: ");
+/* make rev com seq and reverse qual at same time*/
       for (i=0;i<b->core.l_qseq;i++) {
-        char base = bam_nt16_rev_table[bam1_seqi(seq, i)];
-        printf("%c", base);
-      }
-      printf("\n");
-*/
-/* make rev com seq */
-      for (i=0;i<b->core.l_qseq;i++) {
-/*
-        char base = bam_nt16_rev_table[bam1_seqi(seq, b->core.l_qseq-i-1)];
-        revseq[i/2] |= bam_nt16_table[(int)base] << 4*(1-i%2);
-*/
         uint8_t ib = seq_comp_table[bam1_seqi(seq, b->core.l_qseq-i-1)];
         revseq[i/2] |= ib << 4*(1-i%2);
+        revqual[i] = qual[b->core.l_qseq-i-1];
       }
-/* print rev com seq */
-/*
-      printf("reverse: ");
-      for (i=0;i<b->core.l_qseq;i++) {
-        char base = bam_nt16_rev_table[bam1_seqi(revseq, i)];
-        printf("%c", base);
-      }
-      printf("\n");
-*/
-      memcpy(seq,revseq,(b->core.l_qseq+1)/2);
+
+      memcpy(seq, revseq, (b->core.l_qseq+1)/2 + b->core.l_qseq);
       free(revseq);
 
-      uint8_t *qual;
-      qual = bam1_qual(b);
+/*
       uint8_t *revqual = calloc(1,b->core.l_qseq);
       for (i=0;i<b->core.l_qseq;i++) {
         revqual[i] = qual[b->core.l_qseq-i-1];
       }
       memcpy(qual,revqual,b->core.l_qseq);
       free(revqual);
+*/
       
-      int *revcig = calloc(1,b->core.n_cigar*sizeof(int));
+      int *revcig = calloc(1,b->core.n_cigar*4);
       int *cig = bam1_cigar(b);
       
       for (i=0;i<b->core.n_cigar;i++) {
@@ -378,22 +396,51 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping) {
     end = bam_calend(&b->core, bam1_cigar(b));
     b->core.bin = bam_reg2bin(b->core.pos,end);
 
+    regionStats->nWritten++;
+
     if (!bam_write1(out->x.bam, b)) {
-      printf("Failed writing bam entry\n");
+      fprintf(stderr, "Failed writing bam entry\n");
     }
   }
-  printf("Number of reads (bam_iter)  = %d  num off ends %d num non local mates %d\n",bCount,nOffEnds,nMateNonLocal);
-  totOffEnd+=nOffEnds;
+  //printf("Number of reads read = %d  num off ends %d num non local mates %d\n",regionStats->nRead,
+  //                                                                             regionStats->nOverEnds,
+  //                                                                             regionStats->nRemoteMate);
 
   bam_iter_destroy(iter);
   bam_destroy1(b);
 
-  bam_index_destroy(idx);
-
-  samclose(tmp.in);
   return 0;
 }
 
+int mapRemoteLocation(Vector **mappingVectors, int seqid, int pos) {
+  Mapping *mapping = NULL;
+  Vector  *mapVec = mappingVectors[seqid];
+  int i;
+
+  /* Find the mapping containing the location */
+  for (i=0; i<Vector_getNumElement(mapVec); i++) {
+    Mapping *m = Vector_getElementAt(mapVec,i);
+    char *fromChr = Slice_getChrName(m->sourceSlice);
+    int fromStart = Slice_getChrStart(m->sourceSlice);
+    int fromEnd   = Slice_getChrEnd(m->sourceSlice);
+
+    //printf("Comparing %d to slice %s %d %d\n",pos,fromChr,fromStart,fromEnd);
+
+    if (pos >= fromStart && pos <= fromEnd) {
+      mapping = m;
+      //printf("Match %d to slice %s %d %d\n",pos,fromChr,fromStart,fromEnd);
+      break;
+    }
+  }
+
+  if (!mapping) {
+    //fprintf(stderr,"Mate location lies outside any mapped region pos = %d\n", pos);
+    return -1;
+  }
+
+  /* call mapLocation */
+  return mapLocation(mapping, pos);
+}
 
 int mapLocation(Mapping *mapping, int pos) {
   int fromStart  = Slice_getChrStart(mapping->sourceSlice);
@@ -402,7 +449,8 @@ int mapLocation(Mapping *mapping, int pos) {
   int toEnd      = Slice_getChrEnd(mapping->destSlice);
 
   if (pos < fromStart || pos > fromEnd) {
-    printf("Error: tried to map position out of range pos = %d range = %s %d %d\n", pos, Slice_getChrName(mapping->sourceSlice), fromStart, fromEnd);
+    fprintf(stderr,"Error: tried to map position out of range pos = %d range = %s %d %d\n", pos, Slice_getChrName(mapping->sourceSlice), fromStart, fromEnd);
+    return -1;
   }
 
   if (mapping->ori == 1) {
@@ -419,7 +467,24 @@ int mapLocation(Mapping *mapping, int pos) {
   return pos;
 }
 
-Vector *getMappings(DBAdaptor *dba, Slice *destSlice, char *fromAssName, char *toAssName) {
+
+Vector **getMappingVectorsBySourceRegion(DBAdaptor *dba, samfile_t *in, char *sourceName, char *destName) {
+  int i;
+
+  Vector **mappingVectors = calloc(in->header->n_targets, sizeof(Vector *));
+
+  for (i=0;i<in->header->n_targets;i++) {
+    char *seqName = in->header->target_name[i];
+
+    // Note reverse mapping direction to key on source
+    // Use flag to getMappings to fill slices with correct direction
+    mappingVectors[i] = getMappings(dba,seqName,destName,sourceName, 1); 
+  }
+
+  return mappingVectors;
+}
+
+Vector *getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAssName, int rev) {
   StatementHandle *sth;
   ResultRow *row;
   char qStr[1024];
@@ -447,9 +512,9 @@ Vector *getMappings(DBAdaptor *dba, Slice *destSlice, char *fromAssName, char *t
             "       cs1.version='%s' and"
             "       cs2.version='%s' and"
             "       sr%d.name='%s' order by a.%s_start",
-            coordSys1, coordSys2, i+1,  Slice_getChrName(destSlice), (!i ? "asm" : "cmp"));
+            coordSys1, coordSys2, i+1,  seqName, (!i ? "asm" : "cmp"));
   
-    printf("%s\n",qStr);
+    //printf("%s\n",qStr);
   
     sth = dba->dbc->prepare(dba->dbc,qStr,strlen(qStr));
   
@@ -480,18 +545,29 @@ Vector *getMappings(DBAdaptor *dba, Slice *destSlice, char *fromAssName, char *t
       source  = Slice_new(sourceName,sourceStart,sourceEnd,1,fromAssName,NULL,0,0);
       mapping = calloc(1,sizeof(Mapping)); 
   
-      if (!i) {
-        mapping->sourceSlice = source;
-        mapping->destSlice   = dest;
-        mapping->ori         = ori;
+      if (!rev) {
+        if (!i) {
+          mapping->sourceSlice = source;
+          mapping->destSlice   = dest;
+          mapping->ori         = ori;
+        } else {
+          mapping->sourceSlice = dest;
+          mapping->destSlice   = source;
+          mapping->ori         = ori;
+        }
       } else {
-        mapping->sourceSlice = dest;
-        mapping->destSlice   = source;
-        mapping->ori         = ori;
+        if (!i) {
+          mapping->sourceSlice = dest;
+          mapping->destSlice   = source;
+          mapping->ori         = ori;
+        } else {
+          mapping->sourceSlice = source;
+          mapping->destSlice   = dest;
+          mapping->ori         = ori;
+        }
       }
       
       Vector_addElement(mappingVector,mapping); 
-  
     }
   
     sth->finish(sth);
@@ -553,7 +629,6 @@ Vector *getDestinationSlices(DBAdaptor *dba, char *assName) {
     slice = Slice_new(name,1,length,1,assName,NULL,0,0);
 
     Vector_addElement(toplevelSliceVector,slice); 
-
   }
 
 
