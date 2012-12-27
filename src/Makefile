@@ -7,7 +7,7 @@ MYSQLLIBS=${shell mysql_config --libs}
 SAMDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/bin/samtools-0.1.18
 ZLIBDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/include
 
-CFLAGS =  -g -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
+CFLAGS =  -O3 -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS)
 
 BINDIR=../bin

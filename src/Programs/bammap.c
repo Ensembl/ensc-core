@@ -419,7 +419,6 @@ int mapLocation(Mapping *mapping, int pos) {
   return pos;
 }
 
-
 Vector *getMappings(DBAdaptor *dba, Slice *destSlice, char *fromAssName, char *toAssName) {
   StatementHandle *sth;
   ResultRow *row;
