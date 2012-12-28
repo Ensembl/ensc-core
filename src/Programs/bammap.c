@@ -26,31 +26,25 @@ typedef struct readMapStatsStruct {
   int nUnmappedMate;
 } ReadMapStats;
 
-Vector *      getDestinationSlices(DBAdaptor *dba, char *assName);
-Vector *      getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAssName, int rev);
-samfile_t *   writeBamHeader(char *inFName, char *outFName, Vector *destinationSlices);
-bam_header_t *bam_header_dup(const bam_header_t *h0);
-int           mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionStats, samfile_t *in, bam_index_t *idx, Vector **mappingVectors);
-int           mapLocation(Mapping *mapping, int pos);
-void          Bammap_usage();
-int           mapRemoteLocation(Vector **mappingVectors, int seqid, int pos);
-Vector **     getMappingVectorsBySourceRegion(DBAdaptor *dba, samfile_t *in, char *sourceName, char *destName);
+Vector *    getDestinationSlices(DBAdaptor *dba, char *assName);
+Vector *    getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAssName, int rev);
+samfile_t * writeBamHeader(char *inFName, char *outFName, Vector *destinationSlices);
+int         mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionStats, samfile_t *in, bam_index_t *idx, Vector **mappingVectors);
+int         mapLocation(Mapping *mapping, int pos);
+void        Bammap_usage();
+int         mapRemoteLocation(Vector **mappingVectors, int seqid, int pos);
+Vector **   getMappingVectorsBySourceRegion(DBAdaptor *dba, samfile_t *in, char *sourceName, char *destName);
 
 int main(int argc, char *argv[]) {
-  DBAdaptor *dba;
+  DBAdaptor *      dba;
   StatementHandle *sth;
-  ResultRow *row;
-  Vector *destinationSlices;
-  Vector *mappings;
-  samfile_t *out;
-
-  ReadMapStats totalStats;
-  ReadMapStats regionStats;
-
-  memset(&totalStats, 0, sizeof(ReadMapStats));
+  ResultRow *      row;
+  Vector *         destinationSlices;
+  Vector *         mappings;
+  samfile_t *      out;
 
   char *emptyStr = "";
-  int argNum = 1;
+  int   argNum = 1;
 
   char *inFName  = NULL;
   char *outFName = NULL;
@@ -63,6 +57,11 @@ int main(int argc, char *argv[]) {
 
   char *sourceName = "GRCh37";
   char *destName   = "NCBI36";
+
+  ReadMapStats totalStats;
+  ReadMapStats regionStats;
+
+  memset(&totalStats, 0, sizeof(ReadMapStats));
 
   initEnsC();
 
@@ -223,6 +222,7 @@ samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlic
     return NULL;
   }
 
+  // For debugging - these two lines print input BAM file header to stdout
   //strcpy(out_mode, "wh");
   //samopen("-",out_mode,in->header);
 
@@ -393,6 +393,7 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
       free(revcig);
     }
 
+
 /* recalculate bin, not sure if need this for all coords, or just - ori ones */
     end = bam_calend(&b->core, bam1_cigar(b));
     b->core.bin = bam_reg2bin(b->core.pos,end);
@@ -424,9 +425,9 @@ int mapRemoteLocation(Vector **mappingVectors, int seqid, int pos) {
   /* Find the mapping containing the location */
   for (i=0; i<Vector_getNumElement(mapVec); i++) {
     Mapping *m = Vector_getElementAt(mapVec,i);
-    char *fromChr = Slice_getChrName(m->sourceSlice);
-    int fromStart = Slice_getChrStart(m->sourceSlice);
-    int fromEnd   = Slice_getChrEnd(m->sourceSlice);
+    char * fromChr   = Slice_getChrName(m->sourceSlice);
+    int    fromStart = Slice_getChrStart(m->sourceSlice);
+    int    fromEnd   = Slice_getChrEnd(m->sourceSlice);
 
     //printf("Comparing %d to slice %s %d %d\n",pos,fromChr,fromStart,fromEnd);
 
@@ -446,11 +447,11 @@ int mapRemoteLocation(Vector **mappingVectors, int seqid, int pos) {
   return mapLocation(mapping, pos);
 }
 
-int mapLocation(Mapping *mapping, int pos) {
-  int fromStart  = Slice_getChrStart(mapping->sourceSlice);
-  int fromEnd    = Slice_getChrEnd(mapping->sourceSlice);
-  int toStart    = Slice_getChrStart(mapping->destSlice);
-  int toEnd      = Slice_getChrEnd(mapping->destSlice);
+inline int mapLocation(Mapping *mapping, int pos) {
+  int fromStart = Slice_getChrStart(mapping->sourceSlice);
+  int fromEnd   = Slice_getChrEnd(mapping->sourceSlice);
+  int toStart   = Slice_getChrStart(mapping->destSlice);
+  int toEnd     = Slice_getChrEnd(mapping->destSlice);
 
   if (pos < fromStart || pos > fromEnd) {
     fprintf(stderr,"Error: tried to map position out of range pos = %d range = %s %d %d\n", pos, Slice_getChrName(mapping->sourceSlice), fromStart, fromEnd);
@@ -460,7 +461,6 @@ int mapLocation(Mapping *mapping, int pos) {
   if (mapping->ori == 1) {
     pos += (toStart-fromStart);
   } else {
-
     int offset = pos-fromStart;
     //printf("pos before = %d\n",pos);
     //printf("offset = %d\n",offset);
@@ -492,12 +492,11 @@ Vector **getMappingVectorsBySourceRegion(DBAdaptor *dba, samfile_t *in, char *so
 // it looks like the mapping is the other way round 
 Vector *getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAssName, int rev) {
   StatementHandle *sth;
-  ResultRow *row;
-  char qStr[1024];
-  char *coordSys1;
-  char *coordSys2;
-  
-  Vector *mappingVector = Vector_new();
+  ResultRow *      row;
+  char             qStr[1024];
+  char *           coordSys1;
+  char *           coordSys2;
+  Vector *         mappingVector = Vector_new();
 
   int i;
   for (i=0;i<2;i++) {
@@ -584,9 +583,9 @@ Vector *getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAs
 
 Vector *getDestinationSlices(DBAdaptor *dba, char *assName) {
   StatementHandle *sth;
-  ResultRow *row;
-  char qStr[1024];
-  char *assemblyType = DBAdaptor_getAssemblyType(dba);
+  ResultRow *      row;
+  char             qStr[1024];
+  char *           assemblyType = DBAdaptor_getAssemblyType(dba);
 
   if (!strcmp(assemblyType,assName)) {
     sprintf(qStr,
