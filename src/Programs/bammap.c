@@ -26,14 +26,21 @@ typedef struct readMapStatsStruct {
   int nUnmappedMate;
 } ReadMapStats;
 
-Vector *    getDestinationSlices(DBAdaptor *dba, char *assName);
-Vector *    getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAssName, int rev);
-samfile_t * writeBamHeader(char *inFName, char *outFName, Vector *destinationSlices);
-int         mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionStats, samfile_t *in, bam_index_t *idx, Vector **mappingVectors);
-int         mapLocation(Mapping *mapping, int pos);
 void        Bammap_usage();
+Vector *    getDestinationSlices(DBAdaptor *dba, char *assName);
+Vector *    getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAssName, int rev, int flags);
+Vector **   getMappingVectorsBySourceRegion(DBAdaptor *dba, samfile_t *in, char *sourceName, char *destName, int flags);
+Vector **   getPairedMappingFailList(samfile_t *in, Vector **mappingVectors);
+int         mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionStats, samfile_t *in, 
+                   bam_index_t *idx, Vector **mappingVectors, Vector **failedVectors, int flags);
+int         mapLocation(Mapping *mapping, int pos);
 int         mapRemoteLocation(Vector **mappingVectors, int seqid, int pos);
-Vector **   getMappingVectorsBySourceRegion(DBAdaptor *dba, samfile_t *in, char *sourceName, char *destName);
+void        printBam(bam1_t *b, bam_header_t *header);
+void        printMapping(Mapping *mapping);
+samfile_t * writeBamHeader(char *inFName, char *outFName, Vector *destinationSlices);
+
+// Flag values
+#define M_UCSC_NAMING 1
 
 int main(int argc, char *argv[]) {
   DBAdaptor *      dba;
@@ -43,7 +50,6 @@ int main(int argc, char *argv[]) {
   Vector *         mappings;
   samfile_t *      out;
 
-  char *emptyStr = "";
   int   argNum = 1;
 
   char *inFName  = NULL;
@@ -58,14 +64,14 @@ int main(int argc, char *argv[]) {
   char *sourceName = "GRCh37";
   char *destName   = "NCBI36";
 
+  int flags;
+
   ReadMapStats totalStats;
   ReadMapStats regionStats;
 
   memset(&totalStats, 0, sizeof(ReadMapStats));
 
   initEnsC();
-
-//  primary_parser = secondary_parser = secondary_multi_parser = emptyStr;
 
   while (argNum < argc) {
     char *arg = argv[argNum];
@@ -96,6 +102,9 @@ int main(int argc, char *argv[]) {
       StrUtil_copyString(&sourceName,val,0);
     } else if (!strcmp(arg, "-d") || !strcmp(arg,"--dest_ass")) {
       StrUtil_copyString(&destName,val,0);
+    } else if (!strcmp(arg, "-U") || !strcmp(arg,"--ucsc_naming")) {
+      flags |= M_UCSC_NAMING;
+      argNum--;
     } else {
       fprintf(stderr,"Error in command line at %s\n\n",arg);
       Bammap_usage();
@@ -105,7 +114,7 @@ int main(int argc, char *argv[]) {
   }
 
   printf("Program for mapping BAM files between assemblies\n"
-         "Steve M.J. Searle.  searle@sanger.ac.uk  Last update Dec 2012.\n");
+         "Steve M.J. Searle.  searle@sanger.ac.uk  Last update Jan 2013.\n");
 
   if (!inFName || !outFName) {
     Bammap_usage();
@@ -125,7 +134,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  bam_init_header_hash(in->header);
+  //bam_init_header_hash(in->header);
 
   bam_index_t *idx;
   idx = bam_index_load(inFName); // load BAM index
@@ -137,32 +146,32 @@ int main(int argc, char *argv[]) {
   // Load all mappings into an array of vectors arranged by source region id
   // Only used for remote mate mapping, where we don't know in advanced which
   // region the mapping will be to
-  Vector **mappingVectors = getMappingVectorsBySourceRegion(dba, in, sourceName, destName);
+  Vector **mappingVectors = getMappingVectorsBySourceRegion(dba, in, sourceName, destName, flags);
 
+  printf("Stage 1\n");
+  Vector **failedVectors  = getPairedMappingFailList(in, mappingVectors);
+//  Vector **failedVectors = calloc(in->header->n_targets, sizeof(Vector *));
+
+  printf("Stage 2\n");
   int i;
   for (i=0; i<Vector_getNumElement(destinationSlices); i++) {
     Slice *slice = Vector_getElementAt(destinationSlices,i);
 
     printf("Working on '%s'\n",Slice_getChrName(slice));
     //if (!strcmp(Slice_getChrName(slice),"3")) break;
+    //if (strcmp(Slice_getChrName(slice),"12")) continue;
 
-    mappings = getMappings(dba,Slice_getChrName(slice),sourceName,destName,0);
+    mappings = getMappings(dba,Slice_getChrName(slice),sourceName,destName,0, flags);
     int j;
     for (j=0;j<Vector_getNumElement(mappings); j++) {
       Mapping *mapping = Vector_getElementAt(mappings,j);
-//      printf("%s\t%d\t%d\t%s\t%d\t%d\t%d\n",Slice_getChrName(mapping->destSlice),
-//                                            Slice_getChrStart(mapping->destSlice),
-//                                            Slice_getChrEnd(mapping->destSlice),
-//                                            Slice_getChrName(mapping->sourceSlice),
-//                                            Slice_getChrStart(mapping->sourceSlice),
-//                                            Slice_getChrEnd(mapping->sourceSlice),
-//                                            mapping->ori);
+      //printMapping(mapping);
       
 //      mapBam("ftp://ngs.sanger.ac.uk/scratch/project/searle/bams/GM12878_fixed_sorted.bam",out, mapping->sourceSlice);
       //if (Slice_getChrStart(mapping->destSlice)  > 97000000 && Slice_getChrStart(mapping->destSlice) < 98000000) {
       memset(&regionStats, 0, sizeof(ReadMapStats));
 
-      mapBam(inFName, out, mapping, &regionStats, in, idx, mappingVectors);
+      mapBam(inFName, out, mapping, &regionStats, in, idx, mappingVectors, failedVectors, flags);
 
       totalStats.nRead         += regionStats.nRead;
       totalStats.nWritten      += regionStats.nWritten;
@@ -185,21 +194,208 @@ int main(int argc, char *argv[]) {
   bam_index_destroy(idx);
 
   samclose(in);
+  printf("Done\n");
   return 0;
 }
 
+void printMapping(Mapping *mapping) {
+  printf("%s\t%d\t%d\t%s\t%d\t%d\t%d\n",Slice_getChrName(mapping->destSlice),
+                                        Slice_getChrStart(mapping->destSlice),
+                                        Slice_getChrEnd(mapping->destSlice),
+                                        Slice_getChrName(mapping->sourceSlice),
+                                        Slice_getChrStart(mapping->sourceSlice),
+                                        Slice_getChrEnd(mapping->sourceSlice),
+                                        mapping->ori);
+}
 
+Vector **getPairedMappingFailList(samfile_t *in, Vector **mappingVectors) {
+  int i;
+
+  ReadMapStats regionStats;
+  bam1_t *b = bam_init1();
+
+  Vector *mappings;
+  int32_t curtid = -1;
+  int32_t outtid = -1;
+
+  Mapping *curMapping;
+  int      mappingInd = 0;
+
+  int nRead = 0;
+  int nRead1 = 0;
+  int nRead2 = 0;
+  int nRead1Read2 = 0;
+  int nNoRead = 0;
+  int nUnmapped = 0;
+  int nMateUnmapped = 0; // Note not related to nUnmapped - number where flag indicates mate unmapped in original file
+  int nProperPair = 0; 
+  int nNoOverlap = 0;
+  int nFUn = 0;
+// don't know why I need to check for b->core.tid >= 0 but I do otherwise I get a bam entry with -1 tid
+
+  Vector **unmapped = calloc(in->header->n_targets, sizeof(Vector *));
+
+  while (bam_read1(in->x.bam, b) > 0 && b->core.tid >= 0) {
+    nRead++;
+
+    if ((b->core.flag & (BAM_FREAD1 | BAM_FREAD2)) == (BAM_FREAD1 | BAM_FREAD2)) {
+      nRead1Read2++;
+    } else if (b->core.flag & BAM_FREAD1) {
+      nRead1++;
+    } else if (b->core.flag & BAM_FREAD2) {
+      nRead2++;
+    } else {
+      nNoRead++;
+    }
+
+    if (b->core.tid != curtid) {
+      curtid = b->core.tid;
+      //printf("curtid = %d\n",curtid);
+      mappings = mappingVectors[curtid];
+      unmapped[curtid] = Vector_new();
+      mappingInd=0;
+      if (Vector_getNumElement(mappings)) {
+        curMapping = Vector_getElementAt(mappings,mappingInd++);
+      } else {
+        curMapping = NULL;
+      }
+      memset(&regionStats, 0, sizeof(ReadMapStats));
+      printf("Finding failed pair mappings in '%s' (tid = %d)\n",in->header->target_name[curtid],curtid);
+      //printf("curMapping = %d\n",curMapping);
+    }
+    
+    int end;
+
+    regionStats.nRead++;
+
+    end = bam_calend(&b->core, bam1_cigar(b));
+
+    // Move to a point where the slice ends after the start of the feature (pos)
+    // So now either:
+    //    Pos starts before the slice and ends before it  - unmapped
+    //    Pos starts before the slice and ends in the slice - unmapped
+    //    Pos starts before the slice and ends after the slice - unmapped
+    //    Pos and end are both in the slice - MAPPED
+    //    Pos starts in the slice and ends after it - unmapped
+    while (curMapping && b->core.pos > Slice_getChrEnd(curMapping->sourceSlice)-1) {
+      if (Vector_getNumElement(mappings) > mappingInd) {
+        curMapping = Vector_getElementAt(mappings,mappingInd++);
+        //printMapping(curMapping);
+      } else {
+        curMapping = NULL;
+      }
+    }
+
+//    if (!strcmp(bam1_qname(b),"TUPAC_0006:3:79:10780:17293#0")) {
+//        Vector_addElement(unmapped[curtid],bam_dup1(b));
+//    }
+
+//    if (!curMapping ||
+//        (b->core.pos < Slice_getChrStart(curMapping->sourceSlice)-1 || 
+//               end > Slice_getChrEnd(curMapping->sourceSlice))) {
+//      Vector_addElement(unmapped[curtid],bam_dup1(b));
+//      nUnmapped++;
+//    }
+//    if (!(b->core.flag & BAM_FPROPER_PAIR) && !(b->core.flag & BAM_FMUNMAP)) {
+//      nProperPair++;
+//    }
+//    if (b->core.flag & BAM_FUNMAP) {
+//      nFUn++;
+//    }
+    if (b->core.flag & BAM_FMUNMAP) {
+      nMateUnmapped++;
+    } else {
+      // Special case 1 - read lies after end of last assembly mapping block on current sequence, so ignored in later destSlice based fetching
+      if (!curMapping) {
+        nUnmapped++;
+        nNoOverlap++;
+      // Special case 2 - end lies before start of slice, means feature lies completely between mapped regions, so ignored in later destSlice based fetching
+      } else if (end < Slice_getChrStart(curMapping->sourceSlice)) {
+        nUnmapped++;
+        nNoOverlap++;
+      // Read which hangs off the end of a mapping block - save for later checks
+      } else if (b->core.pos < Slice_getChrStart(curMapping->sourceSlice)-1 || 
+                 end > Slice_getChrEnd(curMapping->sourceSlice)) {
+        nUnmapped++;
+        Vector_addElement(unmapped[curtid],bam_dup1(b));
+      }
+    }
+  }
+
+
+/*
+  printf("n target = %d\n",in->header->n_targets);
+  for (i=0;i<in->header->n_targets;i++) {
+    if (!unmapped[i]) {
+      printf("NO VECTOR FOR tid %d (%s)\n",i,in->header->target_name[i]);
+    } else {
+      int j;
+      printf("Number of unmapped for tid %d (%s) is %d\n",i,in->header->target_name[i],Vector_getNumElement(unmapped[i]));
+      for (j=0;j<Vector_getNumElement(unmapped[i]);j++) {
+        bam1_t *b = (bam1_t *) Vector_getElementAt(unmapped[i],j);
+        printBam(b, in->header);
+        
+      }
+    }
+  }
+*/
+  printf("Total number of reads in input file =        %d\n",nRead);
+  printf("Total READ1 reads in input file =            %d\n",nRead1);
+  printf("Total READ2 reads in input file =            %d\n",nRead2);
+  printf("Total (READ1 & READ2) reads in input file =  %d\n",nRead1Read2);
+  printf("Total !(READ1 & READ2) reads in input file = %d\n",nNoRead);
+  printf("Total unmapped in assembly mapping =         %d\n",nUnmapped);
+  printf("Total with no overlap with map regions =     %d\n",nNoOverlap);
+  printf("Total unmapped (BAM_FUNMAP) in input file =  %d\n",nFUn);
+  printf("Total mate unmapped in input file =          %d\n",nMateUnmapped);
+  //printf("Total NOT in proper pair in original file but is paired (!BAM_FPROPER_PAIR && !BAM_FMUNMAP) = %d\n",nProperPair);
+
+  return unmapped;
+}
+
+/*
+ print out a bam1_t entry, particularly the flags (for debugging)
+*/
+void printBam(bam1_t *b, bam_header_t *header) {    
+  printf("%s %s %d %d %s (%d) %d %d\t\tP %d PP %d U %d MU %d R %d MR %d R1 %d R2 %d S %d QC %d D %d\n",
+                                  bam1_qname(b), 
+                                  header->target_name[b->core.tid], 
+                                  b->core.pos, 
+                                  bam_calend(&b->core,bam1_cigar(b)),
+                                  header->target_name[b->core.mtid], 
+                                  b->core.mtid, 
+                                  b->core.mpos, 
+                                  bam_cigar2qlen(&(b->core),bam1_cigar(b)),
+                                  b->core.flag & BAM_FPAIRED,
+                                  b->core.flag & BAM_FPROPER_PAIR ? 1 : 0,
+                                  b->core.flag & BAM_FUNMAP ? 1 : 0,
+                                  b->core.flag & BAM_FMUNMAP ? 1 : 0,
+                                  b->core.flag & BAM_FREVERSE ? 1 : 0,
+                                  b->core.flag & BAM_FMREVERSE ? 1 : 0,
+                                  b->core.flag & BAM_FREAD1 ? 1 : 0,
+                                  b->core.flag & BAM_FREAD2 ? 1 : 0,
+                                  b->core.flag & BAM_FSECONDARY ? 1 : 0,
+                                  b->core.flag & BAM_FQCFAIL ? 1 : 0,
+                                  b->core.flag & BAM_FDUP ? 1 : 0
+                                  );
+  fflush(stdout);
+}
+
+/*
+ Program usage message
+*/
 void Bammap_usage() {
   printf("bammap \n"
-         "  -i --in_file    Input BAM file to map from\n"
-         "  -o --out_file   Output BAM file to write\n"
-         "  -h --host       Database host name for db containing mapping\n"
-         "  -n --name       Database name for db containing mapping\n"
-         "  -u --user       Database user\n"
-         "  -p --password   Database password\n"
-         "  -P --port       Database port\n"
-         "  -s --source_ass Assembly name to map from\n"
-         "  -d --dest_ass   Assembly name to map to\n");
+         "  -i --in_file     Input BAM file to map from\n"
+         "  -o --out_file    Output BAM file to write\n"
+         "  -U --ucsc_naming Input BAM file has 'chr' prefix on seq region names\n"
+         "  -h --host        Database host name for db containing mapping\n"
+         "  -n --name        Database name for db containing mapping\n"
+         "  -u --user        Database user\n"
+         "  -p --password    Database password\n"
+         "  -P --port        Database port\n"
+         "  -s --source_ass  Assembly name to map from\n"
+         "  -d --dest_ass    Assembly name to map to\n");
   exit(1);
 }
 
@@ -280,11 +476,17 @@ samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlic
 
 int8_t seq_comp_table[16] = { 0, 8, 4, 12, 2, 10, 9, 14, 1, 6, 5, 13, 3, 11, 7, 15 };
 
-int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionStats, samfile_t *in, bam_index_t *idx, Vector **mappingVectors) {
+int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionStats, 
+           samfile_t *in, bam_index_t *idx, Vector **mappingVectors, Vector **failedVectors, int flags) {
   int  ref;
   int  begRange;
   int  endRange;
   char region[1024];
+  int str_offset = 0;
+
+  if (flags & M_UCSC_NAMING) {
+    str_offset = 3;
+  }
 
   sprintf(region,"%s:%d-%d", Slice_getChrName(mapping->sourceSlice), 
                              Slice_getChrStart(mapping->sourceSlice), 
@@ -317,11 +519,15 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
       continue;
     }
     
-    b->core.tid = newtid;
 
     if (b->core.mtid >= 0) {
-      int32_t newmtid = bam_get_tid(out->header, in->header->target_name[b->core.mtid]);
+// UCSC
+      int32_t newmtid = bam_get_tid(out->header, &(in->header->target_name[b->core.mtid][str_offset]));
 
+      if (mateFoundInFailedVectors(b, failedVectors)) {
+        //printf("Mate found in failed for:\n");
+        //printBam(b,in->header);
+      }
       if (!(b->core.mpos <= endRange && b->core.mpos >= begRange && newmtid == newtid)) {
         regionStats->nRemoteMate++;
         if ((b->core.mpos = mapRemoteLocation(mappingVectors, b->core.mtid, b->core.mpos+1) - 1) < 0) {
@@ -337,6 +543,8 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
 
       b->core.mtid = newmtid;
     }
+
+    b->core.tid = newtid;
 
 /* pos should be left most position on reference so is either pos or end depending on mapping orientation */
     if (mapping->ori == 1) {
@@ -414,32 +622,107 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
   return 0;
 }
 
-// Not a very efficient routine
-// Could do a binary search into the vector to speed up finding the right mapping
-//    Not many reads needed this call so I didn't bother
+
+int mateFoundInFailedVectors(bam1_t *b, Vector **failedVectors) {
+  int i;
+  Vector *failVec = failedVectors[b->core.mtid];
+  
+  if (!failVec) {
+    return 0;
+  }
+
+  
+  int firstInd = findPosInFailVec(failVec, b->core.mpos);
+  
+  if (firstInd >=0 ) {
+    for (i=firstInd;i<Vector_getNumElement(failVec);i++) {
+      bam1_t *fail_b = (bam1_t *)Vector_getElementAt(failVec,i);
+  
+      if (b->core.mpos == fail_b->core.pos) {
+        if (!strcmp(bam1_qname(b),bam1_qname(fail_b))) {
+          //printf("Fail match of name and pos for %s\n",bam1_qname(b));
+          return 1;
+        }
+      } else if (b->core.mpos < fail_b->core.pos) {
+        break;
+      }
+    }
+  }
+
+  return 0;
+}
+
+int findPosInFailVec(Vector *failVec, int pos) {
+  int imin = 0;
+  int imax = Vector_getNumElement(failVec)-1;
+
+  /* Binary search to find the mapping containing the location */
+
+  // continue searching while [imin,imax] is not empty
+  while (imax >= imin) {
+    // calculate the midpoint for roughly equal partition
+    int imid = (imax+imin) / 2;
+    bam1_t *b = Vector_getElementAt(failVec,imid);
+
+//    printf("imid = %d imin = %d imax = %d pos = %d b->core.pos = %d\n",imid,imin,imax,pos,b->core.pos);
+
+    // determine which subarray to search
+    if (pos > b->core.pos) {
+      // change min index to search upper subarray
+      imin = imid + 1;
+    } else if (pos < b->core.pos) {
+      // change max index to search lower subarray
+      imax = imid - 1;
+    } else {
+      // key found at index imid
+      // Back up through array to find first index which matches (can be several)
+      for (;imid>=0;imid--) {
+        bam1_t *b = Vector_getElementAt(failVec,imid);
+        if (b->core.pos != pos) {
+          return imid+1;
+        }
+      }
+
+      return imid;
+    }
+  }
+  return -1;
+}
+
 int mapRemoteLocation(Vector **mappingVectors, int seqid, int pos) {
   Mapping *mapping = NULL;
   Vector  *mapVec = mappingVectors[seqid];
   int i;
 
-  /* Find the mapping containing the location */
-  for (i=0; i<Vector_getNumElement(mapVec); i++) {
-    Mapping *m = Vector_getElementAt(mapVec,i);
-    char * fromChr   = Slice_getChrName(m->sourceSlice);
-    int    fromStart = Slice_getChrStart(m->sourceSlice);
-    int    fromEnd   = Slice_getChrEnd(m->sourceSlice);
+  int imin = 0;
+  int imax = Vector_getNumElement(mapVec)-1;
 
-    //printf("Comparing %d to slice %s %d %d\n",pos,fromChr,fromStart,fromEnd);
+  /* Binary search to find the mapping containing the location */
 
-    if (pos >= fromStart && pos <= fromEnd) {
+  // continue searching while [imin,imax] is not empty
+  while (imax >= imin) {
+    // calculate the midpoint for roughly equal partition
+    int imid = (imax+imin) / 2;
+ 
+    Mapping *m = Vector_getElementAt(mapVec,imid);
+//    printf("imid = %d imin = %d imax = %d pos = %d m start = %d m end = %d\n",imid,imin,imax,pos,Slice_getChrStart(m->sourceSlice),Slice_getChrEnd(m->sourceSlice));
+
+    // determine which subarray to search
+    if (pos > Slice_getChrEnd(m->sourceSlice)) {
+      // change min index to search upper subarray
+      imin = imid + 1;
+    } else if (pos < Slice_getChrStart(m->sourceSlice)) {
+      // change max index to search lower subarray
+      imax = imid - 1;
+    } else {
+      // key found at index imid
       mapping = m;
-      //printf("Match %d to slice %s %d %d\n",pos,fromChr,fromStart,fromEnd);
       break;
     }
   }
 
   if (!mapping) {
-    //fprintf(stderr,"Mate location lies outside any mapped region pos = %d\n", pos);
+    // fprintf(stderr,"Mate location lies outside any mapped region pos = %d\n", pos);
     return -1;
   }
 
@@ -472,17 +755,23 @@ inline int mapLocation(Mapping *mapping, int pos) {
 }
 
 
-Vector **getMappingVectorsBySourceRegion(DBAdaptor *dba, samfile_t *in, char *sourceName, char *destName) {
+Vector **getMappingVectorsBySourceRegion(DBAdaptor *dba, samfile_t *in, char *sourceName, char *destName, int flags) {
   int i;
+  int str_offset = 0;
+
+  if (flags & M_UCSC_NAMING) {
+    str_offset = 3;
+  }
 
   Vector **mappingVectors = calloc(in->header->n_targets, sizeof(Vector *));
 
   for (i=0;i<in->header->n_targets;i++) {
-    char *seqName = in->header->target_name[i];
+// UCSC
+    char *seqName = &(in->header->target_name[i][str_offset]);
 
     // Note reverse mapping direction to key on source
     // Use flag to getMappings to fill slices with correct direction
-    mappingVectors[i] = getMappings(dba,seqName,destName,sourceName, 1); 
+    mappingVectors[i] = getMappings(dba,seqName,destName,sourceName, 1, flags); 
   }
 
   return mappingVectors;
@@ -490,7 +779,7 @@ Vector **getMappingVectorsBySourceRegion(DBAdaptor *dba, samfile_t *in, char *so
 
 // rev flag is a bit of a hack, to enable fetching by source region, but switching slices so
 // it looks like the mapping is the other way round 
-Vector *getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAssName, int rev) {
+Vector *getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAssName, int rev, int flags) {
   StatementHandle *sth;
   ResultRow *      row;
   char             qStr[1024];
@@ -519,7 +808,7 @@ Vector *getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAs
             "       sr%d.name='%s' order by a.%s_start",
             coordSys1, coordSys2, i+1,  seqName, (!i ? "asm" : "cmp"));
   
-    //printf("%s\n",qStr);
+//    printf("%s\n",qStr);
   
     sth = dba->dbc->prepare(dba->dbc,qStr,strlen(qStr));
   
@@ -531,6 +820,7 @@ Vector *getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAs
       int   destStart;
       int   destEnd;
       char *sourceName;
+    char tmp[1024];
       int   sourceStart;
       int   sourceEnd;
       int   ori;
@@ -545,6 +835,24 @@ Vector *getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAs
       if (row->col(row,4))  sourceStart  = row->getIntAt(row,4);
       if (row->col(row,5))  sourceEnd    = row->getIntAt(row,5);
       if (row->col(row,6))  ori          = row->getIntAt(row,6);
+
+// Maybe should do this after getting mappings - for now do it here
+      if (flags & M_UCSC_NAMING) {
+        strcpy(tmp,"chr");
+        if (!rev) {
+          if (!i) {
+            sourceName = strcat(tmp,sourceName);
+          } else {
+            destName = strcat(tmp,destName);
+          }
+        } else {
+          if (!i) {
+            destName = strcat(tmp,destName);
+          } else {
+            sourceName = strcat(tmp,sourceName);
+          }
+        }
+      }
        
       dest    = Slice_new(destName,destStart,destEnd,1,toAssName,NULL,0,0);
       source  = Slice_new(sourceName,sourceStart,sourceEnd,1,fromAssName,NULL,0,0);
