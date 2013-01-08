@@ -26,18 +26,20 @@ typedef struct readMapStatsStruct {
   int nUnmappedMate;
 } ReadMapStats;
 
-void        Bammap_usage();
-Vector *    getDestinationSlices(DBAdaptor *dba, char *assName);
-Vector *    getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAssName, int rev, int flags);
-Vector **   getMappingVectorsBySourceRegion(DBAdaptor *dba, samfile_t *in, char *sourceName, char *destName, int flags);
-Vector **   getPairedMappingFailList(samfile_t *in, Vector **mappingVectors);
-int         mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionStats, samfile_t *in, 
-                   bam_index_t *idx, Vector **mappingVectors, Vector **failedVectors, int flags);
-int         mapLocation(Mapping *mapping, int pos);
-int         mapRemoteLocation(Vector **mappingVectors, int seqid, int pos, Slice **containingSliceP);
-void        printBam(bam1_t *b, bam_header_t *header);
-void        printMapping(Mapping *mapping);
-samfile_t * writeBamHeader(char *inFName, char *outFName, Vector *destinationSlices);
+void       Bammap_usage();
+int        findPosInFailVec(Vector *failVec, int pos);
+Vector *   getDestinationSlices(DBAdaptor *dba, char *assName);
+Vector *   getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAssName, int rev, int flags);
+Vector **  getMappingVectorsBySourceRegion(DBAdaptor *dba, samfile_t *in, char *sourceName, char *destName, int flags);
+Vector **  getPairedMappingFailList(samfile_t *in, Vector **mappingVectors);
+int        mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionStats, samfile_t *in, 
+                  bam_index_t *idx, Vector **mappingVectors, Vector **failedVectors, int flags);
+int        mapLocation(Mapping *mapping, int pos);
+int        mapRemoteLocation(Vector **mappingVectors, int seqid, int pos, Slice **containingSliceP);
+int        mateFoundInFailedVectors(bam1_t *b, Vector **failedVectors);
+void       printBam(bam1_t *b, bam_header_t *header);
+void       printMapping(Mapping *mapping);
+samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlices);
 
 // Flag values
 #define M_UCSC_NAMING 1
@@ -64,7 +66,7 @@ int main(int argc, char *argv[]) {
   char *sourceName = "GRCh37";
   char *destName   = "NCBI36";
 
-  int flags;
+  int flags = 0;
 
   ReadMapStats totalStats;
   ReadMapStats regionStats;
@@ -124,6 +126,7 @@ int main(int argc, char *argv[]) {
   dba = DBAdaptor_new(dbHost,dbUser,dbPass,dbName,dbPort,NULL);
   //printf(" Done\n");
 
+  printf("Stage 1 - retrieving mappings from database\n");
   destinationSlices = getDestinationSlices(dba, destName);
 
   out = writeBamHeader(inFName,outFName,destinationSlices);
@@ -148,11 +151,11 @@ int main(int argc, char *argv[]) {
   // region the mapping will be to
   Vector **mappingVectors = getMappingVectorsBySourceRegion(dba, in, sourceName, destName, flags);
 
-  printf("Stage 1\n");
-//  Vector **failedVectors  = getPairedMappingFailList(in, mappingVectors);
-  Vector **failedVectors = calloc(in->header->n_targets, sizeof(Vector *));
+  printf("Stage 2 - search for reads which don't map\n");
+  Vector **failedVectors  = getPairedMappingFailList(in, mappingVectors);
+//  Vector **failedVectors = calloc(in->header->n_targets, sizeof(Vector *));
 
-  printf("Stage 2\n");
+  printf("Stage 3 - reading, transforming and writing all mapping reads\n");
   int i;
   for (i=0; i<Vector_getNumElement(destinationSlices); i++) {
     Slice *slice = Vector_getElementAt(destinationSlices,i);
@@ -211,8 +214,7 @@ void printMapping(Mapping *mapping) {
 Vector **getPairedMappingFailList(samfile_t *in, Vector **mappingVectors) {
   int i;
 
-  int32_t curtid = -1;
-
+  int32_t  curtid = -1;
   Vector  *mappings;
   Mapping *curMapping;
   int      mappingInd = 0;
@@ -322,15 +324,15 @@ Vector **getPairedMappingFailList(samfile_t *in, Vector **mappingVectors) {
   }
 */
 
-  printf("Total number of reads in input file =        %d\n",nRead);
-  printf("Total READ1 reads in input file =            %d\n",nRead1);
-  printf("Total READ2 reads in input file =            %d\n",nRead2);
-  printf("Total (READ1 & READ2) reads in input file =  %d\n",nRead1Read2);
-  printf("Total !(READ1 & READ2) reads in input file = %d\n",nNoRead);
-  printf("Total unmapped in assembly mapping =         %d\n",nUnmapped);
-  printf("Total with no overlap with map regions =     %d\n",nNoOverlap);
-  printf("Total unmapped (BAM_FUNMAP) in input file =  %d\n",nFUn);
-  printf("Total mate unmapped in input file =          %d\n",nMateUnmapped);
+  printf("Total number of reads in input file =         %d\n",nRead);
+  printf("Total READ1 reads in input file =             %d\n",nRead1);
+  printf("Total READ2 reads in input file =             %d\n",nRead2);
+  printf("Total (READ1 & READ2) reads in input file =   %d\n",nRead1Read2);
+  printf("Total !(READ1 | READ2) reads in input file =  %d\n",nNoRead);
+  printf("Total unmapped (FUNMAP) in input file =       %d\n",nFUn);
+  printf("Total mate unmapped (FMUNMAP) in input file = %d\n\n",nMateUnmapped);
+  printf("Total unmapped in assembly mapping =          %d\n",nUnmapped);
+  printf("Total with no overlap with map regions =      %d\n",nNoOverlap);
 
   return unmapped;
 }
@@ -464,11 +466,6 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
   int  begRange;
   int  endRange;
   char region[1024];
-  int str_offset = 0;
-
-  if (flags & M_UCSC_NAMING) {
-    str_offset = 3;
-  }
 
   sprintf(region,"%s:%d-%d", Slice_getChrName(mapping->sourceSlice), 
                              Slice_getChrStart(mapping->sourceSlice), 
@@ -512,8 +509,8 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
       }
 
       // If mate lies outside current mapping block
-      //if (!(b->core.mpos <= endRange && b->core.mpos >= begRange && newmtid == newtid)) {
-      if (!(b->core.mpos <= endRange && b->core.mpos >= begRange && b->core.tid == b->core.mtid)) {
+// Limits      if (!(b->core.mpos <= endRange && b->core.mpos >= begRange && b->core.tid == b->core.mtid)) {
+      if (!(b->core.mpos < endRange && b->core.mpos >= begRange && b->core.tid == b->core.mtid)) {
         Slice *containingSlice;
 
         regionStats->nRemoteMate++;
@@ -648,8 +645,6 @@ int findPosInFailVec(Vector *failVec, int pos) {
   int imin = 0;
   int imax = Vector_getNumElement(failVec)-1;
 
-  /* Binary search to find the mapping containing the location */
-
   // continue searching while [imin,imax] is not empty
   while (imax >= imin) {
     // calculate the midpoint for roughly equal partition
@@ -685,9 +680,10 @@ int mapRemoteLocation(Vector **mappingVectors, int seqid, int pos, Slice **conta
   Mapping *mapping = NULL;
   Vector  *mapVec = mappingVectors[seqid];
   int i;
-
   int imin = 0;
   int imax = Vector_getNumElement(mapVec)-1;
+
+  *containingSliceP = NULL;
 
   /* Binary search to find the mapping containing the location */
 
@@ -750,16 +746,19 @@ inline int mapLocation(Mapping *mapping, int pos) {
 Vector **getMappingVectorsBySourceRegion(DBAdaptor *dba, samfile_t *in, char *sourceName, char *destName, int flags) {
   int i;
   int str_offset = 0;
+  char *MT = "MT";
 
-  if (flags & M_UCSC_NAMING) {
-    str_offset = 3;
-  }
+  if (flags & M_UCSC_NAMING) str_offset = 3;
 
   Vector **mappingVectors = calloc(in->header->n_targets, sizeof(Vector *));
 
   for (i=0;i<in->header->n_targets;i++) {
-// UCSC
+// For UCSC naming chop off 'chr' prefix
     char *seqName = &(in->header->target_name[i][str_offset]);
+
+// UCSC MT
+    if (flags & M_UCSC_NAMING && !strcmp(seqName,"M")) seqName = MT;
+      
 
     // Note reverse mapping direction to key on source
     // Use flag to getMappings to fill slices with correct direction
@@ -812,7 +811,7 @@ Vector *getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAs
       int   destStart;
       int   destEnd;
       char *sourceName;
-    char tmp[1024];
+      char  tmp[1024];
       int   sourceStart;
       int   sourceEnd;
       int   ori;
@@ -831,16 +830,21 @@ Vector *getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAs
 // Maybe should do this after getting mappings - for now do it here
       if (flags & M_UCSC_NAMING) {
         strcpy(tmp,"chr");
+        
         if (!rev) {
           if (!i) {
+            if (!strcmp(sourceName,"MT")) sourceName[1] = '\0';
             sourceName = strcat(tmp,sourceName);
           } else {
+            if (!strcmp(destName,"MT")) destName[1] = '\0';
             destName = strcat(tmp,destName);
           }
         } else {
           if (!i) {
+            if (!strcmp(destName,"MT")) destName[1] = '\0';
             destName = strcat(tmp,destName);
           } else {
+            if (!strcmp(sourceName,"MT")) sourceName[1] = '\0';
             sourceName = strcat(tmp,sourceName);
           }
         }
