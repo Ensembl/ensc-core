@@ -34,7 +34,7 @@ Vector **   getPairedMappingFailList(samfile_t *in, Vector **mappingVectors);
 int         mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionStats, samfile_t *in, 
                    bam_index_t *idx, Vector **mappingVectors, Vector **failedVectors, int flags);
 int         mapLocation(Mapping *mapping, int pos);
-int         mapRemoteLocation(Vector **mappingVectors, int seqid, int pos);
+int         mapRemoteLocation(Vector **mappingVectors, int seqid, int pos, Slice **containingSliceP);
 void        printBam(bam1_t *b, bam_header_t *header);
 void        printMapping(Mapping *mapping);
 samfile_t * writeBamHeader(char *inFName, char *outFName, Vector *destinationSlices);
@@ -149,8 +149,8 @@ int main(int argc, char *argv[]) {
   Vector **mappingVectors = getMappingVectorsBySourceRegion(dba, in, sourceName, destName, flags);
 
   printf("Stage 1\n");
-  Vector **failedVectors  = getPairedMappingFailList(in, mappingVectors);
-//  Vector **failedVectors = calloc(in->header->n_targets, sizeof(Vector *));
+//  Vector **failedVectors  = getPairedMappingFailList(in, mappingVectors);
+  Vector **failedVectors = calloc(in->header->n_targets, sizeof(Vector *));
 
   printf("Stage 2\n");
   int i;
@@ -211,26 +211,24 @@ void printMapping(Mapping *mapping) {
 Vector **getPairedMappingFailList(samfile_t *in, Vector **mappingVectors) {
   int i;
 
-  ReadMapStats regionStats;
-  bam1_t *b = bam_init1();
-
-  Vector *mappings;
   int32_t curtid = -1;
-  int32_t outtid = -1;
 
+  Vector  *mappings;
   Mapping *curMapping;
   int      mappingInd = 0;
 
-  int nRead = 0;
-  int nRead1 = 0;
-  int nRead2 = 0;
-  int nRead1Read2 = 0;
-  int nNoRead = 0;
-  int nUnmapped = 0;
+  int nRead         = 0;
+  int nRead1        = 0;
+  int nRead2        = 0;
+  int nRead1Read2   = 0;
+  int nNoRead       = 0;
+  int nUnmapped     = 0;
   int nMateUnmapped = 0; // Note not related to nUnmapped - number where flag indicates mate unmapped in original file
-  int nProperPair = 0; 
-  int nNoOverlap = 0;
-  int nFUn = 0;
+  int nProperPair   = 0; 
+  int nNoOverlap    = 0;
+  int nFUn          = 0;
+
+  bam1_t *b = bam_init1();
 // don't know why I need to check for b->core.tid >= 0 but I do otherwise I get a bam entry with -1 tid
 
   Vector **unmapped = calloc(in->header->n_targets, sizeof(Vector *));
@@ -259,14 +257,11 @@ Vector **getPairedMappingFailList(samfile_t *in, Vector **mappingVectors) {
       } else {
         curMapping = NULL;
       }
-      memset(&regionStats, 0, sizeof(ReadMapStats));
       printf("Finding failed pair mappings in '%s' (tid = %d)\n",in->header->target_name[curtid],curtid);
       //printf("curMapping = %d\n",curMapping);
     }
     
     int end;
-
-    regionStats.nRead++;
 
     end = bam_calend(&b->core, bam1_cigar(b));
 
@@ -286,22 +281,10 @@ Vector **getPairedMappingFailList(samfile_t *in, Vector **mappingVectors) {
       }
     }
 
-//    if (!strcmp(bam1_qname(b),"TUPAC_0006:3:79:10780:17293#0")) {
-//        Vector_addElement(unmapped[curtid],bam_dup1(b));
-//    }
+    if (b->core.flag & BAM_FUNMAP) {
+      nFUn++;
+    }
 
-//    if (!curMapping ||
-//        (b->core.pos < Slice_getChrStart(curMapping->sourceSlice)-1 || 
-//               end > Slice_getChrEnd(curMapping->sourceSlice))) {
-//      Vector_addElement(unmapped[curtid],bam_dup1(b));
-//      nUnmapped++;
-//    }
-//    if (!(b->core.flag & BAM_FPROPER_PAIR) && !(b->core.flag & BAM_FMUNMAP)) {
-//      nProperPair++;
-//    }
-//    if (b->core.flag & BAM_FUNMAP) {
-//      nFUn++;
-//    }
     if (b->core.flag & BAM_FMUNMAP) {
       nMateUnmapped++;
     } else {
@@ -334,11 +317,11 @@ Vector **getPairedMappingFailList(samfile_t *in, Vector **mappingVectors) {
       for (j=0;j<Vector_getNumElement(unmapped[i]);j++) {
         bam1_t *b = (bam1_t *) Vector_getElementAt(unmapped[i],j);
         printBam(b, in->header);
-        
       }
     }
   }
 */
+
   printf("Total number of reads in input file =        %d\n",nRead);
   printf("Total READ1 reads in input file =            %d\n",nRead1);
   printf("Total READ2 reads in input file =            %d\n",nRead2);
@@ -348,7 +331,6 @@ Vector **getPairedMappingFailList(samfile_t *in, Vector **mappingVectors) {
   printf("Total with no overlap with map regions =     %d\n",nNoOverlap);
   printf("Total unmapped (BAM_FUNMAP) in input file =  %d\n",nFUn);
   printf("Total mate unmapped in input file =          %d\n",nMateUnmapped);
-  //printf("Total NOT in proper pair in original file but is paired (!BAM_FPROPER_PAIR && !BAM_FMUNMAP) = %d\n",nProperPair);
 
   return unmapped;
 }
@@ -388,7 +370,7 @@ void Bammap_usage() {
   printf("bammap \n"
          "  -i --in_file     Input BAM file to map from\n"
          "  -o --out_file    Output BAM file to write\n"
-         "  -U --ucsc_naming Input BAM file has 'chr' prefix on seq region names\n"
+         "  -U --ucsc_naming Input BAM file has 'chr' prefix on ALL seq region names\n"
          "  -h --host        Database host name for db containing mapping\n"
          "  -n --name        Database name for db containing mapping\n"
          "  -u --user        Database user\n"
@@ -504,6 +486,7 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
 
 //  fprintf(stderr,"HERE slice chr name = %s\n", Slice_getChrName(mapping->destSlice));
 //  samopen("-","wh",out->header);
+//  samopen("-","wh",in->header);
 
   int32_t newtid = bam_get_tid(out->header, Slice_getChrName(mapping->destSlice));
 
@@ -521,24 +504,33 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
     
 
     if (b->core.mtid >= 0) {
-// UCSC
-      int32_t newmtid = bam_get_tid(out->header, &(in->header->target_name[b->core.mtid][str_offset]));
+       int32_t newmtid;
 
       if (mateFoundInFailedVectors(b, failedVectors)) {
         //printf("Mate found in failed for:\n");
         //printBam(b,in->header);
       }
-      if (!(b->core.mpos <= endRange && b->core.mpos >= begRange && newmtid == newtid)) {
+
+      // If mate lies outside current mapping block
+      //if (!(b->core.mpos <= endRange && b->core.mpos >= begRange && newmtid == newtid)) {
+      if (!(b->core.mpos <= endRange && b->core.mpos >= begRange && b->core.tid == b->core.mtid)) {
+        Slice *containingSlice;
+
         regionStats->nRemoteMate++;
-        if ((b->core.mpos = mapRemoteLocation(mappingVectors, b->core.mtid, b->core.mpos+1) - 1) < 0) {
+        if ((b->core.mpos = mapRemoteLocation(mappingVectors, b->core.mtid, b->core.mpos+1, &containingSlice) - 1) < 0) {
           regionStats->nUnmappedMate++;
           continue;
         }
+        //printf("containing slice = %s %d %d\n",Slice_getChrName(containingSlice),
+        //                                       Slice_getChrStart(containingSlice),
+        //                                       Slice_getChrEnd(containingSlice));
+        newmtid = bam_get_tid(out->header, Slice_getChrName(containingSlice));
       } else {
         if ((b->core.mpos = mapLocation(mapping, b->core.mpos+1) - 1) < 0) {
           regionStats->nUnmappedMate++;
           continue;
         }
+        newmtid = newtid;
       }
 
       b->core.mtid = newmtid;
@@ -689,7 +681,7 @@ int findPosInFailVec(Vector *failVec, int pos) {
   return -1;
 }
 
-int mapRemoteLocation(Vector **mappingVectors, int seqid, int pos) {
+int mapRemoteLocation(Vector **mappingVectors, int seqid, int pos, Slice **containingSliceP) {
   Mapping *mapping = NULL;
   Vector  *mapVec = mappingVectors[seqid];
   int i;
@@ -726,7 +718,7 @@ int mapRemoteLocation(Vector **mappingVectors, int seqid, int pos) {
     return -1;
   }
 
-  /* call mapLocation */
+  *containingSliceP = mapping->destSlice;
   return mapLocation(mapping, pos);
 }
 
