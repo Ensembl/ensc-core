@@ -140,7 +140,7 @@ void Vector_setNumElement(Vector *v, int nElem) {
 void Vector_free(Vector *v) {
   int i;
 
-  printf("Vector free called\n");
+  //printf("Vector free called\n");
   if (v->isSpecial) {
     printf(" - special vector so returning\n");
     return;
@@ -166,5 +166,5 @@ void Vector_free(Vector *v) {
   }
   free(v->elements);
   free(v);
-  printf(" - done freeing vector\n");
+  //printf(" - done freeing vector\n");
 }
