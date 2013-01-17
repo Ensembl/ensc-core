@@ -18,12 +18,12 @@ typedef struct mappingStruct {
 } Mapping;
 
 typedef struct readMapStatsStruct {
-  int nRead;
-  int nWritten;
-  int nOverEnds;
-  int nRemoteMate;
-  int nReversed;
-  int nUnmappedMate;
+  long long nRead;
+  long long nWritten;
+  long long nOverEnds;
+  long long nRemoteMate;
+  long long nReversed;
+  long long nUnmappedMate;
 } ReadMapStats;
 
 void       Bammap_usage();
@@ -213,12 +213,12 @@ int main(int argc, char *argv[]) {
   }
 
   if (verbosity > 0) {
-    printf(" Total reads read in mapped regions           %d\n", totalStats.nRead);
-    printf(" Total reads written in mapped regions        %d\n", totalStats.nWritten);
-    printf(" Total reads where orientation reversed       %d\n", totalStats.nReversed);
-    printf(" Total reads with remotely located mates      %d\n", totalStats.nRemoteMate);
-    printf(" Total reads extending beyond ends of region  %d (not written)\n", totalStats.nOverEnds);
-    printf(" Total reads with unmapped mates              %d (not written)\n", totalStats.nUnmappedMate);
+    printf(" Total reads read in mapped regions           %lld\n", totalStats.nRead);
+    printf(" Total reads written in mapped regions        %lld\n", totalStats.nWritten);
+    printf(" Total reads where orientation reversed       %lld\n", totalStats.nReversed);
+    printf(" Total reads with remotely located mates      %lld\n", totalStats.nRemoteMate);
+    printf(" Total reads extending beyond ends of region  %lld (not written)\n", totalStats.nOverEnds);
+    printf(" Total reads with unmapped mates              %lld (not written)\n", totalStats.nUnmappedMate);
   }
 
   samclose(out);
@@ -247,16 +247,16 @@ int getPairedMappingFailLists(samfile_t *in, Vector **mappingVectors, Vector ***
   Mapping *curMapping;
   int      mappingInd = 0;
 
-  int nRead         = 0;
-  int nRead1        = 0;
-  int nRead2        = 0;
-  int nRead1Read2   = 0;
-  int nNoRead       = 0;
-  int nUnmapped     = 0;
-  int nMateUnmapped = 0; // Note not related to nUnmapped - number where flag indicates mate unmapped in original file
-  int nProperPair   = 0; 
-  int nNoOverlap    = 0;
-  int nFUn          = 0;
+  long long nRead         = 0;
+  long long nRead1        = 0;
+  long long nRead2        = 0;
+  long long nRead1Read2   = 0;
+  long long nNoRead       = 0;
+  long long nUnmapped     = 0;
+  long long nMateUnmapped = 0; // Note not related to nUnmapped - number where flag indicates mate unmapped in original file
+  long long nProperPair   = 0; 
+  long long nNoOverlap    = 0;
+  long long nFUn          = 0;
 
   bam1_t *b = bam_init1();
 // don't know why I need to check for b->core.tid >= 0 but I do otherwise I get a bam entry with -1 tid
@@ -406,7 +406,7 @@ int getPairedMappingFailLists(samfile_t *in, Vector **mappingVectors, Vector ***
     }
   }
 
-  int nRemoteMate = 0;
+  long long nRemoteMate = 0;
   for (i=0;i<in->header->n_targets;i++) {
     if (remoteMates[i]) {
       Vector_sort(remoteMates[i], bamPosNameCompFunc);
@@ -439,16 +439,16 @@ int getPairedMappingFailLists(samfile_t *in, Vector **mappingVectors, Vector ***
 
 
   if (verbosity > 0) {
-    printf("Total number of reads in input file =         %d\n",nRead);
-    printf("Total READ1 reads in input file =             %d\n",nRead1);
-    printf("Total READ2 reads in input file =             %d\n",nRead2);
-    printf("Total (READ1 & READ2) reads in input file =   %d\n",nRead1Read2);
-    printf("Total !(READ1 | READ2) reads in input file =  %d\n",nNoRead);
-    printf("Total unmapped (FUNMAP) in input file =       %d\n",nFUn);
-    printf("Total mate unmapped (FMUNMAP) in input file = %d\n\n",nMateUnmapped);
-    printf("Total unmapped in assembly mapping =          %d\n",nUnmapped);
-    printf("Total with no overlap with map regions =      %d\n",nNoOverlap);
-    printf("Total number of remote mates =                %d\n",nRemoteMate);
+    printf("Total number of reads in input file =         %lld\n",nRead);
+    printf("Total READ1 reads in input file =             %lld\n",nRead1);
+    printf("Total READ2 reads in input file =             %lld\n",nRead2);
+    printf("Total (READ1 & READ2) reads in input file =   %lld\n",nRead1Read2);
+    printf("Total !(READ1 | READ2) reads in input file =  %lld\n",nNoRead);
+    printf("Total unmapped (FUNMAP) in input file =       %lld\n",nFUn);
+    printf("Total mate unmapped (FMUNMAP) in input file = %lld\n\n",nMateUnmapped);
+    printf("Total unmapped in assembly mapping =          %lld\n",nUnmapped);
+    printf("Total with no overlap with map regions =      %lld\n",nNoOverlap);
+    printf("Total number of remote mates =                %lld\n",nRemoteMate);
   }
 
   *failedVectorsP = unmapped;
@@ -641,7 +641,7 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
   int  endRange;
   char region[1024];
   Vector *reverseCache = NULL;
-  Vector *reverseMates = NULL;
+  //Vector *reverseMates = NULL;
 
 
   sprintf(region,"%s:%d-%d", Slice_getChrName(mapping->sourceSlice), 
@@ -661,13 +661,14 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
   if (mapping->ori == -1) {
     // Hacky - for reverse need to make two vectors, one for storing the modifiable bam entries and one for the mate finding which can have the flag value set
     reverseCache = Vector_new();
-    reverseMates = Vector_new();
+  //  reverseMates = Vector_new();
     while (bam_iter_read(in->x.bam, iter, b) >= 0) {
       Vector_addElement(reverseCache,bam_dup1(b));
-      Vector_addElement(reverseMates,bam_dup1(b));
+   //   Vector_addElement(reverseMates,bam_dup1(b));
     }
  
-    Vector_sort(reverseMates, bamPosNameCompFunc);
+    //Vector_sort(reverseMates, bamPosNameCompFunc);
+    Vector_sort(reverseCache, bamPosNameCompFunc);
     
     //printf("reverseCache with %d elements\n",Vector_getNumElement(reverseCache));
   }
@@ -687,6 +688,9 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
     if (mapping->ori == -1) {
       //printf("Copying\n");
       bam_copy1(b, tb);
+      // For the copy, we clear the MY_FUSEDFLAG which can only have been added by the mate finding code to entry in reverseCache
+      // We DON'T want to save that flag
+      b->core.flag &= ~(MY_FUSEDFLAG);
     }
 
     regionStats->nRead++;
@@ -858,7 +862,8 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
                  // Mark mate as used
           b->core.mtid = newtid;
   
-          bam1_t *mate = findMateInVector(b, reverseMates);
+          //bam1_t *mate = findMateInVector(b, reverseMates);
+          bam1_t *mate = findMateInVector(b, reverseCache);
 
           if (!mate) {
             // Shouldn't happen, all local reverse mates should be in rreverseMates
@@ -946,9 +951,9 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
       fprintf(stderr, "Failed writing bam entry\n");
     }
   }
-  //printf("Number of reads read = %d  num off ends %d num non local mates %d\n",regionStats->nRead,
-  //                                                                             regionStats->nOverEnds,
-  //                                                                             regionStats->nRemoteMate);
+  //printf("Number of reads read = %lld  num off ends %lld num non local mates %lld\n",regionStats->nRead,
+  //                                                                                   regionStats->nOverEnds,
+  //                                                                                   regionStats->nRemoteMate);
 
   bam_iter_destroy(iter);
   bam_destroy1(b);
@@ -958,11 +963,11 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
 // Need to free the cache
     for (i=0;i<Vector_getNumElement(reverseCache);i++) {
       bam_destroy1((bam1_t *)Vector_getElementAt(reverseCache,i));
-      bam_destroy1((bam1_t *)Vector_getElementAt(reverseMates,i));
+      //bam_destroy1((bam1_t *)Vector_getElementAt(reverseMates,i));
     }
     
     Vector_free(reverseCache);
-    Vector_free(reverseMates);
+    //Vector_free(reverseMates);
   }
 
   return 0;
