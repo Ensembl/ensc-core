@@ -1,3 +1,21 @@
+/*
+  Bammap
+
+  A program for mapping features in a BAM format file between to assemblies.
+  Input is a BAM file with features on the source coordinates
+  Output is a BAM file with features on the destination coordinates
+  It uses mapping data stored in an Ensembl database.
+
+  It is a fairly efficient program (reads, maps and writes around 250 million 
+  reads per hour on my test system). 
+
+  Although I've tried to limit memory use as much as possible, it can require 
+  fairly large amounts of memory, particularly if there are many pairs on the 
+  source coordinate system which map to different mapping blocks (remote mates),
+  or where many reads only partially map to a mapping block. The largest file I've
+  mapped is around 200Gb, which used around 21.3Gb of RAM whilst running.
+*/
+
 #include <stdio.h>
 
 #include "EnsC.h"
@@ -45,11 +63,13 @@ int        mapRemoteLocation(Vector **mappingVectors, int seqid, int pos, Mappin
 bam1_t    *mateFoundInVectors(bam1_t *b, Vector **vectors);
 void       printBam(FILE *fp, bam1_t *b, bam_header_t *header);
 void       printMapping(Mapping *mapping);
+int        verifyBam(samfile_t *sam);
 samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlices);
 
 // Flag values
 #define M_UCSC_NAMING 1
-#define M_QUICK 2
+//#define M_QUICK 2
+#define M_VERIFY 4
 
 // My custom bam core struct flag value
 #define MY_FUSEDFLAG 32768
@@ -92,10 +112,15 @@ int main(int argc, char *argv[]) {
     char *val;
 
 // Ones without a val go here
-    if (!strcmp(arg, "-q") || !strcmp(arg,"--quick")) {
-      flags |= M_QUICK;
-    } else if (!strcmp(arg, "-U") || !strcmp(arg,"--ucsc_naming")) {
+// Disable -q because complicates mapping logic and doesn't speed it up much. If need
+// to implement it (maybe to save memory), mapBam remote and local reverse mappings need changing
+//    if (!strcmp(arg, "-q") || !strcmp(arg,"--quick")) {
+//      flags |= M_QUICK;
+//    } else 
+    if (!strcmp(arg, "-U") || !strcmp(arg,"--ucsc_naming")) {
       flags |= M_UCSC_NAMING;
+    } else if (!strcmp(arg, "-V") || !strcmp(arg,"--verify")) {
+      flags |= M_VERIFY;
     } else {
 // Ones with a val go in this block
       if (argNum == argc-1) {
@@ -156,8 +181,6 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  //bam_init_header_hash(in->header);
-
   bam_index_t *idx;
   idx = bam_index_load(inFName); // load BAM index
   if (idx == 0) {
@@ -174,12 +197,12 @@ int main(int argc, char *argv[]) {
 
   Vector **failedVectors;
   Vector **remoteMates;
-  if (!(flags & M_QUICK)) {
+  //if (!(flags & M_QUICK)) {
     getPairedMappingFailLists(in, mappingVectors, &failedVectors, &remoteMates);
-  } else {
-    failedVectors = calloc(in->header->n_targets, sizeof(Vector *));
-    remoteMates   = calloc(in->header->n_targets, sizeof(Vector *));
-  }
+  //} else {
+  //  failedVectors = calloc(in->header->n_targets, sizeof(Vector *));
+  //  remoteMates   = calloc(in->header->n_targets, sizeof(Vector *));
+  //}
 
   if (verbosity > 0) printf("Stage 3 - reading, transforming and writing all mapping reads\n");
   int i;
@@ -188,7 +211,6 @@ int main(int argc, char *argv[]) {
 
     if (verbosity > 0) printf("Working on '%s'\n",Slice_getChrName(slice));
     //if (!strcmp(Slice_getChrName(slice),"3")) break;
-    //if (strcmp(Slice_getChrName(slice),"12")) continue;
 
     mappings = getMappings(dba,Slice_getChrName(slice),sourceName,destName,0, flags);
     int j;
@@ -196,7 +218,6 @@ int main(int argc, char *argv[]) {
       Mapping *mapping = Vector_getElementAt(mappings,j);
       if (verbosity > 1) printMapping(mapping);
       
-//      mapBam("ftp://ngs.sanger.ac.uk/scratch/project/searle/bams/GM12878_fixed_sorted.bam",out, mapping->sourceSlice);
       //if (Slice_getChrStart(mapping->destSlice)  > 97000000 && Slice_getChrStart(mapping->destSlice) < 98000000) {
       memset(&regionStats, 0, sizeof(ReadMapStats));
 
@@ -213,6 +234,8 @@ int main(int argc, char *argv[]) {
   }
 
   if (verbosity > 0) {
+    printf(" Note in stats below, the numbers recorded represent mappings attempted.\n"
+           " For reads which map across multiple destination blocks, the read will be counted multiple times\n");
     printf(" Total reads read in mapped regions           %lld\n", totalStats.nRead);
     printf(" Total reads written in mapped regions        %lld\n", totalStats.nWritten);
     printf(" Total reads where orientation reversed       %lld\n", totalStats.nReversed);
@@ -225,8 +248,59 @@ int main(int argc, char *argv[]) {
   bam_index_destroy(idx);
   samclose(in);
 
+  if (flags & M_VERIFY) {
+    out = samopen(outFName, "rb", 0);
+    if (out == 0) {
+      fprintf(stderr, "Fail to open BAM file %s\n", outFName);
+      return 1;
+    }
+
+    verifyBam(out);
+
+    samclose(out);
+  }
+
   if (verbosity > 0) printf("Done\n");
   return 0;
+}
+
+
+// Currently just checks that output is in sorted order
+int verifyBam(samfile_t *sam) {
+  bam1_t *bs[2];
+  int firstind = 0;
+  int secondind = 1;
+  int i;
+
+  if (verbosity > 0) printf("Verifying\n");
+
+  for (i=0;i<2;i++) bs[i] = bam_init1();
+  
+  if (bam_read1(sam->x.bam, bs[0]) <=0 || bs[0]->core.tid < 0) {
+    fprintf(stderr,"Failed reading first bam entry from output file in verifyBam\n");
+    return 0;
+  }
+
+  while (bam_read1(sam->x.bam, bs[secondind]) > 0 && bs[secondind]->core.tid >= 0) {
+/*
+    if (bs[firstind]->core.tid > bs[secondind]->core.tid || 
+        bs[firstind]->core.pos > bs[secondind]->core.pos || 
+*/
+
+// Note this is the way the comparison is done in bam_sort.c which is why I do it this way
+    if (((uint64_t)bs[firstind]->core.tid<<32|(bs[firstind]->core.pos+1)) > ((uint64_t)bs[secondind]->core.tid<<32|(bs[secondind]->core.pos+1))) {
+      fprintf(stderr, "bam entries not in sorted order in output file in verifyBam\n");
+      printBam(stderr, bs[firstind],  sam->header);
+      printBam(stderr, bs[secondind], sam->header);
+        
+      return 0;
+    }
+    firstind  ^= 1;
+    secondind ^= 1;
+  }
+
+  for (i=0;i<2;i++) bam_destroy1(bs[i]);
+  return 1;
 }
 
 void printMapping(Mapping *mapping) {
@@ -398,11 +472,13 @@ int getPairedMappingFailLists(samfile_t *in, Vector **mappingVectors, Vector ***
       printf("NO VECTOR FOR tid %d (%s)\n",i,in->header->target_name[i]);
     } else {
       int j;
-      printf("Number of unmapped for tid %d (%s) is %d\n",i,in->header->target_name[i],Vector_getNumElement(unmapped[i]));
-//      for (j=0;j<Vector_getNumElement(unmapped[i]);j++) {
-//        bam1_t *b = (bam1_t *) Vector_getElementAt(unmapped[i],j);
-//        printBam(stdout, b, in->header);
-//      }
+      printf("Number of partially mapped for tid %d (%s) is %d\n",i,in->header->target_name[i],Vector_getNumElement(unmapped[i]));
+      if (verbosity > 3) {
+        for (j=0;j<Vector_getNumElement(unmapped[i]);j++) {
+          bam1_t *b = (bam1_t *) Vector_getElementAt(unmapped[i],j);
+          printBam(stdout, b, in->header);
+        }
+      }
     }
   }
 
@@ -428,12 +504,12 @@ int getPairedMappingFailLists(samfile_t *in, Vector **mappingVectors, Vector ***
     } else {
       int j;
       printf("Number of remoteMates for tid %d (%s) is %d\n",i,in->header->target_name[i],Vector_getNumElement(remoteMates[i]));
-/*
-      for (j=0;j<Vector_getNumElement(remoteMates[i]);j++) {
-        bam1_t *b = (bam1_t *) Vector_getElementAt(remoteMates[i],j);
-        printBam(stdout, b, in->header);
+      if (verbosity > 3) {
+        for (j=0;j<Vector_getNumElement(remoteMates[i]);j++) {
+          bam1_t *b = (bam1_t *) Vector_getElementAt(remoteMates[i],j);
+          printBam(stdout, b, in->header);
+        }
       }
-*/
     }
   }
 
@@ -518,7 +594,7 @@ void Bammap_usage() {
          "  -i --in_file     Input BAM file to map from (string)\n"
          "  -o --out_file    Output BAM file to write (string)\n"
          "  -U --ucsc_naming Input BAM file has 'chr' prefix on ALL seq region names (flag)\n"
-         "  -q --quick       Q&D mapping (flag)\n"
+         //"  -q --quick       Q&D mapping (flag)\n"
          "  -h --host        Database host name for db containing mapping (string)\n"
          "  -n --name        Database name for db containing mapping (string)\n"
          "  -u --user        Database user (string)\n"
@@ -527,13 +603,14 @@ void Bammap_usage() {
          "  -s --source_ass  Assembly name to map from (string)\n"
          "  -d --dest_ass    Assembly name to map to (string)\n"
          "  -v --verbosity   Verbosity level (int)\n"
+         "  -V --verify      Verify output BAM (currently just checks is in sorted order)\n"
          "\n"
          "Notes:\n"
          "  -U will cause 'chr' to be prepended to all source seq_region names, except the special case MT which is changed to chrM.\n"
          "  -v Default verbosity level is 1. You can make it quieter by setting this to 0, or noisier by setting it > 1.\n"
-         "  -q speeds up the process by not pre screening for reads which only partially mapped.\n" 
-         "     This means it can't know when a read has a mate which only partially maps, so can't do the extra\n"
-         "     fixup work on flag, mpos and mtid for these.\n"
+         //"  -q speeds up the process by not pre screening for reads which only partially mapped.\n" 
+         //"     This means it can't know when a read has a mate which only partially maps, so can't do the extra\n"
+         //"     fixup work on flag, mpos and mtid for these.\n"
          );
   exit(1);
 }
@@ -589,7 +666,7 @@ samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlic
       if (!strncmp(tokens[i],"@HD",3)) {
         char *tmpBuff;
         StrUtil_copyString(&tmpBuff,tokens[i],0);
-        tmpBuff = StrUtil_appendString(tmpBuff,"\n");
+        tmpBuff = StrUtil_appendString(tmpBuff,"\tSO:coordinate\n");
         tmpBuff = StrUtil_appendString(tmpBuff,buff);
         free(buff);
         buff = tmpBuff;
@@ -598,6 +675,15 @@ samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlic
         buff = StrUtil_appendString(buff,"\n");
       }
     }
+  }
+
+  // Wasn't an HD line so add one to flag that the file is sorted
+  if (strncmp(buff,"@HD",strlen("@HD"))) {
+    char *tmpBuff;
+    StrUtil_copyString(&tmpBuff,"@HD\tVN:1.0\tSO:coordinate\n",0);
+    tmpBuff = StrUtil_appendString(tmpBuff,buff);
+    free(buff);
+    buff = tmpBuff;
   }
 
   destHeader->l_text = strlen(buff);
@@ -641,7 +727,7 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
   int  endRange;
   char region[1024];
   Vector *reverseCache = NULL;
-  //Vector *reverseMates = NULL;
+  Vector *reverseFinal = NULL;
 
 
   sprintf(region,"%s:%d-%d", Slice_getChrName(mapping->sourceSlice), 
@@ -659,18 +745,15 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
   bam1_t *b = bam_init1();
 
   if (mapping->ori == -1) {
-    // Hacky - for reverse need to make two vectors, one for storing the modifiable bam entries and one for the mate finding which can have the flag value set
     reverseCache = Vector_new();
-  //  reverseMates = Vector_new();
+    reverseFinal = Vector_new();
     while (bam_iter_read(in->x.bam, iter, b) >= 0) {
       Vector_addElement(reverseCache,bam_dup1(b));
-   //   Vector_addElement(reverseMates,bam_dup1(b));
     }
  
-    //Vector_sort(reverseMates, bamPosNameCompFunc);
     Vector_sort(reverseCache, bamPosNameCompFunc);
     
-    //printf("reverseCache with %d elements\n",Vector_getNumElement(reverseCache));
+    if (verbosity > 2) { printf("reverseCache with %d elements\n",Vector_getNumElement(reverseCache)); }
   }
 //  fprintf(stderr,"HERE slice chr name = %s\n", Slice_getChrName(mapping->destSlice));
 //  samopen("-","wh",out->header);
@@ -680,6 +763,8 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
 
   int counter = 0;
   bam1_t *tb;
+ 
+  // Either fetch from reverseCache or read from file
   while (reverseCache ? (counter < Vector_getNumElement(reverseCache) ? (tb = Vector_getElementAt(reverseCache, counter++))!=NULL: 0) : 
                         bam_iter_read(in->x.bam, iter, b) >= 0) {
     int end;
@@ -697,7 +782,9 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
 
     end = bam_calend(&b->core, bam1_cigar(b));
 
-    if (end > endRange || b->core.pos < begRange) {
+    // There is a special case for reads which have zero length and start at begRange (so end at begRange ie. before the first base we're interested in).
+    // That is the reason for the || end == begRange test
+    if (end > endRange || b->core.pos < begRange || end == begRange) {
       regionStats->nOverEnds++;
       continue;
     }
@@ -717,17 +804,28 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
 //           Check if we can not find its mate in remoteMates
 //             Clear mate information for this read and recalculate isize
 //           else (so can find mate)
-//             Use mate to calculate new isize
+//             Use mate to calculate new isize etc
 //       else (so its local)
-//         If it doesn't map at all ?? Not sure this can happen
-//           Clear mate information for this read and recalculate isize
-//         else (so it maps)
-//           Nothing extra to do
+//         Is it forward strand
+//           If it doesn't map at all ?? Not sure this can happen
+//             Clear mate information for this read and recalculate isize
+//           else (so it maps)
+//             Nothing extra to do
+//         Is it reverse strand
+//           If it doesn't map at all ?? Not sure this can happen
+//             Clear mate information for this read and recalculate isize
+//           else (so it maps)
+//             Check if we can not find its mate in reverseCache
+//               Clear mate information for this read and recalculate isize
+//             else (so can find mate)
+//               Use mate to calculate new isize etc
 //           
       bam1_t *fb;
       if (fb = mateFoundInVectors(b, failedVectors)) {
         clearPairing(b, end);
         // Eliminate from search of failed array by setting one of the unused BAM flag bits
+        // Reason for doing this is that in complex mapping cases there can be multiple mappings at same
+        // location so don't want to eliminate all of them if one mate doesn't map but others do
         fb->core.flag |= MY_FUSEDFLAG;
       } else {
         // If mate lies outside current mapping block
@@ -740,7 +838,6 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
             regionStats->nUnmappedMate++;
   
             clearPairing(b, end);
-            
           } else {
             //printf("containing slice = %s %d %d\n",Slice_getChrName(containingMapping->destSlice),
             //                                       Slice_getChrStart(containingMapping->destSlice),
@@ -774,7 +871,6 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
               // Note: We can't freely use mapLocation on mate end position because although we know that
               //       mate isn't in failed mates vector, if the -q flag is used then that vector is not filled
               //       So first thing - check that mate end also maps in containingMapping
-             
               int tmend = bam_calend(&mate->core, bam1_cigar(mate));
 
               if (tmend > Slice_getChrEnd(containingMapping->sourceSlice)) {
@@ -856,13 +952,12 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
             clearPairing(b, end);
           }
         } else { // local reverse mapping
-                 // have local cache of reads (reverseMates) so look up mate in there
+                 // have local cache of reads (reverseCache) so look up mate in there
                  // Change mpos on b to end of mate
                  // Reverse FMREVERSE
                  // Mark mate as used
           b->core.mtid = newtid;
   
-          //bam1_t *mate = findMateInVector(b, reverseMates);
           bam1_t *mate = findMateInVector(b, reverseCache);
 
           if (!mate) {
@@ -939,7 +1034,6 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
       free(revcig);
     }
 
-
 // recalculate bin, not sure if need this for all coords, or just - ori ones
 // Note: Here we are working with the mapped position (pos has been changed)
     end = bam_calend(&b->core, bam1_cigar(b));
@@ -947,13 +1041,30 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
 
     regionStats->nWritten++;
 
-    if (!bam_write1(out->x.bam, b)) {
-      fprintf(stderr, "Failed writing bam entry\n");
+
+  
+    if (mapping->ori != -1) {
+      if (!bam_write1(out->x.bam, b)) {
+        fprintf(stderr, "Failed writing bam entry\n");
+      }
+    } else {
+      // For reverse rather than writing straight away, store the transformed entries, so can sort into correct order before writing
+      Vector_addElement(reverseFinal, bam_dup1(b));
     }
   }
   //printf("Number of reads read = %lld  num off ends %lld num non local mates %lld\n",regionStats->nRead,
   //                                                                                   regionStats->nOverEnds,
   //                                                                                   regionStats->nRemoteMate);
+
+  if (mapping->ori == -1) {
+    int i;
+    Vector_sort(reverseFinal, bamPosNameCompFunc);
+    for (i=0;i<Vector_getNumElement(reverseFinal);i++) {
+      if (!bam_write1(out->x.bam, Vector_getElementAt(reverseFinal,i))) {
+        fprintf(stderr, "Failed writing bam entry\n");
+      }
+    }
+  }
 
   bam_iter_destroy(iter);
   bam_destroy1(b);
@@ -961,13 +1072,16 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
   if (mapping->ori == -1) {
     int i;
 // Need to free the cache
+// Note bam_destroy1 isn't a function, its a macro, so can't be used as a function pointer for Vector free function
     for (i=0;i<Vector_getNumElement(reverseCache);i++) {
       bam_destroy1((bam1_t *)Vector_getElementAt(reverseCache,i));
-      //bam_destroy1((bam1_t *)Vector_getElementAt(reverseMates,i));
+    }
+    for (i=0;i<Vector_getNumElement(reverseFinal);i++) {
+      bam_destroy1((bam1_t *)Vector_getElementAt(reverseFinal,i));
     }
     
     Vector_free(reverseCache);
-    //Vector_free(reverseMates);
+    Vector_free(reverseFinal);
   }
 
   return 0;
