@@ -60,11 +60,12 @@ typedef struct readMapStatsStruct {
 
 void       Bammap_usage();
 int        bamPosNameCompFunc(const void *one, const void *two);
+int        bamPosCompFunc(const void *one, const void *two);
 int        calcNewEnd(Mapping *mapping, bam1_t *b, int sourceEnd);
 int        calcNewPos(Mapping *mapping, bam1_t *b, int sourceEnd);
 void       clearPairing(bam1_t *b, int end);
 bam1_t *   findMateInVector(bam1_t *b, Vector *vec);
-int        findPosInVec(Vector *vec, int pos);
+int        findPosInVec(Vector *vec, int pos, char *bqname);
 Vector *   getDestinationSlices(DBAdaptor *dba, char *assName);
 Vector *   getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAssName, int rev, int flags);
 Vector **  getMappingVectorsBySourceRegion(DBAdaptor *dba, samfile_t *in, char *sourceName, char *destName, int flags);
@@ -110,19 +111,27 @@ int main(int argc, char *argv[]) {
   char *inFName  = NULL;
   char *outFName = NULL;
 
-  char *dbHost = "ens-staging.internal.sanger.ac.uk";
   char *dbUser = "ensro";
   char *dbPass = NULL;
-  char *dbName = "homo_sapiens_core_70_37";
   int   dbPort = 3306;
+
+  char *dbHost = "ens-livemirror.internal.sanger.ac.uk";
+  char *dbName = "homo_sapiens_core_70_37";
 
   char *sourceName = "GRCh37";
   char *destName   = "NCBI36";
+
+//  char *dbHost = "genebuild2.internal.sanger.ac.uk";
+//  char *dbName = "ba1_nomascus_leucogenys_core_70_1_nleu3";
+
+//  char *sourceName = "Nleu1.0";
+//  char *destName   = "Nleu_3.0";
 
   int flags = 0;
 
   ReadMapStats totalStats;
   ReadMapStats regionStats;
+
 
   memset(&totalStats, 0, sizeof(ReadMapStats));
 
@@ -194,8 +203,18 @@ int main(int argc, char *argv[]) {
 
   destinationSlices = getDestinationSlices(dba, destName);
 
+  if (Vector_getNumElement(destinationSlices) == 0) {
+    fprintf(stderr, "Error: No destination slices.\n");
+    exit(1);
+  }
+
   out = writeBamHeader(inFName,outFName,destinationSlices);
 
+//  bam_flush(out->x.bam);
+
+#ifdef _PBGZF_USE
+  bam_set_num_threads_per(5);
+#endif
   samfile_t *in = samopen(inFName, "rb", 0);
   if (in == 0) {
     fprintf(stderr, "Fail to open BAM file %s\n", inFName);
@@ -219,11 +238,12 @@ int main(int argc, char *argv[]) {
   Vector **failedVectors;
   Vector **remoteMates;
   //if (!(flags & M_QUICK)) {
-    getPairedMappingFailLists(in, mappingVectors, &failedVectors, &remoteMates);
+  getPairedMappingFailLists(in, mappingVectors, &failedVectors, &remoteMates);
   //} else {
   //  failedVectors = calloc(in->header->n_targets, sizeof(Vector *));
   //  remoteMates   = calloc(in->header->n_targets, sizeof(Vector *));
   //}
+
 
   if (verbosity > 0) printf("Stage 3 - reading, transforming and writing all mapping reads\n");
   int i;
@@ -423,6 +443,8 @@ int getPairedMappingFailLists(samfile_t *in, Vector **mappingVectors, Vector ***
       if (!curMapping) {
         nUnmapped++;
         nNoOverlap++;
+      //} else if (b->core.pos >= Slice_getChrStart(curMapping->sourceSlice)-1 &&
+      //           end < Slice_getChrEnd(curMapping->sourceSlice)) {
       // Special case 2 - end lies before start of slice, means feature lies completely between mapped regions, so ignored in later destSlice based fetching
       } else if (end < Slice_getChrStart(curMapping->sourceSlice)) {
         nUnmapped++;
@@ -552,11 +574,16 @@ int getPairedMappingFailLists(samfile_t *in, Vector **mappingVectors, Vector ***
 }
 
 int bamPosNameCompFunc(const void *one, const void *two) {
+/*
   bam1_t **b1p = (bam1_t **)one;
   bam1_t **b2p = (bam1_t **)two;
 
   bam1_t *b1 = *b1p;
   bam1_t *b2 = *b2p;
+*/
+
+  bam1_t *b1 = *((bam1_t**)one);
+  bam1_t *b2 = *((bam1_t**)two);
 
   if (b1->core.tid < b2->core.tid) {
     printf("Urrr.... this shouldn't happen b1 tid %d   b2 tid %d\n", b1->core.tid, b2->core.tid);
@@ -573,6 +600,13 @@ int bamPosNameCompFunc(const void *one, const void *two) {
       return strcmp(bam1_qname(b1),bam1_qname(b2));
     }
   }
+}
+
+int bamPosCompFunc(const void *one, const void *two) {
+  bam1_t *b1 = *((bam1_t**)one);
+  bam1_t *b2 = *((bam1_t**)two);
+
+  return b1->core.pos - b2->core.pos;
 }
 
 /*
@@ -647,6 +681,9 @@ samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlic
   char **       tokens = NULL;
   int           ntoken;
 
+#ifdef _PBGZF_USE
+  bam_set_num_threads_per(1);
+#endif
   in = samopen(inFName, "rb", 0);
   if (in == 0) {
     fprintf(stderr, "Fail to open BAM file %s\n", inFName);
@@ -676,31 +713,37 @@ samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlic
   destHeader = bam_header_init();
 
   /* add non @SQ header lines from source header into destination header */
+  //fprintf(stderr,"Tokenize\n");
   StrUtil_tokenizeByDelim(&tokens, &ntoken, in->header->text, '\n');
-  //printf("ntoken = %d\n",ntoken);
+  //fprintf(stderr,"Token loop\n");
+  //fprintf(stderr,"ntoken = %d\n",ntoken);
   for (i=0;i<ntoken;i++) {
-    //printf("token = %s\n",tokens[i]);
+    //fprintf(stderr,"token = %s\n",tokens[i]);
     if (strncmp(tokens[i],"@SQ",3)) {
       /* HD must come first */
       if (!strncmp(tokens[i],"@HD",3)) {
         char *tmpBuff;
         StrUtil_copyString(&tmpBuff,tokens[i],0);
         if (!strstr(tokens[i],"SO:coordinate")) {
-          tmpBuff = StrUtil_appendString(tmpBuff,"\tSO:coordinate\n");
+          tmpBuff = StrUtil_appendString(tmpBuff,"\tSO:coordinate");
         }
+        tmpBuff = StrUtil_appendString(tmpBuff,"\n");
         tmpBuff = StrUtil_appendString(tmpBuff,buff);
         free(buff);
         buff = tmpBuff;
       } else {
+        //fprintf(stderr,"Here with token = %s buff = %d\n",tokens[i], buff);
         buff = StrUtil_appendString(buff,tokens[i]);
         buff = StrUtil_appendString(buff,"\n");
       }
     }
   }
 
+  //fprintf(stderr,"Before header fix\n");
   // Wasn't an HD line so add one to flag that the file is sorted
   if (strncmp(buff,"@HD",strlen("@HD"))) {
     char *tmpBuff;
+    //fprintf(stderr,"Header fix\n");
     StrUtil_copyString(&tmpBuff,"@HD\tVN:1.0\tSO:coordinate\n",0);
     tmpBuff = StrUtil_appendString(tmpBuff,buff);
     free(buff);
@@ -709,10 +752,14 @@ samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlic
 
   destHeader->l_text = strlen(buff);
   destHeader->text   = buff;
-  //printf("header->text = %s\n",buff);
+  //fprintf(stderr, "header->text = %s\n",buff);
   sam_header_parse(destHeader);
 
   strcpy(out_mode, "wbh");
+
+#ifdef _PBGZF_USE
+  bam_set_num_threads_per(9);
+#endif
   out = samopen(outFName,out_mode,destHeader);
 
 /* Need this hash initialised for looking up tids */
@@ -782,6 +829,7 @@ int mapBam_reverse(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, V
                    int begRange, int endRange, ReadMapStats *regionStats, int newtid, bam_iter_t iter) {
   Vector *reverseCache = Vector_new();
   Vector *reverseFinal = Vector_new();
+  int i;
 
   while (bam_iter_read(in->x.bam, iter, b) >= 0) {
     Vector_addElement(reverseCache,bam_dup1(b));
@@ -791,9 +839,6 @@ int mapBam_reverse(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, V
     
   if (verbosity > 2) { printf("reverseCache with %d elements\n",Vector_getNumElement(reverseCache)); }
 
-  int i;
-  bam1_t *tb;
- 
   for (i=0;i < Vector_getNumElement(reverseCache); i++) { 
     int end;
 
@@ -871,7 +916,7 @@ int mapBam_reverse(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, V
     Vector_addElement(reverseFinal, bam_dup1(b));
   }
 
-  Vector_sort(reverseFinal, bamPosNameCompFunc);
+  Vector_sort(reverseFinal, bamPosCompFunc);
   for (i=0;i<Vector_getNumElement(reverseFinal);i++) {
     regionStats->nWritten++;
 
@@ -897,10 +942,10 @@ int mapBam_reverse(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, V
 
 int mapBam_forward(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, Vector **mappingVectors, Vector **failedVectors, Vector **remoteMates, 
                    int begRange, int endRange, ReadMapStats *regionStats, int newtid, bam_iter_t iter) {
-  // Either fetch from reverseCache or read from file
   while (bam_iter_read(in->x.bam, iter, b) >= 0) {
     int end;
 
+  //fprintf(stderr, "HERE3\n");
     regionStats->nRead++;
 
     end = bam_calend(&b->core, bam1_cigar(b));
@@ -1178,7 +1223,8 @@ bam1_t *mateFoundInVectors(bam1_t *b, Vector **vectors) {
 }
 
 bam1_t *findMateInVector(bam1_t *b, Vector *vec) {
-  int firstInd = findPosInVec(vec, b->core.mpos);
+  char *bqname = bam1_qname(b);
+  int firstInd = findPosInVec(vec, b->core.mpos, bqname);
   int i;
 
   if (firstInd >=0 ) {
@@ -1191,7 +1237,7 @@ bam1_t *findMateInVector(bam1_t *b, Vector *vec) {
             b->core.pos == vb->core.mpos &&
             !(vb->core.flag & MY_FUSEDFLAG)) {
             
-          int qnameCmp =  strcmp(bam1_qname(vb),bam1_qname(b)); // Note order of comparison
+          int qnameCmp =  strcmp(bam1_qname(vb),bqname); // Note order of comparison
           if (!qnameCmp) { // Name match
             return vb;
           } else if (qnameCmp > 0) { // Optimisation: As names in vector are sorted, once string comparison is positive can not be any matches anymore
@@ -1207,7 +1253,7 @@ bam1_t *findMateInVector(bam1_t *b, Vector *vec) {
   return NULL;
 }
 
-int findPosInVec(Vector *vec, int pos) {
+int findPosInVec(Vector *vec, int pos, char *bqname) {
   int imin = 0;
   int imax = Vector_getNumElement(vec)-1;
 
@@ -1222,14 +1268,22 @@ int findPosInVec(Vector *vec, int pos) {
     } else if (pos < b->core.pos) {
       imax = imid - 1;
     } else {
-      // key found at index imid
-      // Back up through array to find first index which matches (can be several)
-      for (;imid>=0;imid--) {
-        bam1_t *b = Vector_getElementAt(vec,imid);
-        if (b->core.pos != pos) {
-          return imid+1;
+      //int qnameCmp =  strcmp(bqname,bam1_qname(b)); // Note order of comparison
+      //if (!qnameCmp) {
+        // key found at index imid
+        // Back up through array to find first index which matches (can be several)
+        for (;imid>=0;imid--) {
+          bam1_t *vb = Vector_getElementAt(vec,imid);
+       //   if (vb->core.pos != pos || strcmp(bqname,bam1_qname(vb))) {
+          if (vb->core.pos != pos) {// || strcmp(bqname,bam1_qname(vb))) {
+            return imid+1;
+          }
         }
-      }
+      //} else if (qnameCmp < 0) {
+      //  imax = imid - 1;
+      //} else {
+      //  imin = imid + 1;
+      //}
 
       return 0; // Is the first element
     }
@@ -1467,6 +1521,7 @@ Vector *getDestinationSlices(DBAdaptor *dba, char *assName) {
             assName);
   }
 
+  if (verbosity > 2) printf("%s\n",qStr);
   sth = dba->dbc->prepare(dba->dbc,qStr,strlen(qStr));
 
   sth->execute(sth);
