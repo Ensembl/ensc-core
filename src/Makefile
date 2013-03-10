@@ -4,10 +4,13 @@ CC = cc
 
 MYSQLCFLAGS=${shell mysql_config --cflags}
 MYSQLLIBS=${shell mysql_config --libs}
-SAMDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/bin/samtools-0.1.18
+#SAMDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/bin/samtools-0.1.18
+SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools_parallel
+#SAMDIR=/nfs/users/nfs_s/searle/src/samtools_parallel
+#SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools-0.1.18
 ZLIBDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/include
 
-CFLAGS =  -O3 -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
+CFLAGS =  -Ofast -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS)
 
 BINDIR=../bin
@@ -16,6 +19,7 @@ all	: directories \
           libensc.a \
           Programs/testdbc \
           Programs/bammap \
+          Programs/bammap_count \
           Programs/countsnps \
           Programs/indicate \
           Programs/fastasplit \
@@ -179,7 +183,13 @@ Programs/testdbc: \
 Programs/bammap: \
 	libensc.a \
 	Programs/bammap.c
-	$(CC) $(CFLAGS) -I$(SAMDIR) -I$(ZLIBDIR) -o Programs/bammap Programs/bammap.c -L. -lensc  -L$(SAMDIR) -lbam $(LDFLAGS)
+	$(CC) $(CFLAGS) -I$(SAMDIR) -I$(ZLIBDIR) -D_PBGZF_USE -o Programs/bammap Programs/bammap.c -L. -lensc  -L$(SAMDIR) -lbam $(LDFLAGS)
+#$(CC) $(CFLAGS) -I$(SAMDIR) -I$(ZLIBDIR) -o Programs/bammap Programs/bammap.c -L. -lensc  -L$(SAMDIR) -lbam $(LDFLAGS) -lrt
+
+Programs/bammap_count: \
+	libensc.a \
+	Programs/bammap_count.c
+	$(CC) $(CFLAGS) -I$(SAMDIR) -I$(ZLIBDIR) -o Programs/bammap_count Programs/bammap_count.c -L. -lensc  -L$(SAMDIR) -lbam $(LDFLAGS)
 
 Programs/countsnps: \
 	libensc.a \
