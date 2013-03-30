@@ -13,12 +13,16 @@ DBConnection *DBConnection_new(char *host, char *user, char *pass,
     return NULL;
   }
 
-  mysql = mysql_init(NULL);
-
-  if ((mysql = mysql_real_connect(mysql,host, user, pass, dbname, port, NULL, 0)) == NULL) {
+  if ((mysql = mysql_init(NULL)) == NULL) {
     Error_write(EMYSQLCONN, "DBConnection_new", ERR_SEVERE,
-                " dbname %s (host %s user %s pass %s port %d)",
-                dbname,host,user,pass,port);
+                " failed creating mysql object in mysql_init, mysql error %s",mysql_error(mysql));
+    return NULL;
+  }
+
+  if ((mysql_real_connect(mysql,host, user, pass, dbname, port, NULL, 0)) == NULL) {
+    Error_write(EMYSQLCONN, "DBConnection_new", ERR_SEVERE,
+                " dbname %s (host %s user %s pass %s port %d), mysql error %s",
+                dbname,host,user,pass,port,mysql_error(mysql));
     return NULL;
   }
 
