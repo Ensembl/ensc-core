@@ -5,6 +5,7 @@
 #include "RawContigAdaptor.h"
 
 NameTableType PredictionTranscriptAdaptor_tableNames = {{"prediction_transcript","p"},
+                                                        {"seq_region","sr"},
                                                         {NULL,NULL}};
 
 PredictionTranscriptAdaptor *PredictionTranscriptAdaptor_new(DBAdaptor *dba) {
@@ -33,7 +34,7 @@ int PredictionTranscriptAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features)
   sprintf(qStr,
       "INSERT INTO prediction_transcript ( prediction_transcript_id, exon_rank, "
                                          "contig_id, contig_start, contig_end, "
-                                         "contig_strand, start_phase, score, "
+                                         "contig_strand, score, "
                                          "p_value, analysis_id, exon_count ) "
         " VALUES ( %" IDFMTSTR ", %%d, %" IDFMTSTR 
                   ", %%d, %%d, %%d, %%d, %%f, %%f, %" IDFMTSTR ", %%d)"); 
@@ -114,12 +115,11 @@ NameTableType *PredictionTranscriptAdaptor_getTables(void) {
 
 char *PredictionTranscriptAdaptor_getColumns(void) {
   return "p.prediction_transcript_id,"
-         "p.contig_id,"
+         "p.seq_region_id,"
          "p.analysis_id,"
-         "p.contig_start,"
-         "p.contig_end,"
-         "p.contig_strand,"
-         "p.start_phase,"
+         "p.seq_region_start,"
+         "p.seq_region_end,"
+         "p.seq_region_strand,"
          "p.exon_rank,"
          "p.score,"
          "p.p_value,"
@@ -172,15 +172,15 @@ Vector *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdapto
     int contigStart = row->getIntAt(row,3);
     int contigEnd   = row->getIntAt(row,4);
     int contigStrand= row->getIntAt(row,5);
-    int startPhase  = row->getIntAt(row,6);
-    int exonRank    = row->getIntAt(row,7);
-    double score    = row->getDoubleAt(row,8);
-    double pValue   = row->getDoubleAt(row,9);
-    int exonCount   = row->getIntAt(row,10);
+    int exonRank    = row->getIntAt(row,6);
+    double score    = row->getDoubleAt(row,7);
+    double pValue   = row->getDoubleAt(row,8);
+    int exonCount   = row->getIntAt(row,9);
     Exon *exon = NULL;
     int exonStart;
     int exonEnd;
     int exonStrand;
+    int startPhase = 0;
     
     //create a new transcript for each new prediction transcript id
     if (!predTrans || !(ptId == predictionTranscriptId)) {
@@ -229,10 +229,15 @@ Vector *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdapto
       stableEnd = contigEnd;
     }
 
+
+    /*
     contig = RawContigAdaptor_fetchByDbID(rca, contigId);
 
     stableCtg = RawContig_getName(contig);
+    */
+    stableCtg = "JUNK";
 
+/*
     if (slice) {
       //a slice was passed in so we want slice coords
       MapperCoordinate fRange;
@@ -266,11 +271,14 @@ Vector *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdapto
         transcriptSliceEnd = exonEnd;
       }
     } else {
+*/
       // we just want plain old contig coords
       exonStart =  contigStart;
       exonEnd   =  contigEnd;
       exonStrand = contigStrand;
+/*
     }
+*/
 
     // create an exon and add it to the prediction transcript
     exon = Exon_new();

@@ -42,8 +42,6 @@ void FeaturePair_freePtrs(FeaturePair *fp) {
   if (fp->hitSpecies) EcoString_freeStr(ecoSTable, fp->hitSpecies);
   if (fp->hitId) EcoString_freeStr(ecoSTable, fp->hitId);
 
-  printf("Freeing  FP\n");
-
   SeqFeature_freePtrs((SeqFeature *)fp);
 }
 

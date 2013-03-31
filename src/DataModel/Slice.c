@@ -53,11 +53,13 @@ Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
   Slice_setAdaptor(slice,(BaseAdaptor *)sa);
   Slice_setDbID(slice,dbID);
 
+/*
   if (sa && chr) {
     ChromosomeAdaptor *ca = DBAdaptor_getChromosomeAdaptor(sa->dba);
     Chromosome *chromosome = ChromosomeAdaptor_fetchByChrName(ca, chr);
     Slice_setChrId(slice,Chromosome_getDbID(chromosome));
   }
+*/
 
 /*
   if( defined $adaptor && !defined $type ) {

@@ -75,10 +75,11 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
   IDHash *exonHash;
   IDHash *translationHash;
   IDHash *transcriptExonsHash;
+  IDHash *transcriptHash;
   IDType *transcriptIds;
   int nTranscriptId;
   int i;
-  char qStr[512];
+  char qStr[1024];
   StatementHandle *sth;
   ResultRow *row;
 
@@ -104,10 +105,14 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
   sprintf(qStr,
     "SELECT tscript.gene_id"
     "  , tscript.transcript_id"
-    "  , e_t.exon_id, e_t.rank"
+    "  , e_t.exon_id"
+    "  , e_t.rank"
     "  , gene.analysis_id"
-    "  , gene.type"
-    "  , tscript.translation_id"
+    "  , gene.biotype"
+    "  , tscript.canonical_translation_id"
+    "  , tscript.seq_region_start"
+    "  , tscript.seq_region_end"
+    "  , tscript.seq_region_strand"
     " FROM gene"
     "  , transcript tscript"
     "  , exon_transcript e_t"
@@ -119,10 +124,12 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
     "  , tscript.transcript_id"
     "  , e_t.rank",geneId);
 
+  //printf("Query = %s\n",qStr);
   sth = ga->prepare((BaseAdaptor *)ga, qStr, strlen(qStr) );
   sth->execute(sth);
 
   transcriptExonsHash = IDHash_new(IDHASH_SMALL);
+  transcriptHash = IDHash_new(IDHASH_SMALL);
   translationHash = IDHash_new(IDHASH_SMALL);
 
   while ((row = sth->fetchRow(sth))) {
@@ -145,12 +152,20 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
     transcriptId = row->getLongLongAt(row,1);
     if( !IDHash_contains(transcriptExonsHash,transcriptId)) {
 
+      //printf("Adding new trans %d\n",transcriptId);
       if ((tes = (TranscriptExons *)calloc(1,sizeof(TranscriptExons))) == NULL) {
         fprintf(stderr,"ERROR: Failed allocating TranscriptExons\n");
         exit(1);
       }
       IDHash_add(transcriptExonsHash,transcriptId,tes);
+
+      Transcript *transcript = Transcript_new();
+      Transcript_setStart(transcript, row->getIntAt(row,7));
+      Transcript_setEnd(transcript, row->getIntAt(row,8));
+      Transcript_setStrand(transcript, row->getIntAt(row,9));
+      IDHash_add(transcriptHash,transcriptId,transcript);
     }
+
     tes = IDHash_getValue(transcriptExonsHash,transcriptId);
 
     if (tes->nExon >= MAXEXON) {
@@ -161,7 +176,7 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
     tes->exonIds[tes->nExon++] = row->getLongLongAt(row,2);
 
 // Note using string because its allocated
-    if (!IDHash_contains(translationHash,row->getLongAt(row,1))) {
+    if (!IDHash_contains(translationHash,row->getLongLongAt(row,1))) {
       IDHash_add(translationHash, row->getLongLongAt(row,1), row->getStringAt(row,6));
     }
   }
@@ -189,8 +204,9 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
   nTranscriptId = IDHash_getNumValues(transcriptExonsHash);
   
   for (i=0;i<nTranscriptId;i++) {
-    Transcript *transcript = Transcript_new();
     IDType transcriptId = transcriptIds[i];
+    //printf("transcript id = %ld\n",transcriptId);
+    Transcript *transcript = IDHash_getValue(transcriptHash,transcriptId);
     IDType translationId;
     TranscriptExons *tes = IDHash_getValue(transcriptExonsHash,transcriptId);
     int i;
@@ -208,7 +224,7 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
 
     for (i=0;i<tes->nExon;i++) {
       Exon *exon = IDHash_getValue(exonHash, tes->exonIds[i]);
-      // printf(" Exon from tes = " IDFMTSTR "\n",Exon_getDbID(exon));
+      //printf(" Exon from tes = " IDFMTSTR "\n",Exon_getDbID(exon));
       Transcript_addExon(transcript, exon);
     }
 
@@ -229,6 +245,7 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
   }
 
   IDHash_free(exonHash,NULL);
+  IDHash_free(transcriptHash,NULL);
   IDHash_free(translationHash,free);
   IDHash_free(transcriptExonsHash,free);
 
@@ -246,9 +263,9 @@ int GeneAdaptor_getStableEntryInfo(GeneAdaptor *ga, Gene *gene) {
   }
 
   sprintf(qStr,
-          "SELECT stable_id, UNIX_TIMESTAMP(created),"
-          "                  UNIX_TIMESTAMP(modified), version"
-          " FROM gene_stable_id"
+          "SELECT stable_id, UNIX_TIMESTAMP(created_date),"
+          "                  UNIX_TIMESTAMP(modified_date), version"
+          " FROM gene"
           " WHERE gene_id = "
           IDFMTSTR, Gene_getDbID(gene));
 
@@ -281,6 +298,7 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
   int nContigId;
   int i;
   char *qStr;
+  char tmpStr[1024];
   StatementHandle *sth;
   ResultRow *row;
   Vector *geneVector;
@@ -297,6 +315,7 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
     return (Vector *)StringHash_getValue(ga->sliceGeneCache,sliceCacheKey);
   }
 
+/*
   ama = DBAdaptor_getAssemblyMapperAdaptor(ga->dba);
   assMapper = AssemblyMapperAdaptor_fetchByType(ama,Slice_getAssemblyType(slice));
 
@@ -330,9 +349,21 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
     }
     qStr = StrUtil_appendString(qStr, numStr);
   }
+*/
+  sprintf(tmpStr,
+    "SELECT distinct(t.gene_id), g.seq_region_start, g.seq_region_end, g.seq_region_strand "
+    " FROM   transcript t,exon_transcript et,exon e, gene g, seq_region sr"
+    " WHERE e.seq_region_id = sr.seq_region_id and sr.name='%s' and g.seq_region_start <= %d and g.seq_region_end >= %d ", 
+    Slice_getChrName(slice), Slice_getChrEnd(slice), Slice_getChrStart(slice));
+  qStr = StrUtil_copyString(&qStr, tmpStr, 0);
+
+  if (!qStr) {
+    Error_trace("fetch_all_by_Slice",NULL);
+    return emptyVector;
+  }
 
   qStr = StrUtil_appendString(qStr, 
-              ") AND   et.exon_id = e.exon_id"
+              " AND   et.exon_id = e.exon_id"
               " AND   et.transcript_id = t.transcript_id"
               " AND   g.gene_id = t.gene_id");
 
@@ -360,8 +391,16 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
 
   while ((row = sth->fetchRow(sth))) {
     IDType geneId = row->getLongLongAt(row,0);
+    int start = row->getIntAt(row,1);
+    int end = row->getIntAt(row,2);
+    int strand = row->getIntAt(row,3);
+
     Gene *gene  = GeneAdaptor_fetchByDbID(ga, geneId, NULL );
-    Gene *newGene = Gene_transformToSlice(gene, slice);
+
+    Gene_setStart(gene,start);
+    Gene_setEnd(gene,end);
+    Gene_setStrand(gene,strand);
+   // Gene *newGene = Gene_transformToSlice(gene, slice);
 
 /* NIY
     if (Gene_getStart(newgene) <= Slice_getLength(slice) &&
@@ -370,7 +409,8 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
       push( @out, $newgene );
     }
 */
-    Vector_addElement(geneVector, newGene);
+    //Vector_addElement(geneVector, newGene);
+    Vector_addElement(geneVector, gene);
   }
   sth->finish(sth);
 
@@ -433,7 +473,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene) {
 
   xrefId = 0;
   sprintf(qStr,
-         "INSERT INTO gene(type, analysis_id, transcript_count, display_xref_id) "
+         "INSERT INTO gene(biotype, analysis_id, transcript_count, display_xref_id) "
          "VALUES('%s'," IDFMTSTR ", %d, " IDFMTSTR ")",
          type, (IDType)analysisId, transCount, (IDType)xrefId);
 
@@ -451,7 +491,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene) {
       exit(1);
     }
     sprintf(qStr,"INSERT INTO gene_stable_id(gene_id," 
-                              "version, stable_id, created, modified)"
+                              "version, stable_id, created_date, modified_date)"
                       " VALUES(" IDFMTSTR ",%d, '%s'," 
                                "FROM_UNIXTIME(%d),"
                                "FROM_UNIXTIME(%d))",

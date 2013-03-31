@@ -10,7 +10,7 @@ SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools_parallel
 #SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools-0.1.18
 ZLIBDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/include
 
-CFLAGS =  -Ofast -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
+CFLAGS =  -O2 -g -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS)
 
 BINDIR=../bin
@@ -18,8 +18,8 @@ BINDIR=../bin
 all	: directories \
           libensc.a \
           Programs/testdbc \
+          Programs/bamcount \
           Programs/bammap \
-          Programs/bammap_count \
           Programs/countsnps \
           Programs/indicate \
           Programs/fastasplit \
@@ -34,6 +34,7 @@ all	: directories \
           Tests/DNAPepAlignFeatureTest \
           Tests/EcoStringTest \
           Tests/FreeTest \
+          Tests/GeneTest \
           Tests/HomologyTest \
           Tests/PredictionTranscriptTest \
           Tests/RepeatFeatureTest \
@@ -180,16 +181,16 @@ Programs/testdbc: \
 	Programs/testdbc.c
 	$(CC) $(CFLAGS) -o Programs/testdbc Programs/testdbc.c -L. -lensc $(LDFLAGS)
 
+Programs/bamcount: \
+	libensc.a \
+	Programs/bamcount.c
+	$(CC) $(CFLAGS) -I$(SAMDIR) -I$(ZLIBDIR) -D_PBGZF_USE -o Programs/bamcount Programs/bamcount.c -L. -lensc  -L$(SAMDIR) -lbam $(LDFLAGS)
+
 Programs/bammap: \
 	libensc.a \
 	Programs/bammap.c
 	$(CC) $(CFLAGS) -I$(SAMDIR) -I$(ZLIBDIR) -D_PBGZF_USE -o Programs/bammap Programs/bammap.c -L. -lensc  -L$(SAMDIR) -lbam $(LDFLAGS)
 #$(CC) $(CFLAGS) -I$(SAMDIR) -I$(ZLIBDIR) -o Programs/bammap Programs/bammap.c -L. -lensc  -L$(SAMDIR) -lbam $(LDFLAGS) -lrt
-
-Programs/bammap_count: \
-	libensc.a \
-	Programs/bammap_count.c
-	$(CC) $(CFLAGS) -I$(SAMDIR) -I$(ZLIBDIR) -o Programs/bammap_count Programs/bammap_count.c -L. -lensc  -L$(SAMDIR) -lbam $(LDFLAGS)
 
 Programs/countsnps: \
 	libensc.a \
@@ -249,6 +250,12 @@ Tests/FreeTest: \
 	libensc.a \
 	Tests/FreeTest.c
 	$(CC) $(CFLAGS) -o Tests/FreeTest Tests/FreeTest.c -L. -lensc $(LDFLAGS)
+
+Tests/GeneTest: \
+	libensc.a \
+	Tests/BaseRODBTest.h \
+	Tests/GeneTest.c
+	$(CC) $(CFLAGS) -o Tests/GeneTest Tests/GeneTest.c -L. -lensc $(LDFLAGS)
 
 Tests/HomologyTest: \
 	libensc.a \
@@ -310,6 +317,7 @@ clean	:
 	rm -f libensc.a
 	rm -f Programs/testdbc
 	rm -f Programs/bammap
+	rm -f Programs/bamcount
 	rm -f Programs/countsnps
 	rm -f Programs/indicate
 	find ./ -name "*.o" -exec rm {} \;

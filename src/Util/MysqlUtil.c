@@ -31,9 +31,16 @@ double MysqlUtil_getDouble(MYSQL_ROW row, int col) {
 
 char *MysqlUtil_getString(MYSQL_ROW row, int col) {
   char *copy;
-  if ((copy = StrUtil_copyString(&copy,row[col],0)) == NULL) {
-    fprintf(stderr,"ERROR: Failed copying mysql col\n");
-    return NULL;
+  if (row[col] == NULL) {
+    if ((copy = StrUtil_copyString(&copy,"",0)) == NULL) {
+      fprintf(stderr,"ERROR: Failed copying mysql col\n");
+      return NULL;
+    }
+  } else {
+    if ((copy = StrUtil_copyString(&copy,row[col],0)) == NULL) {
+      fprintf(stderr,"ERROR: Failed copying mysql col\n");
+      return NULL;
+    }
   }
   return copy;
 }

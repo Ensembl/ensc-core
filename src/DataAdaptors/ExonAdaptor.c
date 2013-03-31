@@ -34,17 +34,15 @@ Exon *ExonAdaptor_fetchByDbID(ExonAdaptor *ea, IDType dbID) {
 
   sprintf(qStr,
     "SELECT exon_id"
-    " , contig_id"
-    " , contig_start"
-    " , contig_end"
-    " , contig_strand"
+    " , seq_region_id"
+    " , seq_region_start"
+    " , seq_region_end"
+    " , seq_region_strand"
     " , phase"
     " , end_phase"
-    " , sticky_rank"
     " FROM   exon"
     " WHERE  exon_id = "
-    IDFMTSTR
-    " ORDER BY sticky_rank DESC", 
+    IDFMTSTR, 
     dbID);
 
   sth = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
@@ -64,6 +62,7 @@ Exon *ExonAdaptor_fetchByDbID(ExonAdaptor *ea, IDType dbID) {
 
 Exon *ExonAdaptor_exonFromResults(ExonAdaptor *ea, StatementHandle *sth, ResultRow *row) {
   Exon *exon;
+/*
   int maxRank = row->getIntAt(row,7);
 
   if (maxRank > 1) {
@@ -109,8 +108,11 @@ Exon *ExonAdaptor_exonFromResults(ExonAdaptor *ea, StatementHandle *sth, ResultR
     StickyExon_setStrand(stickyExon, 1 );
 
   } else {
+*/
     exon = ExonAdaptor_exonFromRow(ea, row);
+/*
   }
+*/
 
   return exon;
 }
@@ -127,7 +129,11 @@ Exon *ExonAdaptor_exonFromRow(ExonAdaptor *ea, ResultRow *row) {
   Exon_setStrand(exon,row->getIntAt(row,4));
   Exon_setPhase(exon,row->getIntAt(row,5));
   Exon_setEndPhase(exon,row->getIntAt(row,6));
-  Exon_setStickyRank(exon,row->getIntAt(row,7));
+ // Exon_setStickyRank(exon,row->getIntAt(row,7));
+  Exon_setStableId(exon,row->getStringAt(row,7));
+  Exon_setCreated(exon,row->getIntAt(row,8));
+  Exon_setModified(exon,row->getIntAt(row,9));
+  Exon_setVersion(exon,row->getIntAt(row,10));
 
   Exon_setAdaptor(exon,(BaseAdaptor *)ea);
 
@@ -152,13 +158,16 @@ int ExonAdaptor_fetchAllByGeneId(ExonAdaptor *ea, IDType geneId, Exon ***retExon
 
   sprintf(qStr,
     "SELECT STRAIGHT_JOIN e.exon_id"
-    "  , e.contig_id"
-    "  , e.contig_start"
-    "  , e.contig_end"
-    "  , e.contig_strand"
+    "  , e.seq_region_id"
+    "  , e.seq_region_start"
+    "  , e.seq_region_end"
+    "  , e.seq_region_strand"
     "  , e.phase"
     "  , e.end_phase"
-    "  , e.sticky_rank"
+    "  , e.stable_id"
+    "  , e.created_date"
+    "  , e.modified_date"
+    "  , e.version"
     " FROM transcript t"
     "  , exon_transcript et"
     "  , exon e"
@@ -166,8 +175,8 @@ int ExonAdaptor_fetchAllByGeneId(ExonAdaptor *ea, IDType geneId, Exon ***retExon
     IDFMTSTR
     "  AND et.transcript_id = t.transcript_id"
     "  AND e.exon_id = et.exon_id"
-    " ORDER BY t.transcript_id,e.exon_id"
-    "  , e.sticky_rank DESC",geneId);
+    " ORDER BY t.transcript_id,e.exon_id",
+      geneId);
 
   sth = ea->prepare((BaseAdaptor *)ea, qStr, strlen(qStr));
   sth->execute(sth);
@@ -202,9 +211,9 @@ int ExonAdaptor_getStableEntryInfo(ExonAdaptor *ea, Exon *exon) {
   }
 
   sprintf(qStr,
-          "SELECT stable_id, UNIX_TIMESTAMP(created),"
-          "                  UNIX_TIMESTAMP(modified), version"
-          " FROM exon_stable_id"
+          "SELECT stable_id, UNIX_TIMESTAMP(created_date),"
+          "                  UNIX_TIMESTAMP(modified_date), version"
+          " FROM exon"
           " WHERE exon_id = " IDFMTSTR, Exon_getDbID(exon));
 
   sth = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
@@ -259,19 +268,19 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
 
 // HACK modified duplicate of query for first exon (with no setting of exonId
   sprintf(qStr,
-    "INSERT into exon (exon_id, contig_id, contig_start,"
-                      "contig_end, contig_strand, phase,"
-                      "end_phase, sticky_rank) "
-    " VALUES ( %" IDFMTSTR ", %" IDFMTSTR ", %%d, %%d, %%d, %%d, %%d, %%d )");
+    "INSERT into exon (exon_id, seq_region_id, seq_region_start,"
+                      "seq_region_end, seq_region_strand, phase,"
+                      "end_phase) "
+    " VALUES ( %" IDFMTSTR ", %" IDFMTSTR ", %%d, %%d, %%d, %%d, %%d )");
 
 
   sth = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
 
   sprintf(qStr,
-    "INSERT into exon (contig_id, contig_start,"
-                      "contig_end, contig_strand, phase,"
-                      "end_phase, sticky_rank) "
-    " VALUES ( %" IDFMTSTR ", %%d, %%d, %%d, %%d, %%d, %%d )");
+    "INSERT into exon (seq_region_id, seq_region_start,"
+                      "seq_region_end, seq_region_strand, phase,"
+                      "end_phase) "
+    " VALUES ( %" IDFMTSTR ", %%d, %%d, %%d, %%d, %%d )");
 
   sth2 = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
 
@@ -442,6 +451,7 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
   // to point to the new database
   // 
 
+/*
   if (stickyExon) {
     for (i=0; i<StickyExon_getComponentExonCount(stickyExon); i++) {
       Exon *e = StickyExon_getComponentExonAt(stickyExon,i);
@@ -449,6 +459,7 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
       Exon_setAdaptor(e,(BaseAdaptor *)ea);
     }
   }
+*/
 
   Exon_setAdaptor(exon,(BaseAdaptor *)ea);
   Exon_setDbID(exon, exonId);

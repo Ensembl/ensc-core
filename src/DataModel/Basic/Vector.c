@@ -157,7 +157,6 @@ void Vector_free(Vector *v) {
 
 
   if (v->freeElement) {
-    printf(" - has free func so freeing elements\n");
     for (i=0;i<v->nElement;i++) {
       if (v->elements[i]) {
         v->freeElement(v->elements[i]);

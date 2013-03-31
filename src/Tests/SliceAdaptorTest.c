@@ -13,9 +13,9 @@ int main(int argc, char *argv[]) {
 
   initEnsC();
 
-  dba = DBAdaptor_new("kaka.sanger.ac.uk","anonymous",NULL,"homo_sapiens_core_12_31",3306,NULL);
+  dba = DBAdaptor_new("ensembldb.ensembl.org","anonymous",NULL,"homo_sapiens_core_70_37",5306,NULL);
 
-  ok(1,!strcmp("NCBI31",DBAdaptor_getAssemblyType(dba)));
+  ok(1,!strcmp("GRCh37",DBAdaptor_getAssemblyType(dba)));
 
   sa = DBAdaptor_getSliceAdaptor(dba);
 

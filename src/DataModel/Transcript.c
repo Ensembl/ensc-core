@@ -1,4 +1,6 @@
+#define __TRANSCRIPT_MAIN__
 #include "Transcript.h"
+#undef __TRANSCRIPT_MAIN__
 
 #include "DBAdaptor.h"
 #include "TranscriptAdaptor.h"
@@ -18,10 +20,14 @@ Transcript *Transcript_new() {
     return NULL;
   }
 
+  Transcript_setModified(transcript,0);
+  Transcript_setCreated(transcript,0);
   Transcript_setVersion(transcript,-1);
 
   transcript->objectType = CLASS_TRANSCRIPT;
   Object_incRefCount(transcript);
+
+  transcript->funcs = &transcriptFuncs;
 
   return transcript;
 }
@@ -122,52 +128,6 @@ void Transcript_flushExons(Transcript *trans) {
 // NIY caches 
 }
 
-int Transcript_setStart(Transcript *trans, int start) {
-  trans->start = start;
-  Transcript_setStartIsSet(trans,TRUE);
-  return trans->start;
-}
-
-int Transcript_getStart(Transcript *trans) {
-  if (!Transcript_getStartIsSet(trans)) {
-    int start;
-    int strand = Exon_getStrand(Transcript_getStartExon(trans));
-
-    if (strand == 1) {
-      start = Exon_getStart(Transcript_getStartExon(trans));
-    } else {
-      start = Exon_getStart(Transcript_getEndExon(trans));
-    }
-    trans->start = start;
-    Transcript_setStartIsSet(trans,TRUE);
-  }
-
-  return trans->start;
-}
-
-
-int Transcript_setEnd(Transcript *trans, int end) {
-  trans->end = end;
-  Transcript_setEndIsSet(trans,TRUE);
-  return trans->end;
-}
-
-int Transcript_getEnd(Transcript *trans) {
-  if (!Transcript_getEndIsSet(trans)) {
-    int end;
-    int strand = Exon_getStrand(Transcript_getStartExon(trans));
-
-    if (strand == 1) {
-      end = Exon_getEnd(Transcript_getEndExon(trans));
-    } else {
-      end = Exon_getEnd(Transcript_getStartExon(trans));
-    }
-    trans->end = end;
-    Transcript_setEndIsSet(trans,TRUE);
-  }
-
-  return trans->end;
-}
 
 int Transcript_setCodingRegionEnd(Transcript *trans, int end) {
   trans->codingRegionEnd = end;

@@ -57,7 +57,7 @@ Transcript *TranscriptAdaptor_fetchByDbID(TranscriptAdaptor *ta, IDType dbID) {
   Transcript_setAdaptor(trans, (BaseAdaptor *)ta );
 
   sprintf(qStr,
-    "SELECT translation_id"
+    "SELECT canononical_translation_id"
     " FROM  transcript"
     " WHERE  transcript_id = " IDFMTSTR,dbID);
 
@@ -70,6 +70,25 @@ Transcript *TranscriptAdaptor_fetchByDbID(TranscriptAdaptor *ta, IDType dbID) {
   }
   sth->finish(sth);
 
+  sprintf(qStr,
+    "SELECT seq_region_start, seq_region_end, seq_region_strand "
+    " FROM  transcript"
+    " WHERE  transcript_id = " IDFMTSTR,dbID);
+
+  sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
+  sth->execute(sth);
+
+  row = sth->fetchRow(sth);
+  if( row != NULL ) {
+    int start = row->getIntAt(row,0);
+    int end = row->getIntAt(row,1);
+    int strand = row->getIntAt(row,2);
+
+    Transcript_setStart(trans,start);
+    Transcript_setEnd(trans,end);
+    Transcript_setStrand(trans,strand);
+  }
+  sth->finish(sth);
   return trans;
 }
 
@@ -84,8 +103,9 @@ int TranscriptAdaptor_getStableEntryInfo(TranscriptAdaptor *ta, Transcript *tran
   }
 
   sprintf(qStr,
-          "SELECT stable_id, version"
-          " FROM transcript_stable_id"
+          "SELECT stable_id, UNIX_TIMESTAMP(created_date),"
+          "                  UNIX_TIMESTAMP(modified_date), version"
+          " FROM transcript"
           " WHERE transcript_id = " IDFMTSTR, Transcript_getDbID(transcript));
 
   sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
@@ -99,7 +119,9 @@ int TranscriptAdaptor_getStableEntryInfo(TranscriptAdaptor *ta, Transcript *tran
   }
 
   Transcript_setStableId(transcript,row->getStringAt(row,0));
-  Transcript_setVersion(transcript,row->getIntAt(row,1));
+  Transcript_setCreated(transcript,row->getIntAt(row,1));
+  Transcript_setModified(transcript,row->getIntAt(row,2));
+  Transcript_setVersion(transcript,row->getIntAt(row,3));
 
   sth->finish(sth);
 
@@ -155,11 +177,11 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
   // ok - now load this line in
   if (translation) {
     sprintf(qStr,
-       "insert into transcript ( gene_id, translation_id, exon_count, display_xref_id )"
+       "insert into transcript ( gene_id, canonical_ranslation_id, exon_count, display_xref_id )"
        " values ( " IDFMTSTR ", " IDFMTSTR ", %d, 0)",geneId, Translation_getDbID(translation),exonCount);
   } else {
     sprintf(qStr,
-       "insert into transcript ( gene_id, translation_id, exon_count, display_xref_id)"
+       "insert into transcript ( gene_id, canonical_translation_id, exon_count, display_xref_id)"
        " values ( " IDFMTSTR ", 0, %d, 0)",geneId, exonCount);
   }
   sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));

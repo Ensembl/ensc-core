@@ -5,7 +5,7 @@
 
 #include "DNAPepAlignFeature.h"
 
-NameTableType ProteinAlignFeatureAdaptor_tableNames = {{"protein_align_feature","paf"},{NULL,NULL}};
+NameTableType ProteinAlignFeatureAdaptor_tableNames = {{"protein_align_feature","paf"},{"seq_region","sr"},{NULL,NULL}};
 
 ProteinAlignFeatureAdaptor *ProteinAlignFeatureAdaptor_new(DBAdaptor *dba) {
   ProteinAlignFeatureAdaptor *pafa;
@@ -105,11 +105,11 @@ NameTableType *ProteinAlignFeatureAdaptor_getTables(void) {
 char *ProteinAlignFeatureAdaptor_getColumns(void) {
 
   return "paf.protein_align_feature_id,"
-         "paf.contig_id,"
+         "paf.seq_region_id,"
          "paf.analysis_id,"
-         "paf.contig_start,"
-         "paf.contig_end,"
-         "paf.contig_strand,"
+         "paf.seq_region_start,"
+         "paf.seq_region_end,"
+         "paf.seq_region_strand,"
          "paf.hit_start,"
          "paf.hit_end,"
          "paf.hit_name,"
@@ -159,6 +159,7 @@ Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor
 
 // Perl has a cache for analysis types but the analysis adaptor should have one
       Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,2));
+/*
       MapperCoordinate fRange;
 
 
@@ -187,6 +188,10 @@ Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor
         featEnd    = fRange.end - sliceStart + 1;
         featStrand = fRange.strand;
       }
+*/
+      featStart  = contigStart;
+      featEnd    = contigEnd;
+      featStrand = contigStrand;
 
       dpaf = DNAPepAlignFeature_new();
 

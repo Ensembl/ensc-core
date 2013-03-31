@@ -4,7 +4,7 @@
 #include "AnalysisAdaptor.h"
 #include "DNAAlignFeature.h"
 
-NameTableType DNAAlignFeatureAdaptor_tableNames = {{"dna_align_feature","daf"},{NULL, NULL}};
+NameTableType DNAAlignFeatureAdaptor_tableNames = {{"dna_align_feature","daf"},{"seq_region","sr"},{NULL, NULL}};
 
 DNAAlignFeatureAdaptor *DNAAlignFeatureAdaptor_new(DBAdaptor *dba) {
   DNAAlignFeatureAdaptor *dafa;
@@ -96,11 +96,11 @@ NameTableType *DNAAlignFeatureAdaptor_getTables(void) {
 
 char *DNAAlignFeatureAdaptor_getColumns(void) {
   return "daf.dna_align_feature_id,"
-         "daf.contig_id,"
+         "daf.seq_region_id,"
          "daf.analysis_id,"
-         "daf.contig_start,"
-         "daf.contig_end,"
-         "daf.contig_strand,"
+         "daf.seq_region_start,"
+         "daf.seq_region_end,"
+         "daf.seq_region_strand,"
          "daf.hit_start,"
          "daf.hit_end,"
          "daf.hit_name,"
@@ -154,6 +154,7 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
 
 // Perl has a cache for analysis types but the analysis adaptor should have one
       Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,2));
+/*
       MapperCoordinate fRange;
 
 
@@ -182,6 +183,11 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
         featEnd    = fRange.end - sliceStart + 1;
         featStrand = fRange.strand;
       }
+
+*/
+      featStart  = contigStart;
+      featEnd    = contigEnd;
+      featStrand = contigStrand;
 
       daf = DNAAlignFeature_new();
 

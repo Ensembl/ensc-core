@@ -243,11 +243,12 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Sl
     return (Vector *)val;
   }
     
-  sliceChrId = Slice_getChrId(slice),
-  sliceStart = Slice_getChrStart(slice),
-  sliceEnd   = Slice_getChrEnd(slice),
-  sliceStrand= Slice_getStrand(slice),
+  sliceChrId = Slice_getChrId(slice);
+  sliceStart = Slice_getChrStart(slice);
+  sliceEnd   = Slice_getChrEnd(slice);
+  sliceStrand= Slice_getStrand(slice);
 
+/*
   ama = DBAdaptor_getAssemblyMapperAdaptor(bfa->dba);
   assMapper = AssemblyMapperAdaptor_fetchByType(ama,Slice_getAssemblyType(slice));
 
@@ -288,6 +289,14 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Sl
 
 
   allConstraints = StrUtil_appendString(allConstraints,")");
+*/
+
+  if (constraint[0]) {
+    sprintf(tmpStr,"%s AND %s.seq_region_id = sr.seq_region_id and sr.name = '%s' and %s.seq_region_end >= %d and %s.seq_region_start <= %d", constraint, (*tables)[0][SYN],Slice_getChrName(slice),(*tables)[0][SYN],Slice_getChrStart(slice),(*tables)[0][SYN],Slice_getChrEnd(slice));
+  } else {
+    sprintf(tmpStr,"%s.seq_region_id = sr.seq_region_id and sr.name = '%s' and %s.seq_region_end >= %d and %s.seq_region_start <= %d", (*tables)[0][SYN],Slice_getChrName(slice),(*tables)[0][SYN],Slice_getChrStart(slice),(*tables)[0][SYN],Slice_getChrEnd(slice));
+  }
+  allConstraints = StrUtil_copyString(&allConstraints,tmpStr,0);
 
   // for speed the remapping to slice may be done at the time of object creation
   //printf("allConstraints = %s\n",allConstraints);

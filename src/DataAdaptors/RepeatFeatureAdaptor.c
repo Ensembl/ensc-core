@@ -10,6 +10,7 @@
 
 NameTableType RepeatFeatureAdaptor_tableNames = {{"repeat_feature","r"},
                                                  {"repeat_consensus","rc"},
+                                                 {"seq_region","sr"},
                                                  {NULL,NULL}};
 
 RepeatFeatureAdaptor *RepeatFeatureAdaptor_new(DBAdaptor *dba) {
@@ -38,10 +39,10 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
 
   sprintf(qStr,
     "INSERT into repeat_feature( repeat_feature_id"
-                        ", contig_id"
-                        ", contig_start"
-                        ", contig_end"
-                        ", contig_strand"
+                        ", seq_region_id"
+                        ", seq_region_start"
+                        ", seq_region_end"
+                        ", seq_region_strand"
                         ", repeat_consensus_id"
                         ", repeat_start"
                         ", repeat_end"
@@ -185,11 +186,11 @@ NameTableType *RepeatFeatureAdaptor_getTables() {
 
 char *RepeatFeatureAdaptor_getColumns() {
   return "r.repeat_feature_id,"
-         "r.contig_id,"
+         "r.seq_region_id,"
          "r.analysis_id,"
-         "r.contig_start,"
-         "r.contig_end,"
-         "r.contig_strand,"
+         "r.seq_region_start,"
+         "r.seq_region_end,"
+         "r.seq_region_strand,"
          "r.repeat_consensus_id,"
          "r.repeat_start,"
          "r.repeat_end,"
@@ -221,7 +222,8 @@ Vector *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
   while ((row = sth->fetchRow(sth))) {
     RepeatFeature *rf;
     Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,2));
-    RawContig *contig = RawContigAdaptor_fetchByDbID(rca, row->getLongLongAt(row,1));
+//    RawContig *contig = RawContigAdaptor_fetchByDbID(rca, row->getLongLongAt(row,1));
+    RawContig *contig = slice;
     IDType repeatConsensusId = row->getLongLongAt(row,6);
     RepeatConsensus *rc;
 

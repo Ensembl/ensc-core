@@ -72,128 +72,6 @@ char *Gene_setType(Gene *g, char *type) {
   return g->type;
 }
 
-int Gene_setStart(Gene *gene, int start) {
-  gene->start = start;
-  Gene_setStartIsSet(gene,TRUE);
-  return gene->start;
-}
-
-int Gene_getStart(Gene *gene) {
-  int multiFlag = 0;
-
-  if (Gene_getStartIsSet(gene) == FALSE) {
-    char *lastContig = NULL;
-    int i;
-    Vector *exonVector = Gene_getAllExons(gene);
-
-    for (i=0; i<Vector_getNumElement(exonVector); i++) {
-      Exon *exon = Vector_getElementAt(exonVector,i);
-
-      if (!Gene_getStartIsSet(gene) || 
-          Exon_getStart(exon) < gene->start) {
-        gene->start = Exon_getStart(exon);
-        Gene_setStartIsSet(gene,TRUE);
-      }
-      if (multiFlag || 
-          (lastContig && strcmp(lastContig, BaseContig_getName(Exon_getContig(exon))))) {
-        multiFlag = 1;
-      }
-      lastContig =  BaseContig_getName(Exon_getContig(exon));
-    }
-    Vector_free(exonVector);
-  }
-
-  if (multiFlag) {
-    fprintf(stderr, "WARNING: Gene_getStart - Gene spans multiple contigs."
-                "The return value from getStart may not be what you want");
-  }
-
-  return gene->start;
-}
-
-int Gene_setEnd(Gene *gene, int end) {
-  gene->end = end;
-  Gene_setEndIsSet(gene,TRUE);
-  return gene->end;
-}
-
-int Gene_getEnd(Gene *gene) {
-  int multiFlag = 0;
-
-  if (Gene_getEndIsSet(gene) == FALSE) {
-    char *lastContig = NULL;
-    int i;
-    Vector *exonVector = Gene_getAllExons(gene);
-
-    for (i=0; i<Vector_getNumElement(exonVector); i++) {
-      Exon *exon = Vector_getElementAt(exonVector,i);
-
-      if (!Gene_getEndIsSet(gene) || 
-          Exon_getEnd(exon) > gene->end) {
-        gene->end = Exon_getEnd(exon);
-        Gene_setEndIsSet(gene,TRUE);
-      }
-      if (multiFlag || 
-          (lastContig && strcmp(lastContig, BaseContig_getName(Exon_getContig(exon))))) {
-        multiFlag = 1;
-      }
-      lastContig =  BaseContig_getName(Exon_getContig(exon));
-    }
-    Vector_free(exonVector);
-  }
-
-  if (multiFlag) {
-    fprintf(stderr, "WARNING: Gene_getEnd - Gene spans multiple contigs."
-                "The return value from getEnd may not be what you want");
-  }
-
-  return gene->end;
-}
-
-int Gene_setStrand(Gene *gene, int strand) {
-  gene->strand = strand;
-  Gene_setStrandIsSet(gene,TRUE);
-  return gene->strand;
-}
-
-int Gene_getStrand(Gene *gene) {
-  int multiFlag = 0;
-
-  if (Gene_getStrandIsSet(gene) == FALSE) {
-    char *lastContig = NULL;
-    int i;
-    Vector *exonVector = Gene_getAllExons(gene);
-
-    if (!Vector_getNumElement(exonVector)) {
-      fprintf(stderr, "WARNING: Gene_getStrand - Gene contains no exons."
-                  "The return value from getStrand may not be what you want");
-      return 0;
-    }
-
-    for (i=0; i<Vector_getNumElement(exonVector); i++) {
-      Exon *exon = Vector_getElementAt(exonVector,i);
-
-      if (lastContig && strcmp(lastContig, BaseContig_getName(Exon_getContig(exon)))) {
-        multiFlag = 1;
-        break;
-      }
-      lastContig =  BaseContig_getName(Exon_getContig(exon));
-    }
-
-
-    if (multiFlag) {
-      fprintf(stderr, "WARNING: Gene_getStrand - Gene spans multiple contigs."
-                  "The return value from getStrand may not be what you want");
-      Vector_free(exonVector);
-      return 0;
-    }
-
-    Gene_setStrand(gene, Exon_getStrand((Exon *)Vector_getElementAt(exonVector,0)));
-    Vector_free(exonVector);
-  }
-
-  return gene->strand;
-}
 
 Vector *Gene_getAllExons(Gene *gene) {
   IDHash *exonHash = IDHash_new(IDHASH_SMALL);
@@ -250,9 +128,6 @@ Gene *Gene_transformToSlice(Gene *gene, Slice *slice) {
   }
 
   // unset the start, end, and strand - they need to be recalculated
-  Gene_setStartIsSet(gene,FALSE);
-  Gene_setEndIsSet(gene,FALSE);
-  Gene_setStrandIsSet(gene,FALSE);
 
 #ifdef DONE
   $self->{_chr_name} = undef;
@@ -290,9 +165,6 @@ Gene *Gene_transformToRawContig(Gene *gene) {
   }
 
   // unset the start, end, and strand - they need to be recalculated
-  Gene_setStartIsSet(gene,FALSE);
-  Gene_setEndIsSet(gene,FALSE);
-  Gene_setStrandIsSet(gene,FALSE);
 
 #ifdef DONE
   $self->{_chr_name} = undef;

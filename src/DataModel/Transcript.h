@@ -24,8 +24,6 @@ struct TranscriptStruct {
   Vector      *dbLinks;
   Translation *translation;
   IDType       translationId;
-  char         startIsSet;
-  char         endIsSet;
   char         codingRegionStartIsSet;
   char         codingRegionEndIsSet;
   char         cDNACodingStartIsSet;
@@ -48,8 +46,20 @@ char *Transcript_setType(Transcript *transcript,char *type);
 #define Transcript_setVersion(transcript,ver)  StableIdInfo_setVersion(&((transcript)->si),(ver))
 int Transcript_getVersion(Transcript *transcript);
 
+#define Transcript_setStart(transcript,start) AnnotatedSeqFeature_setStart((transcript),start)
+#define Transcript_getStart(transcript) AnnotatedSeqFeature_getStart((transcript))
+
+#define Transcript_setEnd(transcript,end) AnnotatedSeqFeature_setEnd((transcript),end)
+#define Transcript_getEnd(transcript) AnnotatedSeqFeature_getEnd((transcript))
+
 #define Transcript_setStrand(transcript,strand) AnnotatedSeqFeature_setStrand((transcript),strand)
 #define Transcript_getStrand(transcript) AnnotatedSeqFeature_getStrand((transcript))
+
+#define Transcript_setCreated(transcript,cd)  StableIdInfo_setCreated(&((transcript)->si),cd)
+#define Transcript_getCreated(transcript)  StableIdInfo_getCreated(&((transcript)->si))
+
+#define Transcript_setModified(transcript,mod)  StableIdInfo_setModified(&((transcript)->si),mod)
+#define Transcript_getModified(transcript)  StableIdInfo_getModified(&((transcript)->si))
 
 Transcript *Transcript_new(void);
 
@@ -73,12 +83,6 @@ Translation *Transcript_getTranslation(Transcript *trans);
 #define Transcript_setAdaptor(transcript,ad) AnnotatedSeqFeature_setAdaptor((transcript),(ad))
 #define Transcript_getAdaptor(transcript) AnnotatedSeqFeature_getAdaptor((transcript))
 
-#define Transcript_setStartIsSet(transcript, flag)  (transcript)->startIsSet = (flag)
-#define Transcript_getStartIsSet(transcript)  (transcript)->startIsSet
-
-#define Transcript_setEndIsSet(transcript, flag)  (transcript)->endIsSet = (flag)
-#define Transcript_getEndIsSet(transcript)  (transcript)->endIsSet
-
 #define Transcript_setCodingRegionStartIsSet(transcript, flag)  (transcript)->codingRegionStartIsSet = (flag)
 #define Transcript_getCodingRegionStartIsSet(transcript)  (transcript)->codingRegionStartIsSet
 
@@ -101,12 +105,6 @@ int Transcript_addDBLink(Transcript *transcript, DBEntry *dbe);
 Transcript *Transcript_transform(Transcript *transcript, IDHash *exonTransforms);
 
 void Transcript_sort(Transcript *trans);
-
-int Transcript_setStart(Transcript *sf, int start);
-int Transcript_getStart(Transcript *sf);
-
-int Transcript_setEnd(Transcript *sf, int end);
-int Transcript_getEnd(Transcript *sf);
 
 int Transcript_getCodingRegionEnd(Transcript *trans);
 int Transcript_setCodingRegionEnd(Transcript *trans, int end);
@@ -132,16 +130,17 @@ Mapper *Transcript_getcDNACoordMapper(Transcript *trans);
 char *Transcript_translate(Transcript *trans);
 
 void Transcript_free(Transcript *trans);
+int Transcript_getLength(Transcript *trans);
 
 
 #ifdef __TRANSCRIPT_MAIN__
   TranscriptFuncs 
     transcriptFuncs = {
                        Transcript_free,
-                       Transcript_getStart,
-                       Transcript_setStart,
-                       Transcript_getEnd,
-                       Transcript_setEnd,
+                       NULL,
+                       NULL,
+                       NULL,
+                       NULL,
                        NULL, // getStrand
                        NULL, // setStrand
                        NULL, // getSeq
