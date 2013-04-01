@@ -249,7 +249,7 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
   ProteinAlignFeatureAdaptor *pafa;
   char *type;
   int nExon;
-  StickyExon *stickyExon = NULL;
+  //StickyExon *stickyExon = NULL;
   
 
   Class_assertType(CLASS_EXON, exon->objectType);
@@ -286,6 +286,7 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
 
   exonId = 0;
 
+/* No more stickys!
   if (exon->objectType == CLASS_STICKYEXON) {
     stickyExon = (StickyExon *)exon;
     // sticky storing. Sticky exons contain normal exons ...
@@ -316,8 +317,7 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
                       Exon_getEnd(componentExon),
                       Exon_getStrand(componentExon),
                       Exon_getPhase(componentExon),
-                      Exon_getEndPhase(componentExon),
-                      Exon_getStickyRank(componentExon));
+                      Exon_getEndPhase(componentExon));
         exonId = sth->getInsertId(sth);
       } else {
         sth->execute( sth,
@@ -327,11 +327,11 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
                       Exon_getEnd(componentExon),
                       Exon_getStrand(componentExon),
                       Exon_getPhase(componentExon),
-                      Exon_getEndPhase(componentExon),
-                      Exon_getStickyRank(componentExon));
+                      Exon_getEndPhase(componentExon));
       }
     }
   } else {
+*/
     // normal storing
     RawContig *contig;
 
@@ -353,10 +353,11 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
                   Exon_getEnd(exon),
                   Exon_getStrand(exon),
                   Exon_getPhase(exon),
-                  Exon_getEndPhase(exon),
-                  Exon_getStickyRank(exon));
+                  Exon_getEndPhase(exon));
     exonId = sth->getInsertId(sth);
+/*
   }
+*/
   sth->finish(sth);
 
   if (Exon_getStableId(exon)) {
@@ -395,11 +396,7 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
   dafa = DBAdaptor_getDNAAlignFeatureAdaptor(ea->dba);
   pafa = DBAdaptor_getProteinAlignFeatureAdaptor(ea->dba);
 
-  if (stickyExon) {
-    nExon = StickyExon_getComponentExonCount(stickyExon);
-  } else {
-    nExon = 1;
-  }
+  nExon = 1;
 
 /* nExon is 1 for non sticky and nComponent for sticky */
   for (i=0;i<nExon;i++) {
@@ -407,11 +404,7 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
     Exon *e;
     Vector *supportingFeatures;
 
-    if (stickyExon) {
-      e = StickyExon_getComponentExonAt(stickyExon,i);
-    } else {
-      e = exon;
-    }
+    e = exon;
 
     supportingFeatures = Exon_getAllSupportingFeatures(e);
 

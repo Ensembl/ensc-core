@@ -4,11 +4,19 @@
 #include <stdlib.h>
 
 int MysqlUtil_getInt(MYSQL_ROW row, int col) {
-  return atol(row[col]);
+  if (row[col] == NULL) {
+    return 0;
+  } else {
+    return atol(row[col]);
+  }
 }
 
 long MysqlUtil_getLong(MYSQL_ROW row, int col) {
-  return atol(row[col]);
+  if (row[col] == NULL) {
+    return 0;
+  } else {
+    return atol(row[col]);
+  }
 }
 
 IDType MysqlUtil_getLongLong(MYSQL_ROW row, int col) {

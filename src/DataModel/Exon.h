@@ -36,7 +36,6 @@ typedef struct ExonFuncsStruct {
 
 #define EXON_DATA \
   ANNOTATEDSEQFEATURE_DATA \
-  int stickyRank; \
   Vector *supportingFeatures; \
   char *seqCacheString;
 

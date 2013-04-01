@@ -149,9 +149,11 @@ int main(int argc, char *argv[]) {
 
   SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
 
-  Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"2",1,250000000);
+  Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,250000000);
+  Slice *slice2 = SliceAdaptor_fetchByChrStartEnd(sa,"2",1,250000000);
 
   Vector_addElement(slices,slice);
+  Vector_addElement(slices,slice2);
 
   if (Vector_getNumElement(slices) == 0) {
     fprintf(stderr, "Error: No slices.\n");
@@ -294,9 +296,19 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
 
   Vector_sort(genes, geneStartCompFunc);
 
-  sprintf(region,"%s:%d-%d", Slice_getChrName(slice), 
-                             Slice_getChrStart(slice), 
-                             Slice_getChrEnd(slice));
+  if (Slice_getChrStart(slice) != 1) {
+    fprintf(stderr, "Currently only allow a slice start position of 1\n");
+    return 1;
+  }
+  if (flags & M_UCSC_NAMING) {
+    sprintf(region,"chr%s:%d-%d", Slice_getChrName(slice), 
+                                  Slice_getChrStart(slice), 
+                                  Slice_getChrEnd(slice));
+  } else {
+    sprintf(region,"%s:%d-%d", Slice_getChrName(slice), 
+                               Slice_getChrStart(slice), 
+                               Slice_getChrEnd(slice));
+  }
   bam_parse_region(in->header, region, &ref, &begRange, &endRange);
   if (ref < 0) {
     fprintf(stderr, "Invalid region %s %d %d\n", Slice_getChrName(slice), 
@@ -350,19 +362,12 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
         continue;
       }
       if (b->core.pos < Gene_getEnd(gene) && end >= Gene_getStart(gene)) {
-
 //        if (DNAAlignFeature_getEnd(snp) >= Gene_getStart(gene) && 
 //           DNAAlignFeature_getStart(snp) <= Gene_getEnd(gene)) {
         int k;
 
         for (k=0; k<Gene_getTranscriptCount(gene) && !done; k++) {
           Transcript *trans = Gene_getTranscriptAt(gene,k);
-          /* 
-          printf("Translation %p Coding region start = %d coding region end = %d\n",
-                 Transcript_getTranslation(trans),
-                 Transcript_getCodingRegionStart(trans),
-                 Transcript_getCodingRegionEnd(trans)); 
-          */
 
           if (b->core.pos < Transcript_getEnd(trans) && end >= Transcript_getStart(trans)) {
             // if (DNAAlignFeature_getEnd(snp) >= Transcript_getStart(trans) && 
@@ -377,16 +382,6 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
                 //    DNAAlignFeature_getStart(snp) <= Exon_getEnd(exon)) {
                 overlapping++;
 
-
-/* Done outside loop for speed
-                if( !IDHash_contains(geneCountsHash,Gene_getDbID(gene))) {
-                  if ((gs = (GeneScore *)calloc(1,sizeof(GeneScore))) == NULL) {
-                    fprintf(stderr,"ERROR: Failed allocating GeneScore\n");
-                    exit(1);
-                  }
-                  IDHash_add(geneCountsHash,Gene_getDbID(gene),gs);
-                }
-*/
                 gs = IDHash_getValue(geneCountsHash, Gene_getDbID(gene));
                 gs->score++;
                 
@@ -399,7 +394,7 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
         done = 1;
       } else if (Gene_getEnd(gene) < b->core.pos+1) {
         gs = IDHash_getValue(geneCountsHash, Gene_getDbID(gene));
-        printf("Gene %s score %ld\n",Gene_getStableId(gene), gs->score);
+        printf("Gene %s (%s) score %ld\n",Gene_getStableId(gene), DBEntry_getDisplayId(Gene_getDisplayXref(gene)), gs->score);
 
         printf("Removing gene %s (index %d) with extent %d to %d\n", 
                Gene_getStableId(gene), 
@@ -408,7 +403,7 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
                Gene_getEnd(gene));
         Vector_setElementAt(genes,j,NULL);
 
-        // Magic - move start if this is the gene at the current start index
+        // Magic (very important for speed) - move startIndex to first non null gene
         int n;
         startIndex = 0;
         for (n=0;n<Vector_getNumElement(genes);n++) {

@@ -32,8 +32,8 @@ DBEntry *DBEntryAdaptor_fetchByDbID(DBEntryAdaptor *dbea, IDType dbID) {
   sprintf(qStr,
    "SELECT xref.xref_id, xref.dbprimary_acc, xref.display_label,"
    "       xref.version, xref.description,"
-   "       exDB.db_name, exDB.release, es.synonym"
-   " FROM   xref, external_db exDB"
+   "       exDB.db_name, exDB.db_release, es.synonym"
+   " FROM  (xref, external_db exDB)"
    " LEFT JOIN external_synonym es on es.xref_id = xref.xref_id"
    " WHERE  xref.xref_id = " IDFMTSTR
    " AND    xref.external_db_id = exDB.external_db_id",
@@ -91,7 +91,7 @@ IDType DBEntryAdaptor_store(DBEntryAdaptor *dbea, DBEntry *exObj,
      "SELECT external_db_id"
      "  FROM external_db"
      " WHERE db_name = '%s'"
-     "   AND release = %d",
+     "   AND db_release = %d",
      DBEntry_getDbName(exObj),
      DBEntry_getRelease(exObj));
 
@@ -307,7 +307,7 @@ int DBEntryAdaptor_fetchAllByGene(DBEntryAdaptor *dbea, Gene *gene) {
   ResultRow *row;
  
   sprintf(qStr,
-      "SELECT t.transcript_id, t.translation_id"
+      "SELECT t.transcript_id, t.canonical_translation_id"
       " FROM   transcript t"
       " WHERE  t.gene_id = " IDFMTSTR,
        Gene_getDbID(gene));
@@ -363,7 +363,7 @@ int DBEntryAdaptor_fetchAllByTranscript(DBEntryAdaptor *dbea, Transcript *trans)
   int i;
 
   sprintf(qStr, 
-    "SELECT t.translation_id" 
+    "SELECT t.canonical_translation_id" 
     " FROM transcript t"
     " WHERE t.transcript_id = " IDFMTSTR,
     Transcript_getDbID(trans));
@@ -421,14 +421,15 @@ Vector *DBEntryAdaptor_fetchByObjectType(DBEntryAdaptor *dbea, IDType ensObj, ch
     exit(1);
   }
 
+// Not sure if idt identities are right way round
   sprintf(qStr,
     "SELECT xref.xref_id, xref.dbprimary_acc, xref.display_label, xref.version,"
     "       xref.description,"
-    "       exDB.db_name, exDB.release, exDB.status," 
+    "       exDB.db_name, exDB.db_release, exDB.status," 
     "       oxr.object_xref_id,"
     "       es.synonym," 
-    "       idt.query_identity, idt.target_identity"
-    " FROM   xref xref, external_db exDB, object_xref oxr" 
+    "       idt.xref_identity, idt.ensembl_identity"
+    " FROM  (external_db exDB, object_xref oxr, xref xref)" 
     " LEFT JOIN external_synonym es on es.xref_id = xref.xref_id"
     " LEFT JOIN identity_xref idt on idt.object_xref_id = oxr.object_xref_id"
     " WHERE  xref.xref_id = oxr.xref_id"

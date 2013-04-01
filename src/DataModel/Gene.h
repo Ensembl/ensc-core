@@ -44,6 +44,9 @@ Gene *Gene_new(void);
 #define Gene_setAdaptor(gene,ad) AnnotatedSeqFeature_setAdaptor((gene),ad)
 #define Gene_getAdaptor(gene) AnnotatedSeqFeature_getAdaptor((gene))
 
+#define Gene_setDisplayXref(gene,xref) AnnotatedSeqFeature_setDisplayXref((gene),xref)
+#define Gene_getDisplayXref(gene) AnnotatedSeqFeature_getDisplayXref((gene))
+
 #define Gene_setStableId(gene,stableId)  StableIdInfo_setStableId(&((gene)->si),stableId)
 char *Gene_getStableId(Gene *gene);
 

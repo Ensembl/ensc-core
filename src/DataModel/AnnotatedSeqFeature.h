@@ -7,6 +7,7 @@
 #include "DataModelTypes.h"
 #include "SeqFeature.h"
 #include "StableIdInfo.h"
+#include "DBEntry.h"
 
 #define ANNOTATEDSEQFEATUREFUNC_TYPES(CLASSTYPE) \
   SEQFEATUREFUNC_TYPES(CLASSTYPE)
@@ -20,7 +21,8 @@ typedef struct AnnotatedSeqFeatureFuncsStruct {
 
 #define ANNOTATEDSEQFEATURE_DATA \
   SEQFEATURE_DATA \
-  StableIdInfo si;
+  StableIdInfo si; \
+  DBEntry *displayXref;
 
 #define FUNCSTRUCTTYPE AnnotatedSeqFeatureFuncs
 struct AnnotatedSeqFeatureStruct {
@@ -55,11 +57,16 @@ char *AnnotatedSeqFeature_getStableId(AnnotatedSeqFeature *asf);
 #define AnnotatedSeqFeature_setVersion(asf,ver)  StableIdInfo_setVersion(&((asf)->si),(ver))
 int AnnotatedSeqFeature_getVersion(AnnotatedSeqFeature *asf);
 
+
 #define AnnotatedSeqFeature_setCreated(asf,cd)  StableIdInfo_setCreated(&((asf)->si),(cd))
 time_t AnnotatedSeqFeature_getCreated(AnnotatedSeqFeature *asf);
 
 #define AnnotatedSeqFeature_setModified(asf,mod)  StableIdInfo_setModified(&((asf)->si),(mod))
 time_t AnnotatedSeqFeature_getModified(AnnotatedSeqFeature *asf);
+
+#define AnnotatedSeqFeature_setDisplayXref(asf,xref)  (asf)->displayXref = (xref)
+#define AnnotatedSeqFeature_getDisplayXref(asf)  (asf)->displayXref
+//DBEntry *AnnotatedSeqFeature_getDisplayXref(AnnotatedSeqFeature *asf);
 
 #define AnnotatedSeqFeature_setDbID(asf,dbID) SeqFeature_setDbID((asf),(dbID))
 #define AnnotatedSeqFeature_getDbID(asf) SeqFeature_getDbID((asf))

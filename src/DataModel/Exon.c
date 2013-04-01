@@ -512,6 +512,7 @@ Exon *Exon_transformSliceToRawContigImpl(Exon *exon) {
     }
   }
 
+/* No more stickys
   if (mapped->nRange > 1 ) {
     int stickyLength = 0;
     int i;
@@ -582,6 +583,7 @@ Exon *Exon_transformSliceToRawContigImpl(Exon *exon) {
     return (Exon *)stickyExon;
 
   } else {
+*/
     // thats a simple exon
 
     RawContig *rawContig;
@@ -617,7 +619,9 @@ Exon *Exon_transformSliceToRawContigImpl(Exon *exon) {
     }
 
     return newExon;
+/*
   }
+*/
 // NIY freeing old exons, old supporting features, SFHash Vectors
   if (SFHash) StringHash_free(SFHash, NULL);
 }

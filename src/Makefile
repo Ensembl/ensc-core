@@ -10,7 +10,7 @@ SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools_parallel
 #SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools-0.1.18
 ZLIBDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/include
 
-CFLAGS =  -O2 -g -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
+CFLAGS =  -Ofast -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS)
 
 BINDIR=../bin
@@ -142,7 +142,6 @@ libensc.a	: \
 	objectfiles/DataModel/Slice.o \
 	objectfiles/DataModel/Species.o \
 	objectfiles/DataModel/StableIdInfo.o \
-	objectfiles/DataModel/StickyExon.o \
 	objectfiles/DataModel/Transcript.o \
 	objectfiles/DataModel/Translation.o \
 	objectfiles/OBDA/BioIndex.o \

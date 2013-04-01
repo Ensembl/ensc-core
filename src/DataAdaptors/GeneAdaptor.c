@@ -68,6 +68,7 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
   ExonAdaptor *ea;
   TranscriptAdaptor *ta;
   AnalysisAdaptor *aa;
+  DBEntryAdaptor *dbea;
   Exon **exons;
   int nExon;
   int first = 1;
@@ -86,6 +87,7 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
   ea = DBAdaptor_getExonAdaptor(ga->dba);
   ta = DBAdaptor_getTranscriptAdaptor(ga->dba);
   aa = DBAdaptor_getAnalysisAdaptor(ga->dba);
+  dbea = DBAdaptor_getDBEntryAdaptor(ga->dba);
 
   nExon = ExonAdaptor_fetchAllByGeneId( ea, geneId, &exons);
 
@@ -113,6 +115,8 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
     "  , tscript.seq_region_start"
     "  , tscript.seq_region_end"
     "  , tscript.seq_region_strand"
+    "  , tscript.biotype"
+    "  , gene.display_xref_id"
     " FROM gene"
     "  , transcript tscript"
     "  , exon_transcript e_t"
@@ -145,6 +149,12 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
       Gene_setAnalysis(gene,ana);
 // Allocating twice???
       Gene_setType(gene,row->getStringAt(row,5));
+
+      IDType displayXrefId = row->getLongLongAt(row,11);
+      if (displayXrefId) {
+        DBEntry *displayXref = DBEntryAdaptor_fetchByDbID(dbea,displayXrefId);
+        Gene_setDisplayXref(gene, displayXref);
+      }
       first = 0;
     }
 
@@ -163,6 +173,7 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
       Transcript_setStart(transcript, row->getIntAt(row,7));
       Transcript_setEnd(transcript, row->getIntAt(row,8));
       Transcript_setStrand(transcript, row->getIntAt(row,9));
+      Transcript_setType(transcript, row->getStringAt(row,10));
       IDHash_add(transcriptHash,transcriptId,transcript);
     }
 
@@ -228,7 +239,7 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
       Transcript_addExon(transcript, exon);
     }
 
-    Transcript_setType(transcript, Gene_getType(gene));
+    //Transcript_setType(transcript, Gene_getType(gene));
     Gene_addTranscript(gene, transcript);
   }
 
