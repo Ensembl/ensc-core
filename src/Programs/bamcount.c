@@ -28,6 +28,7 @@
 #include "Basic/Vector.h"
 #include "Slice.h"
 #include "StrUtil.h"
+#include "IDHash.h"
 
 #include "sam.h"
 #include "bam.h"
@@ -41,6 +42,11 @@ int        findPosInVec(Vector *vec, int pos, char *bqname);
 bam1_t    *mateFoundInVectors(bam1_t *b, Vector **vectors);
 void       printBam(FILE *fp, bam1_t *b, bam_header_t *header);
 int        countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int flags);
+
+typedef struct GeneScoreStruct {
+  int index;
+  long score;
+} GeneScore;
 
 // Flag values
 #define M_UCSC_NAMING 1
@@ -281,6 +287,8 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
   int  endRange;
   char region[1024];
   Vector *genes;
+  IDHash *geneCountsHash = IDHash_new(IDHASH_LARGE);
+  GeneScore *gs; 
 
   genes = Slice_getAllGenes(slice, NULL);
 
@@ -297,10 +305,26 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
     return 1;
   }
 
+// Pregenerate the hash for gene scores, so we don't have to test for existence within the BAM read loop
+// Also means all genes will have a score hash entry
+  int i;
+  for (i=0; i < Vector_getNumElement(genes); i++) {
+    Gene *gene = Vector_getElementAt(genes,i);
+
+    if ((gs = (GeneScore *)calloc(1,sizeof(GeneScore))) == NULL) {
+      fprintf(stderr,"ERROR: Failed allocating GeneScore\n");
+      exit(1);
+    }
+    gs->index = i;
+    IDHash_add(geneCountsHash,Gene_getDbID(gene),gs);
+  }
+
   bam_iter_t iter = bam_iter_query(idx, ref, begRange, endRange);
   bam1_t *b = bam_init1();
 
   long counter = 0;
+  long overlapping = 0;
+  int startIndex = 0;
   while (bam_iter_read(in->x.bam, iter, b) >= 0) {
     int end;
     end = bam_calend(&b->core, bam1_cigar(b));
@@ -316,8 +340,92 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
       printf(".");
       fflush(stdout);
     }
+
+    int j;
+    int done = 0;
+    
+    for (j=startIndex; j < Vector_getNumElement(genes) && !done; j++) {
+      Gene *gene = Vector_getElementAt(genes,j); 
+      if (!gene) {
+        continue;
+      }
+      if (b->core.pos < Gene_getEnd(gene) && end >= Gene_getStart(gene)) {
+
+//        if (DNAAlignFeature_getEnd(snp) >= Gene_getStart(gene) && 
+//           DNAAlignFeature_getStart(snp) <= Gene_getEnd(gene)) {
+        int k;
+
+        for (k=0; k<Gene_getTranscriptCount(gene) && !done; k++) {
+          Transcript *trans = Gene_getTranscriptAt(gene,k);
+          /* 
+          printf("Translation %p Coding region start = %d coding region end = %d\n",
+                 Transcript_getTranslation(trans),
+                 Transcript_getCodingRegionStart(trans),
+                 Transcript_getCodingRegionEnd(trans)); 
+          */
+
+          if (b->core.pos < Transcript_getEnd(trans) && end >= Transcript_getStart(trans)) {
+            // if (DNAAlignFeature_getEnd(snp) >= Transcript_getStart(trans) && 
+            //     DNAAlignFeature_getStart(snp) <= Transcript_getEnd(trans)) {
+            int m;
+     
+            for (m=0; m<Transcript_getExonCount(trans) && !done; m++) {
+              Exon *exon = Transcript_getExonAt(trans,m);
+
+              if (b->core.pos < Exon_getEnd(exon) && end >= Exon_getStart(exon)) {
+                //if (DNAAlignFeature_getEnd(snp) >= Exon_getStart(exon) && 
+                //    DNAAlignFeature_getStart(snp) <= Exon_getEnd(exon)) {
+                overlapping++;
+
+
+/* Done outside loop for speed
+                if( !IDHash_contains(geneCountsHash,Gene_getDbID(gene))) {
+                  if ((gs = (GeneScore *)calloc(1,sizeof(GeneScore))) == NULL) {
+                    fprintf(stderr,"ERROR: Failed allocating GeneScore\n");
+                    exit(1);
+                  }
+                  IDHash_add(geneCountsHash,Gene_getDbID(gene),gs);
+                }
+*/
+                gs = IDHash_getValue(geneCountsHash, Gene_getDbID(gene));
+                gs->score++;
+                
+                done = 1;
+              }
+            }
+          }
+        }
+      } else if (Gene_getStart(gene) > end) {
+        done = 1;
+      } else if (Gene_getEnd(gene) < b->core.pos+1) {
+        gs = IDHash_getValue(geneCountsHash, Gene_getDbID(gene));
+        printf("Gene %s score %ld\n",Gene_getStableId(gene), gs->score);
+
+        printf("Removing gene %s (index %d) with extent %d to %d\n", 
+               Gene_getStableId(gene), 
+               gs->index,
+               Gene_getStart(gene),
+               Gene_getEnd(gene));
+        Vector_setElementAt(genes,j,NULL);
+
+        // Magic - move start if this is the gene at the current start index
+        int n;
+        startIndex = 0;
+        for (n=0;n<Vector_getNumElement(genes);n++) {
+          void *v = Vector_getElementAt(genes,n);
+
+          if (v != NULL) {
+            break;
+          }
+          startIndex++;
+        }
+        printf("startIndex now %d\n",startIndex);
+      }
+    }
   }
   printf("\n");
+
+  printf("Read %ld reads. Num overlapping exons %ld\n", counter, overlapping);
 
   bam_iter_destroy(iter);
   bam_destroy1(b);
