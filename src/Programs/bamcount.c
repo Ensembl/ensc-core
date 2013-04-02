@@ -44,8 +44,9 @@ void       printBam(FILE *fp, bam1_t *b, bam_header_t *header);
 int        countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int flags);
 
 typedef struct GeneScoreStruct {
-  int index;
-  long score;
+  int   index;
+  long  score;
+  Gene *gene;
 } GeneScore;
 
 // Flag values
@@ -78,6 +79,8 @@ int main(int argc, char *argv[]) {
   char *dbName = "homo_sapiens_core_71_37";
 
   char *assName = "GRCh37";
+
+  char *chrName = "1";
 
 //  char *dbHost = "genebuild2.internal.sanger.ac.uk";
 //  char *dbName = "ba1_nomascus_leucogenys_core_70_1_nleu3";
@@ -122,6 +125,9 @@ int main(int argc, char *argv[]) {
         StrUtil_copyString(&assName,val,0);
       } else if (!strcmp(arg, "-v") || !strcmp(arg,"--verbosity")) {
         verbosity = atoi(val);
+// Temporary
+      } else if (!strcmp(arg, "-c") || !strcmp(arg,"--chromosome")) {
+        StrUtil_copyString(&chrName,val,0);
       } else {
         fprintf(stderr,"Error in command line at %s\n\n",arg);
         Bamcount_usage();
@@ -149,11 +155,9 @@ int main(int argc, char *argv[]) {
 
   SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
 
-  Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,250000000);
-  Slice *slice2 = SliceAdaptor_fetchByChrStartEnd(sa,"2",1,250000000);
+  Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,chrName,1,300000000);
 
   Vector_addElement(slices,slice);
-  Vector_addElement(slices,slice2);
 
   if (Vector_getNumElement(slices) == 0) {
     fprintf(stderr, "Error: No slices.\n");
@@ -176,7 +180,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  if (verbosity > 0) printf("Stage 3 - reading, transforming and writing all mapping reads\n");
+  if (verbosity > 0) printf("Stage 2 - counting reads\n");
   int i;
   for (i=0; i<Vector_getNumElement(slices); i++) {
     Slice *slice = Vector_getElementAt(slices,i);
@@ -328,6 +332,7 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
       exit(1);
     }
     gs->index = i;
+    gs->gene  = gene;
     IDHash_add(geneCountsHash,Gene_getDbID(gene),gs);
   }
 
@@ -336,8 +341,14 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
 
   long counter = 0;
   long overlapping = 0;
+  long bad = 0;
   int startIndex = 0;
   while (bam_iter_read(in->x.bam, iter, b) >= 0) {
+    if (b->core.flag & (BAM_FUNMAP | BAM_FSECONDARY | BAM_FQCFAIL | BAM_FDUP)) {
+      bad++;
+      continue;
+    }
+
     int end;
     end = bam_calend(&b->core, bam1_cigar(b));
 
@@ -349,12 +360,13 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
     counter++;
 
     if (!(counter%1000000)) {
-      printf(".");
+      if (verbosity > 1) { printf("."); }
       fflush(stdout);
     }
 
     int j;
     int done = 0;
+    int hadOverlap = 0;
     
     for (j=startIndex; j < Vector_getNumElement(genes) && !done; j++) {
       Gene *gene = Vector_getElementAt(genes,j); 
@@ -366,7 +378,8 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
 //           DNAAlignFeature_getStart(snp) <= Gene_getEnd(gene)) {
         int k;
 
-        for (k=0; k<Gene_getTranscriptCount(gene) && !done; k++) {
+        int doneGene = 0;
+        for (k=0; k<Gene_getTranscriptCount(gene) && !doneGene; k++) {
           Transcript *trans = Gene_getTranscriptAt(gene,k);
 
           if (b->core.pos < Transcript_getEnd(trans) && end >= Transcript_getStart(trans)) {
@@ -374,18 +387,23 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
             //     DNAAlignFeature_getStart(snp) <= Transcript_getEnd(trans)) {
             int m;
      
-            for (m=0; m<Transcript_getExonCount(trans) && !done; m++) {
+            for (m=0; m<Transcript_getExonCount(trans) && !doneGene; m++) {
               Exon *exon = Transcript_getExonAt(trans,m);
 
               if (b->core.pos < Exon_getEnd(exon) && end >= Exon_getStart(exon)) {
                 //if (DNAAlignFeature_getEnd(snp) >= Exon_getStart(exon) && 
                 //    DNAAlignFeature_getStart(snp) <= Exon_getEnd(exon)) {
-                overlapping++;
+
+                // Only count as overlapping once (could be that a read overlaps more than one gene)
+                if (!hadOverlap) {
+                  overlapping++;
+                  hadOverlap = 1;
+                }
 
                 gs = IDHash_getValue(geneCountsHash, Gene_getDbID(gene));
                 gs->score++;
                 
-                done = 1;
+                doneGene = 1;
               }
             }
           }
@@ -394,13 +412,17 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
         done = 1;
       } else if (Gene_getEnd(gene) < b->core.pos+1) {
         gs = IDHash_getValue(geneCountsHash, Gene_getDbID(gene));
-        printf("Gene %s (%s) score %ld\n",Gene_getStableId(gene), DBEntry_getDisplayId(Gene_getDisplayXref(gene)), gs->score);
+        printf("Gene %s (%s) score %ld\n",Gene_getStableId(gene), 
+                                          Gene_getDisplayXref(gene) ? DBEntry_getDisplayId(Gene_getDisplayXref(gene)) : "", 
+                                          gs->score);
 
-        printf("Removing gene %s (index %d) with extent %d to %d\n", 
-               Gene_getStableId(gene), 
-               gs->index,
-               Gene_getStart(gene),
-               Gene_getEnd(gene));
+        if (verbosity > 1) { 
+          printf("Removing gene %s (index %d) with extent %d to %d\n", 
+                 Gene_getStableId(gene), 
+                 gs->index,
+                 Gene_getStart(gene),
+                 Gene_getEnd(gene));
+        }
         Vector_setElementAt(genes,j,NULL);
 
         // Magic (very important for speed) - move startIndex to first non null gene
@@ -414,13 +436,28 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
           }
           startIndex++;
         }
-        printf("startIndex now %d\n",startIndex);
+        if (verbosity > 1) { 
+          printf("startIndex now %d\n",startIndex);
+        }
       }
     }
   }
-  printf("\n");
+  if (verbosity > 1) { printf("\n"); }
 
-  printf("Read %ld reads. Num overlapping exons %ld\n", counter, overlapping);
+// Print out read counts for what ever's left in the genes array
+  int n;
+  for (n=0;n<Vector_getNumElement(genes);n++) {
+    Gene *gene = Vector_getElementAt(genes,n);
+
+    if (gene != NULL) {
+      gs = IDHash_getValue(geneCountsHash, Gene_getDbID(gene));
+      printf("Gene %s (%s) score %ld\n",Gene_getStableId(gene), 
+                                        Gene_getDisplayXref(gene) ? DBEntry_getDisplayId(Gene_getDisplayXref(gene)) : "", 
+                                        gs->score);
+    }
+  }
+
+  printf("Read %ld reads. Num overlapping exons %ld. Number of bad reads (unmapped, qc fail, secondary, dup) %ld\n", counter, overlapping, bad);
 
   bam_iter_destroy(iter);
   bam_destroy1(b);
