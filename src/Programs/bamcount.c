@@ -36,12 +36,13 @@
 void       Bamcount_usage();
 int        bamPosNameCompFunc(const void *one, const void *two);
 int        bamPosCompFunc(const void *one, const void *two);
-int        geneStartCompFunc(const void *one, const void *two);
+int        countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int flags, Vector *genes);
 bam1_t *   findMateInVector(bam1_t *b, Vector *vec);
 int        findPosInVec(Vector *vec, int pos, char *bqname);
+int        geneStartCompFunc(const void *one, const void *two);
+Vector *   getGenes(Slice *slice, int flags);
 bam1_t    *mateFoundInVectors(bam1_t *b, Vector **vectors);
 void       printBam(FILE *fp, bam1_t *b, bam_header_t *header);
-int        countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int flags);
 
 typedef struct GeneScoreStruct {
   int   index;
@@ -82,11 +83,6 @@ int main(int argc, char *argv[]) {
 
   char *chrName = "1";
 
-//  char *dbHost = "genebuild2.internal.sanger.ac.uk";
-//  char *dbName = "ba1_nomascus_leucogenys_core_70_1_nleu3";
-
-//  char *sourceName = "Nleu1.0";
-//  char *destName   = "Nleu_3.0";
 
   int flags = 0;
 
@@ -145,7 +141,6 @@ int main(int argc, char *argv[]) {
     Bamcount_usage();
   }
 
-  if (verbosity > 0) printf("Stage 1 - retrieving annotation from database\n");
   dba = DBAdaptor_new(dbHost,dbUser,dbPass,dbName,dbPort,NULL);
 
   //nSlices = getSlices(dba, destName);
@@ -180,15 +175,17 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  if (verbosity > 0) printf("Stage 2 - counting reads\n");
   int i;
   for (i=0; i<Vector_getNumElement(slices); i++) {
     Slice *slice = Vector_getElementAt(slices,i);
 
     if (verbosity > 0) printf("Working on '%s'\n",Slice_getChrName(slice));
 
-    countReads(inFName, slice, in, idx, flags);
+    if (verbosity > 0) printf("Stage 1 - retrieving annotation from database\n");
+    Vector *genes = getGenes(slice, flags);
 
+    if (verbosity > 0) printf("Stage 2 - counting reads\n");
+    countReads(inFName, slice, in, idx, flags, genes);
   }
 
 
@@ -287,18 +284,23 @@ void printBam(FILE *fp, bam1_t *b, bam_header_t *header) {
   fflush(fp);
 }
 
-int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int flags) {
+Vector *getGenes(Slice *slice, int flags) { 
+  Vector *genes;
+  genes = Slice_getAllGenes(slice, NULL);
+
+  Vector_sort(genes, geneStartCompFunc);
+
+  return genes;
+}
+
+int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int flags, Vector *genes) {
   int  ref;
   int  begRange;
   int  endRange;
   char region[1024];
-  Vector *genes;
   IDHash *geneCountsHash = IDHash_new(IDHASH_LARGE);
   GeneScore *gs; 
 
-  genes = Slice_getAllGenes(slice, NULL);
-
-  Vector_sort(genes, geneStartCompFunc);
 
   if (Slice_getChrStart(slice) != 1) {
     fprintf(stderr, "Currently only allow a slice start position of 1\n");

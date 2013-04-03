@@ -137,6 +137,18 @@ void Vector_setNumElement(Vector *v, int nElem) {
   return;
 }
 
+Vector *Vector_copy(Vector *v) {
+  int i;
+  Vector *newV = Vector_new();
+
+
+  Vector_setNumElement(newV, v->nElement);
+
+  memcpy(newV->elements,v->elements,v->nElement*sizeof(void *));
+
+  return newV;
+}
+
 void Vector_free(Vector *v) {
   int i;
 
