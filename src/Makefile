@@ -19,6 +19,7 @@ all	: directories \
           libensc.a \
           Programs/testdbc \
           Programs/bamcount \
+          Programs/bamcov \
           Programs/bammap \
           Programs/countsnps \
           Programs/indicate \
@@ -184,6 +185,11 @@ Programs/bamcount: \
 	libensc.a \
 	Programs/bamcount.c
 	$(CC) $(CFLAGS) -I$(SAMDIR) -I$(ZLIBDIR) -D_PBGZF_USE -o Programs/bamcount Programs/bamcount.c -L. -lensc  -L$(SAMDIR) -lbam $(LDFLAGS)
+
+Programs/bamcov: \
+	libensc.a \
+	Programs/bamcov.c
+	$(CC) $(CFLAGS) -I$(SAMDIR) -I$(ZLIBDIR) -D_PBGZF_USE -o Programs/bamcov Programs/bamcov.c -L. -lensc  -L$(SAMDIR) -lbam $(LDFLAGS)
 
 Programs/bammap: \
 	libensc.a \

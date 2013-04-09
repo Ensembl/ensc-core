@@ -1,8 +1,7 @@
 /*
-  Bamcount
+  Bamcov
 
-  A program for calculating RPKM type values for features in a BAM format 
-  against a set of annotation from an Ensembl database
+  A program for calculating coverage values for features in a BAM format 
 
   Copyright (c) 1999-2013 The European Bioinformatics Institute and
   Genome Research Limited.  All rights reserved.
@@ -33,22 +32,15 @@
 #include "sam.h"
 #include "bam.h"
 
-void       Bamcount_usage();
-int        bamPosNameCompFunc(const void *one, const void *two);
-int        bamPosCompFunc(const void *one, const void *two);
-int        countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int flags, Vector *genes);
-bam1_t *   findMateInVector(bam1_t *b, Vector *vec);
-int        findPosInVec(Vector *vec, int pos, char *bqname);
+void       Bamcov_usage();
+int        calcCoverage(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int flags);
 int        geneStartCompFunc(const void *one, const void *two);
 Vector *   getGenes(Slice *slice, int flags);
-bam1_t    *mateFoundInVectors(bam1_t *b, Vector **vectors);
 void       printBam(FILE *fp, bam1_t *b, bam_header_t *header);
 
-typedef struct GeneScoreStruct {
-  int   index;
-  long  score;
-  Gene *gene;
-} GeneScore;
+typedef struct CoverageStruct {
+  long  coverage;
+} Coverage;
 
 // Flag values
 #define M_UCSC_NAMING 1
@@ -98,7 +90,7 @@ int main(int argc, char *argv[]) {
     } else {
 // Ones with a val go in this block
       if (argNum == argc-1) {
-        Bamcount_usage();
+        Bamcov_usage();
       }
 
       val = argv[++argNum];
@@ -126,19 +118,19 @@ int main(int argc, char *argv[]) {
         StrUtil_copyString(&chrName,val,0);
       } else {
         fprintf(stderr,"Error in command line at %s\n\n",arg);
-        Bamcount_usage();
+        Bamcov_usage();
       }
     }
     argNum++;
   }
 
   if (verbosity > 0) {
-    printf("Program for read counting of BAM reads against annotation \n"
-           "Steve M.J. Searle.  searle@sanger.ac.uk  Last update Mar 2013.\n");
+    printf("Program for calculating read coverage in a BAM file \n"
+           "Steve M.J. Searle.  searle@sanger.ac.uk  Last update April 2013.\n");
   }
 
   if (!inFName || !outFName) {
-    Bamcount_usage();
+    Bamcov_usage();
   }
 
   dba = DBAdaptor_new(dbHost,dbUser,dbPass,dbName,dbPort,NULL);
@@ -150,7 +142,7 @@ int main(int argc, char *argv[]) {
 
   SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
 
-  Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,chrName,1,300000000);
+  Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,chrName,1,7000000);
 
   Vector_addElement(slices,slice);
 
@@ -181,11 +173,11 @@ int main(int argc, char *argv[]) {
 
     if (verbosity > 0) printf("Working on '%s'\n",Slice_getChrName(slice));
 
-    if (verbosity > 0) printf("Stage 1 - retrieving annotation from database\n");
-    Vector *genes = getGenes(slice, flags);
+//    if (verbosity > 0) printf("Stage 1 - retrieving annotation from database\n");
+//    Vector *genes = getGenes(slice, flags);
 
-    if (verbosity > 0) printf("Stage 2 - counting reads\n");
-    countReads(inFName, slice, in, idx, flags, genes);
+    if (verbosity > 0) printf("Stage 1 - calculating coverage\n");
+    calcCoverage(inFName, slice, in, idx, flags);
   }
 
 
@@ -199,13 +191,13 @@ int main(int argc, char *argv[]) {
 /*
  Program usage message
 */
-void Bamcount_usage() {
+void Bamcov_usage() {
   printf("bamcount \n"
          "  -i --in_file     Input BAM file to map from (string)\n"
-         "  -o --out_file    Output BAM file to write (string)\n"
+         "  -o --out_file    Output Wiggle file to write (string)\n"
          "  -U --ucsc_naming Input BAM file has 'chr' prefix on ALL seq region names (flag)\n"
-         "  -h --host        Database host name for db containing mapping (string)\n"
-         "  -n --name        Database name for db containing mapping (string)\n"
+         "  -h --host        Database host name for db containing genes (string)\n"
+         "  -n --name        Database name for db containing genes (string)\n"
          "  -u --user        Database user (string)\n"
          "  -p --password    Database password (string)\n"
          "  -P --port        Database port (int)\n"
@@ -217,34 +209,6 @@ void Bamcount_usage() {
          "  -v Default verbosity level is 1. You can make it quieter by setting this to 0, or noisier by setting it > 1.\n"
          );
   exit(1);
-}
-
-int bamPosNameCompFunc(const void *one, const void *two) {
-  bam1_t *b1 = *((bam1_t**)one);
-  bam1_t *b2 = *((bam1_t**)two);
-
-  if (b1->core.tid < b2->core.tid) {
-    printf("Urrr.... this shouldn't happen b1 tid %d   b2 tid %d\n", b1->core.tid, b2->core.tid);
-    return -1;
-  } else if (b1->core.tid > b2->core.tid) {
-    printf("Urrr.... this shouldn't happen b1 tid %d   b2 tid %d\n", b1->core.tid, b2->core.tid);
-    return 1;
-  } else {
-    if (b1->core.pos > b2->core.pos) {
-      return 1;
-    } else if (b1->core.pos < b2->core.pos) {
-      return -1;
-    } else {
-      return strcmp(bam1_qname(b1),bam1_qname(b2));
-    }
-  }
-}
-
-int bamPosCompFunc(const void *one, const void *two) {
-  bam1_t *b1 = *((bam1_t**)one);
-  bam1_t *b2 = *((bam1_t**)two);
-
-  return b1->core.pos - b2->core.pos;
 }
 
 int geneStartCompFunc(const void *one, const void *two) {
@@ -293,13 +257,11 @@ Vector *getGenes(Slice *slice, int flags) {
   return genes;
 }
 
-int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int flags, Vector *genes) {
+int calcCoverage(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int flags) {
   int  ref;
   int  begRange;
   int  endRange;
   char region[1024];
-  IDHash *geneCountsHash = IDHash_new(IDHASH_LARGE);
-  GeneScore *gs; 
 
 
   if (Slice_getChrStart(slice) != 1) {
@@ -323,23 +285,11 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
     return 1;
   }
 
-// Pregenerate the hash for gene scores, so we don't have to test for existence within the BAM read loop
-// Also means all genes will have a score hash entry
-  int i;
-  for (i=0; i < Vector_getNumElement(genes); i++) {
-    Gene *gene = Vector_getElementAt(genes,i);
-
-    if ((gs = (GeneScore *)calloc(1,sizeof(GeneScore))) == NULL) {
-      fprintf(stderr,"ERROR: Failed allocating GeneScore\n");
-      exit(1);
-    }
-    gs->index = i;
-    gs->gene  = gene;
-    IDHash_add(geneCountsHash,Gene_getDbID(gene),gs);
-  }
 
   bam_iter_t iter = bam_iter_query(idx, ref, begRange, endRange);
   bam1_t *b = bam_init1();
+
+  Coverage *coverage = calloc(Slice_getLength(slice),sizeof(Coverage));
 
   long counter = 0;
   long overlapping = 0;
@@ -366,6 +316,46 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
       fflush(stdout);
     }
 
+    int cigInd;
+    int refPos;
+    int readPos;
+    uint32_t *cigar = bam1_cigar(b);
+    for (cigInd = readPos = 0, refPos = b->core.pos; cigInd < b->core.n_cigar; ++cigInd) {
+      int k;
+      int lenCigBlock = cigar[cigInd]>>4;
+      int op          = cigar[cigInd]&0xf;
+
+      if (op == BAM_CMATCH || op == BAM_CEQUAL || op == BAM_CDIFF) {
+        for (k = 0; k < lenCigBlock; ++k) {
+          //if (ref[refPos+k] == 0) break; // out of boundary
+          coverage[refPos+k].coverage++;
+        }
+        if (k < lenCigBlock) break;
+        refPos += lenCigBlock; readPos += lenCigBlock;
+      } else if (op == BAM_CDEL) {
+        for (k = 0; k < lenCigBlock; ++k) {
+        //  if (ref[refPos+k] == 0) break;
+          coverage[refPos+k].coverage++;
+        }
+        if (k < lenCigBlock) break;
+        refPos += lenCigBlock;
+      } else if (op == BAM_CSOFT_CLIP) {
+        readPos += lenCigBlock;
+      } else if (op == BAM_CHARD_CLIP) {
+      } else if (op == BAM_CINS) {
+         readPos += lenCigBlock;
+      } else if (op == BAM_CREF_SKIP) {
+         refPos += lenCigBlock;
+      }
+    }
+// Remember: b->core.pos is zero based!
+/*
+    for (k=b->core.pos; k<end; k++) {
+      coverage[k].coverage++;
+    }
+*/
+
+#ifdef DONE
     int j;
     int done = 0;
     int hadOverlap = 0;
@@ -438,9 +428,11 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
         }
       }
     }
+#endif
   }
   if (verbosity > 1) { printf("\n"); }
 
+#ifdef DONE
 // Print out read counts for what ever's left in the genes array
   int n;
   for (n=0;n<Vector_getNumElement(genes);n++) {
@@ -452,95 +444,18 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
                                         Gene_getDisplayXref(gene) ? DBEntry_getDisplayId(Gene_getDisplayXref(gene)) : "", 
                                         gs->score);
     }
-  }
 
-  printf("Read %ld reads. Num overlapping exons %ld. Number of bad reads (unmapped, qc fail, secondary, dup) %ld\n", counter, overlapping, bad);
+  }
+#endif
+
+  printf("Read %ld reads. Number of bad reads (unmapped, qc fail, secondary, dup) %ld\n", counter, bad);
+
+  long i;
+  for (i=0; i< Slice_getLength(slice); i++) {
+    printf("%ld %ld\n", i, coverage[i].coverage);
+  }
 
   bam_iter_destroy(iter);
   bam_destroy1(b);
-}
-
-bam1_t *getMateFromRemoteMates(bam1_t *b, Vector **remoteMates) {
-// For now just delegate, could optimise more
-  return mateFoundInVectors(b, remoteMates);
-}
-
-bam1_t *mateFoundInVectors(bam1_t *b, Vector **vectors) {
-  Vector *vec = vectors[b->core.mtid];
-  
-  if (!vec) {
-    return NULL;
-  }
-
-  return findMateInVector(b, vec);
-}
-
-bam1_t *findMateInVector(bam1_t *b, Vector *vec) {
-  char *bqname = bam1_qname(b);
-  int firstInd = findPosInVec(vec, b->core.mpos, bqname);
-  int i;
-
-  if (firstInd >=0 ) {
-    for (i=firstInd;i<Vector_getNumElement(vec);i++) {
-      bam1_t *vb = (bam1_t *)Vector_getElementAt(vec,i);
-
-      if (b->core.mpos == vb->core.pos) {
-        //if (b->core.isize == -vb->core.isize &&
-        if (abs(b->core.isize) == abs(vb->core.isize) &&
-            b->core.pos == vb->core.mpos &&
-            !(vb->core.flag & MY_FUSEDFLAG)) {
-            
-          int qnameCmp =  strcmp(bam1_qname(vb),bqname); // Note order of comparison
-          if (!qnameCmp) { // Name match
-            return vb;
-          } else if (qnameCmp > 0) { // Optimisation: As names in vector are sorted, once string comparison is positive can not be any matches anymore
-            break;
-          }
-        }
-      } else if (b->core.mpos < vb->core.pos) {
-        break;
-      }
-    }
-  }
-
-  return NULL;
-}
-
-int findPosInVec(Vector *vec, int pos, char *bqname) {
-  int imin = 0;
-  int imax = Vector_getNumElement(vec)-1;
-
-  while (imax >= imin) {
-    int imid = (imax+imin) / 2;
-    bam1_t *b = Vector_getElementAt(vec,imid);
-
-//    printf("imid = %d imin = %d imax = %d pos = %d b->core.pos = %d\n",imid,imin,imax,pos,b->core.pos);
-
-    if (pos > b->core.pos) {
-      imin = imid + 1;
-    } else if (pos < b->core.pos) {
-      imax = imid - 1;
-    } else {
-      //int qnameCmp =  strcmp(bqname,bam1_qname(b)); // Note order of comparison
-      //if (!qnameCmp) {
-        // key found at index imid
-        // Back up through array to find first index which matches (can be several)
-        for (;imid>=0;imid--) {
-          bam1_t *vb = Vector_getElementAt(vec,imid);
-       //   if (vb->core.pos != pos || strcmp(bqname,bam1_qname(vb))) {
-          if (vb->core.pos != pos) {// || strcmp(bqname,bam1_qname(vb))) {
-            return imid+1;
-          }
-        }
-      //} else if (qnameCmp < 0) {
-      //  imax = imid - 1;
-      //} else {
-      //  imin = imid + 1;
-      //}
-
-      return 0; // Is the first element
-    }
-  }
-  return -1;
 }
 
