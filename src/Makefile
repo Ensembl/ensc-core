@@ -10,7 +10,7 @@ SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools_parallel
 #SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools-0.1.18
 ZLIBDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/include
 
-CFLAGS =  -Ofast -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
+CFLAGS =  -g -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS)
 
 BINDIR=../bin
@@ -30,6 +30,7 @@ all	: directories \
           Tests/ClassTest \
           Tests/ComparaDBAdaptorTest \
           Tests/ComparaDNAAlignFeatureAdaptorTest \
+          Tests/CoordSystemTest \
           Tests/DBAdaptorTest \
           Tests/DNAAlignFeatureTest \
           Tests/DNAPepAlignFeatureTest \
@@ -83,6 +84,7 @@ libensc.a	: \
 	objectfiles/DataAdaptors/BaseAdaptor.o \
 	objectfiles/DataAdaptors/BaseFeatureAdaptor.o \
 	objectfiles/DataAdaptors/ChromosomeAdaptor.o \
+	objectfiles/DataAdaptors/CoordSystemAdaptor.o \
 	objectfiles/DataAdaptors/CloneAdaptor.o \
 	objectfiles/DataAdaptors/DBAdaptor.o \
 	objectfiles/DataAdaptors/DBConnection.o \
@@ -111,6 +113,7 @@ libensc.a	: \
 	objectfiles/DataModel/BaseContig.o \
 	objectfiles/DataModel/Basic/Vector.o \
 	objectfiles/DataModel/Chromosome.o \
+	objectfiles/DataModel/CoordSystem.o \
 	objectfiles/DataModel/CigarStrUtil.o \
 	objectfiles/DataModel/Class.o \
 	objectfiles/DataModel/Clone.o \
@@ -230,6 +233,11 @@ Tests/ComparaDNAAlignFeatureAdaptorTest: \
 	libensc.a \
 	Tests/ComparaDNAAlignFeatureAdaptorTest.c
 	$(CC) $(CFLAGS) -o Tests/ComparaDNAAlignFeatureAdaptorTest Tests/ComparaDNAAlignFeatureAdaptorTest.c -L. -lensc $(LDFLAGS)
+
+Tests/CoordSystemTest: \
+	libensc.a \
+	Tests/CoordSystemTest.c
+	$(CC) $(CFLAGS) -o Tests/CoordSystemTest Tests/CoordSystemTest.c -L. -lensc $(LDFLAGS)
 
 Tests/DBAdaptorTest: \
 	libensc.a \
