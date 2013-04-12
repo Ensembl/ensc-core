@@ -26,6 +26,7 @@ char *StrUtil_strReplChrs(char *str, char *fromChs, char *toChs);
 char *StrUtil_substr(char *from, int start, int length);
 int StrUtil_rmQuotes(char *str);
 char *StrUtil_appendNString(char *to, char *from, int len);
+int StrUtil_tokenizeByDelim(char ***tokens, int *ntok, char *string, char *delim);
 
 
 #ifdef __STRUTIL_MAIN__

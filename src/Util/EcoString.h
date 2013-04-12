@@ -12,7 +12,7 @@ struct EcoStrTabStruct {
   int        *UseCount;
 };
 
-#define EcoString_strcmp(X,Y) !((int)(X) == (int)(Y))
+#define EcoString_strcmp(X,Y) !((X) == (Y))
 
 /* prototypes */
 int EcoString_addStr(ECOSTRTABLE *EcoSTabP, char *String, int *StrInd);
