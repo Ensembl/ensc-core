@@ -218,3 +218,11 @@ AssemblyMapperAdaptor *DBAdaptor_getAssemblyMapperAdaptor(DBAdaptor *dba) {
   }
   return (AssemblyMapperAdaptor *)DBConnection_getAdaptor(dba->dbc,ASSEMBLYMAPPER_ADAPTOR);
 }
+
+CoordSystemAdaptor *DBAdaptor_getCoordSystemAdaptor(DBAdaptor *dba) {
+  if (!DBConnection_getAdaptor(dba->dbc,COORDSYSTEM_ADAPTOR)) {
+    DBConnection_addAdaptor(dba->dbc,
+                            (BaseAdaptor *)CoordSystemAdaptor_new(dba));
+  }
+  return (CoordSystemAdaptor *)DBConnection_getAdaptor(dba->dbc,COORDSYSTEM_ADAPTOR);
+}

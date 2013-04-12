@@ -1,6 +1,8 @@
 #include "CoordSystemAdaptor.h"
 #include "BaseAdaptor.h"
 #include "MysqlUtil.h"
+#include "DBAdaptor.h"
+#include "MetaContainer.h"
 
 #include "StatementHandle.h"
 #include "ResultRow.h"
@@ -8,12 +10,14 @@
 CoordSystemAdaptor *CoordSystemAdaptor_new(DBAdaptor *dba) {
   CoordSystemAdaptor *csa;
   char qStr[256];
+  StatementHandle *sth;
+  ResultRow *row;
 
   if ((csa = (CoordSystemAdaptor *)calloc(1,sizeof(CoordSystemAdaptor))) == NULL) {
     fprintf(stderr, "ERROR: Failed allocating space for CoordSystemAdaptor\n");
     return NULL;
   }
-  BaseAdaptor_init((BaseAdaptor *)csa, dba, CHROMOSOME_ADAPTOR);
+  BaseAdaptor_init((BaseAdaptor *)csa, dba, COORDSYSTEM_ADAPTOR);
 
   //
   // Cache the entire contents of the coord_system table cross-referenced
@@ -23,7 +27,6 @@ CoordSystemAdaptor *CoordSystemAdaptor_new(DBAdaptor *dba) {
   csa->nameCache = StringHash_new(STRINGHASH_SMALL);
   csa->rankCache = IDHash_new(IDHASH_SMALL);
 
-  // keyed on id, 1/undef values
   csa->isSeqLevelCache = IDHash_new(IDHASH_SMALL);
   csa->isDefaultVersionCache = IDHash_new(IDHASH_SMALL);
 
@@ -35,7 +38,7 @@ CoordSystemAdaptor *CoordSystemAdaptor_new(DBAdaptor *dba) {
   $self->{'_external_seq_region_mapping'} = {};
 */
 
-  int speciesID = 1; // Hardcoded for now
+  IDType speciesID = 1; // Hardcoded for now
 
   sprintf(qStr, "SELECT coord_system_id, name, rank, version, attrib "
                     "FROM coord_system "
@@ -52,16 +55,17 @@ CoordSystemAdaptor *CoordSystemAdaptor_new(DBAdaptor *dba) {
     IDType dbID    = row->getLongLongAt(row,0);
     char * name    = row->getStringAt(row,1);
     int    rank    = row->getIntAt(row,2);
-    int    version = row->getIntAt(row,3);
+    char * version = row->getStringAt(row,3);
     char * attribs = row->getStringAt(row,4);
 
     if ( attribs && strcmp(attribs,"") ) {
-      char **tokens;
+      char **tokens = NULL;
       int ntok;
       int i;
 
       if (!StrUtil_tokenizeByDelim(&tokens, &ntok, attribs, ",")) {
-        exit("Failed tokenizing attribs string %s\n", attribs);
+        fprintf(stderr,"Failed tokenizing attribs string %s\n", attribs);
+        exit(1);
       }
         
       
@@ -78,7 +82,7 @@ CoordSystemAdaptor *CoordSystemAdaptor_new(DBAdaptor *dba) {
       }
     }
 
-    CoordSystem cs = CoordSystem_new( dbID, csa, name, version, rank, seqLvl, defaultVer, 0 /*toplevel*/ );
+    CoordSystem *cs = CoordSystem_new( name, version, rank, dbID, csa, seqLvl, defaultVer, 0 /*toplevel*/ );
 
     IDHash_add(csa->dbIDCache, CoordSystem_getDbID(cs), cs);
 
@@ -97,10 +101,10 @@ CoordSystemAdaptor *CoordSystemAdaptor_new(DBAdaptor *dba) {
 
     Vector *v;
     if (StringHash_contains(csa->nameCache, lcName)) {
-      v = StringHash_getValue(lcName);
+      v = StringHash_getValue(csa->nameCache, lcName);
     } else {
       v = Vector_new();
-      StringHash_add(csa->nameCache, v);
+      StringHash_add(csa->nameCache, lcName, v);
     }
     Vector_addElement(v, cs);
 
@@ -170,20 +174,21 @@ void CoordSystemAdaptor_cacheMappingPaths(CoordSystemAdaptor *csa) {
   // Retrieve a list of available mappings from the meta table.  This
   // may eventually be moved a table of its own if this proves too
   // cumbersome.
-  StringHash *mapping_paths = StringHash_new();
-  MetaContainer *mc = DBAdaptor_getMetaContainer(csa->db);
-  Vector *mappingStrings = MetaContainer_listValueByKey(mc, 'assembly.mapping');
+  StringHash *mappingPaths = StringHash_new(STRINGHASH_SMALL);
+  MetaContainer *mc = DBAdaptor_getMetaContainer(csa->dba);
+  Vector *mappingStrings = MetaContainer_listValueByKey(mc, "assembly.mapping");
 
   int i;
   MAP_PATH : for (i=0; i<Vector_getNumElement(mappingStrings); i++) {
     char *mapPath = Vector_getElementAt(mappingStrings, i);
 
-    char **csStrings;
+    char **csStrings = NULL;
     int nCsString;
     int i;
 
     if (!StrUtil_tokenizeByDelim(&csStrings, &nCsString, mapPath, "|#")) {
-      exit("Failed tokenizing mapPath string %s\n", mapPath);
+      fprintf(stderr, "Failed tokenizing mapPath string %s\n", mapPath);
+      exit(1);
     }
 
     if ( nCsString < 2 ) {
@@ -191,20 +196,21 @@ void CoordSystemAdaptor_cacheMappingPaths(CoordSystemAdaptor *csa) {
       continue;
     }
 
-    Vector coordSystems = Vector_new();
+    Vector *coordSystems = Vector_new();
 
     int j;
     for (j=0; j<nCsString ; j++) {
       char *csString = csStrings[j];
-      int chInd = index(csString,':');
+      char *chP = index(csString,':');
+      CoordSystem *cs;
 
-      if (chInd < 0) {
+      if (chP == NULL) {
         // csString is just name (no :)
-        CoordSystem *cs = CoordSystemAdaptor_fetchByName(csa, csString, NULL);
+        cs = CoordSystemAdaptor_fetchByName(csa, csString, NULL);
       } else {
         // csString is name and version - replace ':' with \0
-        csString[index] = '\0';
-        CoordSystem *cs = CoordSystemAdaptor_fetchByName(csa, csString, &csString[index+1]);
+        *chP = '\0';
+        cs = CoordSystemAdaptor_fetchByName(csa, csString, chP+1);
       }
         
 
@@ -224,12 +230,12 @@ void CoordSystemAdaptor_cacheMappingPaths(CoordSystemAdaptor *csa) {
     // If the delimiter is a '#' we want a special case, multiple parts
     // of the same component map to the same assembly part.  As this
     // looks like the "long" mapping, we just make the path a bit longer
-    if ( index( mapPath, '#' ) != -1 && Vector_getNumElement(coordSystems) == 2 ) {
+    if ( index( mapPath, '#' ) != NULL && Vector_getNumElement(coordSystems) == 2 ) {
       Vector_insertElementAt(coordSystems,1,NULL);
     }
 
     CoordSystem *cs1 = Vector_getElementAt(coordSystems, 0);
-    CoordSystem *cs2 = Vector_getElementAt(coordSystems, Vector_getNumElement(coordSystems)-1);
+    CoordSystem *cs2 = Vector_getLastElement(coordSystems); //, Vector_getNumElement(coordSystems)-1);
 
     char key1[1024];
     char key2[1024];
@@ -260,7 +266,7 @@ void CoordSystemAdaptor_cacheMappingPaths(CoordSystemAdaptor *csa) {
   // Create the pseudo coord system 'toplevel' and cache it so that only
   // one of these is created for each database.
 
-  CoordSystem *topLevel = CoordSystem_new( 0, csa, "toplevel", 0/*version*/, 0/*rank*/, 0/*seqlevel*/, 0/*defaultVer*/, 1 /*topLevel*/);
+  CoordSystem *topLevel = CoordSystem_new("toplevel", "0"/*version*/, 0/*rank*/, 0, csa, 0/*seqlevel*/, 0/*defaultVer*/, 1 /*topLevel*/);
   csa->topLevel = topLevel;
 
   if (csa->mappingPaths) {
@@ -269,7 +275,7 @@ void CoordSystemAdaptor_cacheMappingPaths(CoordSystemAdaptor *csa) {
 
   csa->mappingPaths = mappingPaths;
 
-  return 1;
+  return;
 }
 
 /*
@@ -396,7 +402,7 @@ CoordSystem *CoordSystemAdaptor_fetchByName(CoordSystemAdaptor *csa, char *name,
       if (!strcasecmp(CoordSystem_getVersion(cs),version)) {
         return cs;
       }
-    } else if (IDHash_contains(csa->isDefaultVersionCache, CoordSystem_getDbID(cs)) {
+    } else if (IDHash_contains(csa->isDefaultVersionCache, CoordSystem_getDbID(cs))) {
       return cs;
     }
   }
@@ -456,7 +462,7 @@ Vector *CoordSystemAdaptor_fetchAllByName(CoordSystemAdaptor *csa, char *name) {
 }
 
 
-CoordSystem *CoordSystemAdaptor_fetchByDbID(CooordSystemAdaptor *csa, IDType dbID) {
+CoordSystem *CoordSystemAdaptor_fetchByDbID(CoordSystemAdaptor *csa, IDType dbID) {
 
   CoordSystem *cs = IDHash_getValue(csa->dbIDCache, dbID);
 
@@ -550,8 +556,8 @@ Vector *CoordSystemAdaptor_getMappingPath(CoordSystemAdaptor *csa, CoordSystem *
     // No path was explicitly defined, but we might be able to guess a
     // suitable path.  We only guess for missing 2 step paths.
 
-    mid1Hash = StringHash_new();
-    mid2Hash = StringHash_new();
+    StringHash *mid1Hash = StringHash_new(STRINGHASH_SMALL);
+    StringHash *mid2Hash = StringHash_new(STRINGHASH_SMALL);
 
     Vector *mappingPathsVec = StringHash_getValues(csa->mappingPaths);
 
@@ -566,23 +572,23 @@ Vector *CoordSystemAdaptor_getMappingPath(CoordSystemAdaptor *csa, CoordSystem *
 
       int match = -1;
 
-      if (CoordSystem_equals(Vector_getElementAt(path,0), cs1)) {
+      if (CoordSystem_compare(Vector_getElementAt(path,0), cs1)) {
         match = 1;
-      } else if (CoordSystem_equals(Vector_getElementAt(path,1), cs1)) {
+      } else if (CoordSystem_compare(Vector_getElementAt(path,1), cs1)) {
         match = 0;
       }
 
       if (match > -1) {
         CoordSystem *mid = Vector_getElementAt(path, match);
-        char midKey[1024]
+        char midKey[1024];
         sprintf(midKey,"%s:%s", CoordSystem_getName(mid), CoordSystem_getVersion(mid) ? CoordSystem_getVersion(mid) : "");
 
 
         // is the same cs mapped to by other cs?
-        if (StringHash_contains(mid2Hash, midkey)) {
+        if (StringHash_contains(mid2Hash, midKey)) {
           // Make new three way path
           path = Vector_new();
-          Vector_addElement(cs1); Vector_addElement(mid); Vector_addElement(cs2);
+          Vector_addElement(path, cs1); Vector_addElement(path, mid); Vector_addElement(path, cs2);
 
           // Add to mapping
           StringHash_add(csa->mappingPaths, keypair, path);
@@ -595,8 +601,8 @@ Vector *CoordSystemAdaptor_getMappingPath(CoordSystemAdaptor *csa, CoordSystem *
                           "An explicit 'assembly.mapping' entry should be added to the meta table.\nExample: '%s|%s|%s'\n", 
                           key1, key2, key1, midKey, key2);
 
-          StringHash_free(mid1Hash);
-          StringHash_free(mid2Hash);
+          StringHash_free(mid1Hash, NULL);
+          StringHash_free(mid2Hash, NULL);
 
           return path;
         } else {
@@ -604,25 +610,25 @@ Vector *CoordSystemAdaptor_getMappingPath(CoordSystemAdaptor *csa, CoordSystem *
         }
       }
 
-      int match = -1;
+      match = -1;
 
-      if (CoordSystem_equals(Vector_getElementAt(path,0), cs2)) {
+      if (CoordSystem_compare(Vector_getElementAt(path,0), cs2)) {
         match = 1;
-      } else if (CoordSystem_equals(Vector_getElementAt(path,1), cs2)) {
+      } else if (CoordSystem_compare(Vector_getElementAt(path,1), cs2)) {
         match = 0;
       }
 
       if (match > -1) {
         CoordSystem *mid = Vector_getElementAt(path, match);
-        char midKey[1024]
+        char midKey[1024];
         sprintf(midKey,"%s:%s", CoordSystem_getName(mid), CoordSystem_getVersion(mid) ? CoordSystem_getVersion(mid) : "");
 
 
         // is the same cs mapped to by other cs?
-        if (StringHash_contains(mid1Hash, midkey)) {
+        if (StringHash_contains(mid1Hash, midKey)) {
           // Make new three way path
           path = Vector_new();
-          Vector_addElement(cs2); Vector_addElement(mid); Vector_addElement(cs1);
+          Vector_addElement(path, cs2); Vector_addElement(path, mid); Vector_addElement(path, cs1);
 
           // Add to mapping
           StringHash_add(csa->mappingPaths, revKeypair, path);
@@ -635,8 +641,8 @@ Vector *CoordSystemAdaptor_getMappingPath(CoordSystemAdaptor *csa, CoordSystem *
                           "An explicit 'assembly.mapping' entry should be added to the meta table.\nExample: '%s|%s|%s'\n", 
                           key1, key2, key1, midKey, key2);
 
-          StringHash_free(mid1Hash);
-          StringHash_free(mid2Hash);
+          StringHash_free(mid1Hash, NULL);
+          StringHash_free(mid2Hash, NULL);
 
           return path;
         } else {
@@ -765,18 +771,18 @@ sub store_mapping_path{
 =cut
 */
 
-sub CoordSystemAdaptor_fetchByAttrib(CoordSystemAdaptor *csa, char *attrib, char *version) {
+CoordSystem *CoordSystemAdaptor_fetchByAttrib(CoordSystemAdaptor *csa, char *attrib, char *version) {
   IDHash *attribCache;
 
   if ( !strcmp(attrib, "sequence_level") ) {
-    attribCache = isSeqLevelCache;
+    attribCache = csa->isSeqLevelCache;
   } else if ( !strcmp(attrib, "default_version")) {
-    attribCache = isDefaultVersionCache;
+    attribCache = csa->isDefaultVersionCache;
   }
 
   
   if (!IDHash_getNumValues(attribCache)) {
-    fprintf(stderr, "No %s coordinate system defined\n",attrib)
+    fprintf(stderr, "No %s coordinate system defined\n",attrib);
     exit(1);
   }
 
@@ -786,11 +792,11 @@ sub CoordSystemAdaptor_fetchByAttrib(CoordSystemAdaptor *csa, char *attrib, char
     CoordSystem *cs = values[i];
 
     if (version) {
-      if (!strcasecmp(version, CoordSystem_getVersion(cs)) {
+      if (!strcasecmp(version, CoordSystem_getVersion(cs))) {
         free(values);
         return cs;
       }
-    } else if (IDHash_contains(csa->isDefaultVersionCache,dbID)) {
+    } else if (IDHash_contains(csa->isDefaultVersionCache, CoordSystem_getDbID(cs))) {
       free(values);
       return cs;
     }
@@ -802,7 +808,7 @@ sub CoordSystemAdaptor_fetchByAttrib(CoordSystemAdaptor *csa, char *attrib, char
     exit(1);
   }
 
-  CoordSystem *cs = IDHash_getValue(attribCache, dbID);
+  CoordSystem *cs = values[0];
   fprintf(stderr, "No default version for %s coord_system exists. Using version [%s] arbitrarily\n",
                   attrib, CoordSystem_getVersion(cs));
 
@@ -830,12 +836,12 @@ Vector *CoordSystemAdaptor_fetchAllByAttrib(CoordSystemAdaptor *csa, char *attri
   IDHash *attribCache;
 
   if ( !strcmp(attrib, "sequence_level") ) {
-    attribCache = isSeqLevelCache;
+    attribCache = csa->isSeqLevelCache;
   } else if ( !strcmp(attrib, "default_version")) {
-    attribCache = isDefaultVersionCache;
+    attribCache = csa->isDefaultVersionCache;
   }
 
-  Vector *coordSystems = Vector_newFromArray(IDHash_getValues(attribCache), IDHash_getNumValue(attribCache));
+  Vector *coordSystems = Vector_newFromArray(IDHash_getValues(attribCache), IDHash_getNumValues(attribCache));
 
   return coordSystems;
 }

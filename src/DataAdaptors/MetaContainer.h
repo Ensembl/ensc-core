@@ -13,6 +13,7 @@ struct MetaContainerStruct {
 MetaContainer *MetaContainer_new(DBAdaptor *dba);
 char *MetaContainer_getDefaultAssembly(MetaContainer *mc);
 Species *MetaContainer_getSpecies(MetaContainer *mc);
+Vector *MetaContainer_listValueByKey(MetaContainer *mc, char *key);
 
 
 #endif
