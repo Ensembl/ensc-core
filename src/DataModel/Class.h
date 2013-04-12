@@ -42,6 +42,7 @@ typedef enum ClassTypeEnum {
   CLASS_SYNTENYREGION,
   CLASS_VECTOR,
   CLASS_SPECIES,
+  CLASS_COORDSYSTEM,
   CLASS_NUMCLASS
 } ClassType;
 

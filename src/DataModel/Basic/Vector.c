@@ -20,6 +20,17 @@ Vector *Vector_new() {
   return vector;
 }
 
+Vector *Vector_newFromArray(void **array, int nInArray) {
+  Vector *vector = Vector_new();
+
+  int i;
+  for (i=0;i<nInArray;i++) {
+    Vector_addElement(vector, array[i]);
+  }
+
+  return vector;
+}
+
 void Vector_setFreeFunc(Vector *v, void freeElement()) {
   v->freeElement = freeElement;
 }
@@ -78,6 +89,27 @@ void *Vector_removeElementAt(Vector *v, int ind) {
   v->nElement--;
 
   return removed;
+}
+
+void *Vector_insertElementAt(Vector *v, int ind, void *elem) {
+  void *removed;
+  int i;
+
+  if (ind < 0) {
+    fprintf(stderr,"ERROR: Invalid element index %d\n",ind);
+    exit(1);
+  } else if (ind >= v->nElement) {
+    fprintf(stderr,"ERROR: Invalid element index %d\n",ind);
+    exit(1);
+  }
+  
+  Vector_setNumElement(v, v->nElement+1);
+
+  for (i=v->nElement-2; i>=ind; i--) {
+    v->elements[i+1] = v->elements[i];
+  }
+
+  return Vector_setElementAt(v, ind, elem);
 }
 
 void Vector_reverse(Vector *v) {

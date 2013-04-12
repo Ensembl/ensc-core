@@ -19,6 +19,8 @@ SeqFeature *SeqFeature_new(void) {
     return NULL;
   }
 
+  sf->funcs = &seqFeatureFuncs;
+
   return sf;
 }
 

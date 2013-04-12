@@ -16,8 +16,8 @@
 
 struct MapperStruct {
   IDHash *hashes[2];
-  CoordSystem toSystem;
-  CoordSystem fromSystem;
+  CoordSystemType toSystem;
+  CoordSystemType fromSystem;
   int isSorted;
 };
 
@@ -33,18 +33,18 @@ struct MapperStruct {
 #define Mapper_setIsSorted(m, i) (m)->isSorted = (i)
 #define Mapper_getIsSorted(m) (m)->isSorted
 
-Mapper *Mapper_new(CoordSystem from, CoordSystem to);
+Mapper *Mapper_new(CoordSystemType from, CoordSystemType to);
 
 MapperRangeSet *Mapper_mapCoordinates(Mapper *m, IDType id, int start, int end, 
-                                      int strand, CoordSystem type);
+                                      int strand, CoordSystemType type);
 
 int Mapper_fastMap(Mapper *m, IDType id, int start, int end, int strand, 
-                   CoordSystem type, MapperCoordinate *retRange);
+                   CoordSystemType type, MapperCoordinate *retRange);
 
 void Mapper_addMapCoordinates(Mapper *m, IDType contigId, int contigStart, int contigEnd,
                               int contigOri, IDType chrId, int chrStart, int chrEnd);
 
-MapperPairSet *Mapper_listPairs(Mapper *m, IDType id, int start, int end, CoordSystem type);
+MapperPairSet *Mapper_listPairs(Mapper *m, IDType id, int start, int end, CoordSystemType type);
 
 void Mapper_dump(Mapper *m, FILE *fp);
 

@@ -2,7 +2,7 @@
 #include "MapperCoordinate.h"
 #include <stdio.h>
 
-Mapper *Mapper_new(CoordSystem from, CoordSystem to) {
+Mapper *Mapper_new(CoordSystemType from, CoordSystemType to) {
   Mapper *m;
 
   if ((m = (Mapper *)calloc(1,sizeof(Mapper))) == NULL) {
@@ -42,7 +42,7 @@ Mapper *Mapper_new(CoordSystem from, CoordSystem to) {
 =cut
 */
 
-MapperRangeSet *Mapper_mapCoordinates(Mapper *m, IDType id, int start, int end, int strand, CoordSystem type) {
+MapperRangeSet *Mapper_mapCoordinates(Mapper *m, IDType id, int start, int end, int strand, CoordSystemType type) {
   IDHash *hash;
   MapperPair *lastUsedPair = NULL;
   MapperRangeSet *results;
@@ -189,7 +189,7 @@ MapperRangeSet *Mapper_mapCoordinates(Mapper *m, IDType id, int start, int end, 
 =cut
 */
 
-int Mapper_fastMap(Mapper *m, IDType id, int start, int end, int strand, CoordSystem type, MapperCoordinate *retRange) {
+int Mapper_fastMap(Mapper *m, IDType id, int start, int end, int strand, CoordSystemType type, MapperCoordinate *retRange) {
   MapperPairSet *pairs;
   int i;
   IDHash *hash;
@@ -350,7 +350,7 @@ void Mapper_addMapCoordinates(Mapper *m, IDType contigId, int contigStart, int c
 =cut
 */
 
-MapperPairSet *Mapper_listPairs(Mapper *m, IDType id, int start, int end, CoordSystem type) {
+MapperPairSet *Mapper_listPairs(Mapper *m, IDType id, int start, int end, CoordSystemType type) {
   MapperPairSet *pairs;
   IDHash *hash;
   int from, to;

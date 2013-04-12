@@ -34,6 +34,7 @@ void *Vector_addElement(Vector *vector, void *elem);
 void *Vector_getElementAt(Vector *v, int ind);
 void Vector_free(Vector *vector);
 void Vector_setFreeFunc(Vector *vector, void freeFunc());
+Vector *Vector_newFromArray(void **array, int nInArray);
 
 void Vector_append(Vector *dest, Vector *src);
 void Vector_reverse(Vector *v);

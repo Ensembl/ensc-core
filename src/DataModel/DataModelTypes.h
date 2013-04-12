@@ -8,6 +8,7 @@ typedef struct BaseAlignFeatureStruct BaseAlignFeature;
 typedef struct BaseContigStruct BaseContig;
 typedef struct ChromosomeStruct Chromosome;
 typedef struct CloneStruct Clone;
+typedef struct CoordSystemStruct CoordSystem;
 typedef struct DBEntryStruct DBEntry;
 typedef struct DNAAlignFeatureStruct DNAAlignFeature;
 typedef struct DNAPepAlignFeatureStruct DNAPepAlignFeature;

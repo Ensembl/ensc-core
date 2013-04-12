@@ -9,6 +9,6 @@ typedef enum CoordSystemEnum {
   RAWCONTIG_COORDS,
   CDNA_COORDS,
   GENOMIC_COORDS
-} CoordSystem;
+} CoordSystemType;
 
 #endif
