@@ -6,8 +6,8 @@
 typedef struct MapperUnitStruct MapperUnit;
 
 struct MapperUnitStruct {
-  int start;
-  int end;
+  long start;
+  long end;
   int ori;
   IDType id;
 };

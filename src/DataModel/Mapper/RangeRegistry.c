@@ -331,6 +331,12 @@ long RangeRegistry_overlapSize(RangeRegistry *registry, IDType id, long start, l
 // low level function to access the ranges
 // only use for read access
 Vector *RangeRegistry_getRanges(RangeRegistry *registry, IDType id) {
+  IDHash *reg = RangeRegistry_getRegistry(registry);
+  Vector *list = NULL;
 
-  return $self->{'registry'}->{$id};
+  if (IDHash_contains(reg, id)) {
+    list = IDHash_getValue(reg, id); 
+  }
+
+  return list;
 }

@@ -4,15 +4,16 @@
 typedef enum MapperRangeTypeEnum {
   MAPPERRANGE_NONE,
   MAPPERRANGE_GAP,
-  MAPPERRANGE_COORD
+  MAPPERRANGE_COORD,
+  MAPPERRANGE_INDEL
 } MapperRangeType;
 
 typedef struct MapperRangeStruct MapperRange;
 
 #define MAPPERRANGE_DATA \
    int rangeType; \
-   int start; \
-   int end;
+   long start; \
+   long end;
 
 struct MapperRangeStruct {
   MAPPERRANGE_DATA

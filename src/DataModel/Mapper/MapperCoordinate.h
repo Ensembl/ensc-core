@@ -12,5 +12,5 @@ struct MapperCoordinateStruct {
   signed char strand;
 };
 
-MapperCoordinate *MapperCoordinate_new(IDType id, int start, int end, int strand);
+MapperCoordinate *MapperCoordinate_new(IDType id, int start, int end, int strand, CoordSystem *cs, int rank);
 #endif

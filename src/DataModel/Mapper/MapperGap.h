@@ -9,5 +9,5 @@ struct MapperGapStruct {
   MAPPERRANGE_DATA
 };
 
-MapperGap *MapperGap_new(int start, int end);
+MapperGap *MapperGap_new(long start, long end);
 #endif

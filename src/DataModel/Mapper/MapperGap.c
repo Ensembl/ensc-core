@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-MapperGap *MapperGap_new(int start, int end) {
+MapperGap *MapperGap_new(long start, long end) {
   MapperGap *mg;
 
   if ((mg = (MapperGap *)calloc(1,sizeof(MapperGap))) == NULL) {
