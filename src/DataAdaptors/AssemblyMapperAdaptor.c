@@ -874,10 +874,10 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
   //need to perform the query for each unregistered range
   int i;
   for (i=0; i<Vector_getNumElement(ranges); i++) {
-    SeqRegionRange *range = Vector_getElementAt(ranges, i);
+    CoordPair *range = Vector_getElementAt(ranges, i);
 
-    long start = SeqRegionRange_getSeqRegionStart(range);
-    long end   = SeqRegionRange_getSeqRegionEnd(range);
+    long start = CoordPair_getStart(range);
+    long end   = CoordPair_getEnd(range);
 
     sth->execute(sth, seqRegionId, start, end, midCsId);
 
@@ -1228,10 +1228,10 @@ void AssemblyMapperAdaptor_registerChainedSpecial(AssemblyMapperAdaptor *ama, Ch
 
     int i;
     for (i=0; i<Vector_getNumElement(ranges); i++) {
-      SeqRegionRange *range = Vector_getElementAt(ranges, i);
+      CoordPair *range = Vector_getElementAt(ranges, i);
 
-      long start = SeqRegionRange_getSeqRegionStart(range);
-      long end   = SeqRegionRange_getSeqRegionEnd(range);
+      long start = CoordPair_getStart(range);
+      long end   = CoordPair_getEnd(range);
 
       sth->execute(sth, id1, start, end, CoordSystem_getDbID(toCs), id2);
 
@@ -1705,7 +1705,7 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
 // after both halves of a chained mapper are loaded
 // this function maps all ranges in $ranges and loads the
 // results into the combined mapper
-sub AssemblyMapperAdaptor_buildCombinedMapper(AssemblyMapperAdaptor *ama, Vector *ranges, Mapper *startMidMapper, 
+void AssemblyMapperAdaptor_buildCombinedMapper(AssemblyMapperAdaptor *ama, Vector *ranges, Mapper *startMidMapper, 
                                               Mapper *endMidMapper, Mapper *combinedMapper, char *startName) {
   int i;
   for (i=0; i<Vector_getNumElement(ranges); i++) {
@@ -1717,45 +1717,50 @@ sub AssemblyMapperAdaptor_buildCombinedMapper(AssemblyMapperAdaptor *ama, Vector
 
     long sum = 0;
 
-    Vector *initialCoords = Mapper_mapCoordinates(startMidMapper, seqRegionId, start, end, 1, startName);
+    MapperRangeSet *initialCoords = Mapper_mapCoordinates(startMidMapper, seqRegionId, start, end, 1, startName);
 
-    foreach my $icoord (@initial_coords) {
+    int j;
+    for (j=0; j < MapperRangeSet_getNumRange(initialCoords); j++) {
+      MapperRange *icoord = MapperRangeSet_getRangeAt(initialCoords, j);
+
       //skip gaps
-      if ($icoord->isa('Bio::EnsEMBL::Mapper::Gap')) {
-        sum += $icoord->length();
-        next;
+      if (icoord->rangeType == MAPPERRANGE_GAP) {
+        sum += MapperRange_getLength(icoord);
+        continue;
       }
 
 
       //feed the results of the first mapping into the second mapper
-      my @final_coords =
-        $end_mid_mapper->map_coordinates($icoord->id, $icoord->start,
-                                         $icoord->end,
-                                         $icoord->strand, "middle");
+      MapperRangeSet *finalCoords =
+        Mapper_mapCoordinates(endMidMapper, icoord->id, icoord->start, icoord->end, icoord->strand, "middle");
 
 
-      foreach my $fcoord (@final_coords) {
+      int k;
+      for (k=0; k < MapperRangeSet_getNumRange(finalCoords); k++) {
+        MapperRange *fcoord = MapperRangeSet_getRangeAt(finalCoords, k);
         //load up the final mapper
 
-        if ($fcoord->isa('Bio::EnsEMBL::Mapper::Coordinate')) {
+        // Mapper::Coordinate - inheritance means INDEL is also a coordinate
+        if (fcoord->rangeType == MAPPERRANGE_COORDINATE || fcoord->rangeType == MAPPERRANGE_INDEL) {
           long totalStart = start + sum;
-          long totalEnd   = totalStart + $fcoord->length - 1;
-          int  ori = $fcoord->strand();
+          long totalEnd   = totalStart + MapperRange_getLength(fcoord) - 1;
+          int  ori = fcoord->strand;
 
-          if (!strcmp(startName,"first")) { // add coords in consistant order
+          if (!strcmp(startName,"first")) { // add coords in consistent order
             Mapper_addMapCoordinates(combinedMapper,
-                             seqRegionId, totalStart, $totalEnd, ori,
-                             $fcoord->id(), $fcoord->start(), $fcoord->end());
+                             seqRegionId, totalStart, totalEnd, ori,
+                             fcoord->id, fcoord->start, fcoord->end);
           } else {
             Mapper_addMapCoordinates(combinedMapper,
-                        $fcoord->id(), $fcoord->start(), $fcoord->end(), ori,
+                        fcoord->id, fcoord->start, fcoord->end, ori,
                         seqRegionId, totalStart, totalEnd);
           }
-
         }
-        sum += $fcoord->length();
+        sum += MapperRange_getLength(fcoord);
       }
+      MapperRangeSet_free(fcoord);
     }
+    MapperRangeSet_free(icoord);
   }
   //all done!
 }
