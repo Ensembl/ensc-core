@@ -9,6 +9,7 @@ typedef struct MapperPairStruct MapperPair;
 struct MapperPairStruct {
   MapperUnit *units[2];
   int ori;
+  int isIndel;
 };
 
 MapperPair *MapperPair_new();

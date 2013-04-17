@@ -19,4 +19,7 @@ struct MapperRangeStruct {
   MAPPERRANGE_DATA
 };
 
+
+#define MapperRange_getLength(mr) ((mr)->end - (mr)->start + 1)
+
 #endif
