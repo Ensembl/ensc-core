@@ -9,6 +9,8 @@
 
 //#include "BaseRODBTest.h"
 
+int loadSGPDump(Mapper *mapper, int reverse);
+int testTransform(Mapper *mapper, int srcId, int srcStart, int srcEnd, int srcStrand, char *srcType, int dest[][4], int nDest );
 
 int main(int argc, char *argv[]) {
 
@@ -19,24 +21,30 @@ int main(int argc, char *argv[]) {
   ok(1,  nToLoad != 0);
 
 
-  // transform a segment entirely within the first rawcontig
-  int testOutput[][4] = {1, 2, 5, -1};
-  testTransform (mapper, 627012, 2, 5, -1, "rawcontig", testOutput);
+  {
+    // transform a segment entirely within the first rawcontig
+    int testOutput[][4] = {1, 2, 5, -1};
+    testTransform (mapper, 627012, 2, 5, -1, "rawcontig", testOutput,1);
+  }
   
-  // now a split coord
-  int testOutput2[][4] = {
+  {
+    // now a split coord
+    int testOutput[][4] = {
                           {314696, 31917, 31937, -1},
                           {341, 126, 59773, -1},
                           {315843, 5332, 5963, +1}
                          };
-  testTransform (mapper, 1, 383700, 444000, +1, "virtualcontig",testOutput2);
+    testTransform (mapper, 1, 383700, 444000, +1, "virtualcontig",testOutput,3);
+  }
   
-  int testOutput3[][4] = {
+  {
+    // now a simple gap
+    int testOutput[][4] = {
                           { 627011, 7447, 7507, +1 },
                           { 1, 273762, 273781, 0 }
-                         };
-  // now a simple gap
-  testTransform (mapper, 1, 273701, 273781, +1, "virtualcontig", testOutput3);
+                          };
+    testTransform (mapper, 1, 273701, 273781, +1, "virtualcontig", testOutput,2);
+  }
   
   //
   // check if the mapper can do merging
@@ -49,13 +57,12 @@ int main(int argc, char *argv[]) {
   Mapper_addMapCoordinates(mapper, 1, 11, 20, 1, 1, 111, 120 );
   
   
-  int testOutput4[][4] = {
-                          { 1, 105, 125, 1 } 
-                         };
-  testTransform( mapper, 1, 5, 25, 1, "asm1", testOutput4);
+  {
+    int testOutput[][4] = {{ 1, 105, 125, 1 }};
+    testTransform(mapper, 1, 5, 25, 1, "asm1", testOutput,1);
+  }
   
   
-#ifdef DONE
   
   //
   // Slightly differnt merge case
@@ -66,10 +73,14 @@ int main(int argc, char *argv[]) {
   Mapper_addMapCoordinates(mapper, 1, 21, 30, 1, 1, 121, 130 );
   Mapper_addMapCoordinates(mapper, 1, 12, 20, 1, 1, 112, 120 );
   
-  testTransform( mapper, 1, 5, 25, 1, "asm1" ,
-                [ 1, 105, 110, 1 ],
-                [ 1, 11, 11, 0 ],
-                [ 1, 112, 125, 1 ] );
+  {
+    int testOutput[][4] = {
+                { 1, 105, 110, 1 },
+                { 1, 11, 11, 0 },
+                { 1, 112, 125, 1 }
+                          };
+    testTransform( mapper, 1, 5, 25, 1, "asm1" , testOutput,3);
+  }
   
   
   
@@ -83,10 +94,13 @@ int main(int argc, char *argv[]) {
   Mapper_addMapCoordinates(mapper, 1, 21, 30, 1, 1, 121, 130 );
   Mapper_addMapCoordinates(mapper, 1, 11, 20, -1, 1, 111, 120 );
   
-  testTransform( mapper,  1, 5, 25, 1, "asm1" ,
-                [ 1, 105, 110, 1 ],
-                [ 1, 111, 120, -1 ],
-                [ 1, 121, 125, 1 ] );
+  {
+    int testOutput[][4] = {
+                { 1, 105, 110, 1 },
+                { 1, 111, 120, -1 },
+                { 1, 121, 125, 1 } };
+    testTransform( mapper,  1, 5, 25, 1, "asm1" , testOutput,3);
+  }
   
   //
   // can reverse strands merge?
@@ -98,8 +112,10 @@ int main(int argc, char *argv[]) {
   Mapper_addMapCoordinates(mapper, 1, 21, 30, -1, 1, 101, 110 );
   Mapper_addMapCoordinates(mapper, 1, 11, 20, -1, 1, 111, 120 );
   
-  testTransform( mapper, 1, 5, 25, 1, "asm1",
-                [ 1, 106, 126, -1 ] );
+  {
+    int testOutput[][4] = {{ 1, 106, 126, -1 } };
+    testTransform( mapper, 1, 5, 25, 1, "asm1", testOutput,1);
+  }
   
   
   //
@@ -114,13 +130,15 @@ int main(int argc, char *argv[]) {
   Mapper_addMapCoordinates(mapper, 1, 51, 70, 1, 1, 161, 180 );
   Mapper_addMapCoordinates(mapper, 1, 31, 35, 1, 1, 141, 145 );
   
-  
-  testTransform( mapper, 1, 5, 45, 1, "asm1" ,
-                [ 1, 105, 120, 1 ],
-                [ 1, 21, 21, 0 ],
-                [ 1, 132, 145, 1 ],
-                [ 1, 36, 45, 0 ]
-               );
+  {
+    int testOutput[][4] = {
+                { 1, 105, 120, 1 },
+                { 1, 21, 21, 0 },
+                { 1, 132, 145, 1 },
+                { 1, 36, 45, 0 }
+               };
+    testTransform( mapper, 1, 5, 45, 1, "asm1" , testOutput, 4);
+  }
   
   
   //
@@ -132,26 +150,35 @@ int main(int argc, char *argv[]) {
   Mapper_addMapCoordinates(mapper,1, 1, 10, 1, 2, 101, 110);
   Mapper_addMapCoordinates(mapper,1, 11, 20, -1, 3, 1, 10);
   
-  // boundary insert, expect 2 edge inserts back
-  testTransform(mapper, 1, 11, 10, 1, "asm1",
-                 [2, 111, 110, 1],
-                 [3, 11,  10, -1]);
+  {
+    // boundary insert, expect 2 edge inserts back
+    int testOutput[][4] = {
+                           {2, 111, 110, 1},
+                           {3, 11,  10, -1}
+                          };
+    testTransform(mapper, 1, 11, 10, 1, "asm1", testOutput,2);
+  }
   
-  // edge insert, negative strand, expect edge insert negative strand
-  testTransform(mapper, 1, 1, 0, -1, "asm1",
-                 [2, 101, 100, -1]);
+  {
+    // edge insert, negative strand, expect edge insert negative strand
+    int testOutput[][4] = {{2, 101, 100, -1}};
+    testTransform(mapper, 1, 1, 0, -1, "asm1", testOutput,1);
+  }
   
-  // normal case, expect single insert in middle
-  testTransform(mapper, 1, 2, 1, 1, "asm1",
-                        [2, 102, 101, 1]);
+  {
+    // normal case, expect single insert in middle
+    int testOutput[][4] = {{2, 102, 101, 1}};
+    testTransform(mapper, 1, 2, 1, 1, "asm1", testOutput,1);
+  }
   
-  // expect a gap
-  testTransform(mapper, 1, 100, 200, 1, "asm1",
-                        [1, 100, 200, 0]);
+  {
+    // expect a gap
+    int testOutput[][4] = {{1, 100, 200, 0}};
+    testTransform(mapper, 1, 100, 200, 1, "asm1", testOutput, 1);
+  }
   
   
   return 0;
-#endif
 }
 
 
@@ -168,31 +195,48 @@ int main(int argc, char *argv[]) {
 */
 
 
-int testTransform(Mapper *mapper, int srcId, int srcStart, int srcEnd, int srcStrand, char *srcType, int dest[][5] ) {
+int testTransform(Mapper *mapper, int srcId, int srcStart, int srcEnd, int srcStrand, char *srcType, int dest[][4], int nDest ) {
 
   MapperRangeSet *results = Mapper_mapCoordinates(mapper, srcId, srcStart, srcEnd, srcStrand, srcType);
 
   printf("New test\n");
+
+  int diff = 0;
+  if (MapperRangeSet_getNumRange(results) != nDest) {
+    diff =1;
   
-  int i;
-  for (i=0;i<MapperRangeSet_getNumRange(results);i++) {
-    MapperRange *range = MapperRangeSet_getRangeAt(results, i);
-    switch (range->rangeType) {
-      case MAPPERRANGE_COORD :
-        {
-          MapperCoordinate *mc = (MapperCoordinate *)range;
-          printf("Coord: "IDFMTSTR" %ld %ld %d\n", mc->id, mc->start, mc->end, mc->strand);
-        } 
-        break;
-      case MAPPERRANGE_GAP :
-        {
-          MapperGap *mg = (MapperGap *)range;
-          printf("Gap: %ld %ld\n", mg->start, mg->end);
-        } 
-        break;
-      default:
-        break;
+  } else{
+    int i;
+    for (i=0;i<MapperRangeSet_getNumRange(results) && !diff;i++) {
+      MapperRange *range = MapperRangeSet_getRangeAt(results, i);
+
+      switch (range->rangeType) {
+        case MAPPERRANGE_COORD :
+          {
+            MapperCoordinate *mc = (MapperCoordinate *)range;
+            printf("Coord: "IDFMTSTR" %ld %ld %d\n", mc->id, mc->start, mc->end, mc->strand);
+            if (dest[i][0] != mc->id || dest[i][1] != mc->start || dest[i][2] != mc->end || dest[i][3] != mc->strand) {
+              diff=1;
+            }
+          } 
+          break;
+        case MAPPERRANGE_GAP :
+          {
+            MapperGap *mg = (MapperGap *)range;
+            
+            printf("Gap: %ld %ld\n", mg->start, mg->end);
+            if (dest[i][0] != srcId || dest[i][1] != mg->start || dest[i][2] != mg->end || dest[i][3] != 0) {
+              diff=1;
+            }
+          } 
+          break;
+        default:
+          break;
+      }
     }
+  }
+  if (diff) {
+    printf("DIFFERENCE\n");
   }
 /*
   @coord = map ([isgap($_) ? $srcid : $_->id,  // Gap object should do this, but currently doesn't.
