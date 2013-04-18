@@ -8,7 +8,9 @@
 typedef void (*StatementHandle_ExecuteFunc)(StatementHandle *sth, ...);
 typedef ResultRow *(*StatementHandle_FetchRowFunc)(StatementHandle *sth);
 typedef void (*StatementHandle_FinishFunc)(StatementHandle *sth);
+typedef unsigned long long (*StatementHandle_NumRowsFunc)(StatementHandle *sth);
 typedef IDType (*StatementHandle_GetInsertIdFunc)(StatementHandle *sth);
+typedef void (*StatementHandle_addFlagFunc)(StatementHandle *sth, unsigned long flag);
 
 
 OBJECTFUNC_TYPES(StatementHandle)
@@ -25,8 +27,11 @@ typedef struct StatementHandleFuncsStruct {
   DBConnection *dbc; \
   StatementHandle_ExecuteFunc execute; \
   StatementHandle_FetchRowFunc fetchRow; \
+  StatementHandle_NumRowsFunc numRows; \
   StatementHandle_FinishFunc finish; \
-  StatementHandle_GetInsertIdFunc getInsertId;
+  StatementHandle_GetInsertIdFunc getInsertId; \
+  StatementHandle_addFlagFunc addFlag; \
+  unsigned long flags;
   
 #define FUNCSTRUCTTYPE StatementHandleFuncs
 struct StatementHandleStruct {

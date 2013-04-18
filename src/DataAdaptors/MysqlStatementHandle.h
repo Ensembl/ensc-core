@@ -5,6 +5,9 @@
 #include "StatementHandle.h"
 #include "MysqlResultRow.h"
 
+// flag 
+#define MYSQLFLAG_USE_RESULT 2
+
 typedef struct MysqlStatementHandleStruct MysqlStatementHandle;
 
 #ifdef __hpux
@@ -18,7 +21,9 @@ typedef struct MysqlStatementHandleStruct MysqlStatementHandle;
 StatementHandle *MysqlStatementHandle_new(DBConnection *dbc, char *query);
 ResultRow *MysqlStatementHandle_fetchRow(StatementHandle *sth);
 IDType MysqlStatementHandle_getInsertId(StatementHandle *sth);
+unsigned long long MysqlStatementHandle_numRows(StatementHandle *sth);
 void MysqlStatementHandle_finish(StatementHandle *sth);
+void MysqlStatementHandle_addFlag(StatementHandle *sth, unsigned long flag);
 
 OBJECTFUNC_TYPES(MysqlStatementHandle)
 

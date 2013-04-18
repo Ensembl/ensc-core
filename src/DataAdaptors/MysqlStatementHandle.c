@@ -24,8 +24,10 @@ StatementHandle *MysqlStatementHandle_new(DBConnection *dbc, char *query) {
 
   sth->execute     = MysqlStatementHandle_execute;
   sth->fetchRow    = MysqlStatementHandle_fetchRow;
+  sth->numRows     = MysqlStatementHandle_numRows;
   sth->finish      = MysqlStatementHandle_finish;
   sth->getInsertId = MysqlStatementHandle_getInsertId;
+  sth->addFlag     = MysqlStatementHandle_addFlag;
 
   sth->dbc = dbc;
  
@@ -83,7 +85,11 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
 
   /* the query succeeded; determine whether or not it returns data */
 
-  results = mysql_store_result (m_sth->dbc->mysql);
+  if (m_sth->flags & MYSQLFLAG_USE_RESULT) {
+    results = mysql_use_result (m_sth->dbc->mysql);
+  } else {
+    results = mysql_store_result (m_sth->dbc->mysql);
+  }
   if (results) {                    /* a result set was returned */
     /* store it for future fetches */
     m_sth->results = results;
@@ -106,6 +112,10 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
 
 #endif
 
+void MysqlStatementHandle_addFlag(StatementHandle *sth, unsigned long flag) {
+  sth->flags |= flag;
+}
+  
 
 ResultRow *MysqlStatementHandle_fetchRow(StatementHandle *sth) {
   MysqlStatementHandle *m_sth;
@@ -130,6 +140,22 @@ ResultRow *MysqlStatementHandle_fetchRow(StatementHandle *sth) {
   m_sth->m_row->mysql_row = mysql_row;
 
   return (ResultRow *)(m_sth->m_row);
+}
+
+unsigned long long MysqlStatementHandle_numRows(StatementHandle *sth) {
+  MysqlStatementHandle *m_sth;
+
+  Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);
+
+  m_sth = (MysqlStatementHandle *)sth;
+
+  if (m_sth->results == NULL) {
+    fprintf(stderr,"ERROR: Tried to fetch number of rows for a StatementHandle with no results for %s\n",
+            sth->statementFormat);
+    exit(1);
+  }
+
+  return mysql_num_rows(m_sth->results);
 }
 
 IDType MysqlStatementHandle_getInsertId(StatementHandle *sth) {
