@@ -38,6 +38,7 @@ all	: directories \
           Tests/FreeTest \
           Tests/GeneTest \
           Tests/HomologyTest \
+          Tests/MapperTest \
           Tests/PredictionTranscriptTest \
           Tests/RepeatFeatureTest \
           Tests/SeqUtilTest \
@@ -112,6 +113,7 @@ libensc.a	: \
 	objectfiles/DataModel/BaseAlignFeature.o \
 	objectfiles/DataModel/BaseContig.o \
 	objectfiles/DataModel/Basic/Vector.o \
+	objectfiles/DataModel/ChainedAssemblyMapper.o \
 	objectfiles/DataModel/Chromosome.o \
 	objectfiles/DataModel/CoordSystem.o \
 	objectfiles/DataModel/CigarStrUtil.o \
@@ -128,12 +130,15 @@ libensc.a	: \
 	objectfiles/DataModel/GenomicRange.o \
 	objectfiles/DataModel/IdentityXref.o \
 	objectfiles/DataModel/Mapper.o \
+	objectfiles/DataModel/Mapper/CoordPair.o \
+	objectfiles/DataModel/Mapper/IndelCoordinate.o \
 	objectfiles/DataModel/Mapper/MapperCoordinate.o \
 	objectfiles/DataModel/Mapper/MapperGap.o \
 	objectfiles/DataModel/Mapper/MapperPair.o \
 	objectfiles/DataModel/Mapper/MapperPairSet.o \
 	objectfiles/DataModel/Mapper/MapperRangeSet.o \
 	objectfiles/DataModel/Mapper/MapperUnit.o \
+	objectfiles/DataModel/Mapper/RangeRegistry.o \
 	objectfiles/DataModel/Object.o \
 	objectfiles/DataModel/PredictionTranscript.o \
 	objectfiles/DataModel/RawContig.o \
@@ -141,11 +146,13 @@ libensc.a	: \
 	objectfiles/DataModel/RepeatFeature.o \
 	objectfiles/DataModel/SeqFeature.o \
 	objectfiles/DataModel/SeqFeatureFactory.o \
+	objectfiles/DataModel/SeqRegionRange.o \
 	objectfiles/DataModel/Sequence.o \
 	objectfiles/DataModel/SimpleFeature.o \
 	objectfiles/DataModel/Slice.o \
 	objectfiles/DataModel/Species.o \
 	objectfiles/DataModel/StableIdInfo.o \
+	objectfiles/DataModel/TopLevelAssemblyMapper.o \
 	objectfiles/DataModel/Transcript.o \
 	objectfiles/DataModel/Translation.o \
 	objectfiles/OBDA/BioIndex.o \
@@ -274,6 +281,11 @@ Tests/HomologyTest: \
 	libensc.a \
 	Tests/HomologyTest.c
 	$(CC) $(CFLAGS) -o Tests/HomologyTest Tests/HomologyTest.c -L. -lensc $(LDFLAGS)
+
+Tests/MapperTest: \
+	libensc.a \
+	Tests/MapperTest.c
+	$(CC) $(CFLAGS) -o Tests/MapperTest Tests/MapperTest.c -L. -lensc $(LDFLAGS)
 
 Tests/PredictionTranscriptTest: \
 	libensc.a \
