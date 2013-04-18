@@ -43,7 +43,7 @@ Mapper *Mapper_new(char *from, char *to, CoordSystem *fromCs, CoordSystem *toCs)
   Mapper_setFromCoordSystem(m, fromCs);
   Mapper_setToCoordSystem(m, toCs);
 
-  Mapper_setPairCount(0);
+  Mapper_setPairCount(m, 0);
 
   Mapper_setPairHash(m, MAPPER_FROM_IND, IDHash_new(IDHASH_MEDIUM));
   Mapper_setPairHash(m, MAPPER_TO_IND,   IDHash_new(IDHASH_MEDIUM));
@@ -74,13 +74,14 @@ char *Mapper_setTo(Mapper *m, char *to) {
 */
 
 void Mapper_flush(Mapper *m)  {
-  PairHash_free(Mapper_getPairHash(m, MAPPER_FROM_IND));
-  PairHash_free(Mapper_getPairHash(m, MAPPER_TO_IND));
+// NIY: What should free func be for these
+  IDHash_free(Mapper_getPairHash(m, MAPPER_FROM_IND), NULL);
+  IDHash_free(Mapper_getPairHash(m, MAPPER_TO_IND), NULL);
 
   Mapper_setPairHash(m, MAPPER_FROM_IND, IDHash_new(IDHASH_MEDIUM));
   Mapper_setPairHash(m, MAPPER_TO_IND,   IDHash_new(IDHASH_MEDIUM));
 
-  Mapper_setPairCount(0);
+  Mapper_setPairCount(m, 0);
 }
 
 /*
@@ -117,9 +118,6 @@ MapperRangeSet *Mapper_mapCoordinates(Mapper *m, IDType id, long start, long end
     exit(1);
   }
 
-  if (!Mapper_isSorted()) {
-    Mapper_sort(m);
-  }
 
   IDHash *hash;
   CoordSystem *cs;
@@ -132,7 +130,7 @@ MapperRangeSet *Mapper_mapCoordinates(Mapper *m, IDType id, long start, long end
     from = MAPPER_TO_IND;
     to   = MAPPER_FROM_IND;
     cs   = Mapper_getFromCoordSystem(m);
-  } else if (!Mapper_compareType(type,Mapper_getTo(m))) {
+  } else if (!Mapper_compareType(type,Mapper_getFrom(m))) {
     from = MAPPER_FROM_IND;
     to   = MAPPER_TO_IND;
     cs   = Mapper_getToCoordSystem(m);
@@ -155,7 +153,7 @@ MapperRangeSet *Mapper_mapCoordinates(Mapper *m, IDType id, long start, long end
 // Was upcasing the id - its a number in C, I haven't found a case yet where its a string
   if (!IDHash_contains(hash, id)) {
     // one big gap!
-    MapperRange *gap = (MapperRange *)MapperGap_new(start,end);
+    MapperRange *gap = (MapperRange *)MapperGap_new(start,end,0); // Perl didn't set rank so use 0
     MapperRangeSet_addRange(results,gap);
     return results;
   }
@@ -251,7 +249,7 @@ MapperRangeSet *Mapper_mapCoordinates(Mapper *m, IDType id, long start, long end
       // create a Gap object
       MapperGap *gap = MapperGap_new(start,
                                      selfCoord->end < end ? selfCoord->end : end,
-                                     rank); // Perl didn't set rank - don't know if need to
+                                     0); // Perl didn't set rank - don't know if need to
 
       // create the Coordinate object
       MapperCoordinate *coord = MapperCoordinate_new(targetCoord->id,
@@ -259,7 +257,7 @@ MapperRangeSet *Mapper_mapCoordinates(Mapper *m, IDType id, long start, long end
                                                      targetEnd,
                                                      pair->ori * strand, 
                                                      cs, 
-                                                     rank); // Perl didn't set rank - don't know if need to
+                                                     0); // Perl didn't set rank - don't know if need to
 
       //and finally, the IndelCoordinate object with
       res = (MapperRange *)IndelCoordinate_new(gap, coord);
@@ -305,14 +303,14 @@ MapperRangeSet *Mapper_mapCoordinates(Mapper *m, IDType id, long start, long end
   }
 
   if (lastUsedPair == NULL) {
-    MapperRange *gap = (MapperRange *)MapperGap_new(start,end);
+    MapperRange *gap = (MapperRange *)MapperGap_new(start,end, 0); // Perl doesn't set rank, so use 0
     MapperRangeSet_addRange(results,gap);
 
-  } else if (MapperPair_getUnit(lastUsedPair, from)->end < end ) {
+  } else if (MapperPair_getUnit(lastUsedPair, from)->end < end) {
     // gap at the end
     MapperRange *gap = (MapperRange *)MapperGap_new(
                            MapperPair_getUnit(lastUsedPair,from)->end + 1,
-                           end);
+                           end, 0 ); // Perl didn't set rank so use 0
     MapperRangeSet_addRange(results,gap);
   }
 
@@ -366,7 +364,7 @@ MapperRangeSet *Mapper_mapInsert(Mapper *m, IDType id, long start, long end, int
     MapperCoordinate *c = (MapperCoordinate *)MapperRangeSet_getRangeAt(coords,0);
 
     // swap start and end to convert back into insert
-    MapperCoordinate *newC = MapperCoordinate_new(c->id, c->end, c->start, c->strand, c->coordSystem);
+    MapperCoordinate *newC = MapperCoordinate_new(c->id, c->end, c->start, c->strand, c->coordSystem, 0); // Perl didn't set rank so use 0
     MapperRangeSet_addRange(retSet, (MapperRange *)newC);
 
   } else {
@@ -399,11 +397,11 @@ MapperRangeSet *Mapper_mapInsert(Mapper *m, IDType id, long start, long end, int
       } else {
         mcC1->start++;
       }
-      newC1 = MapperCoordinate_new(mcC1->id, mcC1->start, mcC1->end, mcC1->strand, mcC1->coordSystem);
+      newC1 = MapperCoordinate_new(mcC1->id, mcC1->start, mcC1->end, mcC1->strand, mcC1->coordSystem, 0); // Perl didn't set rank, so use 0
     }
 
     // (see above for note on this condition if (ref($c2) eq 'Bio::EnsEMBL::Mapper::Coordinate') 
-    MapperRange *newC2 = NULL;
+    MapperCoordinate *newC2 = NULL;
     if (c2->rangeType == MAPPERRANGE_COORD) {
       MapperCoordinate *mcC2 = (MapperCoordinate *)c2;
       // insert is before second coord
@@ -412,7 +410,7 @@ MapperRangeSet *Mapper_mapInsert(Mapper *m, IDType id, long start, long end, int
       } else {
         mcC2->end--;
       }
-      newC2 = MapperCoordinate_new(mcC2->id, mcC2->start, mcC2->end, mcC2->strand, mcC2->coordSystem);
+      newC2 = MapperCoordinate_new(mcC2->id, mcC2->start, mcC2->end, mcC2->strand, mcC2->coordSystem, 0); // Perl didn't set rank, so use 0
     }
    
     if (strand == -1) { // Add in 2, 1 order
@@ -440,7 +438,7 @@ MapperRangeSet *Mapper_mapInsert(Mapper *m, IDType id, long start, long end, int
       
       MapperCoordinate *mcC = (MapperCoordinate *)c;
 
-      MapperCoordinate *newC = MapperCoordinate_new(mcC->id, mcC->start, mcC->end, mcC->strand, mcC->coordSystem);
+      MapperCoordinate *newC = MapperCoordinate_new(mcC->id, mcC->start, mcC->end, mcC->strand, mcC->coordSystem, 0); // Perl didn't set rank, so use 0
       MapperRangeSet_addRange(retSet, (MapperRange *)newC);
 
 /*
@@ -537,7 +535,8 @@ MapperRangeSet *Mapper_fastMap(Mapper *m, IDType id, long start, long end, int s
                                                         targetCoord->start + start - selfCoord->start, 
                                                         targetCoord->start + end   - selfCoord->start,
                                                         strand,
-                                                        cs); 
+                                                        cs, 
+                                                        0); // Perl didn't set rank, so use 0 
 
 /*
       retRange->id     = targetCoord->id;
@@ -554,7 +553,8 @@ MapperRangeSet *Mapper_fastMap(Mapper *m, IDType id, long start, long end, int s
                                                         targetCoord->end - (end - selfCoord->start),
                                                         targetCoord->end - (start - selfCoord->start),
                                                         -strand,
-                                                        cs); 
+                                                        cs, 
+                                                        0); // Perl didn't set rank, so use 0 
 
 /*
       retRange->id     = targetCoord->id;
@@ -1066,7 +1066,7 @@ void Mapper_mergePairs(Mapper *m) {
   int to   = MAPPER_TO_IND;
   int from = MAPPER_FROM_IND;
 
-  Mapper_setPairCount(0);
+  Mapper_setPairCount(m, 0);
 
   IDHash *toPairHash   = Mapper_getPairHash(m, MAPPER_TO_IND);
   IDHash *fromPairHash = Mapper_getPairHash(m, MAPPER_FROM_IND);
@@ -1075,12 +1075,12 @@ void Mapper_mergePairs(Mapper *m) {
 
   
   int pairInd;
-  for (pairInd = 0; pairInd<Vector_getNumValue(toPairHash); pairInd++) {
+  for (pairInd = 0; pairInd<IDHash_getNumValues(toPairHash); pairInd++) {
     MapperPairSet *pairs = toPairValues[pairInd];
 
     int i = 0;
     int next = 1;
-    int length = MapperPairSet_getNumPairs(pairs)-1; //$#{$lr};
+    int length = MapperPairSet_getNumPair(pairs)-1; //$#{$lr};
 
     while (next <= length) {
       MapperPair *currentPair = MapperPairSet_getPairAt(pairs, i);
@@ -1153,4 +1153,12 @@ void Mapper_mergePairs(Mapper *m) {
 
     Mapper_addToPairCount(m, MapperPairSet_getNumPair(pairs)); //    $self->{'pair_count'} += scalar( @$lr );
   }
+}
+
+void Mapper_free(Mapper *mapper) {
+  Mapper_flush(mapper);
+
+  // NIY: Probably more cleanup needed
+
+  free(mapper);
 }

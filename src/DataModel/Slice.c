@@ -16,7 +16,7 @@
 #include "Vector.h"
 #include "StrUtil.h"
 
-Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
+Slice *Slice_new(char *regionName, int start, int end, int strand, char *assemblyType,
                  SliceAdaptor *sa, IDType dbID, int empty) {
   Slice *slice;
 
@@ -31,17 +31,17 @@ Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
   slice->funcs = &sliceFuncs;
 
   if (!empty) {
-    if( !chr || !assemblyType) {
+    if( !regionName || !assemblyType) {
       fprintf(stderr,"ERROR: Do not have all the parameters for slice\n");
       exit(1);
     }
-    Slice_setChrName(slice,chr);
-    Slice_setChrStart(slice,start);
-    Slice_setChrEnd(slice,end);
+    Slice_setSeqRegionName(slice,regionName);
+    Slice_setSeqRegionStart(slice,start);
+    Slice_setSeqRegionEnd(slice,end);
     Slice_setStrand(slice,strand);
   } else {
     Slice_setStrand(slice,1);
-    Slice_setChrStart(slice,1);
+    Slice_setSeqRegionStart(slice,1);
     Slice_setEmptyFlag(slice,TRUE);
 
     // empty Slices are used to do mapping to chromosomal coords.
@@ -75,8 +75,8 @@ ECOSTRING Slice_getName(Slice *slice) {
 
   // NIY printf("Need to redo this\n");
   if (!slice->name) {
-    sprintf(tmpStr,"%s.%d-%d",Slice_getChrName(slice),
-            Slice_getChrStart(slice),Slice_getChrEnd(slice));
+    sprintf(tmpStr,"%s.%d-%d",Slice_getSeqRegionName(slice),
+            Slice_getSeqRegionStart(slice),Slice_getSeqRegionEnd(slice));
     EcoString_copyStr(ecoSTable,&(slice->name),tmpStr,0);
   }
   return slice->name;
@@ -136,10 +136,10 @@ Vector *Slice_getAllPredictionTranscripts(Slice *slice, char *logicName) {
 }
 
 
-ECOSTRING Slice_setChrName(Slice *sl, char *chrName) {
-  EcoString_copyStr(ecoSTable, &(sl->chrName), chrName, 0);
+ECOSTRING Slice_setSeqRegionName(Slice *sl, char *seqRegionName) {
+  EcoString_copyStr(ecoSTable, &(sl->seqRegionName), seqRegionName, 0);
 
-  return sl->chrName;
+  return sl->seqRegionName;
 }
 
 ECOSTRING Slice_setAssemblyType(Slice *sl, char *assemblyType) {
@@ -187,7 +187,7 @@ void Slice_free(Slice *slice) {
   BaseContig_freePtrs(slice);
 
   if (slice->name) EcoString_freeStr(ecoSTable, slice->name);
-  if (slice->chrName) EcoString_freeStr(ecoSTable, slice->chrName);
+  if (slice->seqRegionName) EcoString_freeStr(ecoSTable, slice->seqRegionName);
   if (slice->assemblyType) EcoString_freeStr(ecoSTable, slice->assemblyType);
 
 

@@ -15,7 +15,6 @@
 #endif
 #define FALSE 0
 
-int trueVal = 1;
 
 typedef enum CopyDepthEnum {
   NONE_DEPTH,
@@ -34,8 +33,10 @@ typedef long long IDType;
 
 #ifdef __ECOS_MAIN__
  ECOSTRTABLE *ecoSTable;
+ int trueVal = 1;
 #else
  extern ECOSTRTABLE *ecoSTable;
+ extern int trueVal;
 #endif
 
 void initEnsC(void);

@@ -24,6 +24,65 @@ void MapperPairSet_addPair(MapperPairSet *mps, MapperPair *pair) {
   mps->pairs[mps->nPair++] = pair;
 }
 
+Vector *MapperPairSet_getToIds(MapperPairSet *mps) {
+  Vector *idVector = Vector_new();
+
+  int i;
+  int *idP;
+  for (i=0; i<mps->nPair; i++) {
+    if ((idP = (IDType *)calloc(1,sizeof(IDType))) == NULL) {
+      fprintf(stderr,"ERROR: Failed allocating space for to id\n");
+      exit(1);
+    }
+    *idP = MapperPair_getUnit(mps->pairs[i], MAPPER_TO_IND)->id;
+
+    Vector_addElement(idVector, idP);
+  }
+
+  return idVector;
+}
+
+Vector *MapperPairSet_getFromIds(MapperPairSet *mps) {
+  Vector *idVector = Vector_new();
+
+  int i;
+  int *idP;
+  for (i=0; i<mps->nPair; i++) {
+    if ((idP = (IDType *)calloc(1,sizeof(IDType))) == NULL) {
+      fprintf(stderr,"ERROR: Failed allocating space for to id\n");
+      exit(1);
+    }
+    *idP = MapperPair_getUnit(mps->pairs[i], MAPPER_FROM_IND)->id;
+
+    Vector_addElement(idVector, idP);
+  }
+
+  return idVector;
+}
+
+MapperPair *MapperPairSet_removePairAt(MapperPairSet *mps, int ind) {
+  MapperPair *removed;
+
+  if (ind < 0) {
+    fprintf(stderr,"ERROR: Invalid pair element index %d\n",ind);
+    exit(1);
+  } else if (ind >= mps->nPair) {
+    fprintf(stderr,"ERROR: Invalid pair element index %d\n",ind);
+    exit(1);
+  }
+
+ removed = mps->pairs[ind];
+
+  int i;
+  for (i=ind+1; i<mps->nPair; i++) {
+    mps->pairs[i-1] = mps->pairs[i];
+  }
+
+  mps->nPair--;
+
+  return removed;
+}
+
 static int sortInd;
 
 int MapperPairCompFunc(const void *a, const void *b) {

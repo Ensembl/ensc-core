@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-MapperGap *MapperGap_new(long start, long end) {
+MapperGap *MapperGap_new(long start, long end, int rank) {
   MapperGap *mg;
 
   if ((mg = (MapperGap *)calloc(1,sizeof(MapperGap))) == NULL) {
@@ -13,6 +13,7 @@ MapperGap *MapperGap_new(long start, long end) {
   mg->rangeType = MAPPERRANGE_GAP;
   mg->start = start;
   mg->end = end;
+  mg->rank = rank;
 
   return mg;
 }

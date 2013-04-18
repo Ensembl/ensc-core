@@ -34,6 +34,7 @@ typedef struct SpeciesStruct Species;
 typedef struct StableIdInfoStruct StableIdInfo;
 typedef struct StickyExonStruct StickyExon;
 typedef struct StorableStruct Storable;
+typedef struct TopLevelAssemblyMapperStruct TopLevelAssemblyMapper;
 typedef struct TranscriptStruct Transcript;
 typedef struct TranslationStruct Translation;
 

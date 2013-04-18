@@ -548,7 +548,7 @@ MapperRangeSet *Transcript_genomic2Pep(Transcript *trans, int start, int end, in
       
       if (coord->strand == -1 || end < cdnaCStart || start > cdnaCEnd) {
 	// is all gap - does not map to peptide
-	MapperGap *gap = MapperGap_new(start,end);
+	MapperGap *gap = MapperGap_new(start,end,0);
         MapperRangeSet_addRange(out, (MapperRange *)gap);
       } else {
 	// we know area is at least partially overlapping CDS
@@ -562,7 +562,7 @@ MapperRangeSet *Transcript_genomic2Pep(Transcript *trans, int start, int end, in
 
 	if (start < cdnaCStart) {
 	  // start of coordinates are in the 5prime UTR
-	  MapperGap *gap = MapperGap_new(start,cdnaCStart-1);
+	  MapperGap *gap = MapperGap_new(start,cdnaCStart-1,0);
 	  // start is now relative to start of CDS
 	  cdsStart = 1;
           MapperRangeSet_addRange(out, (MapperRange *)gap);
@@ -570,7 +570,7 @@ MapperRangeSet *Transcript_genomic2Pep(Transcript *trans, int start, int end, in
 	
 	if (end > cdnaCEnd) {
 	  // end of coordinates are in the 3prime UTR
-	  endGap = MapperGap_new(cdnaCEnd+1, end);
+	  endGap = MapperGap_new(cdnaCEnd+1, end,0);
 	  // adjust end to relative to CDS start
 	  cdsEnd = cdnaCEnd - cdnaCStart + 1;
 	}
@@ -584,7 +584,8 @@ MapperRangeSet *Transcript_genomic2Pep(Transcript *trans, int start, int end, in
         // NOTE Don't use same coord unlike perl so can easily free mapped
 	pepStart = (cdsStart + shift + 2) / 3;
 	pepEnd   = (cdsEnd   + shift + 2) / 3;
-        newCoord = MapperCoordinate_new(coord->id, pepStart, pepEnd, coord->strand);
+  //NIY: What should coordsystem be???
+        newCoord = MapperCoordinate_new(coord->id, pepStart, pepEnd, coord->strand,NULL, 0);
 	
         MapperRangeSet_addRange(out, (MapperRange *)newCoord);
 
@@ -607,7 +608,7 @@ MapperRangeSet *Transcript_cDNA2Genomic(Transcript *trans, int start, int end) {
 
   mapper = Transcript_getcDNACoordMapper(trans);
 
-  return Mapper_mapCoordinates(mapper, (IDType)trans, start, end, 1, CDNA_COORDS );
+  return Mapper_mapCoordinates(mapper, (IDType)trans, start, end, 1, "cdna" );
 }
 
 MapperRangeSet *Transcript_genomic2cDNA(Transcript *trans, int start, int end, int strand, BaseContig *contig) {
@@ -627,7 +628,7 @@ MapperRangeSet *Transcript_genomic2cDNA(Transcript *trans, int start, int end, i
   printf(" %s = %s\n", BaseContig_getName(contig), 
          BaseContig_getName(Exon_getContig(firstExon)));
 
-  return Mapper_mapCoordinates(mapper,(IDType)contig, start, end, strand, GENOMIC_COORDS);
+  return Mapper_mapCoordinates(mapper,(IDType)contig, start, end, strand, "genomic");
 }
 
 
@@ -644,7 +645,8 @@ Mapper *Transcript_getcDNACoordMapper(Transcript *trans) {
   // the mapper is loaded with OBJECTS in place of the IDs !!!!
   //  the objects are the contigs in the exons
   // 
-  mapper = Mapper_new( CDNA_COORDS, GENOMIC_COORDS );
+// NIY: What should coordsystems be
+  mapper = Mapper_new( "cdna", "genomic", NULL, NULL );
 
   for (i=0; i<Transcript_getExonCount(trans); i++) {
     Exon *exon = Transcript_getExonAt(trans,i);

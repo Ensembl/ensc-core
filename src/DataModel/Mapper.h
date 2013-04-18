@@ -21,6 +21,7 @@ struct MapperStruct {
   CoordSystem *toSystem;
   CoordSystem *fromSystem;
   int isSorted;
+  int pairCount;
 };
 
 #define Mapper_getTo(m) (m)->to
@@ -37,6 +38,14 @@ struct MapperStruct {
 
 #define Mapper_setIsSorted(m, i) (m)->isSorted = (i)
 #define Mapper_getIsSorted(m) (m)->isSorted
+#define Mapper_isSorted(m) (m)->isSorted
+
+#define Mapper_setPairCount(m, pc) (m)->pairCount = (pc)
+#define Mapper_getPairCount(m) (m)->pairCount
+#define Mapper_incPairCount(m) ((m)->pairCount++)
+#define Mapper_addToPairCount(m, n) ((m)->pairCount+=n)
+
+#define Mapper_compareType(a, b) (strcmp((a),(b)))
 
 Mapper *Mapper_new(char *from, char *to, CoordSystem *fromCs, CoordSystem *toCs);
 char *Mapper_setFrom(Mapper *m, char *from);

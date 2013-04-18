@@ -439,7 +439,7 @@ MapperRangeSet *PredictionTranscript_cDNA2Genomic(PredictionTranscript *trans, i
 
   mapper = PredictionTranscript_getcDNACoordMapper(trans);
 
-  return Mapper_mapCoordinates(mapper, (IDType)trans, start, end, 1, CDNA_COORDS );
+  return Mapper_mapCoordinates(mapper, (IDType)trans, start, end, 1, "cdna" );
 }
 
 MapperRangeSet *PredictionTranscript_genomic2cDNA(PredictionTranscript *trans, int start, int end, int strand, BaseContig *contig) {
@@ -460,7 +460,7 @@ MapperRangeSet *PredictionTranscript_genomic2cDNA(PredictionTranscript *trans, i
 
   mapper = PredictionTranscript_getcDNACoordMapper(trans);
 
-  return Mapper_mapCoordinates(mapper,(IDType)contig, start, end, strand, GENOMIC_COORDS);
+  return Mapper_mapCoordinates(mapper,(IDType)contig, start, end, strand, "genomic");
 }
 
 Mapper *PredictionTranscript_getcDNACoordMapper(PredictionTranscript *trans) {
@@ -477,7 +477,8 @@ Mapper *PredictionTranscript_getcDNACoordMapper(PredictionTranscript *trans) {
   // the mapper is loaded with OBJECTS in place of the IDs !!!!
   //  the objects are the contigs in the exons
   //
-  mapper = Mapper_new( CDNA_COORDS, GENOMIC_COORDS );
+// NIY: What should coordsystems be?
+  mapper = Mapper_new( "cdna", "genomic", NULL, NULL );
 
   translateable = PredictionTranscript_getAllTranslateableExons(trans);
   for (i=0; i<Vector_getNumElement(translateable); i++) {

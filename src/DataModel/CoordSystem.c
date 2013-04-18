@@ -160,10 +160,11 @@ int CoordSystem_compare(CoordSystem *cs1, CoordSystem *cs2) {
 */
 
   if (!EcoString_strcmp(CoordSystem_getVersion(cs1), CoordSystem_getVersion(cs2)) && !EcoString_strcmp(CoordSystem_getName(cs1), CoordSystem_getName(cs2))) {
-    return 1;
+    // Equal, so return 0
+    return 0;
   }
 
-  return 0;
+  return 1;
 }
 
 

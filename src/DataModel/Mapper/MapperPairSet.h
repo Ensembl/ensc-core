@@ -2,6 +2,7 @@
 #define __MAPPERPAIRSET_H__
 
 #include "MapperPair.h"
+#include "Vector.h"
 
 typedef struct MapperPairSetStruct MapperPairSet;
 
@@ -21,6 +22,10 @@ void MapperPairSet_free(MapperPairSet *mps, int freePairsFlag);
 
 void MapperPairSet_addPair(MapperPairSet *mps, MapperPair *pair);
 
+MapperPair *MapperPairSet_removePairAt(MapperPairSet *mps, int ind);
+
+Vector *MapperPairSet_getFromIds(MapperPairSet *mps);
+Vector *MapperPairSet_getToIds(MapperPairSet *mps);
 
 
 #endif

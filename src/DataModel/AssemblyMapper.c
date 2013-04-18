@@ -22,7 +22,7 @@ my $ASSEMBLED = 'assembled';
 my $COMPONENT = 'component';
 */
 
-int DEFAULT_MAX_PAIR_COUNT = 1000;
+int AM_DEFAULT_MAX_PAIR_COUNT = 1000;
 
 
 /*
@@ -70,7 +70,7 @@ AssemblyMapper *AssemblyMapper_new(AssemblyMapperAdaptor *adaptor, Vector *coord
   AssemblyMapper_setMapper(am, Mapper_new("assembled", "component", AssemblyMapper_getAssembledCoordSystem(am), 
                                                                     AssemblyMapper_getComponentCoordSystem(am)));
 
-  AssemblyMapper_setMaxPairCount(am, DEFAULT_MAX_PAIR_COUNT);
+  AssemblyMapper_setMaxPairCount(am, AM_DEFAULT_MAX_PAIR_COUNT);
 
   return am;
 }
@@ -310,7 +310,7 @@ IDType AssemblyMapper_getSeqRegionId(AssemblyMapper *am, char *seqRegionName, Co
   Vector *tmp = Vector_new();
   Vector_addElement(tmp, seqRegionName);
 
-  AssemblyMapperAdaptor *adaptor = ChainedAssemblyMapper_getAdaptor(am);
+  AssemblyMapperAdaptor *adaptor = AssemblyMapper_getAdaptor(am);
   
   Vector *idVec = AssemblyMapperAdaptor_seqRegionsToIds(cs, tmp);
 
@@ -329,7 +329,7 @@ Vector *AssemblyMapper_listIds(AssemblyMapper *am, char *frmSeqRegionName, long 
   if ( !CoordSystem_compare(frmCs, AssemblyMapper_getComponentCoordSystem(am) ) ) {
 
     if ( !AssemblyMapper_haveRegisteredComponent(am, seqRegionId) ) {
-      AssemblyMapper_registeredComponent(am, seqRegionId);
+      AssemblyMapper_registerComponent(am, seqRegionId);
     }
 
     // Pull out the 'from' identifiers of the mapper pairs.  The we
@@ -340,7 +340,7 @@ Vector *AssemblyMapper_listIds(AssemblyMapper *am, char *frmSeqRegionName, long 
     return MapperPairSet_getFromIds(mps);
   } else if ( !CoordSystem_compare(frmCs, AssemblyMapper_getAssembledCoordSystem(am) ) ) {
 
-    AssemblyMapper_registeredComponent(am, seqRegionId, frmStart, frmEnd);
+    AssemblyMapper_registerComponent(am, seqRegionId, frmStart, frmEnd);
 
     // Pull out the 'to' identifiers of the mapper pairs we loaded the
     // component side as the 'to' coord system in the constructor.

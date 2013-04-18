@@ -9,6 +9,7 @@ typedef struct MapperCoordinateStruct MapperCoordinate;
 
 struct MapperCoordinateStruct {
   MAPPERRANGE_DATA
+  int rank;
   IDType id;
   signed char strand;
   CoordSystem *coordSystem;

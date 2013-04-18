@@ -30,10 +30,10 @@ my $LAST  = 'last';
 */
 
 // 2^20 = approx 10^6
-int CHUNKFACTOR = 20;
+int CAM_CHUNKFACTOR = 20;
 
 // max size of the pair cache in the mappers
-int DEFAULT_MAX_PAIR_COUNT = 6000;
+int CAM_DEFAULT_MAX_PAIR_COUNT = 6000;
 
 /*
 =head2 new
@@ -104,7 +104,7 @@ ChainedAssemblyMapper *ChainedAssemblyMapper_new(AssemblyMapperAdaptor *adaptor,
   ChainedAssemblyMapper_setFirstRegistry(cam, RangeRegistry_new());
   ChainedAssemblyMapper_setLastRegistry(cam, RangeRegistry_new());
 
-  ChainedAssemblyMapper_setMaxPairCount(cam, DEFAULT_MAX_PAIR_COUNT);
+  ChainedAssemblyMapper_setMaxPairCount(cam, CAM_DEFAULT_MAX_PAIR_COUNT);
 
   return cam;
 }
@@ -264,11 +264,11 @@ MapperRangeSet *ChainedAssemblyMapper_map(ChainedAssemblyMapper *cam, char *frmS
   long minStart, minEnd;
 
   if (isInsert) {
-    minStart = ((frmEnd >> CHUNKFACTOR) << CHUNKFACTOR);
-    minEnd   = (((frmStart >> CHUNKFACTOR) + 1) << CHUNKFACTOR) - 1 ;
+    minStart = ((frmEnd >> CAM_CHUNKFACTOR) << CAM_CHUNKFACTOR);
+    minEnd   = (((frmStart >> CAM_CHUNKFACTOR) + 1) << CAM_CHUNKFACTOR) - 1 ;
   } else {
-    minStart = ((frmStart >> CHUNKFACTOR) << CHUNKFACTOR);
-    minEnd   = (((frmEnd >> CHUNKFACTOR) + 1) << CHUNKFACTOR) - 1 ;
+    minStart = ((frmStart >> CAM_CHUNKFACTOR) << CAM_CHUNKFACTOR);
+    minEnd   = (((frmEnd >> CAM_CHUNKFACTOR) + 1) << CAM_CHUNKFACTOR) - 1 ;
   }
 
   // get a list of ranges in the requested region that have not been registered,
@@ -353,11 +353,11 @@ Vector *ChainedAssemblyMapper_listIds(ChainedAssemblyMapper *cam, char *frmSeqRe
   long minStart, minEnd;
 
   if (isInsert) {
-    minStart = ((frmEnd >> CHUNKFACTOR) << CHUNKFACTOR);
-    minEnd   = (((frmStart >> CHUNKFACTOR) + 1) << CHUNKFACTOR) - 1;
+    minStart = ((frmEnd >> CAM_CHUNKFACTOR) << CAM_CHUNKFACTOR);
+    minEnd   = (((frmStart >> CAM_CHUNKFACTOR) + 1) << CAM_CHUNKFACTOR) - 1;
   } else {
-    minStart = ((frmStart >> CHUNKFACTOR) << CHUNKFACTOR);
-    minEnd   = (((frmEnd >> CHUNKFACTOR) + 1) << CHUNKFACTOR) - 1;
+    minStart = ((frmStart >> CAM_CHUNKFACTOR) << CAM_CHUNKFACTOR);
+    minEnd   = (((frmEnd >> CAM_CHUNKFACTOR) + 1) << CAM_CHUNKFACTOR) - 1;
   }
 
   IDType seqRegionId = ChainedAssemblyMapper_getSeqRegionId(cam, frmSeqRegionName, frmCs);

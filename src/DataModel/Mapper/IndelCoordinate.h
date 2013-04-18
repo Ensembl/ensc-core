@@ -11,11 +11,12 @@ typedef struct IndelCoordinateStruct IndelCoordinate;
 
 struct IndelCoordinateStruct {
   MAPPERRANGE_DATA
+  int rank;
   IDType id;
   signed char strand;
+  CoordSystem *coordSystem;
   long gapStart;
   long gapEnd;
-  CoordSystem *coordSystem;
 };
 
 IndelCoordinate *IndelCoordinate_new(MapperGap *gap, MapperCoordinate *coordinate);

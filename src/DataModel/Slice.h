@@ -7,6 +7,7 @@
 #include "Gene.h"
 #include "Vector.h"
 #include "EcoString.h"
+#include "CoordSystem.h"
 
 BASECONTIGFUNC_TYPES(Slice)
 
@@ -19,9 +20,10 @@ struct SliceStruct {
   BASECONTIG_DATA
   int strand;
   char emptyFlag;
-  ECOSTRING chrName;
+  ECOSTRING seqRegionName;
   ECOSTRING assemblyType;
-  IDType chrId;
+  CoordSystem *coordSystem;
+  IDType seqRegionId;
 };
 #undef FUNCSTRUCTTYPE
 
@@ -44,14 +46,30 @@ Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
 #define Slice_setEmptyFlag(s,e) (s)->emptyFlag = (e)
 #define Slice_getEmptyFlag(s) (s)->emptyFlag
 
+#define Slice_setSeqRegionStart(sl,s) (sl)->start = (s)
+#define Slice_getSeqRegionStart(sl) (sl)->start
+
+#define Slice_setSeqRegionEnd(sl,e) (sl)->end = (e)
+#define Slice_getSeqRegionEnd(sl) (sl)->end
+
+#define Slice_setSeqRegionId(sl,c) (sl)->seqRegionId = (c)
+#define Slice_getSeqRegionId(sl) (sl)->seqRegionId
+
+// SMJS Temporary Chr versions to satisfy linking
 #define Slice_setChrStart(sl,s) (sl)->start = (s)
 #define Slice_getChrStart(sl) (sl)->start
 
 #define Slice_setChrEnd(sl,e) (sl)->end = (e)
 #define Slice_getChrEnd(sl) (sl)->end
 
-#define Slice_setChrId(sl,c) (sl)->chrId = (c)
-#define Slice_getChrId(sl) (sl)->chrId
+#define Slice_setChrId(sl,c) (sl)->seqRegionId = (c)
+#define Slice_getChrId(sl) (sl)->seqRegionId
+
+#define Slice_getChrName(sl) (sl)->seqRegionName
+// SMJS End temporary Chr versions to satisfy linking
+
+#define Slice_setCoordSystem(sl,cs) (sl)->coordSystem = (cs)
+#define Slice_getCoordSystem(sl) (sl)->coordSystem
 
 #define Slice_setStrand(sl,s) (sl)->strand = (s)
 #define Slice_getStrand(sl) (sl)->strand
@@ -61,8 +79,8 @@ Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
 ECOSTRING Slice_setAssemblyType(Slice *sl,char *type);
 #define Slice_getAssemblyType(sl) (sl)->assemblyType
 
-ECOSTRING Slice_setChrName(Slice *sl,char *chrName);
-#define Slice_getChrName(sl) (sl)->chrName
+ECOSTRING Slice_setSeqRegionName(Slice *sl,char *seqRegionName);
+#define Slice_getSeqRegionName(sl) (sl)->seqRegionName
 
 ECOSTRING Slice_getName(Slice *sl);
 Vector *Slice_getAllGenes(Slice *slice, char *logicName);

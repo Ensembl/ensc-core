@@ -40,11 +40,11 @@ CoordSystem *CoordSystem_new(char *name, char *version, int rank, IDType dbID, C
 
 #define CoordSystem_getVersion(cs) cs->version
 
-#define CoordSystem_getIsTopLevel(cs) cs->isTopLevel;
+#define CoordSystem_getIsTopLevel(cs) cs->isTopLevel
 
-#define CoordSystem_getIsSeqLevel(cs) cs->isSeqLevel;
+#define CoordSystem_getIsSeqLevel(cs) cs->isSeqLevel
 
-#define CoordSystem_getIsDefaultVersion(cs) cs->isDefaultVersion;
+#define CoordSystem_getIsDefaultVersion(cs) cs->isDefaultVersion
 
 int CoordSystem_compare(CoordSystem *cs1, CoordSystem *cs2);
 
