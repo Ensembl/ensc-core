@@ -20,9 +20,9 @@ char *SeqRegionRange_setSeqRegionName(SeqRegionRange *srRange, char *srName) {
     exit(1);
   }
 
-  strcpy(sr->srName,srName);
+  strcpy(srRange->srName,srName);
 
-  return sr->srName;
+  return srRange->srName;
 }
 
 void SeqRegionRange_expand(SeqRegionRange *range, int pad) {

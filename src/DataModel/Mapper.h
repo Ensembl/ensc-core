@@ -16,16 +16,21 @@
 
 struct MapperStruct {
   IDHash *hashes[2];
-  CoordSystemType toSystem;
-  CoordSystemType fromSystem;
+  char *from;
+  char *to;
+  CoordSystem *toSystem;
+  CoordSystem *fromSystem;
   int isSorted;
 };
 
-#define Mapper_setTo(m, t) (m)->toSystem = (t)
-#define Mapper_getTo(m) (m)->toSystem
+#define Mapper_getTo(m) (m)->to
+#define Mapper_getFrom(m) (m)->from
 
-#define Mapper_setFrom(m, f) (m)->fromSystem = (f)
-#define Mapper_getFrom(m) (m)->fromSystem
+#define Mapper_setToCoordSystem(m, t) (m)->toSystem = (t)
+#define Mapper_getToCoordSystem(m) (m)->toSystem
+
+#define Mapper_setFromCoordSystem(m, f) (m)->fromSystem = (f)
+#define Mapper_getFromCoordSystem(m) (m)->fromSystem
 
 #define Mapper_setPairHash(m, ind, h) (m)->hashes[(ind)] = (h)
 #define Mapper_getPairHash(m, ind) (m)->hashes[(ind)]
@@ -33,22 +38,30 @@ struct MapperStruct {
 #define Mapper_setIsSorted(m, i) (m)->isSorted = (i)
 #define Mapper_getIsSorted(m) (m)->isSorted
 
-Mapper *Mapper_new(CoordSystemType from, CoordSystemType to);
+Mapper *Mapper_new(char *from, char *to, CoordSystem *fromCs, CoordSystem *toCs);
+char *Mapper_setFrom(Mapper *m, char *from);
+char *Mapper_setTo(Mapper *m, char *to);
 
-MapperRangeSet *Mapper_mapCoordinates(Mapper *m, IDType id, int start, int end, 
-                                      int strand, CoordSystemType type);
+void Mapper_flush(Mapper *m);
 
-int Mapper_fastMap(Mapper *m, IDType id, int start, int end, int strand, 
-                   CoordSystemType type, MapperCoordinate *retRange);
+MapperRangeSet *Mapper_mapCoordinates(Mapper *m, IDType id, long start, long end, 
+                                      int strand, char *type);
+
+MapperRangeSet *Mapper_fastMap(Mapper *m, IDType id, long start, long end, int strand, 
+                               char *type);
 
 void Mapper_addMapCoordinates(Mapper *m, IDType contigId, int contigStart, int contigEnd,
                               int contigOri, IDType chrId, int chrStart, int chrEnd);
 
-MapperPairSet *Mapper_listPairs(Mapper *m, IDType id, int start, int end, CoordSystemType type);
+MapperRangeSet *Mapper_mapInsert(Mapper *m, IDType id, long start, long end, int strand, char *type, int fastmap);
+
+MapperPairSet *Mapper_listPairs(Mapper *m, IDType id, long start, long end, char *type);
 
 void Mapper_dump(Mapper *m, FILE *fp);
 
 void Mapper_sort(Mapper *m);
+
+void Mapper_mergePairs(Mapper *m);
 
 
 #endif

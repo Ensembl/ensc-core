@@ -1,3 +1,5 @@
+#include "ChainedAssemblyMapper.h"
+#include "CoordPair.h"
 /*
 =head1 DESCRIPTION
 
@@ -73,16 +75,28 @@ ChainedAssemblyMapper *ChainedAssemblyMapper_new(AssemblyMapperAdaptor *adaptor,
   ChainedAssemblyMapper_setLastCoordSystem(cam, Vector_getElementAt(coordSystems, 2));
 
   // maps between first and intermediate coord systems
-  Mapper *firstMidMapper = Mapper_new("first", "middle");
+  Mapper *firstMidMapper = Mapper_new("first", 
+                                      "middle",
+                                      ChainedAssemblyMapper_getFirstCoordSystem(cam),
+                                      ChainedAssemblyMapper_getMiddleCoordSystem(cam)
+                                     );
   ChainedAssemblyMapper_setFirstMiddleMapper(cam, firstMidMapper);
 
   // maps between last and intermediate
-  Mapper *lastMidMapper = Mapper_new("last", "middle");
+  Mapper *lastMidMapper = Mapper_new("last", 
+                                     "middle",
+                                     ChainedAssemblyMapper_getLastCoordSystem(cam),
+                                     ChainedAssemblyMapper_getMiddleCoordSystem(cam)
+                                    );
   ChainedAssemblyMapper_setLastMiddleMapper(cam, lastMidMapper);
 
   // mapper that is actually used and is loaded by the mappings generated
   // by the other two mappers
-  Mapper *firstLastMapper = Mapper_new("first", "last", srcSc, dstCs); //NIY Extra args in Mapper_new??
+  Mapper *firstLastMapper = Mapper_new("first", 
+                                       "last", 
+                                       ChainedAssemblyMapper_getFirstCoordSystem(cam),
+                                       ChainedAssemblyMapper_getLastCoordSystem(cam)
+                                      );
   ChainedAssemblyMapper_setFirstLastMapper(cam, firstLastMapper);
 
   // need registries to keep track of what regions are registered in source
@@ -93,30 +107,6 @@ ChainedAssemblyMapper *ChainedAssemblyMapper_new(AssemblyMapperAdaptor *adaptor,
   ChainedAssemblyMapper_setMaxPairCount(cam, DEFAULT_MAX_PAIR_COUNT);
 
   return cam;
-}
-
-
-/*
-=head2 max_pair_count
-
-  Arg [1]    : (optional) int $max_pair_count
-  Example    : $mapper->max_pair_count(100000)
-  Description: Getter/Setter for the number of mapping pairs allowed in the
-               internal cache. This can be used to override the default value
-               (6000) to tune the performance and memory usage for certain
-               scenarios. Higher value = bigger cache, more memory used
-  Returntype : int
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-*/
-
-sub max_pair_count {
-  my $self = shift;
-  $self->{'max_pair_count'} = shift if(@_);
-  return $self->{'max_pair_count'};
 }
 
 
@@ -217,6 +207,24 @@ int ChainedAssemblyMapper_getSize(ChainedAssemblyMapper *cam) {
 =cut
 */
 
+IDType ChainedAssemblyMapper_getSeqRegionId(ChainedAssemblyMapper *cam, char *seqRegionName, CoordSystem *cs) {
+  // Not the most efficient thing to do making these temporary vectors to get one value, but hey its what the perl does!
+  Vector *tmp = Vector_new();
+  Vector_addElement(tmp, seqRegionName);
+
+  AssemblyMapperAdaptor *adaptor = ChainedAssemblyMapper_getAdaptor(cam);
+
+  Vector *idVec = AssemblyMapperAdaptor_seqRegionsToIds(adaptor, cs, tmp);
+
+  IDType seqRegionId = *((IDType *)Vector_getElementAt(idVec, 0));
+
+  Vector_free(tmp);
+  Vector_free(idVec);
+  // End of somewhat inefficient stuff
+
+  return seqRegionId;
+}
+
 MapperRangeSet *ChainedAssemblyMapper_map(ChainedAssemblyMapper *cam, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, 
                               CoordSystem *frmCs, int fastmap, Slice *toSlice) {
 
@@ -229,17 +237,7 @@ MapperRangeSet *ChainedAssemblyMapper_map(ChainedAssemblyMapper *cam, char *frmS
   char *frm;
   RangeRegistry *registry;
 
-  Vector *tmp = Vector_new();
-  Vector_addElement(tmp, frmSeqRegionName);
-
-  AssemblyMapperAdaptor *adaptor = ChainedAssemblyMapper_getAdaptor(cam);
-
-  Vector *idVec = AssemblyMapperAdaptor_seqRegionsToIds(frmCs, tmp);
-
-  IDType seqRegionId = *(Vector_getElementAt(idVec, 0));
-
-  Vector_free(tmp, NULL);
-  Vector_free(idVec, NULL);
+  IDType seqRegionId = ChainedAssemblyMapper_getSeqRegionId(cam, frmSeqRegionName, frmCs);
 
   // speed critical section:
   // try to do simple pointer equality comparisons of the coord system objects
@@ -279,19 +277,19 @@ MapperRangeSet *ChainedAssemblyMapper_map(ChainedAssemblyMapper *cam, char *frmS
   Vector *ranges;
 
   if (isInsert) {
-    ranges = RangeRegistry_checkAndRegister(registry, seqRegionId, frmEnd, frmStart, minStart, minEnd);
+    ranges = RangeRegistry_checkAndRegister(registry, seqRegionId, frmEnd, frmStart, minStart, minEnd, 1);
   } else {
-    ranges = RangeRegistry_checkAndRegister(registry, seqRegionId, frmStart, frmEnd, minStart, minEnd);
+    ranges = RangeRegistry_checkAndRegister(registry, seqRegionId, frmStart, frmEnd, minStart, minEnd, 1);
   }
 
   if (Vector_getNumElement(ranges)) {
-    if (ChainedAssemblyMapper_getSize() > ChainedAssemblyMapper_getMaxPairCount(cam)) {
+    if (ChainedAssemblyMapper_getSize(cam) > ChainedAssemblyMapper_getMaxPairCount(cam)) {
       ChainedAssemblyMapper_flush(cam);
 
       if (isInsert) {
-        ranges = RangeRegistry_checkAndRegister(registry, seqRegionId, frmEnd, frmStart, minStart, minEnd);
+        ranges = RangeRegistry_checkAndRegister(registry, seqRegionId, frmEnd, frmStart, minStart, minEnd, 1);
       } else {
-        ranges = RangeRegistry_checkAndRegister(registry, seqRegionId, frmStart, frmEnd, minStart, minEnd);
+        ranges = RangeRegistry_checkAndRegister(registry, seqRegionId, frmStart, frmEnd, minStart, minEnd, 1);
       }
     }
     AssemblyMapperAdaptor *adaptor = ChainedAssemblyMapper_getAdaptor(cam);
@@ -305,8 +303,8 @@ MapperRangeSet *ChainedAssemblyMapper_map(ChainedAssemblyMapper *cam, char *frmS
     mrs = Mapper_mapCoordinates(mapper, seqRegionId, frmStart, frmEnd, frmStrand, frm);
   }
 
-  // Need to tidy up
-  Vector_free(ranges, CoordPair_free);
+  // NIY: Need to tidy up elements too!!
+  Vector_free(ranges);
 
   return mrs;
 }
@@ -343,7 +341,7 @@ MapperRangeSet *ChainedAssemblyMapper_fastMap(ChainedAssemblyMapper *cam, char *
 */
 
 
-Vector *ChainedAssemblyMapper_listIds(ChainedAssemblyMapper *cam, char *fromSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
+Vector *ChainedAssemblyMapper_listIds(ChainedAssemblyMapper *cam, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
 
   int isInsert = (frmStart == frmEnd+1);
 
@@ -362,19 +360,7 @@ Vector *ChainedAssemblyMapper_listIds(ChainedAssemblyMapper *cam, char *fromSeqR
     minEnd   = (((frmEnd >> CHUNKFACTOR) + 1) << CHUNKFACTOR) - 1;
   }
 
-  // Not the most efficient thing to do making these temporary vectors to get one value, but hey its what the perl does!
-  Vector *tmp = Vector_new();
-  Vector_addElement(tmp, frmSeqRegionName);
-
-  AssemblyMapperAdaptor *adaptor = ChainedAssemblyMapper_getAdaptor(cam);
-
-  Vector *idVec = AssemblyMapperAdaptor_seqRegionsToIds(frmCs, tmp);
-
-  IDType seqRegionId = *(Vector_getElementAt(idVec, 0));
-
-  Vector_free(tmp, NULL);
-  Vector_free(idVec, NULL);
-  // End of somewhat inefficient stuff
+  IDType seqRegionId = ChainedAssemblyMapper_getSeqRegionId(cam, frmSeqRegionName, frmCs);
 
 
   if (!CoordSystem_compare(frmCs, ChainedAssemblyMapper_getFirstCoordSystem(cam))) {
@@ -383,16 +369,17 @@ Vector *ChainedAssemblyMapper_listIds(ChainedAssemblyMapper *cam, char *fromSeqR
     Vector *ranges;
 
     if (isInsert) {
-      ranges = RangeRegistry_checkAndRegister(registry, seqRegionId, frmEnd, frmStart, minStart, minEnd);
+      ranges = RangeRegistry_checkAndRegister(registry, seqRegionId, frmEnd, frmStart, minStart, minEnd, 1);
     } else {
-      ranges = RangeRegistry_checkAndRegister(registry, seqRegionId, frmStart, frmEnd, minStart, minEnd);
+      ranges = RangeRegistry_checkAndRegister(registry, seqRegionId, frmStart, frmEnd, minStart, minEnd, 1);
     }
 
-    if (defined($ranges)) {
-      $self->adaptor->register_chained($self,"first",$seq_region_id,$ranges);
+    if (ranges) {
+      AssemblyMapperAdaptor *adaptor = ChainedAssemblyMapper_getAdaptor(cam);
+      AssemblyMapperAdaptor_registerChained(adaptor, cam, "first", seqRegionId, ranges);
     }
 
-    MapperPairSet *mps = Mapepr_listPairs( ChainedAssemblyMapper_getFirstLastMapper(cam), seqRegionId, frmStart, frmEnd, "first");
+    MapperPairSet *mps = Mapper_listPairs( ChainedAssemblyMapper_getFirstLastMapper(cam), seqRegionId, frmStart, frmEnd, "first");
 
     return MapperPairSet_getToIds(mps) ;
 
@@ -402,9 +389,9 @@ Vector *ChainedAssemblyMapper_listIds(ChainedAssemblyMapper *cam, char *fromSeqR
     Vector *ranges;
 
     if (isInsert) {
-      ranges = RangeRegistry_checkAndRegister(registry, seqRegionId, frmEnd, frmStart, minStart, minEnd);
+      ranges = RangeRegistry_checkAndRegister(registry, seqRegionId, frmEnd, frmStart, minStart, minEnd, 1);
     } else {
-      ranges = RangeRegistry_checkAndRegister(registry, seqRegionId, frmStart, frmEnd, minStart, minEnd);
+      ranges = RangeRegistry_checkAndRegister(registry, seqRegionId, frmStart, frmEnd, minStart, minEnd, 1);
     }
 
     if (Vector_getNumElement(ranges)) {
@@ -412,7 +399,7 @@ Vector *ChainedAssemblyMapper_listIds(ChainedAssemblyMapper *cam, char *fromSeqR
       AssemblyMapperAdaptor_registerChained(adaptor, cam, "last", seqRegionId, ranges);
     }
 
-    MapperPairSet *mps = Mapepr_listPairs( ChainedAssemblyMapper_getFirstLastMapper(cam), seqRegionId, frmStart, frmEnd, "last");
+    MapperPairSet *mps = Mapper_listPairs( ChainedAssemblyMapper_getFirstLastMapper(cam), seqRegionId, frmStart, frmEnd, "last");
 
     return MapperPairSet_getFromIds(mps) ;
   } else {
@@ -446,10 +433,10 @@ Vector *ChainedAssemblyMapper_listIds(ChainedAssemblyMapper *cam, char *fromSeqR
 =cut
 */
 
-Vector *ChainedAssemblyMapper_listSeqRegions(ChainedAssemblyMapper *cam, char *fromSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
+Vector *ChainedAssemblyMapper_listSeqRegions(ChainedAssemblyMapper *cam, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
 
   //retrieve the seq_region names
-  Vector *seqRegs = ChainedAssemblyMapper_listIds(frmSeqRegionName, frmStart, frmEnd, frmCs);
+  Vector *seqRegs = ChainedAssemblyMapper_listIds(cam, frmSeqRegionName, frmStart, frmEnd, frmCs);
 
   // The seq_regions are from the 'to' coordinate system not the
   // from coordinate system we used to obtain them
@@ -466,163 +453,9 @@ Vector *ChainedAssemblyMapper_listSeqRegions(ChainedAssemblyMapper *cam, char *f
 
   Vector *regions = AssemblyMapperAdaptor_seqIdsToRegions(adaptor, seqRegs);
   // Need to tidy up seqRegs;
-  Vector_free(seqRegs, NULL);
+  Vector_free(seqRegs);
 
   return regions;
-}
-
-/*
-=head2 first_last_mapper
-
-  Args       : none
-  Example    : $mapper = $cam->first_last_mapper();
-  Description: return the mapper.
-  Returntype : Bio::EnsEMBL::Mapper
-  Exceptions : none
-  Caller     : internal
-  Status     : Stable
-
-=cut
-*/
-
-sub first_last_mapper {
-  my $self = shift;
-  return $self->{'first_last_mapper'};
-}
-
-/*
-=head2 first_middle_mapper
-
-  Args       : none
-  Example    : $mapper = $cam->first_middle_mapper();
-  Description: return the mapper.
-  Returntype : Bio::EnsEMBL::Mapper
-  Exceptions : none
-  Caller     : internal
-  Status     : Stable
-
-=cut
-*/
-
-
-sub first_middle_mapper {
-  my $self = shift;
-  return $self->{'first_mid_mapper'};
-}
-
-/*
-=head2 last_middle_mapper
-
-  Args       : none
-  Example    : $mapper = $cam->last_middle_mapper();
-  Description: return the mapper.
-  Returntype : Bio::EnsEMBL::Mapper
-  Exceptions : none
-  Caller     : internal
-  Status     : Stable
-
-=cut
-*/
-
-sub last_middle_mapper {
-  my $self = shift;
-  return $self->{'last_mid_mapper'};
-}
-
-
-/*
-=head2 first_CoordSystem
-
-  Args       : none
-  Example    : $coordsys = $cam->first_CoordSystem();
-  Description: return the CoordSystem.
-  Returntype : Bio::EnsEMBL::CoordSystem
-  Exceptions : none
-  Caller     : internal
-  Status     : Stable
-
-=cut
-*/
-
-sub first_CoordSystem {
-  my $self = shift;
-  return $self->{'first_cs'};
-}
-
-/*
-=head2 middle_CoordSystem
-
-  Args       : none
-  Example    : $coordsys = $cam->middle_CoordSystem();
-  Description: return the CoordSystem.
-  Returntype : Bio::EnsEMBL::CoordSystem
-  Exceptions : none
-  Caller     : internal
-  Status     : Stable
-
-=cut
-*/
-
-sub middle_CoordSystem {
-  my $self = shift;
-  return $self->{'mid_cs'};
-}
-
-/*
-=head2 last_CoordSystem
-
-  Args       : none
-  Example    : $coordsys = $cam->last_CoordSystem();
-  Description: return the CoordSystem.
-  Returntype : Bio::EnsEMBL::CoordSystem
-  Exceptions : none
-  Caller     : internal
-  Status     : Stable
-
-=cut
-*/
-
-sub last_CoordSystem {
-  my $self = shift;
-  return $self->{'last_cs'};
-}
-
-/*
-=head2 first_registry
-
-  Args       : none
-  Example    : $rr = $cam->first_registry();
-  Description: return the Registry.
-  Returntype : Bio::EnsEMBL::Mapper::RangeRegistry
-  Exceptions : none
-  Caller     : internal
-  Status     : Stable
-
-=cut
-*/
-
-sub first_registry {
-  my $self = shift;
-  return $self->{'first_registry'};
-}
-
-/*
-=head2 last_registry
-
-  Args       : none
-  Example    : $rr = $cam->last_registry();
-  Description: return the Registry.
-  Returntype : Bio::EnsEMBL::Mapper::RangeRegistry
-  Exceptions : none
-  Caller     : internal
-  Status     : Stable
-
-=cut
-*/
-
-sub last_registry {
-  my $self = shift;
-  return $self->{'last_registry'};
 }
 
 
@@ -647,10 +480,12 @@ sub last_registry {
 =cut
 */
 
+/* Don't implement for now
 sub mapper {
   my $self = shift;
   return $self->first_last_mapper();
 }
+*/
 
 /*
 =head2 assembled_CoordSystem
@@ -666,10 +501,12 @@ sub mapper {
 =cut
 */
 
+/* Don't implement for now
 sub assembled_CoordSystem {
   my $self = shift;
   return $self->{'first_cs'};
 }
+*/
 
 /*
 =head2 component_CoordSystem
@@ -685,30 +522,12 @@ sub assembled_CoordSystem {
 =cut
 */
 
+/*
 sub component_CoordSystem {
   my $self = shift;
   return $self->{'last_cs'};
 }
-
-
-/*
-=head2 adaptor
-
-  Arg [1]    : Bio::EnsEMBL::DBSQL::AssemblyMapperAdaptor $adaptor
-  Description: get/set for this objects database adaptor
-  Returntype : Bio::EnsEMBL::DBSQL::AssemblyMapperAdaptor
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
 */
-
-sub adaptor {
-  my $self = shift;
-  weaken($self->{'adaptor'} = shift) if(@_);
-  return $self->{'adaptor'};
-}
 
 
 /* Hopefully don't need these deprecated methods

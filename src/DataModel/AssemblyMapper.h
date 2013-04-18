@@ -2,7 +2,9 @@
 #define __ASSEMBLYMAPPER_H__
 
 #include "DataModelTypes.h"
+#include "EnsC.h"
 
+#include "Vector.h"
 #include "IDHash.h"
 #include "Mapper.h"
 #include "AdaptorTypes.h"
@@ -11,11 +13,13 @@
 #define MAXCHUNK 2000
 
 struct AssemblyMapperStruct {
-  char *type;
   AssemblyMapperAdaptor *adaptor;
   Mapper *mapper;
-  IDHash *contigRegister;
-  IDHash *chrChunkHash;
+  IDHash *componentRegister;
+  IDHash *assembledRegister;
+  CoordSystem *assembledCoordSystem;
+  CoordSystem *componentCoordSystem;
+  int maxPairCount;
 };
 
 #define AssemblyMapper_setChrChunkHash(am,h) (am)->chrChunkHash = (h)
@@ -24,31 +28,32 @@ struct AssemblyMapperStruct {
 #define AssemblyMapper_setAdaptor(am, ad) (am)->adaptor = (ad)
 #define AssemblyMapper_getAdaptor(am) (am)->adaptor
 
+#define AssemblyMapper_setAssembledCoordSystem(am, cs) (am)->assembledCoordSystem = (cs)
+#define AssemblyMapper_getAssembledCoordSystem(am) (am)->assembledCoordSystem
+
+#define AssemblyMapper_setComponentCoordSystem(am, cs) (am)->componentCoordSystem = (cs)
+#define AssemblyMapper_getComponentCoordSystem(am) (am)->componentCoordSystem
+
+#define AssemblyMapper_setMaxPairCount(am, mp) (am)->maxPairCount = (mp)
+#define AssemblyMapper_getMaxPairCount(am) (am)->maxPairCount
+
 #define AssemblyMapper_setMapper(am, m) (am)->mapper = (m)
 #define AssemblyMapper_getMapper(am) (am)->mapper
 
+/*
 char *AssemblyMapper_setType(AssemblyMapper *am, char *type);
 #define AssemblyMapper_getType(am) (am)->type
+*/
 
-#define AssemblyMapper_setContigRegister(am, cr) (am)->contigRegister = (cr)
-#define AssemblyMapper_getContigRegister(am) (am)->contigRegister
+#define AssemblyMapper_setComponentRegister(am, cr) (am)->componentRegister = (cr)
+#define AssemblyMapper_getComponentRegister(am) (am)->componentRegister
 
+#define AssemblyMapper_setAssembledRegister(am, ar) (am)->assembledRegister = (ar)
+#define AssemblyMapper_getAssembledRegister(am) (am)->assembledRegister
 
-AssemblyMapper *AssemblyMapper_new(AssemblyMapperAdaptor *ama, char *type);
-char *AssemblyMapper_setType(AssemblyMapper *am, char *type);
-MapperRangeSet *AssemblyMapper_mapCoordinatesToAssembly(AssemblyMapper *am, IDType contigId,
-                                                        int start, int end, int strand);
-int AssemblyMapper_fastToAssembly(AssemblyMapper *am, IDType contigId,
-                                  int start, int end, int strand, MapperCoordinate *retRange);
-MapperRangeSet *AssemblyMapper_mapCoordinatesToRawContig(AssemblyMapper *am, IDType chrId,
-                              int start, int end, int strand);
-int AssemblyMapper_listContigIds(AssemblyMapper *am, IDType chrId, int start, int end, IDType **ids);
-void AssemblyMapper_registerRegion(AssemblyMapper *am, IDType chrId, int start, int end);
-int AssemblyMapper_registerRegionAroundContig(AssemblyMapper *am, IDType contigId, int left, int right);
-int AssemblyMapper_haveRegisteredContig(AssemblyMapper *am, IDType id);
-void AssemblyMapper_registerContig(AssemblyMapper *am, IDType id);
-int AssemblyMapper_getChunkSize(AssemblyMapper *am);
-void AssemblyMapper_chunkRegisterRegion(AssemblyMapper *am, IDType chrId,
-                     int firstChunk, int lastChunk);
+AssemblyMapper *AssemblyMapper_new(AssemblyMapperAdaptor *ama, Vector *coordSystems);
 
+IDType AssemblyMapper_getSeqRegionId(AssemblyMapper *am, char *seqRegionName, CoordSystem *cs);
+int AssemblyMapper_haveRegisteredComponent(AssemblyMapper *am, IDType cmpSeqRegionId);
+int AssemblyMapper_haveRegisteredAssembled(AssemblyMapper *am, IDType asmSeqRegionId, int chunkId);
 #endif

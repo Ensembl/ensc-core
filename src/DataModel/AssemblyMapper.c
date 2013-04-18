@@ -1,4 +1,4 @@
-
+#include "AssemblyMapper.h"
 /*
 =head1 DESCRIPTION
 
@@ -76,34 +76,6 @@ AssemblyMapper *AssemblyMapper_new(AssemblyMapperAdaptor *adaptor, Vector *coord
 }
 
 /*
-=head2 max_pair_count
-
-  Arg [1]    : (optional) int $max_pair_count
-  Example    : $mapper->max_pair_count(100000)
-  Description: Getter/Setter for the number of mapping pairs allowed
-               in the internal cache.  This can be used to override
-               the default value (1000) to tune the performance and
-               memory usage for certain scenarios.  Higher value
-               means bigger cache, more memory used.
-  Return type: int
-  Exceptions : None
-  Caller     : General
-  Status     : Stable
-
-=cut
-*/
-
-sub max_pair_count {
-  my ( $self, $value ) = @_;
-
-  if ( defined($value) ) {
-    $self->{'max_pair_count'} = $value;
-  }
-
-  return $self->{'max_pair_count'};
-}
-
-/*
 =head2 register_all
 
   Arg [1]    : None
@@ -165,21 +137,11 @@ MapperRangeSet *AssemblyMapper_map(AssemblyMapper *am, char *frmSeqRegionName, l
   Mapper *mapper  = AssemblyMapper_getMapper(am);
   CoordSystem *asmCs  = AssemblyMapper_getAssembledCoordSystem(am);
   CoordSystem *cmpCs  = AssemblyMapper_getComponentCoordSystem(am);
-  AssemblyMapperAdaptor *adaptor = AssemblyMapperAdaptor_getAdaptor(am);
+  AssemblyMapperAdaptor *adaptor = AssemblyMapper_getAdaptor(am);
 
   char *frm;
 
-  // Not the most efficient thing to do making these temporary vectors to get one value, but hey its what the perl does!
-  Vector *tmp = Vector_new();
-  Vector_addElement(tmp, frmSeqRegionName);
-
-  Vector *idVec = AssemblyMapperAdaptor_seqRegionsToIds(frmCs, tmp);
-
-  IDType seqRegionId = *(Vector_getElementAt(idVec, 0));
-
-  Vector_free(tmp, NULL);
-  Vector_free(idVec, NULL);
-  // End of somewhat inefficient stuff
+  IDType seqRegionId = AssemblyMapper_getSeqRegionId(am, frmSeqRegionName, frmCs);
 
   // Speed critical section:
   // Try to do simple pointer equality comparisons of the coord system
@@ -287,17 +249,7 @@ MapperRangeSet *AssemblyMapper_fastMap(AssemblyMapper *am, char *frmSeqRegionNam
   AssemblyMapperAdaptor *adaptor = AssemblyMapper_getAdaptor(am);
   char *frm;
 
-  // Not the most efficient thing to do making these temporary vectors to get one value, but hey its what the perl does!
-  Vector *tmp = Vector_new();
-  Vector_addElement(tmp, frmSeqRegionName);
-
-  Vector *idVec = AssemblyMapperAdaptor_seqRegionsToIds(frmCs, tmp);
-
-  IDType seqRegionId = *(Vector_getElementAt(idVec, 0));
-
-  Vector_free(tmp, NULL);
-  Vector_free(idVec, NULL);
-  // End of somewhat inefficient stuff
+  IDType seqRegionId = AssemblyMapper_getSeqRegionId(am, frmSeqRegionName, frmCs);
 
 
   // Speed critical section:
@@ -353,19 +305,26 @@ MapperRangeSet *AssemblyMapper_fastMap(AssemblyMapper *am, char *frmSeqRegionNam
 =cut
 */
 
-
-Vector *AssemblyMapper_listIds(AssemblyMapper *am, char *fromSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
+IDType AssemblyMapper_getSeqRegionId(AssemblyMapper *am, char *seqRegionName, CoordSystem *cs) {
   // Not the most efficient thing to do making these temporary vectors to get one value, but hey its what the perl does!
   Vector *tmp = Vector_new();
-  Vector_addElement(tmp, frmSeqRegionName);
+  Vector_addElement(tmp, seqRegionName);
 
-  Vector *idVec = AssemblyMapperAdaptor_seqRegionsToIds(frmCs, tmp);
+  AssemblyMapperAdaptor *adaptor = ChainedAssemblyMapper_getAdaptor(am);
+  
+  Vector *idVec = AssemblyMapperAdaptor_seqRegionsToIds(cs, tmp);
 
-  IDType seqRegionId = *(Vector_getElementAt(idVec, 0));
+  IDType seqRegionId = *((IDType *)Vector_getElementAt(idVec, 0));
 
-  Vector_free(tmp, NULL);
-  Vector_free(idVec, NULL);
+  Vector_free(tmp);
+  Vector_free(idVec);
   // End of somewhat inefficient stuff
+
+  return seqRegionId;
+}
+
+Vector *AssemblyMapper_listIds(AssemblyMapper *am, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
+  IDType seqRegionId = AssemblyMapper_getSeqRegionId(am, frmSeqRegionName, frmCs);
 
   if ( !CoordSystem_compare(frmCs, AssemblyMapper_getComponentCoordSystem(am) ) ) {
 
@@ -376,7 +335,7 @@ Vector *AssemblyMapper_listIds(AssemblyMapper *am, char *fromSeqRegionName, long
     // Pull out the 'from' identifiers of the mapper pairs.  The we
     // loaded the assembled side as the 'from' side in the constructor.
 
-    MapperPairSet *mps = Mapepr_listPairs( AssemblyMapper_getMapper(am), seqRegionId, frmStart, frmEnd, "component");
+    MapperPairSet *mps = Mapper_listPairs( AssemblyMapper_getMapper(am), seqRegionId, frmStart, frmEnd, "component");
 
     return MapperPairSet_getFromIds(mps);
   } else if ( !CoordSystem_compare(frmCs, AssemblyMapper_getAssembledCoordSystem(am) ) ) {
@@ -386,7 +345,7 @@ Vector *AssemblyMapper_listIds(AssemblyMapper *am, char *fromSeqRegionName, long
     // Pull out the 'to' identifiers of the mapper pairs we loaded the
     // component side as the 'to' coord system in the constructor.
 
-    MapperPairSet *mps = Mapepr_listPairs( AssemblyMapper_getMapper(am), seqRegionId, frmStart, frmEnd, "assembled");
+    MapperPairSet *mps = Mapper_listPairs( AssemblyMapper_getMapper(am), seqRegionId, frmStart, frmEnd, "assembled");
 
     return MapperPairSet_getToIds(mps);
   } else {
@@ -426,9 +385,9 @@ Vector *AssemblyMapper_listIds(AssemblyMapper *am, char *fromSeqRegionName, long
 =cut
 */
 
-Vector *AssemblyMapper_listSeqRegions(AssemblyMapper *am, char *fromSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
+Vector *AssemblyMapper_listSeqRegions(AssemblyMapper *am, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
   //retrieve the seq_region names
-  Vector *seqRegs = ChainedAssemblyMapper_listIds(frmSeqRegionName, frmStart, frmEnd, frmCs);
+  Vector *seqRegs = AssemblyMapper_listIds(am, frmSeqRegionName, frmStart, frmEnd, frmCs);
 
 // SMJS toCs doesn't seem to be used
 //  CoordSystem *toCs;
@@ -444,7 +403,7 @@ Vector *AssemblyMapper_listSeqRegions(AssemblyMapper *am, char *fromSeqRegionNam
   Vector *regions = AssemblyMapperAdaptor_seqIdsToRegions(adaptor, seqRegs);
 
   // Need to tidy up seqRegs;
-  Vector_free(seqRegs, NULL);
+  Vector_free(seqRegs);
 
   return regions;
 }
@@ -470,7 +429,7 @@ Vector *AssemblyMapper_listSeqRegions(AssemblyMapper *am, char *fromSeqRegionNam
 =cut
 */
 
-void AssemblyMapper_haveRegisteredComponent(AssemblyMapper *am, IDType cmpSeqRegionId) {
+int AssemblyMapper_haveRegisteredComponent(AssemblyMapper *am, IDType cmpSeqRegionId) {
   IDHash *componentRegister = AssemblyMapper_getComponentRegister(am);
 
   if ( !IDHash_contains(componentRegister, cmpSeqRegionId) ) {
@@ -503,7 +462,7 @@ void AssemblyMapper_haveRegisteredComponent(AssemblyMapper *am, IDType cmpSeqReg
 =cut
 */
 
-void AssemblyMapper_haveRegisteredAssembled(AssemblyMapper *am, IDType asmSeqRegionId, int chunkId) {
+int AssemblyMapper_haveRegisteredAssembled(AssemblyMapper *am, IDType asmSeqRegionId, int chunkId) {
   IDHash *assembledRegister = AssemblyMapper_getAssembledRegister(am);
 
   if ( !IDHash_contains(assembledRegister, asmSeqRegionId) ) {
@@ -569,7 +528,7 @@ void AssemblyMapper_registerAssembled(AssemblyMapper *am, IDType asmSeqRegionId,
   IDHash *assembledRegister = AssemblyMapper_getAssembledRegister(am);
 
   if ( !IDHash_contains(assembledRegister, asmSeqRegionId) ) {
-    IDHash_add(assembledRegister, asmSeqRegionId, IDHash_new());
+    IDHash_add(assembledRegister, asmSeqRegionId, IDHash_new(IDHASH_MEDIUM));
   }
 
   IDHash *chunkHash = IDHash_getValue(assembledRegister, asmSeqRegionId);
@@ -579,92 +538,6 @@ void AssemblyMapper_registerAssembled(AssemblyMapper *am, IDType asmSeqRegionId,
   }
 }
 
-/*
-=head2 mapper
-
-  Arg [1]    : None
-  Example    : $mapper = $asm_mapper->mapper();
-  Description: Retrieves the internal mapper used by this Assembly
-               Mapper.  This is unlikely to be useful unless you
-               _really_ know what you are doing.
-  Return type: Bio::EnsEMBL::Mapper
-  Exceptions : None
-  Caller     : Internal, AssemblyMapperAdaptor
-  Status     : Stable
-
-=cut
-*/
-
-sub mapper {
-  my ($self) = @_;
-
-  return $self->{'mapper'};
-}
-
-/*
-=head2 assembled_CoordSystem
-
-  Arg [1]    : None
-  Example    : $cs = $asm_mapper->assembled_CoordSystem();
-  Description: Retrieves the assembled CoordSystem from this
-               assembly mapper.
-  Return type: Bio::EnsEMBL::CoordSystem
-  Exceptions : None
-  Caller     : Internal, AssemblyMapperAdaptor
-  Status     : Stable
-
-=cut
-*/
-
-sub assembled_CoordSystem {
-  my ($self) = @_;
-
-  return $self->{'asm_cs'};
-}
-
-/*
-=head2 component_CoordSystem
-
-  Arg [1]    : None
-  Example    : $cs = $asm_mapper->component_CoordSystem();
-  Description: Retrieves the component CoordSystem from this
-               assembly mapper.
-  Return type: Bio::EnsEMBL::CoordSystem
-  Exceptions : None
-  Caller     : Internal, AssemblyMapperAdaptor
-  Status     : Stable
-
-=cut
-*/
-
-sub component_CoordSystem {
-  my ($self) = @_;
-
-  return $self->{'cmp_cs'};
-}
-
-/*
-=head2 adaptor
-
-  Arg [1]    : Bio::EnsEMBL::DBSQL::AssemblyMapperAdaptor $adaptor
-  Description: Getter/set terfor this object's database adaptor.
-  Returntype : Bio::EnsEMBL::DBSQL::AssemblyMapperAdaptor
-  Exceptions : None
-  Caller     : General
-  Status     : Stable
-
-=cut
-*/
-
-sub adaptor {
-  my ( $self, $value ) = @_;
-
-  if ( defined($value) ) {
-    weaken($self->{'adaptor'} = $value);
-  }
-
-  return $self->{'adaptor'};
-}
 
 /* Not implementing deprecated methods
 

@@ -1,3 +1,5 @@
+#include "RangeRegistry.h"
+#include "CoordPair.h"
 /*
 =head2 new
 
@@ -75,7 +77,8 @@ void *RangeRegistry_flush(RangeRegistry *registry) {
 
 // Also added a flag to indicate we actually want the gaps vector returned - quite often its not used in the caller and so would leak
 // memory
-Vector *RangeRegistry_checkAndRegister(RangeRegistry *reg, IDType id, long start, long end, long rStart, long rEnd, int wantGaps) {
+Vector *RangeRegistry_checkAndRegister(RangeRegistry *registry, IDType id, long start, long end, 
+                                       long rStart, long rEnd, int wantGaps) {
 
   // The following was commented out due to Ensembl Genomes requirements
   // for bacterial genomes.
@@ -100,13 +103,13 @@ Vector *RangeRegistry_checkAndRegister(RangeRegistry *reg, IDType id, long start
     exit(1);
   }
 
-  IDHash *reg = RangeRegistry_getRegistry(registry);
+  IDHash *regReg = RangeRegistry_getRegistry(registry);
   Vector *list;
-  if (IDHash_contains(id)) {
-    list = IDHash_getValue(id);
+  if (IDHash_contains(regReg, id)) {
+    list = IDHash_getValue(regReg, id);
   } else {
     list = Vector_new();
-    IDHash_add(reg, id, list);
+    IDHash_add(regReg, id, list);
   }
 
   
@@ -134,7 +137,7 @@ Vector *RangeRegistry_checkAndRegister(RangeRegistry *reg, IDType id, long start
   int startIdx = 0;
   int endIdx   = Vector_getNumElement(list)-1;
   int midIdx;
-  Range *range;
+  CoordPair *range;
 
   // binary search the relevant pairs
   // helps if the list is big
@@ -142,7 +145,7 @@ Vector *RangeRegistry_checkAndRegister(RangeRegistry *reg, IDType id, long start
     midIdx = ( startIdx + endIdx ) >> 1;
     range  = Vector_getElementAt(list, midIdx);
 
-    if ( Range_getEnd(range) < rStart ) {
+    if ( CoordPair_getEnd(range) < rStart ) {
       startIdx = midIdx;
     } else {
       endIdx = midIdx;
@@ -159,9 +162,9 @@ Vector *RangeRegistry_checkAndRegister(RangeRegistry *reg, IDType id, long start
 
   int i;
   for (i=startIdx; i < len ; i++ ) {
-    Range *pRange = Vector_getElementAt(list, i);
-    long pStart = Range_getStart(pRange);
-    long pEnd   = Range_getEnd(pRange);
+    CoordPair *pRange = Vector_getElementAt(list, i);
+    long pStart = CoordPair_getStart(pRange);
+    long pEnd   = CoordPair_getEnd(pRange);
     
     // no work needs to be done at all if we find a range pair that
     // entirely overlaps the requested region
@@ -207,19 +210,19 @@ Vector *RangeRegistry_checkAndRegister(RangeRegistry *reg, IDType id, long start
   if (rStartIdx >= 0 ) { // rStartIdx has been set to something 
     long newStart;
     long newEnd;
-    Range *rStartIdxRange = Vector_getElementAt(list, rStartIdx); 
-    Range *rEndIdxRange   = Vector_getElementAt(list, rEndIdx); 
+    CoordPair *rStartIdxRange = Vector_getElementAt(list, rStartIdx); 
+    CoordPair *rEndIdxRange   = Vector_getElementAt(list, rEndIdx); 
 
-    if ( rStart < Range_getStart(rStartIdxRange)) {
+    if ( rStart < CoordPair_getStart(rStartIdxRange)) {
       newStart = rStart;
     } else {
-      newStart = Range_getStart(rStartIdxRange);
+      newStart = CoordPair_getStart(rStartIdxRange);
     }
 
-    if ( rEnd > Range_getEnd(rEndIdxRange)) {
+    if ( rEnd > CoordPair_getEnd(rEndIdxRange)) {
       newEnd = rEnd;
     } else {
-      newEnd = Range_getEnd(rEndIdxRange);
+      newEnd = CoordPair_getEnd(rEndIdxRange);
     }
 
     CoordPair *cp = CoordPair_new(newStart, newEnd);
@@ -269,10 +272,10 @@ long RangeRegistry_overlapSize(RangeRegistry *registry, IDType id, long start, l
 
   if ( start > end ) return 0;
 
-  IDHash *reg = RangeRegistry_getRegistry(registry);
+  IDHash *regReg = RangeRegistry_getRegistry(registry);
   Vector *list;
-  if (IDHash_contains(id)) {
-    list = IDHash_getValue(id);
+  if (IDHash_contains(regReg, id)) {
+    list = IDHash_getValue(regReg, id);
   } else {
     return 0; // No list for this id, so can't be any overlap 
   }
@@ -287,14 +290,14 @@ long RangeRegistry_overlapSize(RangeRegistry *registry, IDType id, long start, l
   int startIdx = 0;
   int endIdx   = Vector_getNumElement(list)-1;
   int midIdx;
-  Range *range;
+  CoordPair *range;
 
   // binary search the relevant pairs
   // helps if the list is big
   while ( ( endIdx - startIdx ) > 1 ) {
     midIdx = ( startIdx + endIdx ) >> 1;
     range   = Vector_getElementAt(list, midIdx);
-    if ( Range_getEnd(range) < start ) {
+    if ( CoordPair_getEnd(range) < start ) {
       startIdx = midIdx;
     } else {
       endIdx = midIdx;
@@ -303,9 +306,9 @@ long RangeRegistry_overlapSize(RangeRegistry *registry, IDType id, long start, l
 
   int i;
   for (i=startIdx; i < len ; i++ ) {
-    Range *pRange = Vector_getElementAt(list, i);
-    long pStart = Range_getStart(pRange);
-    long pEnd   = Range_getEnd(pRange);
+    CoordPair *pRange = Vector_getElementAt(list, i);
+    long pStart = CoordPair_getStart(pRange);
+    long pEnd   = CoordPair_getEnd(pRange);
 
     if ( pStart > end ) {
       break;
@@ -331,11 +334,11 @@ long RangeRegistry_overlapSize(RangeRegistry *registry, IDType id, long start, l
 // low level function to access the ranges
 // only use for read access
 Vector *RangeRegistry_getRanges(RangeRegistry *registry, IDType id) {
-  IDHash *reg = RangeRegistry_getRegistry(registry);
+  IDHash *regReg = RangeRegistry_getRegistry(registry);
   Vector *list = NULL;
 
-  if (IDHash_contains(reg, id)) {
-    list = IDHash_getValue(reg, id); 
+  if (IDHash_contains(regReg, id)) {
+    list = IDHash_getValue(regReg, id); 
   }
 
   return list;

@@ -15,6 +15,8 @@
 #endif
 #define FALSE 0
 
+int trueVal = 1;
+
 typedef enum CopyDepthEnum {
   NONE_DEPTH,
   SHALLOW_DEPTH,

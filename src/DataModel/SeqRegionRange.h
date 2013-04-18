@@ -2,6 +2,7 @@
 #define __SEQREGIONRANGE_H__
 
 #include "DataModelTypes.h"
+#include "EnsC.h"
 
 struct SeqRegionRangeStruct {
   char * srName;
