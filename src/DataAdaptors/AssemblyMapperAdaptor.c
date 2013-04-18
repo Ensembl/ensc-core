@@ -2,10 +2,15 @@
 #include "BaseAdaptor.h"
 #include "MysqlUtil.h"
 #include "AssemblyMapper.h"
-//#include "GenomicRange.h"
+#include "ChainedAssemblyMapper.h"
+#include "Slice.h"
+#include "DBAdaptor.h"
 
 #include "StatementHandle.h"
+#include "MysqlStatementHandle.h"
+#include "CoordSystemAdaptor.h"
 #include "ResultRow.h"
+#include "CoordPair.h"
 
 int CHUNKFACTOR = 20;  // 2^20 = approx. 10^6
 
@@ -140,11 +145,11 @@ char *makeMappingPathKey(Vector *path) {
 */
 
 AssemblyMapper *AssemblyMapper_fetchByCoordSystems(AssemblyMapperAdaptor *ama, CoordSystem *cs1, CoordSystem *cs2) {
-  if (CoordSystem_isTopLevel(cs1)) {
+  if (CoordSystem_getIsTopLevel(cs1)) {
     return TopLevelAssemblyMapper_new(ama, cs1, cs2);
   }
 
-  if (CoordSystem_isTopLevel(cs2)) {
+  if (CoordSystem_getIsTopLevel(cs2)) {
     return TopLevelAssemblyMapper_new(ama, cs2, cs1);
   }
 
@@ -210,7 +215,12 @@ AssemblyMapper *AssemblyMapper_fetchByCoordSystems(AssemblyMapperAdaptor *ama, C
         StringHash_add(ama->asmMapperCache, key, casmMapper);
         free(key);
   
-        Vector *revMappingPath = Vector_reverse(mappingPath);
+        // Make a reverse COPY of the mapping path (as its a copy I'm not using Vector_reverse which is inplace reverse 
+        Vector *revMappingPath = Vector_new();
+        int i;
+        for (i=Vector_getNumElement(mappingPath)-1; i>=0; i--) {
+          Vector_addElement(revMappingPath, Vector_getElementAt(mappingPath, i));
+        }
         key = makeMappingPathKey(revMappingPath);
         StringHash_add(ama->asmMapperCache, key, casmMapper);
   
@@ -345,7 +355,7 @@ void AssemblyMapperAdaptor_registerAssembled(AssemblyMapperAdaptor *ama, Assembl
   }
 
   // keep the Mapper to a reasonable size
-  if (AssemblyMapper_getSize(asmMapper) > AssemblyMapper_maxPairCount(asmMapper) ) {
+  if (AssemblyMapper_getSize(asmMapper) > AssemblyMapper_getMaxPairCount(asmMapper) ) {
     AssemblyMapper_flush(asmMapper);
 
     // we now have to go and register the entire requested region since we
@@ -525,6 +535,11 @@ char *AssemblyMapperAdaptor_seqRegionIdToName(AssemblyMapperAdaptor *ama, IDType
   return srName;
 }
 
+void SeqRegionCacheEntry_free(SeqRegionCacheEntry *srce) {
+  free(srce->regionName);
+  free(srce);
+}
+
 void AssemblyMapperAdaptor_addToSrCaches(AssemblyMapperAdaptor *ama, char *regionName, IDType regionId, IDType csId, long regionLength) {
   char key[1024];
   SeqRegionCacheEntry *cacheData;
@@ -535,7 +550,7 @@ void AssemblyMapperAdaptor_addToSrCaches(AssemblyMapperAdaptor *ama, char *regio
     exit(1);
   }
   
-  StrUtil_copyString(cacheData->regionName, regionName, 0);
+  StrUtil_copyString(&(cacheData->regionName), regionName, 0);
   cacheData->regionId     = regionId;
   cacheData->csId         = csId;
   cacheData->regionLength = regionLength;
@@ -629,7 +644,7 @@ void AssemblyMapperAdaptor_registerComponent(AssemblyMapperAdaptor *ama, Assembl
   //
   if (sth->numRows(sth) != 1) {
     fprintf(stderr,"Multiple assembled regions for single component region cmp_seq_region_id="IDFMTSTR"\n"
-                   "Remember that multiple mappings use the #-operaator in the meta-table (i.e. chromosome:EquCab2\#contig\n",
+                   "Remember that multiple mappings use the #-operaator in the meta-table (i.e. chromosome:EquCab2#contig\n",
                    cmpSeqRegion);
     exit(1);
   }
@@ -704,14 +719,15 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
   IDType toSeqRegionId;
 
   if (toSlice != NULL) {
-    if (!CoordSystem_compare(ChainedAssemblyMapper_getFirstCoordSystem(casmMapper), ChainedAssemblyMapper_getLastCoordSystem(casmMapper)) {
+    if (!CoordSystem_compare(ChainedAssemblyMapper_getFirstCoordSystem(casmMapper), 
+                             ChainedAssemblyMapper_getLastCoordSystem(casmMapper))) {
       return AssemblyMapperAdaptor_registerChainedSpecial(ama, casmMapper, from, seqRegionId, ranges, toSlice);
     }
 
     IDType toSeqRegionId = Slice_getSeqRegionId(toSlice);
 
     // NIY can we do not defined?? Use 0 for now if (!defined($to_seq_region_id)){
-    if (!toSeqRegionId)){
+    if (!toSeqRegionId) {
       fprintf(stderr, "Could not get seq_region_id for to_slice %s\n", Slice_getSeqRegionName(toSlice));
       exit(1);
     }
@@ -860,7 +876,6 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
     sprintf(cmp2AsmStr, "%s", cmp2AsmBaseStr);
   }
 
-  StatementHandle *sth;
   sth = (!CoordSystem_compare(asmCs, startCs)) ? ama->prepare((BaseAdaptor *)ama, asm2CmpStr, strlen(asm2CmpStr)) :
                                                  ama->prepare((BaseAdaptor *)ama, cmp2AsmStr, strlen(cmp2AsmStr));
 
@@ -936,7 +951,7 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
       //extra work later
 
       if (startStart < start || startEnd > end) {
-        RangeRegistry_checkAndRegister(startRgistry, seqRegionId, startStart, startEnd);
+        RangeRegistry_checkAndRegister(startRegistry, seqRegionId, startStart, startEnd, startStart, startEnd, 0);
       }
     }
     sth->finish(sth);
@@ -952,7 +967,11 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
       RangeRegistry_checkAndRegister(endRegistry, 
                                      SeqRegionRange_getSeqRegionId(range), 
                                      SeqRegionRange_getSeqRegionStart(range), 
-                                     SeqRegionRange_getSeqRegionEnd(range));
+                                     SeqRegionRange_getSeqRegionEnd(range),
+                                     SeqRegionRange_getSeqRegionStart(range), 
+                                     SeqRegionRange_getSeqRegionEnd(range),
+                                     0
+                                    );
     }
 
     // and thats it for the simple case ...
@@ -966,8 +985,10 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
   // ranges
   // 
 
+  Vector_free(path);
   //ascertain which is component and which is actually assembled coord system
-  Vector *path = CoordSystemAdaptor_getMappingPath(csa, midCs, endCs);
+
+  path = CoordSystemAdaptor_getMappingPath(csa, midCs, endCs);
   if (Vector_getNumElement(path) == 2 || ( Vector_getNumElement(path) == 3 && Vector_getElementAt(path, 1) == NULL)) {
     asmCs = Vector_getElementAt(path, 0);
     cmpCs = Vector_getLastElement(path);
@@ -1044,7 +1065,7 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
       AssemblyMapperAdaptor_addToSrCaches(ama, endSeqRegion, endSeqRegionId, endCsId, endLength);
 
       //register this region on the end coord system
-      RangeRegistry_checkAndRegister(endRegistry, endSeqRegionId, endStart, endEnd);
+      RangeRegistry_checkAndRegister(endRegistry, endSeqRegionId, endStart, endEnd, endStart, endEnd, 0);
     }
     sth->finish(sth);
   }
@@ -1174,9 +1195,9 @@ void AssemblyMapperAdaptor_registerChainedSpecial(AssemblyMapperAdaptor *ama, Ch
 
   Vector *path;
   if ( midCs ) {
-    path = CoordSystemAdaptor_getMappingPath(startCs, midCs);
+    path = CoordSystemAdaptor_getMappingPath(csa, startCs, midCs);
   } else {
-    path = CoordSystemAdaptor_getMappingPath(startCs, endCs);
+    path = CoordSystemAdaptor_getMappingPath(csa, startCs, endCs);
   }
 
   if (midCs == NULL) {
@@ -1200,9 +1221,9 @@ void AssemblyMapperAdaptor_registerChainedSpecial(AssemblyMapperAdaptor *ama, Ch
   asmCs = Vector_getElementAt(path, 0);
   cmpCs = Vector_getLastElement(path);
 
-  Mapper *combinedMapper  = ChainedAssemblyMapper_getFirstLastMapper(casmMapper);
-  CoordSystem *midCs      = ChainedAssemblyMapper_getMiddleCoordSystem(casmMapper);
-  CoordSystemAdaptor *csa = DBAdaptor_getCoordSystemAdaptor(ama->dba);
+  //Mapper *combinedMapper  = ChainedAssemblyMapper_getFirstLastMapper(casmMapper);
+  //CoordSystem *midCs      = ChainedAssemblyMapper_getMiddleCoordSystem(casmMapper);
+  //CoordSystemAdaptor *csa = DBAdaptor_getCoordSystemAdaptor(ama->dba);
   // SMJS Unused$mid_name        = 'middle';
 
   IDType midCsId;
@@ -1301,7 +1322,7 @@ void AssemblyMapperAdaptor_registerChainedSpecial(AssemblyMapperAdaptor *ama, Ch
         //extra work later
         
         if (startStart < start || startEnd > end) {
-          RangeRegistry_checkAndRegister(startRegistry, id1, startStart, startEnd);
+          RangeRegistry_checkAndRegister(startRegistry, id1, startStart, startEnd, startStart, startEnd, 0);
         }
       }
       sth->finish(sth);
@@ -1316,19 +1337,23 @@ void AssemblyMapperAdaptor_registerChainedSpecial(AssemblyMapperAdaptor *ama, Ch
           RangeRegistry_checkAndRegister(endRegistry, 
                                          SeqRegionRange_getSeqRegionId(range),
                                          SeqRegionRange_getSeqRegionStart(range),
-                                         SeqRegionRange_getSeqRegionEnd(range));
+                                         SeqRegionRange_getSeqRegionEnd(range),
+                                         SeqRegionRange_getSeqRegionStart(range),
+                                         SeqRegionRange_getSeqRegionEnd(range),
+                                         0
+                                        );
         }
         
         // and thats it for the simple case ...
-        Vector_free(midRanges, NULL);
-        Vector_free(startRanges, NULL);
+        Vector_free(midRanges);
+        Vector_free(startRanges);
         return;
       }
     }
   }
 
-  Vector_free(midRanges, NULL);
-  Vector_free(startRanges, NULL);
+  Vector_free(midRanges);
+  Vector_free(startRanges);
 }
 
 
@@ -1393,7 +1418,7 @@ void AssemblyMapperAdaptor_registerAll(AssemblyMapperAdaptor *ama, AssemblyMappe
   sth->execute(sth);
 
   // load the asmMapper with the assembly information
-  IDHash *asmRegistered = IDHash_new();
+  IDHash *asmRegistered = IDHash_new(IDHASH_MEDIUM);
 
   ResultRow *row;
   while (row = sth->fetchRow(sth)) {
@@ -1427,7 +1452,7 @@ void AssemblyMapperAdaptor_registerAll(AssemblyMapperAdaptor *ama, AssemblyMappe
       int endChunk = asmLength >> CHUNKFACTOR;
       int i;
       for (i=0; i<=endChunk; i++) {
-        AssmeblyMapper_registerAssembled(asmSeqRegionId, i);
+        AssemblyMapper_registerAssembled(asmSeqRegionId, i);
       }
 
       AssemblyMapperAdaptor_addToSrCaches(ama, asmSeqRegion, asmSeqRegionId, asmCsId, asmLength);
@@ -1527,7 +1552,7 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
 
     fprintf(stderr, "Unexpected mapping path between start and intermediate coord systems (%s  %s and %s %s).\n"
                     "Expected path length 1, got %d. (path=%s).\n", 
-                     CoordSystem_getName(startCs), CoordSystem_getVersion(startCs),
+                     CoordSystem_getName(firstCs), CoordSystem_getVersion(firstCs),
                      CoordSystem_getName(midCs), CoordSystem_getVersion(midCs),
                      len, pathStr);
     exit(1);
@@ -1557,7 +1582,7 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
 
   IDType midCsId;
   IDType startCsId;
-  AssemblyMapper *mapper;
+  Mapper *mapper;
   RangeRegistry *reg;
 
   if ( midCs == NULL ) {
@@ -1607,12 +1632,12 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
 
     AssemblyMapperAdaptor_addToRangeVector(ranges, startSeqRegionId, startStart, startEnd, NULL);  
 
-    RangeRegistry_checkAndRegister(reg, startSeqRegionId, 1, startLength );
+    RangeRegistry_checkAndRegister(reg, startSeqRegionId, 1, startLength, 1, startLength, 0 );
 
     if ( midCs == NULL ) {
       RangeRegistry *lastReg = ChainedAssemblyMapper_getLastRegistry(casmMapper);
 
-      RangeRegistry_checkAndRegister(lastReg, midSeqRegionId, midStart, midEnd);
+      RangeRegistry_checkAndRegister(lastReg, midSeqRegionId, midStart, midEnd, midStart, midEnd, 0);
     }
 
     AssemblyMapperAdaptor_addToSrCaches(ama, midSeqRegion, midSeqRegionId, midCsId, midLength);
@@ -1626,7 +1651,9 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
   }
 
 
-  Vector *path = CoordSystemAdaptor_getMappingPath(csa, lastCs, midCs);
+  Vector_free(path);
+
+  path = CoordSystemAdaptor_getMappingPath(csa, lastCs, midCs);
   if ( midCs ) {
     if (Vector_getElementAt(path,1) == NULL) {
       Vector_removeElementAt(path, 1);
@@ -1640,19 +1667,19 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
     fprintf(stderr, "Unexpected mapping path between intermediate and last coord systems (%s  %s and %s %s).\n"
                     "Expected path length 1, got %d. (path=%s).\n", 
                      CoordSystem_getName(midCs), CoordSystem_getVersion(midCs),
-                     CoordSystem_getName(endCs), CoordSystem_getVersion(endCs),
+                     CoordSystem_getName(lastCs), CoordSystem_getVersion(lastCs),
                      len, pathStr);
     exit(1);
   }
 
-  CoordSystem *asmCs = Vector_getElementAt(path,0);
-  CoordSystem *cmpCs = Vector_getElementAt(path,1);
+  asmCs = Vector_getElementAt(path,0);
+  cmpCs = Vector_getElementAt(path,1);
 
   sth->execute(sth, CoordSystem_getDbID(asmCs), CoordSystem_getDbID(cmpCs));
 
   long endStart, endEnd;
   IDType endSeqRegionId;
-  char *endSeqRegion,
+  char *endSeqRegion;
   long endLength;
 
 
@@ -1691,7 +1718,7 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
        endSeqRegionId, endStart, endEnd, ori,
        midSeqRegionId, midStart, midEnd);
 
-    RangeRegistry_checkAndRegister(reg, endSeqRegionId, 1, endLength );
+    RangeRegistry_checkAndRegister(reg, endSeqRegionId, 1, endLength, 1, endLength, 0 );
 
     AssemblyMapperAdaptor_addToSrCaches(ama, endSeqRegion, endSeqRegionId, endCsId, endLength);
   }
@@ -1735,10 +1762,15 @@ void AssemblyMapperAdaptor_buildCombinedMapper(AssemblyMapperAdaptor *ama, Vecto
         continue;
       }
 
+      if (icoord->rangeType != MAPPERRANGE_COORD) {
+        fprintf(stderr,"Belt and Braces check for icoord being a MAPPERRANGE_COORD. Its a %d\n", icoord->rangeType);
+        exit(1);
+      }
 
+      MapperCoordinate *coordICoord = (MapperCoordinate *)icoord;
       //feed the results of the first mapping into the second mapper
       MapperRangeSet *finalCoords =
-        Mapper_mapCoordinates(endMidMapper, icoord->id, icoord->start, icoord->end, icoord->strand, "middle");
+        Mapper_mapCoordinates(endMidMapper, coordICoord->id, coordICoord->start, coordICoord->end, coordICoord->strand, "middle");
 
 
       int k;
@@ -1748,17 +1780,19 @@ void AssemblyMapperAdaptor_buildCombinedMapper(AssemblyMapperAdaptor *ama, Vecto
 
         // Mapper::Coordinate - inheritance means INDEL is also a coordinate
         if (fcoord->rangeType == MAPPERRANGE_COORD || fcoord->rangeType == MAPPERRANGE_INDEL) {
+// NIY: Need to check that INDEL is compatible with MapperCoordinate
+          MapperCoordinate *coordFCoord = (MapperCoordinate *)fcoord;
           long totalStart = start + sum;
-          long totalEnd   = totalStart + MapperRange_getLength(fcoord) - 1;
-          int  ori = fcoord->strand;
+          long totalEnd   = totalStart + MapperRange_getLength(coordFCoord) - 1;
+          int  ori = coordFCoord->strand;
 
           if (!strcmp(startName,"first")) { // add coords in consistent order
             Mapper_addMapCoordinates(combinedMapper,
                              seqRegionId, totalStart, totalEnd, ori,
-                             fcoord->id, fcoord->start, fcoord->end);
+                             coordFCoord->id, coordFCoord->start, coordFCoord->end);
           } else {
             Mapper_addMapCoordinates(combinedMapper,
-                        fcoord->id, fcoord->start, fcoord->end, ori,
+                        coordFCoord->id, coordFCoord->start, coordFCoord->end, ori,
                         seqRegionId, totalStart, totalEnd);
           }
         }
@@ -1876,12 +1910,13 @@ Vector *AssemblyMapperAdaptor_seqIdsToRegions(AssemblyMapperAdaptor *ama, CoordS
 =cut
 */
 
+
 void AssemblyMapperAdaptor_deleteCache(AssemblyMapperAdaptor *ama) {
 
   fprintf(stderr, "deleteCache is not right yet\n");
   
   StringHash_free(ama->srNameCache, SeqRegionCacheEntry_free);
-  StringHash_free(ama->srIdCache, SeqRegionCacheEntry_free);
+  IDHash_free(ama->srIdCache, SeqRegionCacheEntry_free);
 
   Vector *asmMappers = StringHash_getValues(ama->asmMapperCache);
   int i;
@@ -1910,6 +1945,7 @@ void AssemblyMapperAdaptor_deleteCache(AssemblyMapperAdaptor *ama) {
 =cut
 */
 
+/* Comment out for now
 void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama, AssemblyMapper *asmMapper, char *type, 
                                           char *chrName, long start, long end){
 
@@ -1919,6 +1955,7 @@ void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama, AssemblyMa
  
   return;
 }
+*/
 
 
 /*
@@ -1929,6 +1966,7 @@ void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama, AssemblyMa
 =cut
 */
 
+/* Comment out for now
 void AssemblyMapperAdaptor_registerContig(AssemblyMapperAdaptor *ama, AssemblyMapper *asmMapper, char *type, IDType contigId) {
 
   fprintf(stderr,"Deprecated: Use register_component instead\n");
@@ -1937,6 +1975,7 @@ void AssemblyMapperAdaptor_registerContig(AssemblyMapperAdaptor *ama, AssemblyMa
    //seq_region_id...
   AssemblyMapperAdaptor_registerComponent(ama, asmMapper, contigId);
 }
+*/
 
 
 /*
@@ -1947,6 +1986,7 @@ void AssemblyMapperAdaptor_registerContig(AssemblyMapperAdaptor *ama, AssemblyMa
 =cut
 */
 
+/* Comment out for now
 AssemblyMapper *AssemblyMapperAdaptor_fetchByType(AssemblyMapperAdaptor *ama, char *type) {
 
   fprintf(stderr,"Deprecated: Use fetch_by_CoordSystem instead\n");
@@ -1961,4 +2001,5 @@ AssemblyMapper *AssemblyMapperAdaptor_fetchByType(AssemblyMapperAdaptor *ama, ch
 
   return AssemblyMapperAdaptor_fetchByCoordSystems(ama, cs1, cs2);
 }
+*/
 

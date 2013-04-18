@@ -5,11 +5,15 @@
 #include "DBConnection.h"
 #include "AdaptorTypes.h"
 #include "EnsC.h"
+#include "IDHash.h"
+#include "StringHash.h"
 
 struct DBAdaptorStruct {
   BASEDBADAPTOR_DATA
   DBAdaptor     *dnadb;
   char          *assemblyType;
+  IDHash        *seqRegionIdCache;
+  StringHash    *seqRegionNameCache;
 };
 
 DBAdaptor *DBAdaptor_new(char *host, char *user, char *pass, char *dbname,
@@ -42,6 +46,9 @@ TranscriptAdaptor           *DBAdaptor_getTranscriptAdaptor(DBAdaptor *dba);
 
 #define DBAdaptor_getDNADBAdaptor(dba) (dba)->dnadb
 #define DBAdaptor_setDNADBAdaptor(dba, ddb) (dba)->dnadb = ddb
+
+#define DBAdaptor_getSeqRegionIdCache(dba) (dba)->seqRegionIdCache
+#define DBAdaptor_getSeqRegionNameCache(dba) (dba)->seqRegionNameCache
 
 #define DBAdaptor_prepare(dba,qStr,qLen) BaseDBAdaptor_prepare((dba),(qStr),(qLen))
 

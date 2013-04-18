@@ -4,6 +4,7 @@
 #include "AnalysisAdaptor.h"
 #include "AssemblyMapperAdaptor.h"
 #include "ChromosomeAdaptor.h"
+#include "CoordSystemAdaptor.h"
 #include "CloneAdaptor.h"
 #include "DBEntryAdaptor.h"
 #include "DNAAlignFeatureAdaptor.h"
@@ -41,6 +42,9 @@ DBAdaptor *DBAdaptor_new(char *host, char *user, char *pass, char *dbname,
     dba->dnadb = dba;
   }
   return dba;
+
+  dba->seqRegionIdCache = IDHash_new(IDHASH_MEDIUM);
+  dba->seqRegionNameCache = StringHash_new(STRINGHASH_MEDIUM);
 }
 
 char *DBAdaptor_setAssemblyType(DBAdaptor *dba, char *type) {
