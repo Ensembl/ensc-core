@@ -120,6 +120,17 @@ CoordSystemAdaptor *CoordSystemAdaptor_new(DBAdaptor *dba) {
   return csa;
 }
 
+void CoordSystemAdaptor_dumpCachedMappings(CoordSystemAdaptor *csa) {
+  char **keys = StringHash_getKeys(csa->mappingPaths);
+
+  int i;
+  for (i=0;i<StringHash_getNumValues(csa->mappingPaths);i++) { 
+    Vector *path = StringHash_getValue(csa->mappingPaths, keys[i]);
+    fprintf(stderr,"Path: %s has %d elements, pointer %ld\n",keys[i], Vector_getNumElement(path), path);
+    free(keys[i]);
+  }
+  free(keys);
+}
 
 void CoordSystemAdaptor_cacheSeqRegionMapping(CoordSystemAdaptor *csa) {
 // Not Implemented Yet
@@ -257,6 +268,7 @@ void CoordSystemAdaptor_cacheMappingPaths(CoordSystemAdaptor *csa) {
       }
     }
 
+    //fprintf(stderr, "Adding to cache: Mapping path %s length = %d\n",keypair, Vector_getNumElement(coordSystems));
     // NOTE: May in fact be a replace - need to think about memory
     StringHash_add(mappingPaths, keypair, coordSystems);
   }
@@ -542,6 +554,7 @@ Vector *CoordSystemAdaptor_getMappingPath(CoordSystemAdaptor *csa, CoordSystem *
   
   if (StringHash_contains(csa->mappingPaths, keypair)) {
     path = StringHash_getValue(csa->mappingPaths, keypair);
+    //fprintf(stderr, "first if path %s length = %d\n", keypair, Vector_getNumElement(path));
     if (path) return path; // Not sure if a NULL path should ever be returned from hash but perl was checking for it
   }
 
@@ -549,8 +562,10 @@ Vector *CoordSystemAdaptor_getMappingPath(CoordSystemAdaptor *csa, CoordSystem *
 
   if (StringHash_contains(csa->mappingPaths, revKeypair)) {
     path = StringHash_getValue(csa->mappingPaths, revKeypair);
+    //fprintf(stderr,"second if path %s length = %d\n", revKeypair, Vector_getNumElement(path));
     if (path) return path; // Not sure if a NULL path should ever be returned from hash but perl was checking for it
   }
+
 
   if (!path) {
     // No path was explicitly defined, but we might be able to guess a

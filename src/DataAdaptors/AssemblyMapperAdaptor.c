@@ -191,7 +191,7 @@ AssemblyMapper *AssemblyMapperAdaptor_fetchByCoordSystems(AssemblyMapperAdaptor 
     case 2:
       {
         // 1 step regular mapping
-        printf("Making a normal AssemblyMapper for path %s\n",key);
+        //printf("Making a normal AssemblyMapper for path %s\n",key);
         AssemblyMapper *asmMapper = AssemblyMapper_new(ama, mappingPath);
   
         //   If you want multiple pieces on two seqRegions to map to each other
@@ -209,7 +209,7 @@ AssemblyMapper *AssemblyMapperAdaptor_fetchByCoordSystems(AssemblyMapperAdaptor 
     case 3:
       // two step chained mapping
       {
-        printf("Making a ChainedAssemblyMapper for path %s\n",key);
+        //printf("Making a ChainedAssemblyMapper for path %s\n",key);
         ChainedAssemblyMapper *casmMapper = ChainedAssemblyMapper_new(ama, mappingPath);
   
         // in multi-step mapping it is possible get requests with the
@@ -564,13 +564,13 @@ void AssemblyMapperAdaptor_addToSrCaches(AssemblyMapperAdaptor *ama, char *regio
 
   // Do a quick sanity check
   if (StringHash_contains(ama->srNameCache, key)) {
-    fprintf(stderr,"Hmm - seq region already in name cache - odd\n");
+    //fprintf(stderr,"Hmm - seq region already in name cache - odd\n");
   } else {
     StringHash_add(ama->srNameCache, key, cacheData);
   }
 
   if (IDHash_contains(ama->srIdCache, regionId)) {
-    fprintf(stderr,"Hmm - seq region already in id cache - odd\n");
+    //fprintf(stderr,"Hmm - seq region already in id cache - odd\n");
   } else {
     IDHash_add(ama->srIdCache, regionId, cacheData);
   }
@@ -992,7 +992,6 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
   // ranges
   // 
 
-  Vector_free(path);
   //ascertain which is component and which is actually assembled coord system
 
   path = CoordSystemAdaptor_getMappingPath(csa, midCs, endCs);
@@ -1657,8 +1656,6 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
     return;
   }
 
-
-  Vector_free(path);
 
   path = CoordSystemAdaptor_getMappingPath(csa, lastCs, midCs);
   if ( midCs ) {

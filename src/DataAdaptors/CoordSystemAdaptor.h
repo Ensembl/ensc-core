@@ -27,6 +27,7 @@ int CoordSystem_sortByRankFunc(const void *one, const void *two);
 
 void                CoordSystemAdaptor_cacheMappingPaths(CoordSystemAdaptor *csa);
 void                CoordSystemAdaptor_cacheSeqRegionMapping(CoordSystemAdaptor *csa);
+void                CoordSystemAdaptor_dumpCachedMappings(CoordSystemAdaptor *csa);
 Vector *            CoordSystemAdaptor_fetchAllByAttrib(CoordSystemAdaptor *csa, char *attrib);
 Vector *            CoordSystemAdaptor_fetchAllByName(CoordSystemAdaptor *csa, char *name);
 CoordSystem *       CoordSystemAdaptor_fetchByAttrib(CoordSystemAdaptor *csa, char *attrib, char *version);
