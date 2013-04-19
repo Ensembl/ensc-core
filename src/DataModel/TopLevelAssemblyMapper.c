@@ -60,7 +60,6 @@ TopLevelAssemblyMapper *TopLevelAssemblyMapper_new(AssemblyMapperAdaptor *ama, C
 }
 
 
-#ifdef NIY
 /*
 =head2 map
 
@@ -90,61 +89,80 @@ TopLevelAssemblyMapper *TopLevelAssemblyMapper_new(AssemblyMapperAdaptor *ama, C
 */
 
 
-sub map {
-  throw('Incorrect number of arguments.') if(@_ != 6 && @_ != 7);
+IDType TopLevelAssemblyMapper_getSeqRegionId(TopLevelAssemblyMapper *tlam, char *seqRegionName, CoordSystem *cs) {
+  // Not the most efficient thing to do making these temporary vectors to get one value, but hey its what the perl does!
+  Vector *tmp = Vector_new();
+  Vector_addElement(tmp, seqRegionName);
 
-  my($self, $frm_seq_region_name, $frm_start, $frm_end, $frm_strand, $frm_cs,
-    $fastmap) = @_;
+  AssemblyMapperAdaptor *adaptor = TopLevelAssemblyMapper_getAdaptor(tlam);
 
-  if($frm_cs->is_top_level()) {
-    throw("The toplevel CoordSystem can only be mapped TO, not FROM.");
+  Vector *idVec = AssemblyMapperAdaptor_seqRegionsToIds(adaptor, cs, tmp);
+
+  IDType seqRegionId = *((IDType *)Vector_getElementAt(idVec, 0));
+
+  Vector_free(tmp);
+  Vector_free(idVec);
+  // End of somewhat inefficient stuff
+
+  return seqRegionId;
+}
+
+MapperRangeSet *TopLevelAssemblyMapper_map(TopLevelAssemblyMapper *tlam, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, 
+                                           CoordSystem *frmCs, int fastMap) {
+
+  if (CoordSystem_isTopLevel(frmCs)) {
+    fprintf(stderr,"The toplevel CoordSystem can only be mapped TO, not FROM.\n");
   }
 
-  my @tmp;
-  push @tmp, $frm_seq_region_name;
-  my $seq_region_id = @{$self->adaptor()->seq_regions_to_ids($frm_cs, \@tmp)}[0];
+  IDType seqRegionId = TopLevelAssemblyMapper_getSeqRegionId(tlam, frmSeqRegionName, frmCs);
 
-  my $mapper      = $self->{'mapper'};
-  my $toplevel_cs = $self->{'toplevel_cs'};
-  my $other_cs    = $self->{'other_cs'};
-  my $adaptor     = $self->adaptor;
+  // Not used in perl my $mapper      = $self->{'mapper'};
+  // Not used in perl my $toplevel_cs = $self->{'toplevel_cs'};
+  CoordSystem           *otherCs = TopLevelAssemblyMapper_getOtherCoordSystem(tlam);
+  AssemblyMapperAdaptor *adaptor = TopLevelAssemblyMapper_getAdaptor(tlam);
 
-  if($frm_cs != $other_cs && !$frm_cs->equals($other_cs)) {
-    throw("Coordinate system " . $frm_cs->name . " " . $frm_cs->version .
-          " is neither the assembled nor the component coordinate system " .
-          " of this AssemblyMapper");
+  if (frmCs != otherCs && CoordSystem_compare(frmCs, otherCs)) {
+    fprintf(stderr,"Coordinate system %s %s is neither the assembled nor the component coordinate system"
+                   " of this AssemblyMapper\n", CoordSystem_getName(frmCs), CoordSystem_getVersion(frmCs));
   }
 
-  my $coord_systems = $self->{'coord_systems'};
-
-  my $csa = $self->adaptor()->db()->get_CoordSystemAdaptor();
+  Vector *coordSystems = TopLevelAssemblyMapper_getCoordSystems(tlam);
+  
+  CoordSystemAdaptor *csa = DBAdaptor_getCoordSystemAdaptor(tlam->dba);
 
   //
   // TBD try to make this more efficient
   // 
-  my $from_rank = $other_cs->rank();
-  foreach my $cs (@$coord_systems) {
-    last if($cs->rank >= $from_rank);
+  int fromRank = CoordSystem_getRank(otherCs);
+
+  int i;
+  for (i=0;i<Vector_getNumElement(coordSystems);i++) {
+    CoordSystem *cs = Vector_getElementAt(coordSystems,i);
+
+    if (CoordSystem_getRank(cs) >= fromRank) {
+      break;
+    }
 
     //check if a mapping path even exists to this coordinate system
-    my @mapping_path = @{ $csa->get_mapping_path( $cs, $other_cs ) };
+    Vector *path = CoordSystemAdaptor_getMappingPath(csa, cs, otherCs);
 
-    if(@mapping_path) {
-
+    if (path && Vector_getNumElement(path) >0) {
       // Try to map to this coord system. If we get back any coordinates then
       // it is our 'toplevel' that we were looking for
-      my $mapper = $adaptor->fetch_by_CoordSystems($other_cs, $cs);
+      AssemblyMapper *mapper = AssemblyMapperAdaptor_fetchByCoordSystems(adaptor, otherCs, cs);
 
-      if($fastmap) {
-        my @result = $mapper->fastmap($frm_seq_region_name, $frm_start, $frm_end,
-                                      $frm_strand, $frm_cs);
-        return @result if(@result);
+      if (fastMap) {
+        MapperRangeSet *result = AssemblyMapper_fastMap(mapper, frmSeqRegionName, frmStart, frmEnd, frmStrand, frmCs);
+  // NIY: Not sure what condition should be here?
+        if (result && MapperRangeSet_getNumRange(result) > 0) {
+          return result;
+        }
+        //Perl was: return @result if(@result);
       } else {
-        my @coords = $mapper->map($frm_seq_region_name, $frm_start, $frm_end,
-                                  $frm_strand, $frm_cs);
+        MapperRangeSet *coords = AssemblyMapper_map(mapper, frmSeqRegionName, frmStart, frmEnd, frmStrand, frmCs);
 
-        if(@coords > 1 || !$coords[0]->isa('Bio::EnsEMBL::Mapper::Gap')) {
-          return @coords;
+        if (MapperRangeSet_getNumRange(coords) > 1 || MapperRangeSet_getRangeAt(coords,0)->rangeType != MAPPERRANGE_GAP) {
+          return coords;
         }
       }
     }
@@ -152,11 +170,15 @@ sub map {
 
   // the toplevel coordinate system for the region requested *is* the
   // requested region.
-  if($fastmap) {
-    return ($seq_region_id,$frm_start, $frm_end, $frm_strand, $other_cs);
-  }
-  return Bio::EnsEMBL::Mapper::Coordinate->new
-    ($seq_region_id,$frm_start,$frm_end, $frm_strand, $other_cs);
+//  if ($fastmap) {
+//    return ($seq_region_id,$frm_start, $frm_end, $frm_strand, $other_cs);
+//  }
+  MapperCoordinate *mc = MapperCoordinate_new(seqRegionId, frmStart, frmEnd, frmStrand, otherCs);
+
+  MapperRangeSet *coords = MapperRangeSet_new();
+  MapperRangeSet_addRange(coords, mc);
+
+  return coords;
 }
 
 //
@@ -175,7 +197,9 @@ sub map {
 =cut
 */
 
-sub flush {}
+void TopLevelAssemblyMapper_flush(TopLevelAssemblyMapper *tlam) {
+// No op
+}
 
 /*
 =head2 fastmap
@@ -204,9 +228,9 @@ sub flush {}
 =cut
 */
 
-sub fastmap {
-  my $self = shift;
-  return $self->map(@_,1);
+MapperRangeSet *TopLevelAssemblyMapper_fastMap(TopLevelAssemblyMapper *tlam, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, 
+                                               CoordSystem *frmCs) {
+  return TopLevelAssemblyMapper_map(tlam, frmSeqRegionName, frmStart, frmEnd, frmStrand, frmCs, 1);
 }
 
 /*
@@ -223,9 +247,8 @@ sub fastmap {
 =cut
 */
 
-sub assembled_CoordSystem {
-  my $self = shift;
-  return $self->{'toplevel_cs'};
+CoordSystem *TopLevelAssemblyMapper_assembledCoordSystem(TopLevelAssemblyMapper *tlam) {
+  return TopLevelAssemblyMapper_getTopLevelCoordSystem(tlam);
 }
 
 /*
@@ -242,72 +265,87 @@ sub assembled_CoordSystem {
 =cut
 */
 
-sub component_CoordSystem {
-  my $self = shift;
-  return $self->{'other_cs'};
+CoordSystem *TopLevelAssemblyMapper_componentCoordSystem(TopLevelAssemblyMapper *tlam) {
+  return TopLevelAssemblyMapper_getOtherCoordSystem(tlam);
 }
 
 
-sub _list {
-  my($self, $frm_seq_region_name, $frm_start, $frm_end, $frm_cs, $seq_regions) = @_;
+// private function which implements both list functions depending on whether seqRegions are passed in. As it returns a Vector this is possible in
+// C as well, although its a bit odd
+Vector * TopLevelAssemblyMapper_list(TopLevelAssemblyMapper *tlam, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs, int SeqRegionsFlag)  {
 
-  my $mapper      = $self->{'mapper'};
-  my $toplevel_cs = $self->{'toplevel_cs'};
-  my $other_cs    = $self->{'other_cs'};
-  my $adaptor     = $self->adaptor;
+// Wasn't used in perl  my $mapper      = $self->{'mapper'};
+//  Wasn't used in perl my $toplevel_cs = $self->{'toplevel_cs'};
+  CoordSystem           *otherCs = TopLevelAssemblyMapper_getOtherCoordSystem(tlam);
+  AssemblyMapperAdaptor *adaptor = TopLevelAssemblyMapper_getAdaptor(tlam);
 
-  if($frm_cs->is_top_level()) {
-    throw("The toplevel CoordSystem can only be mapped TO, not FROM.");
+  if (CoordSystem_isTopLevel(frmCs)) {
+    fprintf(stderr, "The toplevel CoordSystem can only be mapped TO, not FROM.\n");
   }
-  if($frm_cs != $other_cs && !$frm_cs->equals($other_cs)) {
-    throw("Coordinate system " . $frm_cs->name . " " . $frm_cs->version .
-          " is neither the assembled nor the component coordinate system " .
-          " of this AssemblyMapper");
+  if (frmCs != otherCs && CoordSystem_compare(frmCs, otherCs)) {
+    fprintf(stderr,"Coordinate system %s %s is neither the assembled nor the component coordinate system"
+                   " of this AssemblyMapper\n", CoordSystem_getName(frmCs), CoordSystem_getVersion(frmCs));
   }
 
-  my $coord_systems = $self->{'coord_systems'};
-  my $csa = $self->adaptor()->db()->get_CoordSystemAdaptor();
+  Vector *coordSystems = TopLevelAssemblyMapper_getCoordSystems(tlam);
+  
+  CoordSystemAdaptor *csa = DBAdaptor_getCoordSystemAdaptor(tlam->dba);
 
   //
   // TBD try to make this more efficient
-  //
-  my $from_rank = $other_cs->rank();
-  foreach my $cs (@$coord_systems) {
-    last if($cs->rank >= $from_rank);
+  // 
+  int fromRank = CoordSystem_getRank(otherCs);
+
+  int i;
+  for (i=0;i<Vector_getNumElement(coordSystems);i++) {
+    CoordSystem *cs = Vector_getElementAt(coordSystems,i);
+
+    if (CoordSystem_getRank(cs) >= fromRank) {
+      break;
+    }
 
     //check if a mapping path even exists to this coordinate system
-    my @mapping_path = @{ $csa->get_mapping_path( $cs, $other_cs ) };
+    Vector *path = CoordSystemAdaptor_getMappingPath(csa, cs, otherCs);
 
-    if(@mapping_path) {
-
+// NIY: Not sure what condition should be here
+    if (path && Vector_getNumElement(path) >0) {
       // Try to map to this coord system. If we get back any coordinates then
       // it is our 'toplevel' that we were looking for
-      my $mapper = $adaptor->fetch_by_CoordSystems($other_cs, $cs);
+      Mapper *mapper = AssemblyMapperAdaptor_fetchByCoordSystems(otherCs, cs);
 
-      my @result;
+      Vector *result;
 
-      my @tmp;
-      push @tmp, $frm_seq_region_name;
-      my $seq_region_id = @{$self->adaptor()->seq_regions_to_ids($frm_cs, \@tmp)}[0];
+      IDType seqRegionId = TopLevelAssemblyMapper_getSeqRegionId(tlam, frmSeqRegionName, frmCs);
 
-      if($seq_regions) {
-        @result = $mapper->list_seq_regions($frm_seq_region_name, $frm_start,
-                                            $frm_end, $frm_cs);
+      if (seqRegionsFlag) {
+        result = AssemblyMapper_listSeqRegions(mapper, frmSeqRegionName, frmStart, frmEnd, frmCs);
       } else {
-        @result = $mapper->list_ids($frm_seq_region_name, $frm_start,
-                                    $frm_end, $frm_cs);
+        result = AssemblyMapper_listIds(mapper, frmSeqRegionName, frmStart, frmEnd, frmCs);
       }
 
-      return @result if(@result);
+// NIY: Not sure what condition should be
+      if (result && Vector_getNumElement(result) > 0) {
+        return result;
+      }
+      //Perl did: return @result if(@result);
     }
   }
 
   // the toplevel coordinate system for the region requested *is* the
 
-  return ($frm_seq_region_name);
+// NIY: Odd name always returned no matter if ask for name or ids??????
+  Vector *resVec = Vector_new();
+  char *tmpStr;
+  StrUtil_copyString(&tmpStr, frmSeqRegionName);
+
+  Vector_addElement(resVec, tmpStr);
+
+  return resVec;
 
 // NONE OF THE CODE BELOW HERE WILL EVER BE ACCESSED!!!
+// NIY: No need to implement because return above means it was never accessed in perl
 
+/*
   // requested region.
   if($seq_regions) {
     return ($frm_seq_region_name);
@@ -320,6 +358,7 @@ sub _list {
                                               $frm_seq_region_name,
                                               undef,undef,undef,$other_cs);
   return ($slice_adaptor->get_seq_region_id($slice));
+*/
 }
 
 
@@ -347,9 +386,8 @@ sub _list {
 =cut
 */
 
-sub list_seq_regions {
-  throw('Incorrect number of arguments.') if(@_ != 5);
-  return _list(@_,1);
+Vector *TopLevelAssemblyMapper_listSeqRegions(TopLevelAssemblyMapper *tlam, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
+  return TopLevelAssemblyMapper_list(tlam, frmSeqRegionName, frmStart, frmEnd, frmCs,1);
 }
 
 
@@ -378,11 +416,9 @@ sub list_seq_regions {
 =cut
 */
 
-sub list_ids {
-  throw('Incorrect number of arguments.') if(@_ != 5);
-  return _list(@_,0);
+Vector *TopLevelAssemblyMapper_listIds(TopLevelAssemblyMapper *tlam, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
+  return TopLevelAssemblyMapper_list(tlam, frmSeqRegionName, frmStart, frmEnd, frmCs,0);
 }
 
 
-#endif
 
