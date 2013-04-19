@@ -56,4 +56,10 @@ AssemblyMapper *AssemblyMapper_new(AssemblyMapperAdaptor *ama, Vector *coordSyst
 IDType AssemblyMapper_getSeqRegionId(AssemblyMapper *am, char *seqRegionName, CoordSystem *cs);
 int AssemblyMapper_haveRegisteredComponent(AssemblyMapper *am, IDType cmpSeqRegionId);
 int AssemblyMapper_haveRegisteredAssembled(AssemblyMapper *am, IDType asmSeqRegionId, int chunkId);
+
+MapperRangeSet *AssemblyMapper_map(AssemblyMapper *am, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, CoordSystem *frmCs, int fastMap, Slice *toSlice);
+Vector *AssemblyMapper_listSeqRegions(AssemblyMapper *am, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs);
+Vector *AssemblyMapper_listIds(AssemblyMapper *am, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs);
+
+
 #endif

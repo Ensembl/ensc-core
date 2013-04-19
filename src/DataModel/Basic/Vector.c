@@ -37,7 +37,7 @@ void Vector_setFreeFunc(Vector *v, void freeElement()) {
 
 void *Vector_getElementAt(Vector *v, int ind) {
   if (ind < 0 || ind >= v->nElement) {
-    fprintf(stderr,"ERROR: Invalid element index %d\n",ind);
+    fprintf(stderr,"ERROR: Invalid element index %d in Vector_getElementAt\n",ind);
     exit(1);
   }
   return v->elements[ind];
@@ -45,7 +45,7 @@ void *Vector_getElementAt(Vector *v, int ind) {
 
 void *Vector_getLastElement(Vector *v) {
   if (!v->nElement) {
-    fprintf(stderr,"ERROR: No elements in vector\n");
+    fprintf(stderr,"ERROR: No elements in vector in Vector_getLastElement\n");
     exit(1);
   }
   return v->elements[v->nElement-1];
@@ -53,7 +53,7 @@ void *Vector_getLastElement(Vector *v) {
 
 void *Vector_setElementAt(Vector *v, int ind, void *elem) {
   if (ind < 0) {
-    fprintf(stderr,"ERROR: Invalid element index %d\n",ind);
+    fprintf(stderr,"ERROR: Invalid element index %d in Vector_setElementAt\n",ind);
     exit(1);
   } else if (ind >= v->nElement) {
     Vector_setNumElement(v, ind+1);
@@ -71,10 +71,10 @@ void *Vector_removeElementAt(Vector *v, int ind) {
   int i;
 
   if (ind < 0) {
-    fprintf(stderr,"ERROR: Invalid element index %d\n",ind);
+    fprintf(stderr,"ERROR: Invalid element index %d in Vector_removeElementAt\n",ind);
     exit(1);
   } else if (ind >= v->nElement) {
-    fprintf(stderr,"ERROR: Invalid element index %d\n",ind);
+    fprintf(stderr,"ERROR: Invalid element index %d in Vector_removeElementAt\n",ind);
     exit(1);
   }
 /* NIY free old one
@@ -96,10 +96,10 @@ void *Vector_insertElementAt(Vector *v, int ind, void *elem) {
   int i;
 
   if (ind < 0) {
-    fprintf(stderr,"ERROR: Invalid element index %d\n",ind);
+    fprintf(stderr,"ERROR: Invalid element index %d in Vector_insertElementAt\n",ind);
     exit(1);
-  } else if (ind >= v->nElement) {
-    fprintf(stderr,"ERROR: Invalid element index %d\n",ind);
+  } else if (ind > v->nElement) {
+    fprintf(stderr,"ERROR: Invalid element index %d Vector_insertElementAt\n",ind);
     exit(1);
   }
   

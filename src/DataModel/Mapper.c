@@ -162,7 +162,7 @@ MapperRangeSet *Mapper_mapCoordinates(Mapper *m, IDType id, long start, long end
   MapperPairSet *pairs = IDHash_getValue(hash,id); //my $lr = $hash->{ uc($id) };
 
 
-  MapperPair *lastUsedPair;
+  MapperPair *lastUsedPair = NULL;
 
   int startIdx, endIdx, midIdx;
   MapperPair *pair;

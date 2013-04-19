@@ -1,4 +1,5 @@
 #include "AssemblyMapper.h"
+#include "AssemblyMapperAdaptor.h"
 /*
 =head1 DESCRIPTION
 
@@ -133,7 +134,7 @@ void AssemblyMapper_registerAll(AssemblyMapper *am) {
 =cut
 */
 
-MapperRangeSet *AssemblyMapper_map(AssemblyMapper *am, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, CoordSystem *frmCs, Slice *toSlice) {
+MapperRangeSet *AssemblyMapper_map(AssemblyMapper *am, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, CoordSystem *frmCs, int fakeFastMapFlag, Slice *toSlice) {
   Mapper *mapper  = AssemblyMapper_getMapper(am);
   CoordSystem *asmCs  = AssemblyMapper_getAssembledCoordSystem(am);
   CoordSystem *cmpCs  = AssemblyMapper_getComponentCoordSystem(am);
@@ -312,7 +313,7 @@ IDType AssemblyMapper_getSeqRegionId(AssemblyMapper *am, char *seqRegionName, Co
 
   AssemblyMapperAdaptor *adaptor = AssemblyMapper_getAdaptor(am);
   
-  Vector *idVec = AssemblyMapperAdaptor_seqRegionsToIds(cs, tmp);
+  Vector *idVec = AssemblyMapperAdaptor_seqRegionsToIds(adaptor, cs, tmp);
 
   IDType seqRegionId = *((IDType *)Vector_getElementAt(idVec, 0));
 
@@ -573,52 +574,56 @@ sub in_assembly {
   Description: DEPRECATED, use map() instead.
 
 =cut
+*/
+MapperRangeSet *AssemblyMapper_mapCoordinatesToAssembly(AssemblyMapper *am, IDType contigId, long start, long end, int strand) {
 
-sub map_coordinates_to_assembly {
-  my ( $self, $contig_id, $start, $end, $strand ) = @_;
+  //deprecate('Use map() instead.');
 
-  deprecate('Use map() instead.');
 
-  # Not sure if contig_id is seq_region_id or name...
-  return
-    $self->map( $contig_id, $start, $end, $strand,
-                $self->contig_CoordSystem() );
+  // Not sure if contig_id is seq_region_id or name...
+//  return
+//    AssemblyMapper_map(am,  contigId, start, end, strand, AssemblyMapper_getContigCoordSystem(am));
 
+  return NULL;
 }
 
+/*
 =head2 fast_to_assembly
 
   Description: DEPRECATED, use map() instead.
 
 =cut
+*/
 
-sub fast_to_assembly {
-  my ( $self, $contig_id, $start, $end, $strand ) = @_;
+MapperRangeSet *AssemblyMapper_fastToAssembly(AssemblyMapper *am, IDType contigId, long start, long end, int strand) {
 
-  deprecate('Use map() instead.');
+//  deprecate('Use map() instead.');
 
-  # Not sure if contig_id is seq_region_id or name...
-  return
-    $self->map( $contig_id, $start, $end, $strand,
-                $self->contig_CoordSystem() );
+  // Not sure if contig_id is seq_region_id or name...
+//  return
+//    $self->map( $contig_id, $start, $end, $strand,
+//                $self->contig_CoordSystem() );
+  return NULL;
 }
 
+/*
 =head2 map_coordinates_to_rawcontig
 
   Description: DEPRECATED, use map() instead.
 
 =cut
+*/
 
-sub map_coordinates_to_rawcontig {
-  my ( $self, $chr_name, $start, $end, $strand ) = @_;
+MapperRangeSet *AssemblyMapper_mapCoordinatesToRawContig(AssemblyMapper *am, char *chrName, long start, long end, int strand) {
+  //deprecate('Use map() instead.');
 
-  deprecate('Use map() instead.');
-
-  return
-    $self->map( $chr_name, $start, $end, $strand,
-                $self->assembled_CoordSystem() );
+  //return
+  //  $self->map( $chr_name, $start, $end, $strand,
+  //              $self->assembled_CoordSystem() );
+  return NULL;
 }
 
+/*
 =head2 list_contig_ids
 
   Description: DEPRECATED, use list_ids() instead.
@@ -634,6 +639,4 @@ sub list_contig_ids {
     $self->list_ids( $chr_name, $start, $end,
                      $self->assembled_CoordSystem() );
 }
-
 */
-

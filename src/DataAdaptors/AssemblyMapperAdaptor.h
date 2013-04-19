@@ -23,7 +23,7 @@ struct AssemblyMapperAdaptorStruct {
 AssemblyMapperAdaptor *AssemblyMapperAdaptor_new(DBAdaptor *dba);
 
 void AssemblyMapperAdaptor_cacheSeqIdsWithMultAssemblies(AssemblyMapperAdaptor *ama);
-AssemblyMapper *AssemblyMapper_fetchByCoordSystems(AssemblyMapperAdaptor *ama, CoordSystem *cs1, CoordSystem *cs2);
+AssemblyMapper *AssemblyMapperAdaptor_fetchByCoordSystems(AssemblyMapperAdaptor *ama, CoordSystem *cs1, CoordSystem *cs2);
 SeqRegionRange *AssemblyMapperAdaptor_addToRangeVector(Vector *ranges, IDType id, long start, long end, char *name);
 void AssemblyMapperAdaptor_registerAssembled(AssemblyMapperAdaptor *ama, AssemblyMapper *assm, IDType asmSeqRegion, long asmStart, long asmEnd);
 IDType AssemblyMapperAdaptor_seqRegionNameToId(AssemblyMapperAdaptor *ama, char *srName, IDType csId);
@@ -39,7 +39,7 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
 void AssemblyMapperAdaptor_buildCombinedMapper(AssemblyMapperAdaptor *ama, Vector *ranges, Mapper *startMidMapper,
                                               Mapper *endMidMapper, Mapper *combinedMapper, char *startName);
 Vector *AssemblyMapperAdaptor_seqRegionsToIds(AssemblyMapperAdaptor *ama, CoordSystem *coordSystem, Vector *seqRegions);
-Vector *AssemblyMapperAdaptor_seqIdsToRegions(AssemblyMapperAdaptor *ama, CoordSystem *coordSystem, Vector *seqRegionIds);
+Vector *AssemblyMapperAdaptor_seqIdsToRegions(AssemblyMapperAdaptor *ama, Vector *seqRegionIds);
 void AssemblyMapperAdaptor_deleteCache(AssemblyMapperAdaptor *ama);
 void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama, AssemblyMapper *asmMapper, char *type,
                                           char *chrName, long start, long end);

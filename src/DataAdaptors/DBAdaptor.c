@@ -41,10 +41,10 @@ DBAdaptor *DBAdaptor_new(char *host, char *user, char *pass, char *dbname,
   } else {
     dba->dnadb = dba;
   }
-  return dba;
 
   dba->seqRegionIdCache = IDHash_new(IDHASH_MEDIUM);
   dba->seqRegionNameCache = StringHash_new(STRINGHASH_MEDIUM);
+  return dba;
 }
 
 char *DBAdaptor_setAssemblyType(DBAdaptor *dba, char *type) {

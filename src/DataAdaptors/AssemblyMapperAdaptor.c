@@ -11,6 +11,7 @@
 #include "CoordSystemAdaptor.h"
 #include "ResultRow.h"
 #include "CoordPair.h"
+#include "StrUtil.h"
 
 int CHUNKFACTOR = 20;  // 2^20 = approx. 10^6
 
@@ -108,13 +109,13 @@ char *makeMappingPathKey(Vector *path) {
   for (i=0; i<Vector_getNumElement(path); i++) {
     CoordSystem *cs = Vector_getElementAt(path, i);
     if (cs == NULL) {
-      StrUtil_appendString(&key, "-", 0);
+      key = StrUtil_appendString(key, "-");
     } else {
       char tmp[1024];
       sprintf(tmp,IDFMTSTR,CoordSystem_getDbID(cs));
-      StrUtil_appendString(&key, tmp, 0 );
+      key = StrUtil_appendString(key, tmp );
     }
-    if (i < Vector_getNumElement(path)-1) StrUtil_appendString(":");
+    if (i < Vector_getNumElement(path)-1) key = StrUtil_appendString(key, ":");
   }
   
   return key;
@@ -144,7 +145,7 @@ char *makeMappingPathKey(Vector *path) {
 =cut
 */
 
-AssemblyMapper *AssemblyMapper_fetchByCoordSystems(AssemblyMapperAdaptor *ama, CoordSystem *cs1, CoordSystem *cs2) {
+AssemblyMapper *AssemblyMapperAdaptor_fetchByCoordSystems(AssemblyMapperAdaptor *ama, CoordSystem *cs1, CoordSystem *cs2) {
   if (CoordSystem_getIsTopLevel(cs1)) {
     return TopLevelAssemblyMapper_new(ama, cs1, cs2);
   }
@@ -152,6 +153,8 @@ AssemblyMapper *AssemblyMapper_fetchByCoordSystems(AssemblyMapperAdaptor *ama, C
   if (CoordSystem_getIsTopLevel(cs2)) {
     return TopLevelAssemblyMapper_new(ama, cs2, cs1);
   }
+
+  //printf("Srnamecache size at start of fbcs = %d\n",StringHash_getNumValues(ama->srNameCache));
 
   CoordSystemAdaptor *csa = DBAdaptor_getCoordSystemAdaptor(ama->dba);
 
@@ -188,6 +191,7 @@ AssemblyMapper *AssemblyMapper_fetchByCoordSystems(AssemblyMapperAdaptor *ama, C
     case 2:
       {
         // 1 step regular mapping
+        printf("Making a normal AssemblyMapper for path %s\n",key);
         AssemblyMapper *asmMapper = AssemblyMapper_new(ama, mappingPath);
   
         //   If you want multiple pieces on two seqRegions to map to each other
@@ -205,6 +209,7 @@ AssemblyMapper *AssemblyMapper_fetchByCoordSystems(AssemblyMapperAdaptor *ama, C
     case 3:
       // two step chained mapping
       {
+        printf("Making a ChainedAssemblyMapper for path %s\n",key);
         ChainedAssemblyMapper *casmMapper = ChainedAssemblyMapper_new(ama, mappingPath);
   
         // in multi-step mapping it is possible get requests with the
@@ -402,9 +407,9 @@ void AssemblyMapperAdaptor_registerAssembled(AssemblyMapperAdaptor *ama, Assembl
                    "  assembly asm, seq_region sr"
                    " WHERE asm.asm_seq_region_id = "
                      IDFMTSTR
-                    " AND %ld <= asm.asm_end AND"
-                    " AND %ld >= asm.asm_start AND"
-                    " AND asm.cmp_seq_region_id = sr.seq_region_id AND"
+                    " AND %ld <= asm.asm_end"
+                    " AND %ld >= asm.asm_start"
+                    " AND asm.cmp_seq_region_id = sr.seq_region_id"
                     " AND sr.coord_system_id = "IDFMTSTR, 
                    asmSeqRegion, regionStart, regionEnd, cmpCsId);
   
@@ -469,14 +474,14 @@ IDType AssemblyMapperAdaptor_seqRegionNameToId(AssemblyMapperAdaptor *ama, char 
   char qStr[1024];
   sprintf(qStr, "SELECT seq_region_id, length "
                   "FROM seq_region "
-                 "WHERE name = %s AND coord_system_id = "
+                 "WHERE name = '%s' AND coord_system_id = "
                  IDFMTSTR, srName, csId);
 
   StatementHandle *sth = ama->prepare((BaseAdaptor *)ama,qStr,strlen(qStr));
   sth->execute(sth);
 
   if (sth->numRows(sth) != 1) {
-    fprintf(stderr,"Ambiguous or non-existant seq_region [%s] in coord system "IDFMTSTR, srName,csId);
+    fprintf(stderr,"Ambiguous or non-existant seq_region [%s] in coord system "IDFMTSTR" (numRowss = "IDFMTSTR")\n", srName,csId,sth->numRows(sth));
     exit(1);
   }
 
@@ -560,13 +565,15 @@ void AssemblyMapperAdaptor_addToSrCaches(AssemblyMapperAdaptor *ama, char *regio
   // Do a quick sanity check
   if (StringHash_contains(ama->srNameCache, key)) {
     fprintf(stderr,"Hmm - seq region already in name cache - odd\n");
+  } else {
+    StringHash_add(ama->srNameCache, key, cacheData);
   }
-  StringHash_add(ama->srNameCache, key, cacheData);
 
   if (IDHash_contains(ama->srIdCache, regionId)) {
     fprintf(stderr,"Hmm - seq region already in id cache - odd\n");
+  } else {
+    IDHash_add(ama->srIdCache, regionId, cacheData);
   }
-  IDHash_add(ama->srIdCache, regionId, cacheData);
 
   return;
 }
@@ -954,8 +961,8 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
         RangeRegistry_checkAndRegister(startRegistry, seqRegionId, startStart, startEnd, startStart, startEnd, 0);
       }
     }
-    sth->finish(sth);
   }
+  sth->finish(sth);
 
   // in the one step case, we load the mid ranges in the
   // last_registry and we are done
@@ -1067,8 +1074,8 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
       //register this region on the end coord system
       RangeRegistry_checkAndRegister(endRegistry, endSeqRegionId, endStart, endEnd, endStart, endEnd, 0);
     }
-    sth->finish(sth);
   }
+  sth->finish(sth);
 
   //########
   // Now that both halves are loaded
@@ -1325,8 +1332,8 @@ void AssemblyMapperAdaptor_registerChainedSpecial(AssemblyMapperAdaptor *ama, Ch
           RangeRegistry_checkAndRegister(startRegistry, id1, startStart, startEnd, startStart, startEnd, 0);
         }
       }
-      sth->finish(sth);
     }
+    sth->finish(sth);
 
     if (found) {
       if (midCs == NULL ) {
@@ -1878,7 +1885,7 @@ Vector *AssemblyMapperAdaptor_seqRegionsToIds(AssemblyMapperAdaptor *ama, CoordS
 =cut
 */
 
-Vector *AssemblyMapperAdaptor_seqIdsToRegions(AssemblyMapperAdaptor *ama, CoordSystem *coordSystem, Vector *seqRegionIds) {
+Vector *AssemblyMapperAdaptor_seqIdsToRegions(AssemblyMapperAdaptor *ama, Vector *seqRegionIds) {
   Vector *out = Vector_new();
 
   int i;
@@ -1986,7 +1993,6 @@ void AssemblyMapperAdaptor_registerContig(AssemblyMapperAdaptor *ama, AssemblyMa
 =cut
 */
 
-/* Comment out for now
 AssemblyMapper *AssemblyMapperAdaptor_fetchByType(AssemblyMapperAdaptor *ama, char *type) {
 
   fprintf(stderr,"Deprecated: Use fetch_by_CoordSystem instead\n");
@@ -1994,12 +2000,16 @@ AssemblyMapper *AssemblyMapperAdaptor_fetchByType(AssemblyMapperAdaptor *ama, ch
   //assume that what the user wanted was a mapper between the sequence coord
   //level and the top coord level
 
+/*
   CoordSystemAdaptor *csa  = DBAdaptor_getCoordSystemAdaptor(ama->dba);
 
   CoordSystem *cs1 = CoordSystemAdaptor_fetchTopLevel(csa, type);
   CoordSystem *cs2 = CoordSystemAdaptor_fetchSequenceLevel(csa);
 
   return AssemblyMapperAdaptor_fetchByCoordSystems(ama, cs1, cs2);
+*/
+  return NULL;
 }
+/* Comment out for now
 */
 
