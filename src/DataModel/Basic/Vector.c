@@ -86,6 +86,7 @@ void *Vector_removeElementAt(Vector *v, int ind) {
     v->elements[i-1] = v->elements[i];
   }
 
+  //Vector_setNumElement(v, v->nElement-1);
   v->nElement--;
 
   return removed;

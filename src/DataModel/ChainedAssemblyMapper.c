@@ -1,5 +1,6 @@
 #include "ChainedAssemblyMapper.h"
 #include "CoordPair.h"
+#include "AssemblyMapperAdaptor.h"
 /*
 =head1 DESCRIPTION
 
@@ -376,7 +377,7 @@ Vector *ChainedAssemblyMapper_listIds(ChainedAssemblyMapper *cam, char *frmSeqRe
 
     if (ranges) {
       AssemblyMapperAdaptor *adaptor = ChainedAssemblyMapper_getAdaptor(cam);
-      AssemblyMapperAdaptor_registerChained(adaptor, cam, "first", seqRegionId, ranges);
+      AssemblyMapperAdaptor_registerChained(adaptor, cam, "first", seqRegionId, ranges, NULL);
     }
 
     MapperPairSet *mps = Mapper_listPairs( ChainedAssemblyMapper_getFirstLastMapper(cam), seqRegionId, frmStart, frmEnd, "first");
@@ -396,7 +397,7 @@ Vector *ChainedAssemblyMapper_listIds(ChainedAssemblyMapper *cam, char *frmSeqRe
 
     if (Vector_getNumElement(ranges)) {
       AssemblyMapperAdaptor *adaptor = ChainedAssemblyMapper_getAdaptor(cam);
-      AssemblyMapperAdaptor_registerChained(adaptor, cam, "last", seqRegionId, ranges);
+      AssemblyMapperAdaptor_registerChained(adaptor, cam, "last", seqRegionId, ranges, NULL);
     }
 
     MapperPairSet *mps = Mapper_listPairs( ChainedAssemblyMapper_getFirstLastMapper(cam), seqRegionId, frmStart, frmEnd, "last");

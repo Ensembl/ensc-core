@@ -169,7 +169,7 @@ Vector *RangeRegistry_checkAndRegister(RangeRegistry *registry, IDType id, long 
     // no work needs to be done at all if we find a range pair that
     // entirely overlaps the requested region
     if ( pStart <= start && pEnd >= end ) {
-      return NULL;
+      return Vector_new(); // perl returns undef, but that causes me problems
     }
 
     // find adjacent or overlapping regions already registered
