@@ -7,6 +7,8 @@
 
 #include "BaseTest.h"
 
+#define NumOutput(a) sizeof(a)/(sizeof(int)*4)
+
 //#include "BaseRODBTest.h"
 
 int loadSGPDump(Mapper *mapper, int reverse);
@@ -18,13 +20,13 @@ int main(int argc, char *argv[]) {
   int nToLoad = loadSGPDump(mapper, 0 );
 
   // loading done successfully
-  ok(1,  nToLoad != 0);
+  ok(1,  nToLoad == 100);
 
 
   {
     // transform a segment entirely within the first rawcontig
     int testOutput[][4] = {1, 2, 5, -1};
-    testTransform (mapper, 627012, 2, 5, -1, "rawcontig", testOutput,1);
+    testTransform (mapper, 627012, 2, 5, -1, "rawcontig", testOutput, NumOutput(testOutput));
   }
   
   {
@@ -34,7 +36,7 @@ int main(int argc, char *argv[]) {
                           {341, 126, 59773, -1},
                           {315843, 5332, 5963, +1}
                          };
-    testTransform (mapper, 1, 383700, 444000, +1, "virtualcontig",testOutput,3);
+    testTransform (mapper, 1, 383700, 444000, +1, "virtualcontig",testOutput, NumOutput(testOutput));
   }
   
   {
@@ -43,7 +45,7 @@ int main(int argc, char *argv[]) {
                           { 627011, 7447, 7507, +1 },
                           { 1, 273762, 273781, 0 }
                           };
-    testTransform (mapper, 1, 273701, 273781, +1, "virtualcontig", testOutput,2);
+    testTransform (mapper, 1, 273701, 273781, +1, "virtualcontig", testOutput, NumOutput(testOutput));
   }
   
   //
@@ -59,7 +61,7 @@ int main(int argc, char *argv[]) {
   
   {
     int testOutput[][4] = {{ 1, 105, 125, 1 }};
-    testTransform(mapper, 1, 5, 25, 1, "asm1", testOutput,1);
+    testTransform(mapper, 1, 5, 25, 1, "asm1", testOutput, NumOutput(testOutput));
   }
   
   
@@ -75,11 +77,11 @@ int main(int argc, char *argv[]) {
   
   {
     int testOutput[][4] = {
-                { 1, 105, 110, 1 },
-                { 1, 11, 11, 0 },
-                { 1, 112, 125, 1 }
+                           { 1, 105, 110, 1 },
+                           { 1, 11, 11, 0 },
+                           { 1, 112, 125, 1 }
                           };
-    testTransform( mapper, 1, 5, 25, 1, "asm1" , testOutput,3);
+    testTransform( mapper, 1, 5, 25, 1, "asm1" , testOutput, NumOutput(testOutput));
   }
   
   
@@ -96,10 +98,11 @@ int main(int argc, char *argv[]) {
   
   {
     int testOutput[][4] = {
-                { 1, 105, 110, 1 },
-                { 1, 111, 120, -1 },
-                { 1, 121, 125, 1 } };
-    testTransform( mapper,  1, 5, 25, 1, "asm1" , testOutput,3);
+                           { 1, 105, 110, 1 },
+                           { 1, 111, 120, -1 },
+                           { 1, 121, 125, 1 }
+                          };
+    testTransform( mapper,  1, 5, 25, 1, "asm1" , testOutput, NumOutput(testOutput));
   }
   
   //
@@ -114,7 +117,7 @@ int main(int argc, char *argv[]) {
   
   {
     int testOutput[][4] = {{ 1, 106, 126, -1 } };
-    testTransform( mapper, 1, 5, 25, 1, "asm1", testOutput,1);
+    testTransform( mapper, 1, 5, 25, 1, "asm1", testOutput, NumOutput(testOutput));
   }
   
   
@@ -132,12 +135,12 @@ int main(int argc, char *argv[]) {
   
   {
     int testOutput[][4] = {
-                { 1, 105, 120, 1 },
-                { 1, 21, 21, 0 },
-                { 1, 132, 145, 1 },
-                { 1, 36, 45, 0 }
-               };
-    testTransform( mapper, 1, 5, 45, 1, "asm1" , testOutput, 4);
+                           { 1, 105, 120, 1 },
+                           { 1, 21, 21, 0 },
+                           { 1, 132, 145, 1 },
+                           { 1, 36, 45, 0 }
+                          };
+    testTransform( mapper, 1, 5, 45, 1, "asm1" , testOutput, NumOutput(testOutput));
   }
   
   
@@ -156,27 +159,26 @@ int main(int argc, char *argv[]) {
                            {2, 111, 110, 1},
                            {3, 11,  10, -1}
                           };
-    testTransform(mapper, 1, 11, 10, 1, "asm1", testOutput,2);
+    testTransform(mapper, 1, 11, 10, 1, "asm1", testOutput, NumOutput(testOutput));
   }
   
   {
     // edge insert, negative strand, expect edge insert negative strand
     int testOutput[][4] = {{2, 101, 100, -1}};
-    testTransform(mapper, 1, 1, 0, -1, "asm1", testOutput,1);
+    testTransform(mapper, 1, 1, 0, -1, "asm1", testOutput, NumOutput(testOutput));
   }
   
   {
     // normal case, expect single insert in middle
     int testOutput[][4] = {{2, 102, 101, 1}};
-    testTransform(mapper, 1, 2, 1, 1, "asm1", testOutput,1);
+    testTransform(mapper, 1, 2, 1, 1, "asm1", testOutput, NumOutput(testOutput));
   }
   
   {
     // expect a gap
     int testOutput[][4] = {{1, 100, 200, 0}};
-    testTransform(mapper, 1, 100, 200, 1, "asm1", testOutput, 1);
+    testTransform(mapper, 1, 100, 200, 1, "asm1", testOutput, NumOutput(testOutput));
   }
-  
   
   return 0;
 }
@@ -199,9 +201,10 @@ int testTransform(Mapper *mapper, int srcId, int srcStart, int srcEnd, int srcSt
 
   MapperRangeSet *results = Mapper_mapCoordinates(mapper, srcId, srcStart, srcEnd, srcStrand, srcType);
 
-  printf("New test\n");
+  printf("\nNew test\n");
 
   int diff = 0;
+  printf("Number of results = %d nDest = %d\n",MapperRangeSet_getNumRange(results), nDest);
   if (MapperRangeSet_getNumRange(results) != nDest) {
     diff =1;
   
@@ -231,6 +234,10 @@ int testTransform(Mapper *mapper, int srcId, int srcStart, int srcEnd, int srcSt
           } 
           break;
         default:
+          {
+            printf("Unhandled range type %d\n",range->rangeType);
+            diff=1;
+          }
           break;
       }
     }
@@ -238,47 +245,13 @@ int testTransform(Mapper *mapper, int srcId, int srcStart, int srcEnd, int srcSt
   if (diff) {
     printf("DIFFERENCE\n");
   }
-/*
-  @coord = map ([isgap($_) ? $srcid : $_->id,  // Gap object should do this, but currently doesn't.
-               $_->start,
-               $_->end,
-               isgap($_) ? 0 : $_->strand],  // strand zero indicates a gap, within this subroutine
-              @coord);
-
-  if (@coord != @dest) {
-     warn "Source:\n(", join(",",@$src), ")\n";
-     warn "Dest:\n", map ("(".join(",",@$_).")\n", @coord);
-     warn "Expected:\n", map ("(".join(",",@$_).")\n", @dest);
-     warn "Wrong number of segments\n";
-     ok( 0 );
-     return;
-  }
-
-  int i;
-  for (i = 0; i < @coord; ++i) {
-    int n;
-    for (n = 0; n < 4; ++n) {
-      if (n == 0
-          ? ($coord[$i]->[$n] ne $dest[$i]->[$n])
-          : ($coord[$i]->[$n] != $dest[$i]->[$n])) {
-        warn "Source:\n(", join(",",@$src), ")\n";
-        warn "Dest:\n", map ("(".join(",",@$_).")\n", @coord);
-        warn "Expected:\n", map ("(".join(",",@$_).")\n", @dest);
-        warn "Error in segment ", $i+1, " field ", $n+1, "\n";
-        ok( 0 );
-        return;
-      }
-    }
-  }
-  ok( 1 );
-*/
   return;
 }
 
 
 
 int loadSGPDump(Mapper *mapper, int reverse) {
-//chr_name	raw_id	chr_start	chr_end	raw_start	raw_end	raw_ori
+  //chr_id raw_id chr_start chr_end raw_start raw_end raw_ori
   long sgpDump[][7] = {
                         { 1, 627012, 1, 31276, 1, 31276, 1 },
                         { 1, 627010, 31377, 42949, 72250, 83822, -1 },
@@ -379,14 +352,10 @@ int loadSGPDump(Mapper *mapper, int reverse) {
                         { 1, 170509, 1183930, 1184112, 864, 1046, 1 },
                         { 1, 173119, 1184213, 1189703, 1, 5491, -1 },
                         { 1, 625357, 1189804, 1213915, 1, 24112, 1 },
-                        { 1, 625359, 1214016, 1216330, 1, 2315, 1 },
-                        { -1, -1, -1, -1, -1, -1, -1 }
+                        { 1, 625359, 1214016, 1216330, 1, 2315, 1 }
                       };
 
-  int nRange = 0;
-  while (sgpDump[nRange++][0] != -1) {}
-
-  nRange--;
+  int nRange = sizeof(sgpDump)/(sizeof(long) *7);
 
   printf("Have %d ranges\n",nRange);
   int inc = 1;
@@ -413,15 +382,3 @@ int loadSGPDump(Mapper *mapper, int reverse) {
   }
   return nRange;
 }
-
-
-
-
-// Define a subroutine to say whether an object is a Coordinate or a Gap.
-// This should be in the Gap/Coordinate object itself but isn't.
-// It might change in future so it's abstracted out here in this test.
-//
-int isGap(MapperRange *mr) {
-  return (mr->rangeType == MAPPERRANGE_GAP);
-}
-
