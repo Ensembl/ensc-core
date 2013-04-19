@@ -65,15 +65,18 @@ int main(int argc, char *argv[]) {
   ok(testNum++, $coords[0]->strand() == 1 );
 */
   
-  coords = AssemblyMapper_map(asmMapper, "multimap_testregion", 100, 800, 1, chnkCs, 0, NULL );
+  coords = ChainedAssemblyMapper_map((ChainedAssemblyMapper *)asmMapper, "multimap_testregion", 100, 800, 1, chnkCs, 0, NULL );
+
   {
     int testOutput[][4] = {
                            {469271, 91, 200, 1},
-                           {0, 91, 200, 0},
-                           {469271, 91, 200, -1},
+                           {0, 210, 400, 0}, // Gap coords added by me - weren't in perl test
+                           {469271, 201, 400, -1},
+                           {0, 601, 700, 0}, // Gap coords added by me - weren't in perl test
                            {469282,  1, 100, -1}
                           };
     ok(testNum++, compareTransform(coords, testOutput, NumOutput(testOutput)));
+    printCoords(coords);
   }
   
 /*
@@ -134,14 +137,14 @@ int main(int argc, char *argv[]) {
   int i;
   for (i=0;i<Vector_getNumElement(seqRegions); i++) {
     char *regionName = Vector_getElementAt(seqRegions, i);
-    printf("%s\n",regionName);
+    fprintf(stderr, "%s\n",regionName);
   }
   
   seqRegions = AssemblyMapper_listSeqRegions(asmMapper, "AL359765.6.1.13780", 1, 13780, ctgCs);
   ok(testNum++, seqRegions!=NULL);
   for (i=0;i<Vector_getNumElement(seqRegions); i++) {
     char *regionName = Vector_getElementAt(seqRegions, i);
-    printf("%s\n",regionName);
+    fprintf(stderr, "%s\n",regionName);
   }
   
   
@@ -154,14 +157,14 @@ int main(int argc, char *argv[]) {
   ok(testNum++, seqIds!=NULL);
   for (i=0;i<Vector_getNumElement(seqIds); i++) {
     IDType regionId = *((IDType *)Vector_getElementAt(seqIds, i));
-    printf(IDFMTSTR"\n",regionId);
+    fprintf(stderr, IDFMTSTR"\n",regionId);
   }
   
   seqIds = AssemblyMapper_listIds(asmMapper, "AL359765.6.1.13780", 1, 13780, ctgCs);
   ok(testNum++, seqIds!=NULL);
   for (i=0;i<Vector_getNumElement(seqIds); i++) {
     IDType regionId = *((IDType *)Vector_getElementAt(seqIds, i));
-    printf(IDFMTSTR"\n",regionId);
+    fprintf(stderr, IDFMTSTR"\n",regionId);
   }
   
   return 0;
@@ -176,18 +179,18 @@ void printCoords(MapperRangeSet *results) {
       case MAPPERRANGE_COORD :
         {
           MapperCoordinate *mc = (MapperCoordinate *)range;
-          printf("Coord: "IDFMTSTR" %ld %ld %d\n", mc->id, mc->start, mc->end, mc->strand);
+          fprintf(stderr, "Coord: "IDFMTSTR" %ld %ld %d\n", mc->id, mc->start, mc->end, mc->strand);
         }
         break;
       case MAPPERRANGE_GAP :
         {
           MapperGap *mg = (MapperGap *)range;
-          printf("Gap: %ld %ld\n", mg->start, mg->end);
+          fprintf(stderr, "Gap: %ld %ld\n", mg->start, mg->end);
         }
         break;
       default:
         {
-          printf("Unhandled range type %d\n",range->rangeType);
+          fprintf(stderr, "Unhandled range type %d\n",range->rangeType);
         }
         break;
     }
@@ -195,9 +198,8 @@ void printCoords(MapperRangeSet *results) {
 }
 
 int compareTransform(MapperRangeSet *results, int dest[][4], int nDest ) {
-  printf("\nNew test\n");
   int diff = 0;
-  printf("Number of results = %d nDest = %d\n",MapperRangeSet_getNumRange(results), nDest);
+  fprintf(stderr, "Number of results = %d nDest = %d\n",MapperRangeSet_getNumRange(results), nDest);
   if (MapperRangeSet_getNumRange(results) != nDest) {
     diff =1;
 
@@ -210,7 +212,7 @@ int compareTransform(MapperRangeSet *results, int dest[][4], int nDest ) {
         case MAPPERRANGE_COORD :
           {
             MapperCoordinate *mc = (MapperCoordinate *)range;
-            printf("Coord: "IDFMTSTR" %ld %ld %d\n", mc->id, mc->start, mc->end, mc->strand);
+            fprintf(stderr, "Coord: "IDFMTSTR" %ld %ld %d\n", mc->id, mc->start, mc->end, mc->strand);
             if (dest[i][0] != mc->id || dest[i][1] != mc->start || dest[i][2] != mc->end || dest[i][3] != mc->strand) {
               diff=1;
             }
@@ -220,7 +222,7 @@ int compareTransform(MapperRangeSet *results, int dest[][4], int nDest ) {
           {
             MapperGap *mg = (MapperGap *)range;
 
-            printf("Gap: %ld %ld\n", mg->start, mg->end);
+            fprintf(stderr, "Gap: %ld %ld\n", mg->start, mg->end);
             if (dest[i][0] != 0 || dest[i][1] != mg->start || dest[i][2] != mg->end || dest[i][3] != 0) {
               diff=1;
             }
@@ -228,7 +230,7 @@ int compareTransform(MapperRangeSet *results, int dest[][4], int nDest ) {
           break;
         default:
           {
-            printf("Unhandled range type %d\n",range->rangeType);
+            fprintf(stderr, "Unhandled range type %d\n",range->rangeType);
             diff=1;
           }
           break;
@@ -236,8 +238,9 @@ int compareTransform(MapperRangeSet *results, int dest[][4], int nDest ) {
     }
   }
   if (diff) {
-    printf("DIFFERENCE\n");
+    fprintf(stderr, "DIFFERENCE\n");
   }
-  return diff;
+  fprintf(stderr, "\n");
+  return !diff;
 }
 
