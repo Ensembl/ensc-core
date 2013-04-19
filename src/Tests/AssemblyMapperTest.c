@@ -76,7 +76,6 @@ int main(int argc, char *argv[]) {
                            {469282,  1, 100, -1}
                           };
     ok(testNum++, compareTransform(coords, testOutput, NumOutput(testOutput)));
-    printCoords(coords);
   }
   
 /*
@@ -109,7 +108,7 @@ int main(int argc, char *argv[]) {
   //
   
   //
-  // 3 Test map
+  // Test map
   //
   
   coords = AssemblyMapper_map(asmMapper, "20", 500001, 60000000, 1, chrCs, 0, NULL);
