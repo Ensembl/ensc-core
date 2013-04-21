@@ -3,6 +3,7 @@
 #include "MysqlUtil.h"
 #include "AssemblyMapper.h"
 #include "ChainedAssemblyMapper.h"
+#include "TopLevelAssemblyMapper.h"
 #include "Slice.h"
 #include "DBAdaptor.h"
 
@@ -147,11 +148,11 @@ char *makeMappingPathKey(Vector *path) {
 
 AssemblyMapper *AssemblyMapperAdaptor_fetchByCoordSystems(AssemblyMapperAdaptor *ama, CoordSystem *cs1, CoordSystem *cs2) {
   if (CoordSystem_getIsTopLevel(cs1)) {
-    return TopLevelAssemblyMapper_new(ama, cs1, cs2);
+    return (AssemblyMapper *)TopLevelAssemblyMapper_new(ama, cs1, cs2);
   }
 
   if (CoordSystem_getIsTopLevel(cs2)) {
-    return TopLevelAssemblyMapper_new(ama, cs2, cs1);
+    return (AssemblyMapper *)TopLevelAssemblyMapper_new(ama, cs2, cs1);
   }
 
   //printf("Srnamecache size at start of fbcs = %d\n",StringHash_getNumValues(ama->srNameCache));
@@ -1458,7 +1459,7 @@ void AssemblyMapperAdaptor_registerAll(AssemblyMapperAdaptor *ama, AssemblyMappe
       int endChunk = asmLength >> CHUNKFACTOR;
       int i;
       for (i=0; i<=endChunk; i++) {
-        AssemblyMapper_registerAssembled(asmSeqRegionId, i);
+        AssemblyMapper_registerAssembled(asmMapper, asmSeqRegionId, i);
       }
 
       AssemblyMapperAdaptor_addToSrCaches(ama, asmSeqRegion, asmSeqRegionId, asmCsId, asmLength);

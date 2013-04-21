@@ -108,7 +108,10 @@ CoordSystemAdaptor *CoordSystemAdaptor_new(DBAdaptor *dba) {
     }
     Vector_addElement(v, cs);
 
-    IDHash_add(csa->rankCache, CoordSystem_getRank(cs), cs);
+    if (IDHash_contains(csa->rankCache, (IDType)CoordSystem_getRank(cs))) {
+      fprintf(stderr, "Already have a rank %d coord system\n",CoordSystem_getRank(cs));
+    }
+    IDHash_add(csa->rankCache, (IDType)CoordSystem_getRank(cs), cs);
   }
 
   sth->finish(sth);
@@ -317,7 +320,7 @@ int CoordSystem_sortByRankFunc(const void *one, const void *two) {
 
 Vector *CoordSystemAdaptor_fetchAll(CoordSystemAdaptor *csa) {
 
-  Vector *coordSystems = IDHash_getValues(csa->rankCache);
+  Vector *coordSystems = IDHash_getValuesVector(csa->rankCache);
 
   //order the array by rank in ascending order
   Vector_sort(coordSystems, CoordSystem_sortByRankFunc);

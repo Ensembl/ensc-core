@@ -325,6 +325,8 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Sl
     IDType contigId = RawContig_getDbID(SeqFeature_getContig(f));
     MapperCoordinate fRange;
   
+    // Fast map implementation changed
+/*
     int mapSucceeded = AssemblyMapper_fastToAssembly(assMapper, contigId, 
                                                SeqFeature_getStart(f), 
                                                SeqFeature_getEnd(f), 
@@ -333,6 +335,24 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Sl
   
     // undefined start means gap
     if (!mapSucceeded) continue;
+*/
+// New temporary implementation
+    char *contigName = RawContig_getName(SeqFeature_getContig(f));
+    MapperRangeSet *set = AssemblyMapper_fastToAssembly(assMapper, contigName,
+                                               SeqFeature_getStart(f),
+                                               SeqFeature_getEnd(f),
+                                               SeqFeature_getStrand(f));
+
+    if (!set || MapperRangeSet_getNumRange(set) == 0) continue;
+
+    MapperRange *mr = MapperRangeSet_getRangeAt(set,0);
+    if (mr->rangeType != MAPPERRANGE_COORD) {
+      fprintf(stderr, "Not a coordinate in BaseFeatureAdaptor\n");
+      exit(1);
+    }
+    memcpy(&fRange, mr, sizeof(MapperCoordinate));
+    MapperRangeSet_free(set);
+// End new temporary implementation
   
     // maps to region outside desired area 
     if (fRange.start > sliceEnd || fRange.end < sliceStart) continue;
