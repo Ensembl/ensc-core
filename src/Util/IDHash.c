@@ -68,6 +68,29 @@ void **IDHash_getValues(IDHash *idHash) {
   return values;
 }
 
+Vector *IDHash_getValuesVector(IDHash *idHash) {
+  int i;
+  int j;
+  
+  if (!idHash->nValue) {
+    return NULL;
+  }
+
+  Vector *values = Vector_new();
+
+  for (i=0; i<idHash->size; i++) {
+    if (idHash->bucketCounts[i]) {
+      for (j=0; j<idHash->bucketCounts[i]; j++) {
+        Vector_addElement(values, idHash->buckets[i][j].value);
+      }
+    }
+  }
+  if (Vector_getNumElement(values) != idHash->nValue) {
+    fprintf(stderr,"ERROR: Internal IDHash error - values vector size != idHash->nValue\n");
+  }
+  return values;
+}
+
 IDType *IDHash_getKeys(IDHash *idHash) {
   int i;
   int j;

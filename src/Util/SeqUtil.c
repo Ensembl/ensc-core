@@ -8,6 +8,7 @@
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 char *SeqUtil_reverseComplement(char *seqStr, int lenSeqStr) {
   int i;
@@ -128,16 +129,29 @@ int SeqUtil_readTransTab(char *fName, char TransTab[4][4][4]) {
     return 0;
   }
 
-  fgets(Line,MAXSTRLEN,FpIn);
+  if  (!fgets(Line,MAXSTRLEN,FpIn)) {
+    Error_write(EFGETSNULL,"ReadTransTab", ERR_SEVERE, "reading translation table file %s\n", fName);
+    return 0;
+  }
+  
 
   while (strncmp(Line,headerStr,sizeof(headerStr)) && !feof(FpIn)) {
-    fgets(Line,MAXSTRLEN,FpIn);
+    if  (!fgets(Line,MAXSTRLEN,FpIn)) {
+      Error_write(EFGETSNULL,"ReadTransTab", ERR_SEVERE, "reading translation table file %s\n", fName);
+      return 0;
+    }
   }
 
-  fgets(Line,MAXSTRLEN,FpIn);
+  if  (!fgets(Line,MAXSTRLEN,FpIn)) {
+    Error_write(EFGETSNULL,"ReadTransTab", ERR_SEVERE, "reading translation table file %s\n", fName);
+    return 0;
+  }
 
   while(!feof(FpIn)) {
-    fgets(Line,MAXSTRLEN,FpIn);
+    if  (!fgets(Line,MAXSTRLEN,FpIn)) {
+      Error_write(EFGETSNULL,"ReadTransTab", ERR_SEVERE, "reading translation table file %s\n", fName);
+      return 0;
+    }
     ChP = Line;
     if (!StrUtil_gettok(Token,&ChP,ChP,MAXSTRLEN)) {
       Error_trace("ReadTransTab",NULL);
@@ -202,3 +216,21 @@ void SeqUtil_printConvTable(int *convTable) {
   }
 }
 
+void SeqUtil_writeFasta(FILE *fp, char *header, char *seq, int lineLen) {
+  fprintf(fp,">%s\n",header);
+
+  if (!lineLen) lineLen = 60;
+  char *chP = seq;
+  int linePos =0;
+  while (*chP != '\0') {
+    fputc(*chP++, fp);
+    linePos++;
+    if (linePos==lineLen) {
+      fputc('\n', fp);
+      linePos = 0;
+    }
+  }
+  if (linePos) {
+    fputc('\n',fp);
+  }
+}

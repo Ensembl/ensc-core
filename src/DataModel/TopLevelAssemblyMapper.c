@@ -438,3 +438,23 @@ void TopLevelAssemblyMapper_freeImpl(TopLevelAssemblyMapper *tlam) {
   Object_errorUnimplementedMethod(tlam, "TopLevelAssemblyMapper_free");
 }
 
+
+void TopLevelAssemblyMapper_registerAllImpl(TopLevelAssemblyMapper *am) {
+  Object_errorUnimplementedMethod(am, "TopLevelAssemblyMapper_registerAll");
+}
+
+MapperRangeSet *TopLevelAssemblyMapper_mapCoordinatesToAssemblyImpl(TopLevelAssemblyMapper *am, char *contigName, long start, long end, int strand) {
+  Object_errorUnimplementedMethod(am, "TopLevelAssemblyMapper_mapCoordinatesToAssembly");
+}
+
+MapperRangeSet *TopLevelAssemblyMapper_fastToAssemblyImpl(TopLevelAssemblyMapper *am, char *contigName, long start, long end, int strand) {
+  Object_errorUnimplementedMethod(am, "TopLevelAssemblyMapper_fastToAssembly");
+}
+
+MapperRangeSet *TopLevelAssemblyMapper_mapCoordinatesToRawContigImpl(TopLevelAssemblyMapper *am, char *chrName, long start, long end, int strand) {
+  Object_errorUnimplementedMethod(am, "TopLevelAssemblyMapper_mapCoordinatesToRawContig");
+}
+
+Vector *TopLevelAssemblyMapper_listContigIdsImpl(TopLevelAssemblyMapper *am, char *chrName, long start, long end, int strand) {
+  Object_errorUnimplementedMethod(am, "TopLevelAssemblyMapper_listContigIds");
+}

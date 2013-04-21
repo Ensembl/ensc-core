@@ -2,6 +2,7 @@
 #define __IDHASH_H__
 
 #include "EnsC.h"
+#include "Vector.h"
 
 typedef enum IDHashSizesEnum {
   IDHASH_SMALL,
@@ -31,5 +32,6 @@ IDType * IDHash_getKeys(IDHash *idHash);
 void *   IDHash_getValue(IDHash *idHash, IDType id);
 void **  IDHash_getValues(IDHash *idHash);
 int      IDHash_remove(IDHash *idHash, IDType id, void freeFunc());
+Vector *IDHash_getValuesVector(IDHash *idHash);
 
 #endif

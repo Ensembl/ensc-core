@@ -28,7 +28,7 @@ SequenceAdaptor *SequenceAdaptor_new(DBAdaptor *dba) {
 }
 
 char *SequenceAdaptor_fetchByRawContigStartEndStrand(SequenceAdaptor *sa, 
-                                                   RawContig *rc,
+                                                   IDType rcId, //RawContig *rc,
                                                    int start,
                                                    int end,
                                                    char strand) {
@@ -43,11 +43,15 @@ char *SequenceAdaptor_fetchByRawContigStartEndStrand(SequenceAdaptor *sa,
 
   if( end == -1 ) {
 
+//    sprintf(qStr,
+//            "SELECT c.length, SUBSTRING( d.sequence, %d )"
+//              " FROM dna d, seq_region c"
+//              " WHERE d.seq_region_id = c.seq_region_id"
+//              "  AND c.seq_region_id = " IDFMTSTR, start, RawContig_getDbID(rc));
     sprintf(qStr,
-            "SELECT c.length, SUBSTRING( d.sequence, %d )"
-              " FROM dna d, contig c"
-              " WHERE d.dna_id = c.dna_id"
-              "  AND c.contig_id = " IDFMTSTR, start, RawContig_getDbID(rc));
+            "SELECT SUBSTRING( d.sequence, %d )"
+              " FROM dna d"
+              " WHERE d.seq_region_id = "IDFMTSTR, start, rcId); //RawContig_getDbID(rc));
 
   } else {
     int length = end - start + 1;
@@ -56,11 +60,14 @@ char *SequenceAdaptor_fetchByRawContigStartEndStrand(SequenceAdaptor *sa,
       return NULL;
     }
 
-    sprintf(qStr,"SELECT c.length,"
-                 " SUBSTRING( d.sequence, %d, %d )"
-                 " FROM dna d, contig c"
-                 " WHERE d.dna_id = c.dna_id"
-                 " AND c.contig_id = " IDFMTSTR,start,length,RawContig_getDbID(rc));
+//    sprintf(qStr,"SELECT c.length,"
+//                 " SUBSTRING( d.sequence, %d, %d )"
+//                 " FROM dna d, seq_region c"
+//                 " WHERE d.seq_region_id = c.seq_region_id"
+//                 " AND c.seq_region_id = " IDFMTSTR,start,length,RawContig_getDbID(rc));
+    sprintf(qStr,"SELECT  SUBSTRING( d.sequence, %d, %d )"
+                 " FROM dna d"
+                 " WHERE d.seq_region_id = "IDFMTSTR, start,length,rcId);//RawContig_getDbID(rc));
   }
 
   if(  DBAdaptor_getDNADBAdaptor(sa->dba) ) {
@@ -75,8 +82,9 @@ char *SequenceAdaptor_fetchByRawContigStartEndStrand(SequenceAdaptor *sa,
   row = sth->fetchRow(sth);
 
   if( row != NULL) {
-    int length   = row->getIntAt(row,0);
-    char *seqStr = row->getStringAt(row,1);
+//    int length   = row->getIntAt(row,0);
+//    char *seqStr = row->getStringAt(row,1);
+    char *seqStr = row->getStringAt(row,0);
 
     /* Is this necessary ????? $seq =~ s/\s//g; */
     sth->finish(sth);
@@ -149,23 +157,30 @@ char *SequenceAdaptor_fetchByAssemblyLocation(SequenceAdaptor *sa,
   coordSet = AssemblyMapper_mapCoordinatesToRawContig(assMapper, chrName, 
                                                       chrStart, chrEnd, strand );
 
+  seq = calloc(chrEnd-chrStart+2,sizeof(char));
+  memset(seq, 'N', chrEnd-chrStart+1);
+
+  long startPos = 0;
   // for each of the pieces get sequence
-  seq = StrUtil_copyString(&seq, "", 0);
+//  seq = StrUtil_copyString(&seq, "", 0);
   for (i=0; i<MapperRangeSet_getNumRange(coordSet); i++) {
     MapperRange *segment = MapperRangeSet_getRangeAt(coordSet,i);
 
     if (segment->rangeType == MAPPERRANGE_COORD) {
       MapperCoordinate *mc = (MapperCoordinate *)segment;
-      RawContig *contig = RawContigAdaptor_fetchByDbID(ra, mc->id);
-      char *contigSeq = SequenceAdaptor_fetchByRawContigStartEndStrand(sa, contig,
+      //RawContig *contig = RawContigAdaptor_fetchByDbID(ra, mc->id);
+      char *contigSeq = SequenceAdaptor_fetchByRawContigStartEndStrand(sa, mc->id,// contig,
                                       mc->start, mc->end, mc->strand); 
-      seq = StrUtil_appendString(seq,contigSeq);
+      memcpy(&(seq[startPos]), contigSeq, MapperRange_getLength(mc));
+//      seq = StrUtil_appendString(seq,contigSeq);
+      
       free(contigSeq);
     } else {
       // its a gap
-      int length = segment->end - segment->start + 1;
-      seq = SeqUtil_addNs(seq,length);
+      //int length = segment->end - segment->start + 1;
+      //seq = SeqUtil_addNs(seq,length);
     }
+    startPos += MapperRange_getLength(segment);
   }
 
   return seq;

@@ -64,7 +64,7 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
 
   Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);
 
-  // printf("Statement = %s\n",sth->statementFormat);
+  //printf("Statement = %s\n",sth->statementFormat);
 
   m_sth = (MysqlStatementHandle *)sth;
 
@@ -77,6 +77,7 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
     exit(1);
   }
 
+  //printf("Statement after formatting = %s\n",statement);
 
   if (mysql_real_query (m_sth->dbc->mysql, statement, qlen) != 0) {    /* the query failed */
     fprintf(stderr, "Could not execute query %s\n", statement);

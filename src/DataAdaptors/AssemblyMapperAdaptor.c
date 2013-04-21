@@ -550,6 +550,12 @@ void AssemblyMapperAdaptor_addToSrCaches(AssemblyMapperAdaptor *ama, char *regio
   char key[1024];
   SeqRegionCacheEntry *cacheData;
 
+  sprintf(key,"%s:"IDFMTSTR, regionName, csId);
+  if (StringHash_contains(ama->srNameCache, key)) {
+    fprintf(stderr,"Hmm - seq region already in name cache - odd\n");
+    return;
+  }
+
   // Allocate the struct
   if ((cacheData = (SeqRegionCacheEntry *)calloc(1,sizeof(SeqRegionCacheEntry))) == NULL) {
     fprintf(stderr, "ERROR: Failed allocating space for SeqRegionCacheEntry\n");
@@ -561,7 +567,6 @@ void AssemblyMapperAdaptor_addToSrCaches(AssemblyMapperAdaptor *ama, char *regio
   cacheData->csId         = csId;
   cacheData->regionLength = regionLength;
   
-  sprintf(key,"%s:"IDFMTSTR, regionName, csId);
 
   // Do a quick sanity check
   if (StringHash_contains(ama->srNameCache, key)) {
@@ -1998,16 +2003,12 @@ AssemblyMapper *AssemblyMapperAdaptor_fetchByType(AssemblyMapperAdaptor *ama, ch
   //assume that what the user wanted was a mapper between the sequence coord
   //level and the top coord level
 
-/*
   CoordSystemAdaptor *csa  = DBAdaptor_getCoordSystemAdaptor(ama->dba);
 
-  CoordSystem *cs1 = CoordSystemAdaptor_fetchTopLevel(csa, type);
-  CoordSystem *cs2 = CoordSystemAdaptor_fetchSequenceLevel(csa);
+  //CoordSystem *cs1 = CoordSystemAdaptor_fetchTopLevel(csa); // Was , type); but perl now ignores type in this call - not sure if it should
+  CoordSystem *cs1 = CoordSystemAdaptor_fetchByName(csa, "chromosome", NULL); // NIY: Hack for testing
+  CoordSystem *cs2 = CoordSystemAdaptor_fetchSeqLevel(csa);
 
   return AssemblyMapperAdaptor_fetchByCoordSystems(ama, cs1, cs2);
-*/
-  return NULL;
 }
-/* Comment out for now
-*/
 

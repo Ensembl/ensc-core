@@ -13,7 +13,8 @@ int main(int argc, char *argv[]) {
 
   initEnsC();
 
-  dba = DBAdaptor_new("ensembldb.ensembl.org","anonymous",NULL,"homo_sapiens_core_70_37",5306,NULL);
+  //dba = DBAdaptor_new("ensembldb.ensembl.org","anonymous",NULL,"homo_sapiens_core_70_37",5306,NULL);
+  dba = DBAdaptor_new("ens-livemirror.internal.sanger.ac.uk","ensro",NULL,"homo_sapiens_core_70_37",3306,NULL);
 
   ok(1,!strcmp("GRCh37",DBAdaptor_getAssemblyType(dba)));
 
@@ -21,14 +22,20 @@ int main(int argc, char *argv[]) {
 
   ok(2, sa!=NULL);
 
-  slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,10000);
+  slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,250000000);
 
   ok(3, slice!=NULL);
 
   printf("slice name = %s\n",Slice_getName(slice));
-  ok(4,!strcmp(Slice_getName(slice),"1.1-10000"));
+  ok(4,!strcmp(Slice_getName(slice),"1.1-250000000"));
 
-  printf("slice seq = %s\n",Slice_getSeq(slice));
+  char *seq = Slice_getSeq(slice);
+//  printf("slice seq = %s\n", seq);
+
+  
+  SeqUtil_writeFasta(stdout, Slice_getName(slice), seq, 60);
+
+  fflush(stdout);
 
 
   return 0;

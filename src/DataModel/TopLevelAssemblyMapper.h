@@ -62,16 +62,16 @@ struct TopLevelAssemblyMapperStruct {
        ((am)->funcs->listSeqRegions((am), (fsrName), (fStart), (fEnd), (fCs)))
 
 #define TopLevelAssemblyMapper_mapCoordinatesToAssembly(am, contigName, fStart, fEnd, fStrand) \
-          BaseAssemblyMapper_mapCoordinatesToAssemblyImpl((am), (contigName), (fStart), (fEnd), (fStrand))
+          BaseAssemblyMapper_mapCoordinatesToAssembly((am), (contigName), (fStart), (fEnd), (fStrand))
 
 #define TopLevelAssemblyMapper_fastToAssembly(am, contigName, fStart, fEnd, fStrand) \
-          BaseAssemblyMapper_fastToAssemblyImpl((am), (contigName), (fStart), (fEnd), (fStrand))
+          BaseAssemblyMapper_fastToAssembly((am), (contigName), (fStart), (fEnd), (fStrand))
 
 #define TopLevelAssemblyMapper_mapCoordinatesToRawContig(am, chrName, fStart, fEnd, fStrand) \
-          BaseAssemblyMapper_mapCoordinatesToRawContigImpl((am), (chrName), (fStart), (fEnd), (fStrand))
+          BaseAssemblyMapper_mapCoordinatesToRawContig((am), (chrName), (fStart), (fEnd), (fStrand))
 
 #define TopLevelAssemblyMapper_listContigIds(am, chrName, fStart, fEnd, fStrand) \
-          BaseAssemblyMapper_listContigIdsImpl((am), (chrName), (fStart), (fEnd), (fStrand))
+          BaseAssemblyMapper_listContigIds((am), (chrName), (fStart), (fEnd), (fStrand))
 
 TopLevelAssemblyMapper *TopLevelAssemblyMapper_new(AssemblyMapperAdaptor *ama, CoordSystem *topLevelCs, CoordSystem *otherCs);
 
@@ -88,6 +88,12 @@ Vector *TopLevelAssemblyMapper_listSeqRegionsImpl(TopLevelAssemblyMapper *tlam, 
 Vector *TopLevelAssemblyMapper_listIdsImpl(TopLevelAssemblyMapper *tlam, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs);
 void TopLevelAssemblyMapper_freeImpl(TopLevelAssemblyMapper *tlam);
 
+void TopLevelAssemblyMapper_registerAllImpl(TopLevelAssemblyMapper *am);
+MapperRangeSet *TopLevelAssemblyMapper_mapCoordinatesToAssemblyImpl(TopLevelAssemblyMapper *am, char *contigName, long start, long end, int strand);
+MapperRangeSet *TopLevelAssemblyMapper_fastToAssemblyImpl(TopLevelAssemblyMapper *am, char *contigName, long start, long end, int strand);
+MapperRangeSet *TopLevelAssemblyMapper_mapCoordinatesToRawContigImpl(TopLevelAssemblyMapper *am, char *chrName, long start, long end, int strand);
+Vector *TopLevelAssemblyMapper_listContigIdsImpl(TopLevelAssemblyMapper *am, char *chrName, long start, long end, int strand);
+
 
 #ifdef __TOPLEVELASSEMBLYMAPPER_MAIN__
   TopLevelAssemblyMapperFuncs
@@ -98,11 +104,11 @@ void TopLevelAssemblyMapper_freeImpl(TopLevelAssemblyMapper *tlam);
                       TopLevelAssemblyMapper_fastMapImpl,  //fastMap
                       TopLevelAssemblyMapper_listSeqRegionsImpl,  // listSeqRegions
                       TopLevelAssemblyMapper_listIdsImpl,  // listIds
-                      NULL, // registerAll
-                      NULL, // mapCoordinatesToAssembly
-                      NULL, // fastToAssembly
-                      NULL, // mapCoordinatesToRawContig
-                      NULL  // listContigIds
+                      TopLevelAssemblyMapper_registerAllImpl,  // registerAll
+                      TopLevelAssemblyMapper_mapCoordinatesToAssemblyImpl,  // mapCoordinatesToAssembly
+                      TopLevelAssemblyMapper_fastToAssemblyImpl,  // fastToAssembly
+                      TopLevelAssemblyMapper_mapCoordinatesToRawContigImpl,  // mapCoordinatesToRawContig
+                      TopLevelAssemblyMapper_listContigIdsImpl  // listContigIds
                    };
 #else
   extern TopLevelAssemblyMapperFuncs topLevelAssemblyMapperFuncs;

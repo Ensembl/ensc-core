@@ -2,12 +2,14 @@
 #define __SEQUTIL_H__
 
 #include <string.h>
+#include <stdio.h>
 
 char *SeqUtil_reverseComplement(char *seq, int len);
 char *SeqUtil_addNs(char *seq, int length);
 char *SeqUtil_addGaps(char *seq, int length);
 char *SeqUtil_addRes(char *seq, int length, char res);
 void SeqUtil_printConvTable(int *convTable);
+void SeqUtil_writeFasta(FILE *fp, char *header, char *seq, int lineLen);
 
 
 #ifdef __SEQUTIL_MAIN__
