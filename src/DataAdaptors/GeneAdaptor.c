@@ -2,6 +2,7 @@
 #include "AnalysisAdaptor.h"
 #include "AssemblyMapperAdaptor.h"
 #include "DBAdaptor.h"
+#include "DBEntryAdaptor.h"
 #include "StrUtil.h"
 #include "BaseAdaptor.h"
 #include "MysqlUtil.h"
@@ -406,7 +407,7 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
     int end = row->getIntAt(row,2);
     int strand = row->getIntAt(row,3);
 
-    Gene *gene  = GeneAdaptor_fetchByDbID(ga, geneId, NULL );
+    Gene *gene  = GeneAdaptor_fetchByDbID(ga, geneId, 0 );
 
     Gene_setStart(gene,start);
     Gene_setEnd(gene,end);
@@ -504,8 +505,8 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene) {
     sprintf(qStr,"INSERT INTO gene_stable_id(gene_id," 
                               "version, stable_id, created_date, modified_date)"
                       " VALUES(" IDFMTSTR ",%d, '%s'," 
-                               "FROM_UNIXTIME(%d),"
-                               "FROM_UNIXTIME(%d))",
+                               "FROM_UNIXTIME(%ld),"
+                               "FROM_UNIXTIME(%ld))",
                   geneId, 
                   Gene_getVersion(gene),
                   Gene_getStableId(gene),

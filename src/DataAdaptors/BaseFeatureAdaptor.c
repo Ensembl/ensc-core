@@ -337,7 +337,7 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Sl
     if (!mapSucceeded) continue;
 */
 // New temporary implementation
-    char *contigName = RawContig_getName(SeqFeature_getContig(f));
+    char *contigName = RawContig_getName((RawContig *)SeqFeature_getContig(f));
     MapperRangeSet *set = AssemblyMapper_fastToAssembly(assMapper, contigName,
                                                SeqFeature_getStart(f),
                                                SeqFeature_getEnd(f),

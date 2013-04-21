@@ -108,7 +108,7 @@ SeqFeature *SeqFeature_new(void);
 #define SeqFeature_setEndPhase(sf,ep) (sf)->endPhase = (ep)
 #define SeqFeature_getEndPhase(sf) (sf)->endPhase
 
-#define SeqFeature_setAnalysis(sf,ana) (ana) ? (sf)->analysis = (ana), Object_incRefCount((ana)) : NULL
+#define SeqFeature_setAnalysis(sf,ana) (ana) ? (sf)->analysis = (ana), Object_incRefCount((ana)) : 0//NULL
 #define SeqFeature_getAnalysis(sf) (sf)->analysis
 
 char *SeqFeature_setStableId(SeqFeature *sf, char *stableId);

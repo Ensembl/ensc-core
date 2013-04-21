@@ -30,7 +30,7 @@
 /* for MAXPATHLEN */
 #include <sys/param.h>
  
-int selectPrefix(struct dirent *DirEnt);
+int selectPrefix(const struct dirent *DirEnt);
 char *currentPrefix;  
 #define MAXSTRLEN 1024
 
@@ -462,7 +462,7 @@ static void BioIndex_parse_fileid(BioIndex *bi, char *line) {
   char **tokens;
   int ntoken;
 
-  StrUtil_tokenizeByDelim(&tokens,&ntoken,line,'\t');
+  StrUtil_tokenizeByDelim(&tokens,&ntoken,line,"\t");
 
   if (ntoken != 3) {
     Error_write(EOBDA,"BioIndex_parse_fileid",ERR_SEVERE,
@@ -481,7 +481,7 @@ static void BioIndex_parse_secondary_namespaces(BioIndex *bi, char *line) {
   int nToken = 0;
   char **tokens;
 
-  StrUtil_tokenizeByDelim(&tokens,&nToken,line,'\t');
+  StrUtil_tokenizeByDelim(&tokens,&nToken,line,"\t");
 
   bi->num_secondary = nToken;
   bi->secondary_namespaces = xcalloc(sizeof(char *),bi->num_secondary);
@@ -772,7 +772,7 @@ static void BioIndex_add_file(BioIndex *bi, char *fname,
 }         
 
 
-int selectPrefix(struct dirent *DirEnt) {
+int selectPrefix(const struct dirent *DirEnt) {
   int lenPref = strlen(currentPrefix);
 
   if (!strncmp(DirEnt->d_name,currentPrefix,lenPref)) {

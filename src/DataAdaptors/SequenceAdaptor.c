@@ -117,7 +117,7 @@ char *SequenceAdaptor_fetchBySliceStartEndStrand(SequenceAdaptor *sa,
             Slice_getChrStart(slice)+start-1,
             Slice_getChrStart(slice)+end-1,
             strand,
-            Slice_getChrId(slice),
+            Slice_getChrName(slice),
             Slice_getAssemblyType(slice)
            );
   } else if (Slice_getStrand(slice) == -1 ) {
@@ -125,7 +125,7 @@ char *SequenceAdaptor_fetchBySliceStartEndStrand(SequenceAdaptor *sa,
             Slice_getChrEnd(slice)-end+1,
             Slice_getChrEnd(slice)-start+1,
             strand * -1, //have to make strand relative to slice's strand
-            Slice_getChrId(slice),
+            Slice_getChrName(slice),
             Slice_getAssemblyType(slice)
            );
   } else {
@@ -136,7 +136,7 @@ char *SequenceAdaptor_fetchBySliceStartEndStrand(SequenceAdaptor *sa,
 }
 
 char *SequenceAdaptor_fetchByAssemblyLocation(SequenceAdaptor *sa,
-          int chrStart, int chrEnd, int strand, IDType chrId, char *assemblyType) {
+          int chrStart, int chrEnd, int strand, char *chrName, char *assemblyType) {
 
   AssemblyMapperAdaptor *ama = DBAdaptor_getAssemblyMapperAdaptor(sa->dba);
   RawContigAdaptor *ra = DBAdaptor_getRawContigAdaptor(sa->dba);
@@ -146,7 +146,7 @@ char *SequenceAdaptor_fetchByAssemblyLocation(SequenceAdaptor *sa,
   int i;
 
 
-  coordSet = AssemblyMapper_mapCoordinatesToRawContig(assMapper, chrId, 
+  coordSet = AssemblyMapper_mapCoordinatesToRawContig(assMapper, chrName, 
                                                       chrStart, chrEnd, strand );
 
   // for each of the pieces get sequence

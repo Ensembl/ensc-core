@@ -322,7 +322,7 @@ MapperRangeSet *ChainedAssemblyMapper_mapImpl(ChainedAssemblyMapper *cam, char *
 
 
 MapperRangeSet *ChainedAssemblyMapper_fastMapImpl(ChainedAssemblyMapper *cam, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, 
-                              CoordSystem *frmCs) {
+                              CoordSystem *frmCs, Slice *fakeSliceArg) {
   return ChainedAssemblyMapper_map(cam, frmSeqRegionName, frmStart, frmEnd, frmStrand, frmCs, 1, NULL);
 }
 

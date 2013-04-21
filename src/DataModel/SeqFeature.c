@@ -146,7 +146,8 @@ SeqFeature *SeqFeature_transformRawContigToSliceImpl(SeqFeature *sf, Slice *slic
 
   mapped = AssemblyMapper_mapCoordinatesToAssembly(
     assMapper,
-    RawContig_getDbID(rc),
+    //RawContig_getDbID(rc),
+    RawContig_getName(rc),
     SeqFeature_getStart(sf),
     SeqFeature_getEnd(sf),
     SeqFeature_getStrand(sf)
@@ -245,7 +246,7 @@ Vector *SeqFeature_transformSliceToRawContigImpl(SeqFeature *sf) {
 
   // convert the assembly coordinates to RawContig coordinates
   mapped = AssemblyMapper_mapCoordinatesToRawContig(assMapper,
-    Slice_getChrId(slice),
+    Slice_getChrName(slice), //Slice_getChrId(slice),
     start,
     end,
     strand

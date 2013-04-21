@@ -113,17 +113,12 @@ int ChainedAssemblyMapper_getSize(ChainedAssemblyMapper *cam);
 MapperRangeSet *ChainedAssemblyMapper_mapImpl(ChainedAssemblyMapper *cam, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand,
                               CoordSystem *frmCs, int fastmap, Slice *toSlice);
 MapperRangeSet *ChainedAssemblyMapper_fastMapImpl(ChainedAssemblyMapper *cam, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand,
-                              CoordSystem *frmCs);
+                              CoordSystem *frmCs, Slice *fakeSliceArg);
 
 MapperRangeSet *ChainedAssemblyMapper_mapCoordinatesToAssemblyImpl(ChainedAssemblyMapper *cam, char *contigName, long start, long end, int strand);
 MapperRangeSet *ChainedAssemblyMapper_fastToAssemblyImpl(ChainedAssemblyMapper *cam, char *contigName, long start, long end, int strand);
 MapperRangeSet *ChainedAssemblyMapper_mapCoordinatesToRawContigImpl(ChainedAssemblyMapper *cam, char *chrName, long start, long end, int strand);
 Vector *ChainedAssemblyMapper_listContigIdsImpl(ChainedAssemblyMapper *cam, char *chrName, long start, long end, int strand);
-
-
-
-
-
 Vector *ChainedAssemblyMapper_listIdsImpl(ChainedAssemblyMapper *cam, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs);
 Vector *ChainedAssemblyMapper_listSeqRegionsImpl(ChainedAssemblyMapper *cam, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs);
 

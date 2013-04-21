@@ -24,17 +24,17 @@ void MapperPairSet_addPair(MapperPairSet *mps, MapperPair *pair) {
   mps->pairs[mps->nPair++] = pair;
 }
 
-Vector *MapperPairSet_getToIds(MapperPairSet *mps) {
+Vector *MapperPairSet_getIds(MapperPairSet *mps, int ind) {
   Vector *idVector = Vector_new();
 
   int i;
-  int *idP;
+  IDType *idP;
   for (i=0; i<mps->nPair; i++) {
     if ((idP = (IDType *)calloc(1,sizeof(IDType))) == NULL) {
-      fprintf(stderr,"ERROR: Failed allocating space for to id\n");
+      fprintf(stderr,"ERROR: Failed allocating space for id\n");
       exit(1);
     }
-    *idP = MapperPair_getUnit(mps->pairs[i], MAPPER_TO_IND)->id;
+    *idP = MapperPair_getUnit(mps->pairs[i], ind)->id;
 
     Vector_addElement(idVector, idP);
   }
@@ -43,21 +43,13 @@ Vector *MapperPairSet_getToIds(MapperPairSet *mps) {
 }
 
 Vector *MapperPairSet_getFromIds(MapperPairSet *mps) {
-  Vector *idVector = Vector_new();
 
-  int i;
-  int *idP;
-  for (i=0; i<mps->nPair; i++) {
-    if ((idP = (IDType *)calloc(1,sizeof(IDType))) == NULL) {
-      fprintf(stderr,"ERROR: Failed allocating space for to id\n");
-      exit(1);
-    }
-    *idP = MapperPair_getUnit(mps->pairs[i], MAPPER_FROM_IND)->id;
+  return MapperPairSet_getIds(mps, MAPPER_FROM_IND);
+}
 
-    Vector_addElement(idVector, idP);
-  }
+Vector *MapperPairSet_getToIds(MapperPairSet *mps) {
 
-  return idVector;
+  return MapperPairSet_getIds(mps, MAPPER_TO_IND);
 }
 
 MapperPair *MapperPairSet_removePairAt(MapperPairSet *mps, int ind) {

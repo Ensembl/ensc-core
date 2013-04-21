@@ -223,7 +223,7 @@ Vector *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
     RepeatFeature *rf;
     Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,2));
 //    RawContig *contig = RawContigAdaptor_fetchByDbID(rca, row->getLongLongAt(row,1));
-    RawContig *contig = slice;
+    RawContig *contig = (RawContig *)slice;
     IDType repeatConsensusId = row->getLongLongAt(row,6);
     RepeatConsensus *rc;
 

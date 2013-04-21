@@ -714,7 +714,7 @@ samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlic
 
   /* add non @SQ header lines from source header into destination header */
   //fprintf(stderr,"Tokenize\n");
-  StrUtil_tokenizeByDelim(&tokens, &ntoken, in->header->text, '\n');
+  StrUtil_tokenizeByDelim(&tokens, &ntoken, in->header->text, "\n");
   //fprintf(stderr,"Token loop\n");
   //fprintf(stderr,"ntoken = %d\n",ntoken);
   for (i=0;i<ntoken;i++) {

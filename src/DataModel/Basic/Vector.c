@@ -3,6 +3,8 @@
 #undef __VECTOR_MAIN__
 #include "EnsC.h"
 
+#include <string.h>
+
 Vector *Vector_new() {
   Vector *vector;
 

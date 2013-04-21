@@ -371,7 +371,7 @@ IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
     sprintf(qStr,
         "INSERT INTO exon_stable_id(exon_id," 
         "version, stable_id, created, modified)"
-                    " VALUES(" IDFMTSTR ",%d,'%s',FROM_UNIXTIME(%d),FROM_UNIXTIME(%d))",
+                    " VALUES(" IDFMTSTR ",%d,'%s',FROM_UNIXTIME(%ld),FROM_UNIXTIME(%ld))",
          exonId,
          Exon_getVersion(exon),
          Exon_getStableId(exon),

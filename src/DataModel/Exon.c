@@ -126,7 +126,7 @@ Exon *Exon_transformRawContigToSliceImpl(Exon *exon, Slice *slice) {
   assMapper = AssemblyMapperAdaptor_fetchByType(ama, Slice_getAssemblyType(slice));
   
   mapped = AssemblyMapper_mapCoordinatesToAssembly(assMapper,
-     BaseContig_getDbID(Exon_getContig(exon)),
+     BaseContig_getName(Exon_getContig(exon)),//BaseContig_getDbID(Exon_getContig(exon)),
      Exon_getStart(exon),
      Exon_getEnd(exon),
      Exon_getStrand(exon)
@@ -470,7 +470,7 @@ Exon *Exon_transformSliceToRawContigImpl(Exon *exon) {
   }
 
   mapped = AssemblyMapper_mapCoordinatesToRawContig(assMapper,
-     Slice_getChrId(slice),
+     Slice_getChrName(slice),//Slice_getChrId(slice),
      exonChrStart,
      exonChrEnd,
      Exon_getStrand(exon)*Slice_getStrand(slice)
@@ -630,7 +630,7 @@ void Exon_loadGenomicMapperImpl(Exon *exon, Mapper *mapper, IDType id, int start
 
 // NIY Make the Exon_getContig consistent
   Mapper_addMapCoordinates( mapper, id, start, start+Exon_getLength(exon)-1,
-                            Exon_getStrand(exon), Exon_getContig(exon),
+                            Exon_getStrand(exon), BaseContig_getDbID(Exon_getContig(exon)),
                             Exon_getStart(exon),  Exon_getEnd(exon) );
 }
 

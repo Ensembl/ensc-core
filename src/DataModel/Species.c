@@ -2,6 +2,7 @@
 #include "Species.h"
 #undef __SPECIES_MAIN__
 #include "StrUtil.h"
+#include <string.h>
 
 Species *Species_new() {
   Species *species;

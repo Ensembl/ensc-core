@@ -10,7 +10,7 @@ SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools_parallel
 #SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools-0.1.18
 ZLIBDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/include
 
-CFLAGS =  -g -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
+CFLAGS =  -g -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS)
 
 BINDIR=../bin
@@ -25,7 +25,9 @@ all	: directories \
           Programs/indicate \
           Programs/fastasplit \
           Programs/moveperl \
+          Tests/AssemblyMapperTest \
           Tests/CacheTest \
+          Tests/ChainedAssemblyMapperTest \
           Tests/CigarStrUtilTest \
           Tests/ClassTest \
           Tests/ComparaDBAdaptorTest \
@@ -47,6 +49,7 @@ all	: directories \
           Tests/StreamTest \
           Tests/StrUtilTest \
           Tests/SyntenyTest \
+          Tests/TopLevelAssemblyMapperTest \
           Tests/TranslateTest \
           Tests/VectorTest
 
@@ -111,6 +114,7 @@ libensc.a	: \
 	objectfiles/DataModel/AnnotatedSeqFeature.o \
 	objectfiles/DataModel/AssemblyMapper.o \
 	objectfiles/DataModel/BaseAlignFeature.o \
+	objectfiles/DataModel/BaseAssemblyMapper.o \
 	objectfiles/DataModel/BaseContig.o \
 	objectfiles/DataModel/Basic/Vector.o \
 	objectfiles/DataModel/ChainedAssemblyMapper.o \
@@ -216,10 +220,20 @@ Programs/moveperl: \
 	Programs/moveperl.c
 	$(CC) $(CFLAGS) -o Programs/moveperl Programs/moveperl.c $(LDFLAGS)
 
+Tests/AssemblyMapperTest: \
+	libensc.a \
+	Tests/AssemblyMapperTest.c
+	$(CC) $(CFLAGS) -o Tests/AssemblyMapperTest Tests/AssemblyMapperTest.c -L. -lensc $(LDFLAGS)
+
 Tests/CacheTest: \
 	libensc.a \
 	Tests/CacheTest.c
 	$(CC) $(CFLAGS) -o Tests/CacheTest Tests/CacheTest.c -L. -lensc $(LDFLAGS)
+
+Tests/ChainedAssemblyMapperTest: \
+	libensc.a \
+	Tests/ChainedAssemblyMapperTest.c
+	$(CC) $(CFLAGS) -o Tests/ChainedAssemblyMapperTest Tests/ChainedAssemblyMapperTest.c -L. -lensc $(LDFLAGS)
 
 Tests/ClassTest: \
 	libensc.a \
@@ -326,6 +340,11 @@ Tests/SyntenyTest: \
 	libensc.a \
 	Tests/SyntenyTest.c
 	$(CC) $(CFLAGS) -o Tests/SyntenyTest Tests/SyntenyTest.c -L. -lensc $(LDFLAGS)
+
+Tests/TopLevelAssemblyMapperTest: \
+	libensc.a \
+	Tests/TopLevelAssemblyMapperTest.c
+	$(CC) $(CFLAGS) -o Tests/TopLevelAssemblyMapperTest Tests/TopLevelAssemblyMapperTest.c -L. -lensc $(LDFLAGS)
 
 Tests/TranslateTest: \
 	libensc.a \

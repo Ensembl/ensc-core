@@ -316,6 +316,7 @@ int calcCoverage(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int
       fflush(stdout);
     }
 
+// Remember: b->core.pos is zero based!
     int cigInd;
     int refPos;
     int readPos;
@@ -348,12 +349,6 @@ int calcCoverage(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int
          refPos += lenCigBlock;
       }
     }
-// Remember: b->core.pos is zero based!
-/*
-    for (k=b->core.pos; k<end; k++) {
-      coverage[k].coverage++;
-    }
-*/
 
 #ifdef DONE
     int j;
@@ -452,7 +447,7 @@ int calcCoverage(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int
 
   long i;
   for (i=0; i< Slice_getLength(slice); i++) {
-    printf("%ld %ld\n", i, coverage[i].coverage);
+    printf("%ld %ld\n", i+1, coverage[i].coverage);
   }
 
   bam_iter_destroy(iter);

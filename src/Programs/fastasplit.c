@@ -126,20 +126,20 @@ int main(int argc, char *argv[]) {
   
     if (fileSize < 100) {
       fprintf(stderr,
-           "Do you really want to split you're file into pieces of %d bytes\n",
+           "Do you really want to split you're file into pieces of %ld bytes\n",
            fileSize);
       exit(1);
     }
   } else {
     nPerFile = nHeader/nChunk;
-    printf("nPerFile = %d nHeader = %d nChunk = %d\n",nPerFile,nHeader,nChunk);
+    printf("nPerFile = %ld nHeader = %d nChunk = %ld\n",nPerFile,nHeader,nChunk);
     if (nPerFile < 1) {
       fprintf(stderr,
            "Do you really want to split you're file into pieces of with less than 1 sequence per file\n");
       exit(1);
     } else {
       remainder = nHeader - nChunk*nPerFile;
-      printf ("Remainder = %d\n",nHeader - nChunk*nPerFile);
+      printf ("Remainder = %ld\n",nHeader - nChunk*nPerFile);
     }
   }
 
@@ -170,7 +170,7 @@ int main(int argc, char *argv[]) {
         entryCount = 0;
       }
 
-      sprintf(chunkFName,"%s/%s_chunk_%7.7d",
+      sprintf(chunkFName,"%s/%s_chunk_%7.7ld",
               outdir,databaseName,currentChunk++);
 
       if (remainder && currentChunk == remainder+1) {

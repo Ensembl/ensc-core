@@ -744,7 +744,7 @@ Vector *BaseAlignFeature_transformFeatureSliceToRawContig(BaseAlignFeature *baf,
   //convert assembly coords to raw contig coords
   mapped = AssemblyMapper_mapCoordinatesToRawContig(
      assMapper,
-     Slice_getChrId(slice),
+     Slice_getChrName(slice), //Slice_getChrId(slice),
      globalStart,
      globalEnd,
      globalStrand

@@ -83,7 +83,7 @@ static ParserName parserArray[] = {
   { wormParser, "wormParser" },
   { wormIDParser, "wormIDParser" },
   { refseqProt2RNAParser, "refseqProt2RNAParser" },
-  { swallMultiParser, "swallMultiParser" },
+  { swallMultiParser, "swallMultiParser" }, // Multi parser takes an extra argument when called, gives a compiler warning
   { uniprotIDParser, "uniprotIDParser" },
   { NULL, NULL }
 };

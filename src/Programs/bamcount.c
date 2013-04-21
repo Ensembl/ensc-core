@@ -36,19 +36,24 @@
 void       Bamcount_usage();
 int        bamPosNameCompFunc(const void *one, const void *two);
 int        bamPosCompFunc(const void *one, const void *two);
-int        countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int flags, Vector *genes);
+int        countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int flags, Vector *genes, IDHash *geneResultsHash, long long countUsableReads);
+long long  countReadsInFile(char *inFName);
 bam1_t *   findMateInVector(bam1_t *b, Vector *vec);
 int        findPosInVec(Vector *vec, int pos, char *bqname);
+Vector *   flattenGene(Gene *gene);
 int        geneStartCompFunc(const void *one, const void *two);
 Vector *   getGenes(Slice *slice, int flags);
+IDHash *   makeGeneResultsHash(Vector *genes);
 bam1_t    *mateFoundInVectors(bam1_t *b, Vector **vectors);
 void       printBam(FILE *fp, bam1_t *b, bam_header_t *header);
 
-typedef struct GeneScoreStruct {
+typedef struct GeneResultsStruct {
   int   index;
   long  score;
   Gene *gene;
-} GeneScore;
+  Vector *flatFeatures;
+  long  flatLength;
+} GeneResults;
 
 // Flag values
 #define M_UCSC_NAMING 1
@@ -65,12 +70,10 @@ int main(int argc, char *argv[]) {
   ResultRow *      row;
   Vector *         slices;
   int              nSlices;
-  samfile_t *      out;
 
   int   argNum = 1;
 
   char *inFName  = NULL;
-  char *outFName = NULL;
 
   char *dbUser = "ensro";
   char *dbPass = NULL;
@@ -105,8 +108,6 @@ int main(int argc, char *argv[]) {
   
       if (!strcmp(arg, "-i") || !strcmp(arg,"--in_file")) {
         StrUtil_copyString(&inFName,val,0);
-      } else if (!strcmp(arg, "-o") || !strcmp(arg,"--out_file")) {
-        StrUtil_copyString(&outFName,val,0);
       } else if (!strcmp(arg, "-h") || !strcmp(arg,"--host")) {
         StrUtil_copyString(&dbHost,val,0);
       } else if (!strcmp(arg, "-p") || !strcmp(arg,"--password")) {
@@ -137,7 +138,7 @@ int main(int argc, char *argv[]) {
            "Steve M.J. Searle.  searle@sanger.ac.uk  Last update Mar 2013.\n");
   }
 
-  if (!inFName || !outFName) {
+  if (!inFName) {
     Bamcount_usage();
   }
 
@@ -158,6 +159,14 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Error: No slices.\n");
     exit(1);
   }
+
+
+#ifdef _PBGZF_USE
+  bam_set_num_threads_per(5);
+#endif
+  long long totalUsableReads = countReadsInFile(inFName);
+
+  printf("Have %lld total usable reads\n",totalUsableReads);
 
 #ifdef _PBGZF_USE
   bam_set_num_threads_per(5);
@@ -184,8 +193,10 @@ int main(int argc, char *argv[]) {
     if (verbosity > 0) printf("Stage 1 - retrieving annotation from database\n");
     Vector *genes = getGenes(slice, flags);
 
+    IDHash *geneResultsHash = makeGeneResultsHash(genes);
+
     if (verbosity > 0) printf("Stage 2 - counting reads\n");
-    countReads(inFName, slice, in, idx, flags, genes);
+    countReads(inFName, slice, in, idx, flags, genes, geneResultsHash, totalUsableReads);
   }
 
 
@@ -196,13 +207,41 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
+long long countReadsInFile(char *inFName) {
+  samfile_t *in = samopen(inFName, "rb", 0);
+  long long nUsableReads = 0;
+
+  if (in == 0) {
+    fprintf(stderr, "Fail to open BAM file %s\n", inFName);
+    exit(1);
+  }
+
+  bam1_t *b = bam_init1();
+
+  int cnt = 0;
+  while (bam_read1(in->x.bam, b) > 0 && b->core.tid >= 0) {
+    if (!(b->core.flag & (BAM_FUNMAP | BAM_FSECONDARY | BAM_FQCFAIL | BAM_FDUP))) {
+      nUsableReads++;
+    }
+    cnt++;
+    if (!(cnt%1000000)) {
+      printf(".");
+      fflush(stdout);
+    }
+  }
+  printf("\n");
+
+  samclose(in);
+
+  return nUsableReads;
+}
+
 /*
  Program usage message
 */
 void Bamcount_usage() {
   printf("bamcount \n"
          "  -i --in_file     Input BAM file to map from (string)\n"
-         "  -o --out_file    Output BAM file to write (string)\n"
          "  -U --ucsc_naming Input BAM file has 'chr' prefix on ALL seq region names (flag)\n"
          "  -h --host        Database host name for db containing mapping (string)\n"
          "  -n --name        Database name for db containing mapping (string)\n"
@@ -239,6 +278,7 @@ int bamPosNameCompFunc(const void *one, const void *two) {
     }
   }
 }
+
 
 int bamPosCompFunc(const void *one, const void *two) {
   bam1_t *b1 = *((bam1_t**)one);
@@ -293,13 +333,74 @@ Vector *getGenes(Slice *slice, int flags) {
   return genes;
 }
 
-int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int flags, Vector *genes) {
+// Pregenerate the hash for gene scores, so we don't have to test for existence within the BAM read loop
+// Also means all genes will have a score hash entry
+IDHash *makeGeneResultsHash(Vector *genes) {
+  IDHash *geneResultsHash = IDHash_new(IDHASH_LARGE);
+
+  int i;
+  for (i=0; i < Vector_getNumElement(genes); i++) {
+    Gene *gene = Vector_getElementAt(genes,i);
+    GeneResults *gr;
+
+    if ((gr = (GeneResults *)calloc(1,sizeof(GeneResults))) == NULL) {
+      fprintf(stderr,"ERROR: Failed allocating GeneResults\n");
+      exit(1);
+    }
+    gr->index = i;
+    gr->gene  = gene;
+    gr->flatFeatures = flattenGene(gene);
+    int j=0;
+    gr->flatLength = 0;
+    for (j=0; j<Vector_getNumElement(gr->flatFeatures); j++) {
+      SeqFeature *sf = Vector_getElementAt(gr->flatFeatures,j);
+      gr->flatLength += SeqFeature_getLength(sf); 
+    }
+    
+    IDHash_add(geneResultsHash,Gene_getDbID(gene),gr);
+  }
+
+  return geneResultsHash;
+}
+
+Vector *flattenGene(Gene *gene) {
+  SeqFeature *curBlock = NULL;
+  Vector *exons = Gene_getAllExons(gene);
+  Vector *blockFeatures = Vector_new();
+
+  Vector_sort(exons, SeqFeature_startCompFunc);
+
+  int i;
+  for (i=0; i<Vector_getNumElement(exons); i++) {
+    Exon *exon = Vector_getElementAt(exons, i);
+    long exStart = Exon_getStart(exon) <= 0 ? 1 : Exon_getStart(exon);
+    long exEnd   = Exon_getEnd(exon) <= 0 ?   1 : Exon_getEnd(exon);
+
+    if (curBlock && SeqFeature_getEnd(curBlock) >= exStart) {
+      // printf("Adding to block with range %ld to %ld\n", exStart, exEnd);
+      // printf("          Block was %d to %d\n", SeqFeature_getStart(curBlock), SeqFeature_getEnd(curBlock));
+      if (exEnd > SeqFeature_getEnd(curBlock)) SeqFeature_setEnd(curBlock, exEnd);
+    } else {
+      // printf("Starting new block with range %ld to %ld\n", exStart, exEnd);
+      curBlock = SeqFeature_new();
+      SeqFeature_setStart(curBlock, exStart);
+      SeqFeature_setEnd(curBlock, exEnd);
+      Vector_addElement(blockFeatures, curBlock);
+    }
+  }
+
+  Vector_sort(blockFeatures, SeqFeature_startCompFunc);
+
+  return blockFeatures;
+}
+
+int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int flags, Vector *origGenesVec, IDHash *geneResultsHash, long long countUsableReads) {
   int  ref;
   int  begRange;
   int  endRange;
   char region[1024];
-  IDHash *geneCountsHash = IDHash_new(IDHASH_LARGE);
-  GeneScore *gs; 
+  GeneResults *gr; 
+  Vector *genes = Vector_copy(origGenesVec);
 
 
   if (Slice_getChrStart(slice) != 1) {
@@ -321,21 +422,6 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
                                                  Slice_getChrStart(slice), 
                                                  Slice_getChrEnd(slice));
     return 1;
-  }
-
-// Pregenerate the hash for gene scores, so we don't have to test for existence within the BAM read loop
-// Also means all genes will have a score hash entry
-  int i;
-  for (i=0; i < Vector_getNumElement(genes); i++) {
-    Gene *gene = Vector_getElementAt(genes,i);
-
-    if ((gs = (GeneScore *)calloc(1,sizeof(GeneScore))) == NULL) {
-      fprintf(stderr,"ERROR: Failed allocating GeneScore\n");
-      exit(1);
-    }
-    gs->index = i;
-    gs->gene  = gene;
-    IDHash_add(geneCountsHash,Gene_getDbID(gene),gs);
   }
 
   bam_iter_t iter = bam_iter_query(idx, ref, begRange, endRange);
@@ -382,6 +468,9 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
         int doneGene = 0;
         for (k=0; k<Gene_getTranscriptCount(gene) && !doneGene; k++) {
           Transcript *trans = Gene_getTranscriptAt(gene,k);
+          if (strcmp(Transcript_getType(trans),"protein_coding")) {
+            continue;
+          }
 
           if (b->core.pos < Transcript_getEnd(trans) && end >= Transcript_getStart(trans)) {
             int m;
@@ -397,8 +486,8 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
                   hadOverlap = 1;
                 }
 
-                gs = IDHash_getValue(geneCountsHash, Gene_getDbID(gene));
-                gs->score++;
+                gr = IDHash_getValue(geneResultsHash, Gene_getDbID(gene));
+                gr->score++;
                 
                 doneGene = 1;
               }
@@ -408,15 +497,15 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
       } else if (Gene_getStart(gene) > end) {
         done = 1;
       } else if (Gene_getEnd(gene) < b->core.pos+1) {
-        gs = IDHash_getValue(geneCountsHash, Gene_getDbID(gene));
-        printf("Gene %s (%s) score %ld\n",Gene_getStableId(gene), 
-                                          Gene_getDisplayXref(gene) ? DBEntry_getDisplayId(Gene_getDisplayXref(gene)) : "", 
-                                          gs->score);
+//        gr = IDHash_getValue(geneResultsHash, Gene_getDbID(gene));
+//        printf("Gene %s (%s) score %ld\n",Gene_getStableId(gene), 
+//                                          Gene_getDisplayXref(gene) ? DBEntry_getDisplayId(Gene_getDisplayXref(gene)) : "", 
+//                                          gr->score);
 
         if (verbosity > 1) { 
           printf("Removing gene %s (index %d) with extent %d to %d\n", 
                  Gene_getStableId(gene), 
-                 gs->index,
+                 gr->index,
                  Gene_getStart(gene),
                  Gene_getEnd(gene));
         }
@@ -443,15 +532,17 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
 
 // Print out read counts for what ever's left in the genes array
   int n;
-  for (n=0;n<Vector_getNumElement(genes);n++) {
-    Gene *gene = Vector_getElementAt(genes,n);
+  for (n=0;n<Vector_getNumElement(origGenesVec);n++) {
+    Gene *gene = Vector_getElementAt(origGenesVec, n);
+// Not really rpkm because only reads from this chr
 
-    if (gene != NULL) {
-      gs = IDHash_getValue(geneCountsHash, Gene_getDbID(gene));
-      printf("Gene %s (%s) score %ld\n",Gene_getStableId(gene), 
+    gr = IDHash_getValue(geneResultsHash, Gene_getDbID(gene));
+
+    double rpkm = gr->score * 1000000000.0 / countUsableReads;
+
+    printf("Gene %s (%s) score %ld flatlength %ld rpkm (sort of) %-14.5f\n",Gene_getStableId(gene), 
                                         Gene_getDisplayXref(gene) ? DBEntry_getDisplayId(Gene_getDisplayXref(gene)) : "", 
-                                        gs->score);
-    }
+                                        gr->score, gr->flatLength, rpkm);
   }
 
   printf("Read %ld reads. Num overlapping exons %ld. Number of bad reads (unmapped, qc fail, secondary, dup) %ld\n", counter, overlapping, bad);

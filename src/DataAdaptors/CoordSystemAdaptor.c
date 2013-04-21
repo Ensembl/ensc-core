@@ -129,7 +129,7 @@ void CoordSystemAdaptor_dumpCachedMappings(CoordSystemAdaptor *csa) {
   int i;
   for (i=0;i<StringHash_getNumValues(csa->mappingPaths);i++) { 
     Vector *path = StringHash_getValue(csa->mappingPaths, keys[i]);
-    fprintf(stderr,"Path: %s has %d elements, pointer %ld\n",keys[i], Vector_getNumElement(path), path);
+    fprintf(stderr,"Path: %s has %d elements, pointer %p\n",keys[i], Vector_getNumElement(path), path);
     free(keys[i]);
   }
   free(keys);
