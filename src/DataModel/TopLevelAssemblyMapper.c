@@ -1,4 +1,6 @@
+#define __TOPLEVELASSEMBLYMAPPER_MAIN__
 #include "TopLevelAssemblyMapper.h"
+#undef  __TOPLEVELASSEMBLYMAPPER_MAIN__
 #include "AssemblyMapperAdaptor.h"
 #include "CoordSystemAdaptor.h"
 #include "DBAdaptor.h"
@@ -33,11 +35,12 @@ toplevel coordinate system to another coordinate system.
 */
 
 TopLevelAssemblyMapper *TopLevelAssemblyMapper_new(AssemblyMapperAdaptor *ama, CoordSystem *topLevelCs, CoordSystem *otherCs) {
+
   if (!CoordSystem_getIsTopLevel(topLevelCs)) {
     fprintf(stderr,"%s is not the toplevel CoordSystem.\n", CoordSystem_getName(topLevelCs));
     exit(1);
   }
-  if (!CoordSystem_getIsTopLevel(otherCs)) {
+  if (CoordSystem_getIsTopLevel(otherCs)) {
     fprintf(stderr,"Other coordsystem (%s) should NOT be the toplevel CoordSystem.\n", CoordSystem_getName(otherCs));
     exit(1);
   }
@@ -51,10 +54,16 @@ TopLevelAssemblyMapper *TopLevelAssemblyMapper_new(AssemblyMapperAdaptor *ama, C
     return NULL;
   }
 
+  tlam->objectType = CLASS_TOPLEVELASSEMBLYMAPPER;
+
+  tlam->funcs = &topLevelAssemblyMapperFuncs;
+
+  Object_incRefCount(tlam);
+
+  TopLevelAssemblyMapper_setAdaptor(tlam, ama);
   tlam->coordSystems = coordSystems;
   tlam->topLevelCs   = topLevelCs;
   tlam->otherCs      = otherCs;
-  TopLevelAssemblyMapper_setAdaptor(tlam, ama);
 
   return tlam;
 }
@@ -89,6 +98,7 @@ TopLevelAssemblyMapper *TopLevelAssemblyMapper_new(AssemblyMapperAdaptor *ama, C
 */
 
 
+/* Now in BaseAssemblyMapper
 IDType TopLevelAssemblyMapper_getSeqRegionId(TopLevelAssemblyMapper *tlam, char *seqRegionName, CoordSystem *cs) {
   // Not the most efficient thing to do making these temporary vectors to get one value, but hey its what the perl does!
   Vector *tmp = Vector_new();
@@ -106,11 +116,12 @@ IDType TopLevelAssemblyMapper_getSeqRegionId(TopLevelAssemblyMapper *tlam, char 
 
   return seqRegionId;
 }
+*/
 
-MapperRangeSet *TopLevelAssemblyMapper_map(TopLevelAssemblyMapper *tlam, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, 
-                                           CoordSystem *frmCs, int fastMap) {
+MapperRangeSet *TopLevelAssemblyMapper_mapImpl(TopLevelAssemblyMapper *tlam, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, 
+                                           CoordSystem *frmCs, int fastMap, Slice *fakeSliceArg) {
 
-  if (CoordSystem_isTopLevel(frmCs)) {
+  if (CoordSystem_getIsTopLevel(frmCs)) {
     fprintf(stderr,"The toplevel CoordSystem can only be mapped TO, not FROM.\n");
   }
 
@@ -128,7 +139,7 @@ MapperRangeSet *TopLevelAssemblyMapper_map(TopLevelAssemblyMapper *tlam, char *f
 
   Vector *coordSystems = TopLevelAssemblyMapper_getCoordSystems(tlam);
   
-  CoordSystemAdaptor *csa = DBAdaptor_getCoordSystemAdaptor(tlam->dba);
+  CoordSystemAdaptor *csa = DBAdaptor_getCoordSystemAdaptor(adaptor->dba);
 
   //
   // TBD try to make this more efficient
@@ -152,14 +163,14 @@ MapperRangeSet *TopLevelAssemblyMapper_map(TopLevelAssemblyMapper *tlam, char *f
       AssemblyMapper *mapper = AssemblyMapperAdaptor_fetchByCoordSystems(adaptor, otherCs, cs);
 
       if (fastMap) {
-        MapperRangeSet *result = AssemblyMapper_fastMap(mapper, frmSeqRegionName, frmStart, frmEnd, frmStrand, frmCs);
+        MapperRangeSet *result = AssemblyMapper_fastMap(mapper, frmSeqRegionName, frmStart, frmEnd, frmStrand, frmCs, NULL);
   // NIY: Not sure what condition should be here?
         if (result && MapperRangeSet_getNumRange(result) > 0) {
           return result;
         }
         //Perl was: return @result if(@result);
       } else {
-        MapperRangeSet *coords = AssemblyMapper_map(mapper, frmSeqRegionName, frmStart, frmEnd, frmStrand, frmCs);
+        MapperRangeSet *coords = AssemblyMapper_map(mapper, frmSeqRegionName, frmStart, frmEnd, frmStrand, frmCs, 0, NULL);
 
         if (MapperRangeSet_getNumRange(coords) > 1 || MapperRangeSet_getRangeAt(coords,0)->rangeType != MAPPERRANGE_GAP) {
           return coords;
@@ -173,10 +184,11 @@ MapperRangeSet *TopLevelAssemblyMapper_map(TopLevelAssemblyMapper *tlam, char *f
 //  if ($fastmap) {
 //    return ($seq_region_id,$frm_start, $frm_end, $frm_strand, $other_cs);
 //  }
-  MapperCoordinate *mc = MapperCoordinate_new(seqRegionId, frmStart, frmEnd, frmStrand, otherCs);
+// NIY: Not sure what rank should be so set to 0
+  MapperCoordinate *mc = MapperCoordinate_new(seqRegionId, frmStart, frmEnd, frmStrand, otherCs, 0 /*rank*/);
 
   MapperRangeSet *coords = MapperRangeSet_new();
-  MapperRangeSet_addRange(coords, mc);
+  MapperRangeSet_addRange(coords, (MapperRange *)mc);
 
   return coords;
 }
@@ -197,7 +209,7 @@ MapperRangeSet *TopLevelAssemblyMapper_map(TopLevelAssemblyMapper *tlam, char *f
 =cut
 */
 
-void TopLevelAssemblyMapper_flush(TopLevelAssemblyMapper *tlam) {
+void TopLevelAssemblyMapper_flushImpl(TopLevelAssemblyMapper *tlam) {
 // No op
 }
 
@@ -228,9 +240,9 @@ void TopLevelAssemblyMapper_flush(TopLevelAssemblyMapper *tlam) {
 =cut
 */
 
-MapperRangeSet *TopLevelAssemblyMapper_fastMap(TopLevelAssemblyMapper *tlam, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, 
-                                               CoordSystem *frmCs) {
-  return TopLevelAssemblyMapper_map(tlam, frmSeqRegionName, frmStart, frmEnd, frmStrand, frmCs, 1);
+MapperRangeSet *TopLevelAssemblyMapper_fastMapImpl(TopLevelAssemblyMapper *tlam, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, 
+                                               CoordSystem *frmCs,Slice *fakeSliceArg) {
+  return TopLevelAssemblyMapper_map(tlam, frmSeqRegionName, frmStart, frmEnd, frmStrand, frmCs, 1, fakeSliceArg);
 }
 
 /*
@@ -272,14 +284,15 @@ CoordSystem *TopLevelAssemblyMapper_componentCoordSystem(TopLevelAssemblyMapper 
 
 // private function which implements both list functions depending on whether seqRegions are passed in. As it returns a Vector this is possible in
 // C as well, although its a bit odd
-Vector * TopLevelAssemblyMapper_list(TopLevelAssemblyMapper *tlam, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs, int SeqRegionsFlag)  {
+Vector * TopLevelAssemblyMapper_list(TopLevelAssemblyMapper *tlam, char *frmSeqRegionName, long frmStart, long frmEnd, 
+                                     CoordSystem *frmCs, int seqRegionsFlag)  {
 
 // Wasn't used in perl  my $mapper      = $self->{'mapper'};
 //  Wasn't used in perl my $toplevel_cs = $self->{'toplevel_cs'};
   CoordSystem           *otherCs = TopLevelAssemblyMapper_getOtherCoordSystem(tlam);
   AssemblyMapperAdaptor *adaptor = TopLevelAssemblyMapper_getAdaptor(tlam);
 
-  if (CoordSystem_isTopLevel(frmCs)) {
+  if (CoordSystem_getIsTopLevel(frmCs)) {
     fprintf(stderr, "The toplevel CoordSystem can only be mapped TO, not FROM.\n");
   }
   if (frmCs != otherCs && CoordSystem_compare(frmCs, otherCs)) {
@@ -289,7 +302,7 @@ Vector * TopLevelAssemblyMapper_list(TopLevelAssemblyMapper *tlam, char *frmSeqR
 
   Vector *coordSystems = TopLevelAssemblyMapper_getCoordSystems(tlam);
   
-  CoordSystemAdaptor *csa = DBAdaptor_getCoordSystemAdaptor(tlam->dba);
+  CoordSystemAdaptor *csa = DBAdaptor_getCoordSystemAdaptor(adaptor->dba);
 
   //
   // TBD try to make this more efficient
@@ -311,7 +324,7 @@ Vector * TopLevelAssemblyMapper_list(TopLevelAssemblyMapper *tlam, char *frmSeqR
     if (path && Vector_getNumElement(path) >0) {
       // Try to map to this coord system. If we get back any coordinates then
       // it is our 'toplevel' that we were looking for
-      Mapper *mapper = AssemblyMapperAdaptor_fetchByCoordSystems(otherCs, cs);
+      AssemblyMapper *mapper = AssemblyMapperAdaptor_fetchByCoordSystems(adaptor, otherCs, cs);
 
       Vector *result;
 
@@ -386,7 +399,7 @@ Vector * TopLevelAssemblyMapper_list(TopLevelAssemblyMapper *tlam, char *frmSeqR
 =cut
 */
 
-Vector *TopLevelAssemblyMapper_listSeqRegions(TopLevelAssemblyMapper *tlam, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
+Vector *TopLevelAssemblyMapper_listSeqRegionsImpl(TopLevelAssemblyMapper *tlam, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
   return TopLevelAssemblyMapper_list(tlam, frmSeqRegionName, frmStart, frmEnd, frmCs,1);
 }
 
@@ -416,9 +429,12 @@ Vector *TopLevelAssemblyMapper_listSeqRegions(TopLevelAssemblyMapper *tlam, char
 =cut
 */
 
-Vector *TopLevelAssemblyMapper_listIds(TopLevelAssemblyMapper *tlam, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
+Vector *TopLevelAssemblyMapper_listIdsImpl(TopLevelAssemblyMapper *tlam, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
   return TopLevelAssemblyMapper_list(tlam, frmSeqRegionName, frmStart, frmEnd, frmCs,0);
 }
 
 
+void TopLevelAssemblyMapper_freeImpl(TopLevelAssemblyMapper *tlam) {
+  Object_errorUnimplementedMethod(tlam, "TopLevelAssemblyMapper_free");
+}
 

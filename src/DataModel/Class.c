@@ -45,7 +45,12 @@ char * hierarchyString =
   "    BASEALIGNFEATURE\n"
   "     DNADNAALIGNFEATURE\n"
   "     DNAPEPALIGNFEATURE\n"
-  "   SPECIES\n";
+  "  SPECIES\n"
+  "  BASEASSEMBLYMAPPER\n"
+  "   ASSEMBLYMAPPER\n"
+  "   CHAINEDASSEMBLYMAPPER\n"
+  "   TOPLEVELASSEMBLYMAPPER\n"
+  "  COORDSYSTEM\n";
 
 /* Step 2 here */
 Class classArray[CLASS_NUMCLASS] = 
@@ -86,7 +91,12 @@ Class classArray[CLASS_NUMCLASS] =
   {CLASS_PREDICTIONTRANSCRIPT, "PREDICTIONTRANSCRIPT"},
   {CLASS_FEATURESET, "FEATURESET"},
   {CLASS_VECTOR, "VECTOR"},
-  {CLASS_SPECIES, "SPECIES"}
+  {CLASS_SPECIES, "SPECIES"},
+  {CLASS_COORDSYSTEM, "COORDSYSTEM"},
+  {CLASS_BASEASSEMBLYMAPPER, "BASEASSEMBLYMAPPER"},
+  {CLASS_ASSEMBLYMAPPER, "ASSEMBLYMAPPER"},
+  {CLASS_CHAINEDASSEMBLYMAPPER, "CHAINEDASSEMBLYMAPPER"},
+  {CLASS_TOPLEVELASSEMBLYMAPPER, "TOPLEVELASSEMBLYMAPPER"}
   };
 
 ClassHierarchyNode *root = NULL;
@@ -251,4 +261,15 @@ Class *Class_findByName(char *name) {
   exit(1);
 }
 
+Class *Class_findByType(ClassType type) {
+  int i;
+
+  for (i=0;i<CLASS_NUMCLASS;i++) {
+    if (type == classArray[i].type) {
+      return &classArray[i];
+    }
+  } 
+  fprintf(stderr,"ERROR: Class type %d not found in class types array\n",type);
+  exit(1);
+}
 

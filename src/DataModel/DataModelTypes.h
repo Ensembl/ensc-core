@@ -5,6 +5,7 @@ typedef struct AnalysisStruct Analysis;
 typedef struct AnnotatedSeqFeatureStruct AnnotatedSeqFeature;
 typedef struct AssemblyMapperStruct AssemblyMapper;
 typedef struct BaseAlignFeatureStruct BaseAlignFeature;
+typedef struct BaseAssemblyMapperStruct BaseAssemblyMapper;
 typedef struct BaseContigStruct BaseContig;
 typedef struct ChainedAssemblyMapperStruct ChainedAssemblyMapper;
 typedef struct ChromosomeStruct Chromosome;

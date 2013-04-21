@@ -28,6 +28,7 @@ struct SliceStruct {
 #undef FUNCSTRUCTTYPE
 
 #ifdef __SLICE_MAIN__
+// NIY: Need to update for new slice
  Slice emptySliceData = {CLASS_SLICE,0,NULL,NULL,NULL,0,{-1,NULL},-1,-1,0,1,NULL,NULL,-1};
  Slice *emptySlice = &emptySliceData;
 #else

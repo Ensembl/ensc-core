@@ -43,6 +43,10 @@ typedef enum ClassTypeEnum {
   CLASS_VECTOR,
   CLASS_SPECIES,
   CLASS_COORDSYSTEM,
+  CLASS_BASEASSEMBLYMAPPER,
+  CLASS_ASSEMBLYMAPPER,
+  CLASS_CHAINEDASSEMBLYMAPPER,
+  CLASS_TOPLEVELASSEMBLYMAPPER,
   CLASS_NUMCLASS
 } ClassType;
 
@@ -60,6 +64,7 @@ struct ClassStruct {
 
 int Class_isDescendent(ClassType parentType, ClassType descType);
 int Class_assertType(ClassType wantedType, ClassType actualType);
+Class *Class_findByType(ClassType type);
 
 
 #endif

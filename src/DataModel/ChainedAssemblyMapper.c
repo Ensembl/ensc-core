@@ -1,4 +1,6 @@
+#define __CHAINEDASSEMBLYMAPPER_MAIN__
 #include "ChainedAssemblyMapper.h"
+#undef  __CHAINEDASSEMBLYMAPPER_MAIN__
 #include "CoordPair.h"
 #include "AssemblyMapperAdaptor.h"
 /*
@@ -60,6 +62,12 @@ ChainedAssemblyMapper *ChainedAssemblyMapper_new(AssemblyMapperAdaptor *adaptor,
     fprintf(stderr, "ERROR: Failed allocating space for ChainedAssemblyMapper\n");
     return NULL;
   }
+
+  cam->objectType = CLASS_CHAINEDASSEMBLYMAPPER;
+
+  cam->funcs = &chainedAssemblyMapperFuncs;
+
+  Object_incRefCount(cam);
 
   ChainedAssemblyMapper_setAdaptor(cam, adaptor);
 
@@ -134,7 +142,7 @@ ChainedAssemblyMapper *ChainedAssemblyMapper_new(AssemblyMapperAdaptor *adaptor,
 =cut
 */
 
-void ChainedAssemblyMapper_registerAll(ChainedAssemblyMapper *cam) {
+void ChainedAssemblyMapper_registerAllImpl(ChainedAssemblyMapper *cam) {
   AssemblyMapperAdaptor *ama = ChainedAssemblyMapper_getAdaptor(cam);
 
   AssemblyMapperAdaptor_registerAllChained(ama, cam);
@@ -144,7 +152,7 @@ void ChainedAssemblyMapper_registerAll(ChainedAssemblyMapper *cam) {
 
 
 
-void ChainedAssemblyMapper_flush(ChainedAssemblyMapper *cam) {
+void ChainedAssemblyMapper_flushImpl(ChainedAssemblyMapper *cam) {
 
   RangeRegistry_flush( ChainedAssemblyMapper_getFirstRegistry(cam) );
   RangeRegistry_flush( ChainedAssemblyMapper_getLastRegistry(cam) );
@@ -208,6 +216,7 @@ int ChainedAssemblyMapper_getSize(ChainedAssemblyMapper *cam) {
 =cut
 */
 
+/* Now in BaseAssemblyMapper
 IDType ChainedAssemblyMapper_getSeqRegionId(ChainedAssemblyMapper *cam, char *seqRegionName, CoordSystem *cs) {
   // Not the most efficient thing to do making these temporary vectors to get one value, but hey its what the perl does!
   Vector *tmp = Vector_new();
@@ -225,8 +234,9 @@ IDType ChainedAssemblyMapper_getSeqRegionId(ChainedAssemblyMapper *cam, char *se
 
   return seqRegionId;
 }
+*/
 
-MapperRangeSet *ChainedAssemblyMapper_map(ChainedAssemblyMapper *cam, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, 
+MapperRangeSet *ChainedAssemblyMapper_mapImpl(ChainedAssemblyMapper *cam, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, 
                               CoordSystem *frmCs, int fastmap, Slice *toSlice) {
 
   Mapper *mapper       = ChainedAssemblyMapper_getFirstLastMapper(cam);
@@ -311,7 +321,7 @@ MapperRangeSet *ChainedAssemblyMapper_map(ChainedAssemblyMapper *cam, char *frmS
 }
 
 
-MapperRangeSet *ChainedAssemblyMapper_fastMap(ChainedAssemblyMapper *cam, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, 
+MapperRangeSet *ChainedAssemblyMapper_fastMapImpl(ChainedAssemblyMapper *cam, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, 
                               CoordSystem *frmCs) {
   return ChainedAssemblyMapper_map(cam, frmSeqRegionName, frmStart, frmEnd, frmStrand, frmCs, 1, NULL);
 }
@@ -342,7 +352,7 @@ MapperRangeSet *ChainedAssemblyMapper_fastMap(ChainedAssemblyMapper *cam, char *
 */
 
 
-Vector *ChainedAssemblyMapper_listIds(ChainedAssemblyMapper *cam, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
+Vector *ChainedAssemblyMapper_listIdsImpl(ChainedAssemblyMapper *cam, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
 
   int isInsert = (frmStart == frmEnd+1);
 
@@ -434,7 +444,7 @@ Vector *ChainedAssemblyMapper_listIds(ChainedAssemblyMapper *cam, char *frmSeqRe
 =cut
 */
 
-Vector *ChainedAssemblyMapper_listSeqRegions(ChainedAssemblyMapper *cam, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
+Vector *ChainedAssemblyMapper_listSeqRegionsImpl(ChainedAssemblyMapper *cam, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
 
   //retrieve the seq_region names
   Vector *seqRegs = ChainedAssemblyMapper_listIds(cam, frmSeqRegionName, frmStart, frmEnd, frmCs);
@@ -459,6 +469,9 @@ Vector *ChainedAssemblyMapper_listSeqRegions(ChainedAssemblyMapper *cam, char *f
   return regions;
 }
 
+void ChainedAssemblyMapper_freeImpl(ChainedAssemblyMapper *cam) {
+  Object_errorUnimplementedMethod(cam, "ChainedAssemblyMapper_free");
+}
 
 /*
  Methods supplied to maintain polymorphism with AssemblyMapper there
@@ -489,73 +502,64 @@ sub mapper {
 */
 
 /*
-=head2 assembled_CoordSystem
+=head2 map_coordinates_to_assembly
 
-  Args       : none
-  Example    : $coordsys = $cam->assembled_CoordSystem();
-  Description: return the first CoordSystem.
-  Returntype : Bio::EnsEMBL::CoordSystem
-  Exceptions : none
-  Caller     : internal
-  Status     : Stable
+  Description: DEPRECATED, use map() instead.
 
 =cut
 */
+// Note changed to use contigName rather than contigId to match current _map functionality - need to change all calls to match this
+MapperRangeSet *ChainedAssemblyMapper_mapCoordinatesToAssemblyImpl(ChainedAssemblyMapper *cam, char *contigName, long start, long end, int strand) {
+  fprintf(stderr,"Deprecated method ChainedAssemblyMapper_mapCoordinatesToAssembly. Use ChainedAssemblyMapper_map instead\n");
 
-/* Don't implement for now
-sub assembled_CoordSystem {
-  my $self = shift;
-  return $self->{'first_cs'};
+  return ChainedAssemblyMapper_map(cam, contigName, start, end, strand, ChainedAssemblyMapper_getComponentCoordSystem(cam), 0, NULL);
 }
-*/
 
 /*
-=head2 component_CoordSystem
+=head2 fast_to_assembly
 
-  Args       : none
-  Example    : $coordsys = $cam->component_CoordSystem();
-  Description: return the last CoordSystem.
-  Returntype : Bio::EnsEMBL::CoordSystem
-  Exceptions : none
-  Caller     : internal
-  Status     : Stable
+  Description: DEPRECATED, use map() instead.
 
 =cut
 */
+
+// Note changed to use contigName rather than contigId to match current _map functionality - need to change all calls to match this
+MapperRangeSet *ChainedAssemblyMapper_fastToAssemblyImpl(ChainedAssemblyMapper *cam, char *contigName, long start, long end, int strand) {
+
+  fprintf(stderr,"Deprecated method ChainedAssemblyMapper_fastToAssembly. Use ChainedAssemblyMapper_map instead\n");
+
+  return ChainedAssemblyMapper_map(cam, contigName, start, end, strand, ChainedAssemblyMapper_getComponentCoordSystem(cam), 0, NULL);
+}
 
 /*
-sub component_CoordSystem {
-  my $self = shift;
-  return $self->{'last_cs'};
-}
-*/
+=head2 map_coordinates_to_rawcontig
 
-
-/* Hopefully don't need these deprecated methods
-
-=head2 in_assembly
-
-  Deprecated. Use map() or list_ids() instead
+  Description: DEPRECATED, use map() instead.
 
 =cut
+*/
 
-sub in_assembly {
-  my ($self, $object) = @_;
+MapperRangeSet *ChainedAssemblyMapper_mapCoordinatesToRawContigImpl(ChainedAssemblyMapper *cam, char *chrName, long start, long end, int strand) {
+  fprintf(stderr,"Deprecated method ChainedAssemblyMapper_mapCoordinatesToRawContig. Use ChainedAssemblyMapper_map instead\n");
 
-  deprecate('Use map() or list_ids() instead.');
-
-  my $csa = $self->db->get_CoordSystemAdaptor();
-
-  my $top_level = $csa->fetch_top_level();
-
-  my $asma = $self->adaptor->fetch_by_CoordSystems($object->coord_system(),
-                                                   $top_level);
-
-  my @list = $asma->list_ids($object->seq_region(), $object->start(),
-                             $object->end(), $object->coord_system());
-
-  return (@list > 0);
+// perl assumes first cs = assembled cs
+  return ChainedAssemblyMapper_map(cam, chrName, start, end, strand, ChainedAssemblyMapper_getAssembledCoordSystem(cam), 0, NULL);
 }
+
+/*
+=head2 list_contig_ids
+
+  Description: DEPRECATED, use list_ids() instead.
+
+=cut
+*/
+Vector *ChainedAssemblyMapper_listContigIdsImpl(ChainedAssemblyMapper *cam, char *chrName, long start, long end, int strand) {
+  fprintf(stderr,"Deprecated method ChainedAssemblyMapper_listContigIds. Use ChainedAssemblyMapper_listIds instead\n");
+
+  return ChainedAssemblyMapper_listIds(cam, chrName, start, end, ChainedAssemblyMapper_getAssembledCoordSystem(cam));
+}
+
+/*
 
 
 =head2 map_coordinates_to_assembly
@@ -624,3 +628,30 @@ sub list_contig_ids {
 }
 */
 
+
+/* Hopefully don't need these deprecated methods
+
+=head2 in_assembly
+
+  Deprecated. Use map() or list_ids() instead
+
+=cut
+
+sub in_assembly {
+  my ($self, $object) = @_;
+
+  deprecate('Use map() or list_ids() instead.');
+
+  my $csa = $self->db->get_CoordSystemAdaptor();
+
+  my $top_level = $csa->fetch_top_level();
+
+  my $asma = $self->adaptor->fetch_by_CoordSystems($object->coord_system(),
+                                                   $top_level);
+
+  my @list = $asma->list_ids($object->seq_region(), $object->start(),
+                             $object->end(), $object->coord_system());
+
+  return (@list > 0);
+}
+*/
