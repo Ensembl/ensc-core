@@ -56,14 +56,14 @@ int main(int argc, char *argv[]) {
 // Test map
 //
 
-  fprintf(stderr, "MAP 'AL359765.6'->toplevel");
-  MapperRangeSet *coords = TopLevelAssemblyMapper_map(clnToplevelMapper,"AL359765.6", 1, 13780, 1, clnCs,  0);
+  fprintf(stderr, "MAP 'AL359765.6'->toplevel\n");
+  MapperRangeSet *coords = TopLevelAssemblyMapper_map(clnToplevelMapper,"AL359765.6", 1, 13780, 1, clnCs,  0, NULL);
   printCoords(coords);
   ok(testNum++, coords!=NULL);
 
 
-  fprintf(stderr, "MAP NT_028392->toplevel");
-  coords = TopLevelAssemblyMapper_map(superctgToplevelMapper, "NT_028392", 600000, 1000000, 1, superctgCs, 0);
+  fprintf(stderr, "MAP NT_028392->toplevel\n");
+  coords = TopLevelAssemblyMapper_map(superctgToplevelMapper, "NT_028392", 600000, 1000000, 1, superctgCs, 0, NULL);
   printCoords(coords);
   ok(testNum++, coords!=NULL);
 
@@ -110,6 +110,9 @@ int main(int argc, char *argv[]) {
     IDType id = *((IDType *)Vector_getElementAt(ids, i));
     fprintf(stderr, IDFMTSTR"\n",id);
   }
+
+// Test for a not implemented method
+//  seqRegions = TopLevelAssemblyMapper_listContigIds(clnToplevelMapper, "AL359765.6", 1, 13780, 1);
 
   return 0;
 }
