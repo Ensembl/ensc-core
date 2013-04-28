@@ -44,6 +44,7 @@ void *Vector_getLastElement(Vector *v);
 void Vector_setNumElement(Vector *v, int nElem);
 void *Vector_removeElementAt(Vector *v, int ind);
 Vector *Vector_copy(Vector *v);
+void **Vector_toArray(Vector *v);
 
 
 #ifdef __VECTOR_MAIN__

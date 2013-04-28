@@ -184,6 +184,18 @@ Vector *Vector_copy(Vector *v) {
   return newV;
 }
 
+void **Vector_toArray(Vector *v) {
+  void **array;
+  if ((array = (void **)calloc(v->nElement,sizeof(void *))) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for array\n");
+    return NULL;
+  }
+
+  memcpy(array,v->elements,v->nElement*sizeof(void *));
+
+  return array;
+}
+
 void Vector_free(Vector *v) {
   int i;
 

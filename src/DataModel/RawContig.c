@@ -9,6 +9,7 @@
 #include "RawContigAdaptor.h"
 #include "RepeatFeatureAdaptor.h"
 #include "SimpleFeatureAdaptor.h"
+#include "SequenceAdaptor.h"
 #include "DBAdaptor.h"
 
 #include "StrUtil.h"
@@ -159,7 +160,7 @@ char *RawContig_getSeq(RawContig *contig) {
     
     dnadba = RawContig_getAdaptor(contig)->dba->dnadb;
     sa = DBAdaptor_getSequenceAdaptor(dnadba);
-    return SequenceAdaptor_fetchByRawContigStartEndStrand(sa, contig, 1, -1, 1);
+    return SequenceAdaptor_fetchByRawContigStartEndStrand(sa, RawContig_getDbID(contig), 1, -1, 1);
   }
 
   fprintf(stderr,"Warning: RawContig seq not set, and no db is available\n");
@@ -196,7 +197,7 @@ char *RawContig_getSubSeq(RawContig *contig, int start, int end, int strand) {
 
   sa = DBAdaptor_getSequenceAdaptor(RawContig_getAdaptor(contig)->dba->dnadb);
 
-  return SequenceAdaptor_fetchByRawContigStartEndStrand(sa, contig, start, end, strand);
+  return SequenceAdaptor_fetchByRawContigStartEndStrand(sa, RawContig_getDbID(contig), start, end, strand);
 
 }
 

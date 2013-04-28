@@ -12,6 +12,7 @@
 #include "RawContigAdaptor.h"
 #include "StrUtil.h"
 #include "BaseAlignFeature.h"
+#include "CoordSystem.h"
 
 Exon *Exon_new() {
   Exon *exon;
@@ -123,7 +124,7 @@ Exon *Exon_transformRawContigToSliceImpl(Exon *exon, Slice *slice) {
   }
 
   ama = DBAdaptor_getAssemblyMapperAdaptor(adaptor->dba);
-  assMapper = AssemblyMapperAdaptor_fetchByType(ama, Slice_getAssemblyType(slice));
+  assMapper = AssemblyMapperAdaptor_fetchByType(ama, CoordSystem_getName(Slice_getCoordSystem(slice)));
   
   mapped = AssemblyMapper_mapCoordinatesToAssembly(assMapper,
      BaseContig_getName(Exon_getContig(exon)),//BaseContig_getDbID(Exon_getContig(exon)),
@@ -155,14 +156,14 @@ Exon *Exon_transformRawContigToSliceImpl(Exon *exon, Slice *slice) {
 
   // the slice is an empty slice, create an enitre chromosome slice and
   // replace the empty slice with it
-  if (Slice_getEmptyFlag(slice)) {
-    SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(adaptor->dba);
-    ChromosomeAdaptor *ca = DBAdaptor_getChromosomeAdaptor(adaptor->dba);
-    char *chrName = Chromosome_getName(ChromosomeAdaptor_fetchByDbID(ca,mc->id));
+//  if (Slice_getEmptyFlag(slice)) {
+//    SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(adaptor->dba);
+//    ChromosomeAdaptor *ca = DBAdaptor_getChromosomeAdaptor(adaptor->dba);
+//    char *chrName = Chromosome_getName(ChromosomeAdaptor_fetchByDbID(ca,mc->id));
 
-    slice = SliceAdaptor_fetchByChrName(sa, chrName);
+//    slice = SliceAdaptor_fetchByChrName(sa, chrName);
 // NIY free old slice (or have special empty one)???
-  } 
+//  } 
 
   newExon = Exon_new();
 
@@ -454,7 +455,7 @@ Exon *Exon_transformSliceToRawContigImpl(Exon *exon) {
 
   ama = DBAdaptor_getAssemblyMapperAdaptor(sa->dba);
 
-  assMapper     = AssemblyMapperAdaptor_fetchByType(ama, Slice_getAssemblyType(slice));
+  assMapper     = AssemblyMapperAdaptor_fetchByType(ama, CoordSystem_getName(Slice_getCoordSystem(slice)));
   rca           = DBAdaptor_getRawContigAdaptor(sa->dba);
   sliceChrStart = Slice_getChrStart(slice);
   sliceChrEnd   = Slice_getChrEnd(slice);

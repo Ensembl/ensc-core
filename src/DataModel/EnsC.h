@@ -31,6 +31,11 @@ typedef long long IDType;
 
 #define EXTREMELEN 65536
 
+#define POS_UNDEF -1111111111L
+#define STRAND_UNDEF -1231231231L
+
+#define CHARFLAG_UNSET -127
+
 #ifdef __ECOS_MAIN__
  ECOSTRTABLE *ecoSTable;
  int trueVal = 1;

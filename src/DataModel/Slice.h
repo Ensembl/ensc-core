@@ -19,24 +19,31 @@ typedef struct SliceFuncsStruct {
 struct SliceStruct {
   BASECONTIG_DATA
   int strand;
-  char emptyFlag;
   ECOSTRING seqRegionName;
-  ECOSTRING assemblyType;
+  long seqRegionLength;
+  //IDType seqRegionId;
   CoordSystem *coordSystem;
-  IDType seqRegionId;
+
+  char isReference;
+  char isTopLevel;
+  char hasKaryotype;
 };
 #undef FUNCSTRUCTTYPE
 
-#ifdef __SLICE_MAIN__
+//#ifdef __SLICE_MAIN__
 // NIY: Need to update for new slice
- Slice emptySliceData = {CLASS_SLICE,0,NULL,NULL,NULL,0,{-1,NULL},-1,-1,0,1,NULL,NULL,NULL,-1};
- Slice *emptySlice = &emptySliceData;
-#else
- extern Slice *emptySlice;
-#endif
+// Slice emptySliceData = {CLASS_SLICE,0,NULL,NULL,NULL,0,{-1,NULL},-1,-1,0,1,NULL,NULL,NULL,-1};
+// Slice *emptySlice = &emptySliceData;
+//#else
+// extern Slice *emptySlice;
+//#endif
 
-Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
-                 SliceAdaptor *sa, IDType dbID, int empty);
+Slice *Slice_new(char *regionName, long start, long end, int strand, long length, CoordSystem *cs, SliceAdaptor *sa);
+
+#define Slice_setStart(sl,s) (sl)->start = (s)
+#define Slice_getStart(sl) (sl)->start
+#define Slice_setEnd(sl,e) (sl)->end = (e)
+#define Slice_getEnd(sl) (sl)->end
 
 #define Slice_setDbID(s,dbID) BaseContig_setDbID((s),(dbID))
 #define Slice_getDbID(s) BaseContig_getDbID((s))
@@ -44,17 +51,17 @@ Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
 #define Slice_setAdaptor(s,ad) BaseContig_setAdaptor((s),(ad))
 #define Slice_getAdaptor(s) BaseContig_getAdaptor((s))
 
-#define Slice_setEmptyFlag(s,e) (s)->emptyFlag = (e)
-#define Slice_getEmptyFlag(s) (s)->emptyFlag
-
 #define Slice_setSeqRegionStart(sl,s) (sl)->start = (s)
 #define Slice_getSeqRegionStart(sl) (sl)->start
 
 #define Slice_setSeqRegionEnd(sl,e) (sl)->end = (e)
 #define Slice_getSeqRegionEnd(sl) (sl)->end
 
-#define Slice_setSeqRegionId(sl,c) (sl)->seqRegionId = (c)
-#define Slice_getSeqRegionId(sl) (sl)->seqRegionId
+#define Slice_setSeqRegionLength(sl,len) (sl)->seqRegionLength = (len)
+#define Slice_getSeqRegionLength(sl) (sl)->seqRegionLength
+
+//#define Slice_setSeqRegionId(sl,c) (sl)->seqRegionId = (c)
+//#define Slice_getSeqRegionId(sl) (sl)->seqRegionId
 
 // SMJS Temporary Chr versions to satisfy linking
 #define Slice_setChrStart(sl,s) (sl)->start = (s)
@@ -77,21 +84,33 @@ Slice *Slice_new(char *chr, int start, int end, int strand, char *assemblyType,
 
 #define Slice_getLength(sl) ((sl)->end - (sl)->start + 1)
 
-ECOSTRING Slice_setAssemblyType(Slice *sl,char *type);
-#define Slice_getAssemblyType(sl) (sl)->assemblyType
+//ECOSTRING Slice_setAssemblyType(Slice *sl,char *type);
+//#define Slice_getAssemblyType(sl) (sl)->assemblyType
 
 ECOSTRING Slice_setSeqRegionName(Slice *sl,char *seqRegionName);
 #define Slice_getSeqRegionName(sl) (sl)->seqRegionName
 
 ECOSTRING Slice_getName(Slice *sl);
-Vector *Slice_getAllGenes(Slice *slice, char *logicName);
-Vector *Slice_getAllSimpleFeatures(Slice *slice, char *logicName, double *score);
-Vector *Slice_getAllDNAAlignFeatures(Slice *slice, char *logicName, double *score);
-Vector *Slice_getAllDNAPepAlignFeatures(Slice *slice, char *logicName, double *score);
-Vector *Slice_getAllPredictionTranscripts(Slice *slice, char *logicName);
-Vector *Slice_getAllRepeatFeatures(Slice *slice, char *logicName);
+Vector *Slice_constrainToRegion(Slice *slice);
+Slice *Slice_expand(Slice *slice, long fivePrimeShift, long threePrimeShift, int forceExpand, long *fpRef, long *tpRef);
+Vector *Slice_getAllPredictionTranscripts(Slice *slice, char *logicName, int loadExons, char *dbType);
+Vector *Slice_getAllDNAAlignFeatures(Slice *slice, char *logicName, double *score, char *dbType, double *hCoverage);
+Vector *Slice_getAllProteinAlignFeatures(Slice *slice, char *logicName, double *score, char *dbType, double *hCoverage);
+Vector *Slice_getAllSimilarityFeatures(Slice *slice, char *logicName, double *score);
+Vector *Slice_getAllSimpleFeatures(Slice *slice, char *logicName, double *score, char *dbType);
+Vector *Slice_getAllRepeatFeatures(Slice *slice, char *logicName, char *repeatType, char *dbType);
+Vector *Slice_getAllGenes(Slice *slice, char *logicName, char *dbType, int loadTranscripts, char *source, char *bioType);
+Vector *Slice_getAllGenesByType(Slice *slice, char *type, char *logicName, int loadTranscripts);
+Vector *Slice_getAllGenesBySource(Slice *slice, char *source, int loadTranscripts);
+Vector *Slice_getAllTranscripts(Slice *slice, int loadExons, char *logicName, char *dbType);
+Vector *Slice_getAllExons(Slice *slice, char *dbType);
 
-Vector *Slice_getAllGenesByType(Slice *slice, char *type);
+IDType Slice_getSeqRegionId(Slice *slice);
+
+DBAdaptor *Slice_getSelectedDBAdaptor(Slice *slice, char *dbType);
+
+
+
 
 char *Slice_getSubSeq(Slice *slice, int start, int end, int strand);
 char *Slice_getSeq(Slice *slice);

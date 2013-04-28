@@ -23,6 +23,7 @@ typedef struct GenomicRangeStruct GenomicRange;
 typedef struct IdentityXrefStruct IdentityXref;
 typedef struct MapperStruct Mapper;
 typedef struct PredictionTranscriptStruct PredictionTranscript;
+typedef struct ProjectionSegmentStruct ProjectionSegment;
 typedef struct RawContigStruct RawContig;
 typedef struct RepeatConsensusStruct RepeatConsensus;
 typedef struct RepeatFeatureStruct RepeatFeature;

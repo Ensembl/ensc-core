@@ -23,8 +23,8 @@ typedef struct BaseContigFuncsStruct {
 #define BASECONTIG_DATA \
   SEQUENCE_DATA \
   Storable st; \
-  int start; \
-  int end;
+  long start; \
+  long end;
 
 #undef FUNCSTRUCTTYPE
 #define FUNCSTRUCTTYPE BaseContigFuncs

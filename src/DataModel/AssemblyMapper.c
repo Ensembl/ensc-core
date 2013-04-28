@@ -19,12 +19,6 @@ generic mapper object between disjoint coordinate systems.
 =cut
 */
 
-
-/*
-my $ASSEMBLED = 'assembled';
-my $COMPONENT = 'component';
-*/
-
 int AM_DEFAULT_MAX_PAIR_COUNT = 1000;
 
 
