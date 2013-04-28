@@ -747,3 +747,49 @@ int StrUtil_tokenizeByDelim(char ***tokens, int *ntok, char *string, char *delim
   return 1;
 }
 
+// Is the entire string a long integer - must be the complete string eg.
+//  "1000" - yes
+//  "1000 bases" - no
+// Returns
+//   1 - it is a long int
+//   0 - it isn't
+// retVal will contain the long value on return if the string is a long int
+int StrUtil_isLongInteger(long *retVal, char *str) {
+  char *endPtr;
+  *retVal = strtol(str, &endPtr, 10);
+
+  if (*endPtr!='\0' || endPtr == str) {
+    return 0;
+  }
+  return 1;
+}
+
+/******************************************************************************/
+/* Routine    :                                                               */
+/*             StrUtil_rmChar()                                               */
+/* Role       :                                                               */
+/*             To remove all occurences of a character from a string.         */
+/* Arguments  :                                                               */
+/*             string - the string to remove characters from.                 */
+/*             ch     - character to remove                                   */
+/* Returns    :                                                               */
+/*             the length of the stripped string                              */
+/******************************************************************************/
+int StrUtil_rmChar(char *string,char ch)
+{
+   int i=0,j=0;
+   int length=0;
+
+
+   length=strlen(string);
+   for (i=0;i<length;i++)
+   {
+      if (string[i]!=ch)
+      {
+         string[j]=string[i];
+         j++;
+      }
+   }
+   string[j]='\0';
+   return(j);
+}
