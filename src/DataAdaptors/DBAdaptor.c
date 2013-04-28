@@ -22,8 +22,8 @@
 #include "TranscriptAdaptor.h"
 #include "TranslationAdaptor.h"
 
-
 #include "StrUtil.h"
+#include "SeqRegionCacheEntry.h"
 
 DBAdaptor *DBAdaptor_new(char *host, char *user, char *pass, char *dbname,
                          unsigned int port, DBAdaptor *dnadb) {
@@ -42,11 +42,39 @@ DBAdaptor *DBAdaptor_new(char *host, char *user, char *pass, char *dbname,
     dba->dnadb = dba;
   }
 
-  dba->seqRegionIdCache = IDHash_new(IDHASH_MEDIUM);
-  dba->seqRegionNameCache = StringHash_new(STRINGHASH_MEDIUM);
+  dba->srIdCache = IDHash_new(IDHASH_MEDIUM);
+  dba->srNameCache = StringHash_new(STRINGHASH_MEDIUM);
   return dba;
 }
 
+void DBAdaptor_addToSrCaches(DBAdaptor *dba, IDType regionId, char *regionName, IDType csId, long regionLength) {
+  char key[1024];
+  SeqRegionCacheEntry *cacheData;
+
+  // Do a quick sanity check
+  if (IDHash_contains(dba->srIdCache, regionId)) {
+    fprintf(stderr,"Hmm - seq region already in id cache - odd\n");
+    return;
+  }
+
+  cacheData = SeqRegionCacheEntry_new(regionId, regionName, csId, regionLength);
+
+  sprintf(key,"%s:"IDFMTSTR, regionName, csId);
+
+  //if (StringHash_contains(dba->srNameCache, key)) {
+    //fprintf(stderr,"Hmm - seq region already in name cache - odd\n");
+  //} else {
+    StringHash_add(dba->srNameCache, key, cacheData);
+  //}
+
+  //if (IDHash_contains(dba->srIdCache, regionId)) {
+    //fprintf(stderr,"Hmm - seq region already in id cache - odd\n");
+  //} else {
+    IDHash_add(dba->srIdCache, regionId, cacheData);
+  //}
+
+  return;
+}
 char *DBAdaptor_setAssemblyType(DBAdaptor *dba, char *type) {
   StrUtil_copyString(&(dba->assemblyType),type,0);
 

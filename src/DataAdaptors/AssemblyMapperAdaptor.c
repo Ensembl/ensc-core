@@ -10,19 +10,13 @@
 #include "StatementHandle.h"
 #include "MysqlStatementHandle.h"
 #include "CoordSystemAdaptor.h"
+#include "SeqRegionCacheEntry.h"
 #include "ResultRow.h"
 #include "CoordPair.h"
 #include "StrUtil.h"
 
 int CHUNKFACTOR = 20;  // 2^20 = approx. 10^6
 
-// May move this
-typedef struct seqRegionCacheEntryStruct {
-  char * regionName;
-  IDType regionId;
-  IDType csId;
-  long   regionLength;
-} SeqRegionCacheEntry;
 
 static char *AMA_FIRST = "first";
 static char *AMA_LAST  = "last";
@@ -445,7 +439,7 @@ void AssemblyMapperAdaptor_registerAssembled(AssemblyMapperAdaptor *ama, Assembl
                  asmSeqRegion, asmStart, asmEnd, ori,
                  cmpSeqRegionId, cmpStart, cmpEnd);
 
-      AssemblyMapperAdaptor_addToSrCaches(ama, cmpSeqRegionName, cmpSeqRegionId, cmpCsId, cmpSeqRegionLength);
+      DBAdaptor_addToSrCaches(ama->dba, cmpSeqRegionId, cmpSeqRegionName, cmpCsId, cmpSeqRegionLength);
     }
     sth->finish(sth);
   }
@@ -492,7 +486,7 @@ IDType AssemblyMapperAdaptor_seqRegionNameToId(AssemblyMapperAdaptor *ama, char 
   long srLength = row->getLongAt(row,1);
 
 
-  AssemblyMapperAdaptor_addToSrCaches(ama, srName, srId, csId, srLength);
+  DBAdaptor_addToSrCaches(ama->dba, srId, srName, csId, srLength);
 
   sth->finish(sth);
   return srId;
@@ -535,53 +529,10 @@ char *AssemblyMapperAdaptor_seqRegionIdToName(AssemblyMapperAdaptor *ama, IDType
   IDType csId   = row->getLongLongAt(row,2);
 
 
-  AssemblyMapperAdaptor_addToSrCaches(ama, srName, srId, csId, srLength);
+  DBAdaptor_addToSrCaches(ama->dba, srId, srName, csId, srLength);
 
   sth->finish(sth);
   return srName;
-}
-
-void SeqRegionCacheEntry_free(SeqRegionCacheEntry *srce) {
-  free(srce->regionName);
-  free(srce);
-}
-
-void AssemblyMapperAdaptor_addToSrCaches(AssemblyMapperAdaptor *ama, char *regionName, IDType regionId, IDType csId, long regionLength) {
-  char key[1024];
-  SeqRegionCacheEntry *cacheData;
-
-  sprintf(key,"%s:"IDFMTSTR, regionName, csId);
-  if (StringHash_contains(ama->srNameCache, key)) {
-    fprintf(stderr,"Hmm - seq region already in name cache - odd\n");
-    return;
-  }
-
-  // Allocate the struct
-  if ((cacheData = (SeqRegionCacheEntry *)calloc(1,sizeof(SeqRegionCacheEntry))) == NULL) {
-    fprintf(stderr, "ERROR: Failed allocating space for SeqRegionCacheEntry\n");
-    exit(1);
-  }
-  
-  StrUtil_copyString(&(cacheData->regionName), regionName, 0);
-  cacheData->regionId     = regionId;
-  cacheData->csId         = csId;
-  cacheData->regionLength = regionLength;
-  
-
-  // Do a quick sanity check
-  if (StringHash_contains(ama->srNameCache, key)) {
-    //fprintf(stderr,"Hmm - seq region already in name cache - odd\n");
-  } else {
-    StringHash_add(ama->srNameCache, key, cacheData);
-  }
-
-  if (IDHash_contains(ama->srIdCache, regionId)) {
-    //fprintf(stderr,"Hmm - seq region already in id cache - odd\n");
-  } else {
-    IDHash_add(ama->srIdCache, regionId, cacheData);
-  }
-
-  return;
 }
 
 /*
@@ -670,7 +621,7 @@ void AssemblyMapperAdaptor_registerComponent(AssemblyMapperAdaptor *ama, Assembl
   char *asmSeqRegion      = row->getStringAt(row,3);
   long asmSeqRegionLength = row->getLongAt(row,4);
 
-  AssemblyMapperAdaptor_addToSrCaches(ama, asmSeqRegion, asmSeqRegionId, asmCsId, asmSeqRegionLength);
+  DBAdaptor_addToSrCaches(ama->dba, asmSeqRegionId, asmSeqRegion, asmCsId, asmSeqRegionLength);
 
 
   // Register the corresponding assembled region. This allows a us to
@@ -803,7 +754,7 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
     path = CoordSystemAdaptor_getMappingPath(csa, startCs, endCs);
   }
 
-  // NIY Free path
+  // NIY Free path - NO DON't FREE IT, Its in the cache
 
   if (Vector_getNumElement(path) != 2 && Vector_getElementAt(path,1) != NULL) {
     char *pathStr = makeMappingPathKey(path);
@@ -952,7 +903,7 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
       }
 
       //update sr_name cache
-      AssemblyMapperAdaptor_addToSrCaches(ama, midSeqRegion, midSeqRegionId, midCsId, midLength);
+      DBAdaptor_addToSrCaches(ama->dba, midSeqRegionId, midSeqRegion,  midCsId, midLength);
 
       AssemblyMapperAdaptor_addToRangeVector(midRanges, midSeqRegionId, midStart, midEnd, midSeqRegion);  
 
@@ -1074,7 +1025,7 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
          midSeqRegionId, midStart, midEnd);
 
       //update sr_name cache
-      AssemblyMapperAdaptor_addToSrCaches(ama, endSeqRegion, endSeqRegionId, endCsId, endLength);
+      DBAdaptor_addToSrCaches(ama->dba, endSeqRegionId, endSeqRegion, endCsId, endLength);
 
       //register this region on the end coord system
       RangeRegistry_checkAndRegister(endRegistry, endSeqRegionId, endStart, endEnd, endStart, endEnd, 0);
@@ -1322,7 +1273,7 @@ void AssemblyMapperAdaptor_registerChainedSpecial(AssemblyMapperAdaptor *ama, Ch
         }
         
         //update sr_name cache
-        AssemblyMapperAdaptor_addToSrCaches(ama, midSeqRegion, midSeqRegionId, midCsId, midLength);
+        DBAdaptor_addToSrCaches(ama->dba, midSeqRegionId, midSeqRegion, midCsId, midLength);
         
         AssemblyMapperAdaptor_addToRangeVector(midRanges, midSeqRegionId, midStart, midEnd, midSeqRegion);  
 
@@ -1454,7 +1405,7 @@ void AssemblyMapperAdaptor_registerAll(AssemblyMapperAdaptor *ama, AssemblyMappe
                  asmSeqRegionId, asmStart, asmEnd, ori,
                  cmpSeqRegionId, cmpStart, cmpEnd);
 
-    AssemblyMapperAdaptor_addToSrCaches(ama, cmpSeqRegion, cmpSeqRegionId, cmpCsId, cmpLength);
+    DBAdaptor_addToSrCaches(ama->dba, cmpSeqRegionId, cmpSeqRegion, cmpCsId, cmpLength);
 
     // only register each asm seq_region once since it requires some work
     if ( ! IDHash_contains(asmRegistered, asmSeqRegionId)) {
@@ -1467,7 +1418,7 @@ void AssemblyMapperAdaptor_registerAll(AssemblyMapperAdaptor *ama, AssemblyMappe
         AssemblyMapper_registerAssembled(asmMapper, asmSeqRegionId, i);
       }
 
-      AssemblyMapperAdaptor_addToSrCaches(ama, asmSeqRegion, asmSeqRegionId, asmCsId, asmLength);
+      DBAdaptor_addToSrCaches(ama->dba, asmSeqRegionId, asmSeqRegion, asmCsId, asmLength);
     }
   }
 
@@ -1542,7 +1493,7 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
                   " sr_cmp.coord_system_id = %"IDFMTSTR); 
 
 
-  CoordSystemAdaptor *csa        = DBAdaptor_getCoordSystemAdaptor(ama->dba);
+  CoordSystemAdaptor *csa = DBAdaptor_getCoordSystemAdaptor(ama->dba);
 
   Vector *path;
   if ( midCs == NULL ) {
@@ -1652,9 +1603,9 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
       RangeRegistry_checkAndRegister(lastReg, midSeqRegionId, midStart, midEnd, midStart, midEnd, 0);
     }
 
-    AssemblyMapperAdaptor_addToSrCaches(ama, midSeqRegion, midSeqRegionId, midCsId, midLength);
+    DBAdaptor_addToSrCaches(ama->dba, midSeqRegionId, midSeqRegion, midCsId, midLength);
 
-    AssemblyMapperAdaptor_addToSrCaches(ama, startSeqRegion, startSeqRegionId, startCsId, startLength);
+    DBAdaptor_addToSrCaches(ama->dba, startSeqRegionId, startSeqRegion, startCsId, startLength);
   }
 
   if (midCs == NULL) {
@@ -1730,7 +1681,7 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
 
     RangeRegistry_checkAndRegister(reg, endSeqRegionId, 1, endLength, 1, endLength, 0 );
 
-    AssemblyMapperAdaptor_addToSrCaches(ama, endSeqRegion, endSeqRegionId, endCsId, endLength);
+    DBAdaptor_addToSrCaches(ama->dba, endSeqRegionId, endSeqRegion, endCsId, endLength);
   }
 
   sth->finish(sth);
@@ -2006,6 +1957,7 @@ AssemblyMapper *AssemblyMapperAdaptor_fetchByType(AssemblyMapperAdaptor *ama, ch
   CoordSystemAdaptor *csa  = DBAdaptor_getCoordSystemAdaptor(ama->dba);
 
   //CoordSystem *cs1 = CoordSystemAdaptor_fetchTopLevel(csa); // Was , type); but perl now ignores type in this call - not sure if it should
+  fprintf(stderr, "Temporary hack in AssemblyMapperAdaptor_fetchByType - use 'chromosome' coord system instead of top level\n");
   CoordSystem *cs1 = CoordSystemAdaptor_fetchByName(csa, "chromosome", NULL); // NIY: Hack for testing
   CoordSystem *cs2 = CoordSystemAdaptor_fetchSeqLevel(csa);
 

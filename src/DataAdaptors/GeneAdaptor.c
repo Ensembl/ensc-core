@@ -251,7 +251,7 @@ Gene *GeneAdaptor_fetchByDbID(GeneAdaptor *ga, IDType geneId, int chrCoords) {
   if( chrCoords ) {
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(ga->dba);
     //Slice *emptySlice = Slice_new(NULL,0,0,0,NULL,sa,0,TRUE);
-    Slice_setAdaptor(emptySlice, (BaseAdaptor *)sa);
+    //Slice_setAdaptor(emptySlice, (BaseAdaptor *)sa);
     //Slice_setEmptyFlag(emptySlice,1);
     // NIY $gene->transform( $empty_slice );
   }
@@ -365,7 +365,7 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
   sprintf(tmpStr,
     "SELECT distinct(t.gene_id), g.seq_region_start, g.seq_region_end, g.seq_region_strand "
     " FROM   transcript t,exon_transcript et,exon e, gene g, seq_region sr"
-    " WHERE e.seq_region_id = sr.seq_region_id and sr.name='%s' and g.seq_region_start <= %d and g.seq_region_end >= %d ", 
+    " WHERE e.seq_region_id = sr.seq_region_id and sr.name='%s' and g.seq_region_start <= %ld and g.seq_region_end >= %ld ", 
     Slice_getChrName(slice), Slice_getChrEnd(slice), Slice_getChrStart(slice));
   qStr = StrUtil_copyString(&qStr, tmpStr, 0);
 
