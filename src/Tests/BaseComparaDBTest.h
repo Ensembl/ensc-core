@@ -21,7 +21,7 @@ Slice *Test_getStandardSlice(ComparaDBAdaptor *cdba) {
 
   sa = DBAdaptor_getSliceAdaptor(dba);
 
-  slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",500000,1000000);
+  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","1",500000,1000000,1,NULL,0);
 
   return slice;
 }

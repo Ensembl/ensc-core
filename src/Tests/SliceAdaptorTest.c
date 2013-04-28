@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
 
   ok(2, sa!=NULL);
 
-  slice = SliceAdaptor_fetchByChrStartEnd(sa,"1",1,250000000);
+  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","1",1,250000000,1,NULL,0);
 
   ok(3, slice!=NULL);
 
