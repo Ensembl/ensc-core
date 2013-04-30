@@ -170,7 +170,7 @@ Slice *SliceAdaptor_fetchByRegion(SliceAdaptor *sa, char *coordSystemName, char 
   // Note make a copy of the seq region name to make memory management easier
   char *seqRegionName = StrUtil_copyString(&seqRegionName, inputSeqRegionName, 0);
 
-  CoordSystem *cs;
+  CoordSystem *cs = NULL;
   CoordSystemAdaptor *csa = DBAdaptor_getCoordSystemAdaptor(sa->dba);
 
   if (coordSystemName != NULL ) {
@@ -209,7 +209,7 @@ Slice *SliceAdaptor_fetchByRegion(SliceAdaptor *sa, char *coordSystemName, char 
   key[0] = '\0';
 
   if (cs) {
-    sprintf(sql,"SELECT sr.name, sr.seq_region_id, sr.length, "IDFMTSTR
+    sprintf(sql,"SELECT sr.name, sr.seq_region_id, sr.length, "IDFMTSTR" "
                          "FROM seq_region sr ",
                          CoordSystem_getDbID(cs));
 
@@ -302,15 +302,18 @@ Slice *SliceAdaptor_fetchByRegion(SliceAdaptor *sa, char *coordSystemName, char 
       // Do fuzzy matching, assuming that we are just missing a version
       // on the end of the seq_region name.
 
-      // NOTE: Started on this statement (%s.%% added from bind_param below it
-      sprintf(qStr, "%s WHERE sr.name LIKE '%s.%%' %s", sql, seqRegionName, constraint);
+      // NOTE: Started on this statement (%s.%%%% added from bind_param below it)
+      // Note I need 4 '%' characters to end up with one because it goes through two sprintfs
+      // which each need an escaped % character
+      fprintf(stderr,"Before fuzzy\n");
+      sprintf(qStr, "%s WHERE sr.name LIKE '%s.%%%%' %s", sql, seqRegionName, constraint);
 
       sth = sa->prepare((BaseAdaptor *)sa,qStr,strlen(qStr));
 
       sth->execute(sth);
 
       int prefixLen = strlen(seqRegionName) + 1;
-      long highVer       = 0L;
+      long highVer  = 0L;
       CoordSystem *highCs = cs;
 
       // Find the fuzzy-matched seq_region with the highest postfix
@@ -338,6 +341,7 @@ Slice *SliceAdaptor_fetchByRegion(SliceAdaptor *sa, char *coordSystemName, char 
           continue;
         }
 
+        fprintf(stderr,"Here tmpVer = %ld\n",tmpVer);
         // take version with highest num, if two versions match take one
         // with highest ranked coord system (lowest num)
         if ( !hadVer ||
@@ -364,11 +368,12 @@ Slice *SliceAdaptor_fetchByRegion(SliceAdaptor *sa, char *coordSystemName, char 
 
       cs = highCs;
 
+      fprintf(stderr,"After fuzzy hadVer = %d\n",hadVer);
       sth->finish(sth);
 
       // return if we did not find any appropriate match:
 
-      if (hadVer) return NULL;
+      if (!hadVer) return NULL;
 
     } else {
       ResultRow *row = sth->fetchRow(sth);
@@ -431,6 +436,7 @@ Slice *SliceAdaptor_fetchByRegion(SliceAdaptor *sa, char *coordSystemName, char 
                                    -ADAPTOR           => $self );
 */
   } else {
+    printf("Making slice\n");
     Slice *slice = Slice_new(seqRegionName, start, end, strand, length, cs, sa);
 
     free(seqRegionName);
@@ -631,7 +637,7 @@ void SliceAdaptor_parseLocationToValues(SliceAdaptor *sa, char *location, int no
 
   StrUtil_tokenizeByDelim(&tokens, &nTok, tmpLoc, ":");
 
-  if (nTok > 4 || nTok < 2) {
+  if (nTok > 4 || nTok < 1) {
     fprintf(stderr, "Unable to parse location string %s\n", location);
     exit(1);
   }
@@ -642,8 +648,8 @@ void SliceAdaptor_parseLocationToValues(SliceAdaptor *sa, char *location, int no
   if (nTok >= 2) {
     // Is it a .. or - type range
 
-    char *dotChP;
-    char *dashChP;
+    char *dotChP = NULL;
+    char *dashChP = NULL;
 
     // Allow for a negative start position eg 1:-10..10:1
     int startInd = 0;
@@ -653,13 +659,13 @@ void SliceAdaptor_parseLocationToValues(SliceAdaptor *sa, char *location, int no
 
       // Can't be a ':' separated range so 4 tokens is an error
       if (nTok == 4) {
-        fprintf(stderr, "Unable to parse location string %s\n", location);
+        fprintf(stderr, "Unable to parse location string %s (4 tok)\n", location);
         exit(1);
       }
 
       // can't use dots and dashs together as a range separator!
       if (dotChP && dashChP) {
-        fprintf(stderr, "Unable to parse location string %s\n", location);
+        fprintf(stderr, "Unable to parse location string %s (dot and dash)\n", location);
         exit(1);
       }
         
@@ -697,7 +703,7 @@ void SliceAdaptor_parseLocationToValues(SliceAdaptor *sa, char *location, int no
 
     // if tokens[1] isn't an integer error
     if ( ! StrUtil_isLongInteger(&num, tokens[1]))  {
-      fprintf(stderr, "Unable to parse location string %s\n", location);
+      fprintf(stderr, "Unable to parse location string %s (tok1 not long)\n", location);
       exit(1);
     } else {
       start = num;
@@ -724,7 +730,7 @@ void SliceAdaptor_parseLocationToValues(SliceAdaptor *sa, char *location, int no
           end = num;
         }
       } else {
-        fprintf(stderr, "Unable to parse location string %s\n", location);
+        fprintf(stderr, "Unable to parse location string %s (last tok)\n", location);
         exit(1);
       }
 
@@ -734,12 +740,12 @@ void SliceAdaptor_parseLocationToValues(SliceAdaptor *sa, char *location, int no
           if (StrUtil_isLongInteger(&num, tokens[2])) {
             end = num;
           } else {
-            fprintf(stderr, "Unable to parse location string %s\n", location);
+            fprintf(stderr, "Unable to parse location string %s (nTok==4 if)\n", location);
             exit(1);
           }
         // else its an error because we have four tokens but the last one isn't a strand
         } else {
-          fprintf(stderr, "Unable to parse location string %s\n", location);
+          fprintf(stderr, "Unable to parse location string %s (4 tok, no strand)\n", location);
           exit(1);
         }
       }
@@ -1263,7 +1269,7 @@ Vector *SliceAdaptor_fetchAll(SliceAdaptor *sa, char *csName, char *csVersion, i
   char qStr[1024];
 
   if ( CoordSystem_getIsTopLevel(origCs)) {
-    sprintf(qStr, "SELECT sr.seq_region_id, sr.name "
+    sprintf(qStr, "SELECT sr.seq_region_id, sr.name, "
                          "sr.length, sr.coord_system_id "
                   "FROM seq_region sr, seq_region_attrib sra, "
                        "attrib_type at, coord_system cs "
@@ -1621,7 +1627,7 @@ Slice *SliceAdaptor_fetchByChrBand(SliceAdaptor *sa, char *chr, char *band) {
                       "MAX(k.seq_region_end) "
                       "FROM karyotype k "
                       "WHERE k.seq_region_id = "IDFMTSTR
-                      "AND k.band LIKE '%s%%'", seqRegionId, band );
+                      "AND k.band LIKE '%s%%%%'", seqRegionId, band );
 
   StatementHandle *sth = sa->prepare((BaseAdaptor *)sa,qStr,strlen(qStr));
   sth->execute(sth);
@@ -2535,7 +2541,7 @@ void SliceAdaptor_buildExceptionCache(SliceAdaptor *sa) {
 
     ExceptionCacheData *ecd = ExceptionCacheData_new(seqRegionId, seqRegionStart, seqRegionEnd, excType, excSeqRegionId, excSeqRegionStart, excSeqRegionEnd);
 
-    if (IDHash_contains(sa->asmExcCache, seqRegionId)) {
+    if (! IDHash_contains(sa->asmExcCache, seqRegionId)) {
       IDHash_add(sa->asmExcCache, seqRegionId, Vector_new()); 
     }
     Vector *vec = IDHash_getValue(sa->asmExcCache, seqRegionId);
@@ -2567,7 +2573,7 @@ void SliceAdaptor_cacheTopLevelSeqMappings(SliceAdaptor *sa) {
   char qStr[1024];
   sprintf(qStr,"SELECT name "
                "FROM  coord_system "
-               "WHERE attrib like '%%sequence_level%%' "
+               "WHERE attrib like '%%%%sequence_level%%%%' "
                "AND   species_id = "IDFMTSTR, SliceAdaptor_getSpeciesID(sa));
 
   StatementHandle *sth = sa->prepare((BaseAdaptor *)sa,qStr,strlen(qStr));

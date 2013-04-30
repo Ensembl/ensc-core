@@ -33,6 +33,11 @@ Slice *SliceAdaptor_fetchByFeature(SliceAdaptor *sa, SeqFeature *feature, int si
 Slice *SliceAdaptor_fetchBySeqRegionId(SliceAdaptor *sa, IDType seqRegionId, long start, long end, int strand);
 Slice *SliceAdaptor_fetchByRegion(SliceAdaptor *sa, char *coordSystemName, char *inputSeqRegionName, long start, long end, int strand, char *version, int noFuzz);
 
+Slice *SliceAdaptor_fetchByName(SliceAdaptor *sa, char *name);
+
+Vector *SliceAdaptor_fetchAll(SliceAdaptor *sa, char *csName, char *csVersion, int flags);
+Slice *SliceAdaptor_fetchByTopLevelLocation(SliceAdaptor *sa, char *location, int noWarnings, int noFuzz);
+
 
 
 
