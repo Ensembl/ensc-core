@@ -727,6 +727,8 @@ int StrUtil_tokenizeByDelim(char ***tokens, int *ntok, char *string, char *delim
   char *retChP;
   int count = 0;
 
+  *tokens = NULL;
+
   while (retChP = strpbrk(chP,delim)) {
     StrUtil_strncpy(token,chP,retChP-chP);
     if (!count || !((count+1)%10)) {

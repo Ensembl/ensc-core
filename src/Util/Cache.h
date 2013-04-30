@@ -1,12 +1,13 @@
 #ifndef __CACHE_H__
 #define __CACHE_H__
 
+#include "EcoString.h"
 #include <stdio.h>
 
 typedef struct CacheStruct Cache;
 typedef struct CacheElementStruct CacheElement;
 
-typedef int (*Cache_FreeFunc)();
+typedef void (*Cache_FreeFunc)(void *);
 
 struct CacheStruct {
   int size;
@@ -28,6 +29,6 @@ void Cache_empty(Cache *cache);
 CacheElement *CacheElement_new(char *key, void *val, Cache_FreeFunc freeFunc);
 int Cache_addElement(Cache *cache, char *key, void *data, Cache_FreeFunc freeFunc);
 
-int CacheElement_free(CacheElement *ce);
+void CacheElement_free(CacheElement *ce);
 
 #endif

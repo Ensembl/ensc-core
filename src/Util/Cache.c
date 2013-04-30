@@ -45,6 +45,18 @@ int Cache_addElement(Cache *cache, char *key, void *data, Cache_FreeFunc freeFun
   return 1;
 }
 
+void *Cache_contains(Cache *cache, char *key) {
+  int i=0;
+  for (i=0;i<cache->size;i++) {
+    if (cache->array[i] != NULL &&
+        !strcmp(cache->array[i]->key,key)) {
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
 void *Cache_findElem(Cache *cache, char *key) {
   int i=0;
   for (i=0;i<cache->size;i++) {
@@ -69,7 +81,7 @@ void Cache_empty(Cache *cache) {
   return;
 }
 
-int CacheElement_free(CacheElement *ce) {
+void CacheElement_free(CacheElement *ce) {
   if (ce->freeFunc) {
     ce->freeFunc(ce->val);
   }
@@ -79,14 +91,14 @@ int CacheElement_free(CacheElement *ce) {
   return 1;
 }
 
-CacheElement *CacheElement_new(char *key, void *data, int freeFunc()) {
+CacheElement *CacheElement_new(char *key, void *data, Cache_FreeFunc freeFunc) {
   CacheElement *cacheElem;
 
   if ((cacheElem = (CacheElement *)calloc(1,sizeof(CacheElement))) == NULL) {
     fprintf(stderr, "ERROR: Failed adding to cache\n");
     return NULL;
   }
-  StrUtil_copyString(&(cacheElem->key),key,0);
+  StrUtil_copyString(&(cacheElem->key), key, 0);
   cacheElem->val = data;
   cacheElem->freeFunc = freeFunc;
 
