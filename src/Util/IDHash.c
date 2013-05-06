@@ -168,10 +168,9 @@ int IDHash_remove(IDHash *idHash, IDType id, void freeFunc()) {
 
   if (toRemove) {
     idHash->bucketCounts[bucketNum]--;
-  }
-
-  if (freeFunc) {
-    freeFunc(toRemove);
+    if (freeFunc) {
+      freeFunc(toRemove);
+    }
   }
   
   return 0;

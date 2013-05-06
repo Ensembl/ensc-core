@@ -30,6 +30,7 @@ int     StringHash_getNumValues(StringHash *stringHash);
 void *  StringHash_getValue(StringHash *stringHash, char *string);
 void *  StringHash_getValues(StringHash *stringHash);
 char ** StringHash_getKeys(StringHash *stringHash);
+int     StringHash_remove(StringHash *stringHash, char *key, void freeFunc());
 
 
 #endif

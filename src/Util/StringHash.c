@@ -196,3 +196,37 @@ void StringHash_free(StringHash *stringHash, void freeFunc()) {
   free(stringHash->bucketCounts);
   free(stringHash);
 }
+
+int StringHash_remove(StringHash *stringHash, char *key, void freeFunc()) {
+  int bucketNum = StringHash_getBucketNum(stringHash, key);
+  int i;
+  int cnt = 0;
+  char *toRemoveKey = NULL;
+  void *toRemoveVal = NULL;
+
+  for (i=0; i<stringHash->bucketCounts[bucketNum]; i++) {
+    if (!strcmp(stringHash->buckets[bucketNum][i].key, key)) {
+      if (toRemoveVal) {
+        fprintf(stderr,"Error: %s found more than once in hash\n", key);
+        exit(1);
+      }
+      toRemoveKey = stringHash->buckets[bucketNum][i].key;
+      toRemoveVal = stringHash->buckets[bucketNum][i].value;
+    } else {
+      stringHash->buckets[bucketNum][cnt].key   = stringHash->buckets[bucketNum][i].key;
+      stringHash->buckets[bucketNum][cnt].value = stringHash->buckets[bucketNum][i].value;
+      cnt++;
+    }
+  }
+
+  if (toRemoveVal) {
+    stringHash->bucketCounts[bucketNum]--;
+
+    if (freeFunc) {
+      freeFunc(toRemoveVal);
+    }
+    free(toRemoveKey);
+  }
+  
+  return 0;
+}
