@@ -61,8 +61,8 @@ int main(int argc, char *argv[]) {
   initEnsC();
 
   //dba = DBAdaptor_new("ensembldb.ensembl.org","anonymous",NULL,"homo_sapiens_core_70_37",5306,NULL);
-  //dba = DBAdaptor_new("ens-livemirror.internal.sanger.ac.uk","ensro",NULL,"homo_sapiens_core_70_37",3306,NULL);
-  dba = DBAdaptor_new("genebuild2.internal.sanger.ac.uk","ensadmin","ensembl","steve_hs_testdb",3306,NULL);
+  dba = DBAdaptor_new("ens-livemirror.internal.sanger.ac.uk","ensro",NULL,"homo_sapiens_core_70_37",3306,NULL);
+  //dba = DBAdaptor_new("genebuild2.internal.sanger.ac.uk","ensadmin","ensembl","steve_hs_testdb",3306,NULL);
 
   ok(nTest++,!strcmp("NCBI34",DBAdaptor_getAssemblyType(dba)));
 
@@ -77,12 +77,15 @@ int main(int argc, char *argv[]) {
   printf("slice name = %s\n",Slice_getName(slice));
   ok(nTest++, !strcmp(Slice_getName(slice),"chromosome:NCBI33:1:1:250000000:1"));
 
-//  char *seq = Slice_getSeq(slice);
-//  printf("slice seq = %s\n", seq);
-  
-//  SeqUtil_writeFasta(stdout, Slice_getName(slice), seq, 60);
+  //slice = SliceAdaptor_fetchByRegion(sa,"chromosome","Y",1,3000000,1,NULL,0);
+  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","2",1,250000000,1,NULL,0);
+  char *seq = Slice_getSeq(slice);
+  //printf("slice seq = %s\n", seq);
+ 
+  SeqUtil_writeFasta(stdout, Slice_getName(slice), seq, 60);
 
-//  fflush(stdout);
+  fflush(stdout);
+  exit(1);
 
 // Tests from perl
 
