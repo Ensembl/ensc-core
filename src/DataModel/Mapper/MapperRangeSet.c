@@ -35,6 +35,22 @@ void MapperRangeSet_reverse(MapperRangeSet *mrs) {
   }
 }
 
+void MapperRangeSet_removeGaps(MapperRangeSet *mrs) {
+  int i;
+  int j;
+  for (i=0; i<mrs->nRange; i++) {
+    MapperRange *tmp = mrs->ranges[i];
+    if (tmp->rangeType == MAPPERRANGE_GAP) {
+      for (j=i+1; j<mrs->nRange; j++) {
+        mrs->ranges[j-1] = mrs->ranges[j];
+      }
+      mrs->nRange--;
+      i--;
+      free(tmp);
+    }
+  }
+}
+
 void MapperRangeSet_free(MapperRangeSet *mrs) {
   int i;
 

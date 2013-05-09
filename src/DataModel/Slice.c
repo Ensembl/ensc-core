@@ -1491,7 +1491,6 @@ Vector *Slice_getAllSimilarityFeatures(Slice *slice, char *logicName, double *sc
 =cut
 */
 
-/*
 Vector *Slice_getAllSimpleFeatures(Slice *slice, char *logicName, double *score, char *dbType) {
   if (!Slice_getAdaptor(slice)) {
     fprintf(stderr, "Warning: Cannot get SimpleFeatures without attached adaptor");
@@ -1509,7 +1508,6 @@ Vector *Slice_getAllSimpleFeatures(Slice *slice, char *logicName, double *score,
 
   return SimpleFeatureAdaptor_fetchAllBySliceAndScore(sfa, slice, score, logicName);
 }
-*/
 
 
 /*

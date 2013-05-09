@@ -4,6 +4,7 @@
 #include "ProteinAlignFeatureAdaptor.h"
 #include "BaseAlignFeature.h"
 #include "DBAdaptor.h"
+#include "BaseFeatureAdaptor.h"
 
 #include <string.h>
 

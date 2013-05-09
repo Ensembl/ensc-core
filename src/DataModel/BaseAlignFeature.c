@@ -721,7 +721,7 @@ Vector *BaseAlignFeature_transformFeatureSliceToRawContig(BaseAlignFeature *baf,
   }
 
   ama = DBAdaptor_getAssemblyMapperAdaptor(sa->dba);
-  assMapper = AssemblyMapperAdaptor_fetchByType(ama, Slice_getAssemblyType(bafSlice));
+  assMapper = AssemblyMapperAdaptor_fetchByType(ama,             CoordSystem_getName(Slice_getCoordSystem(bafSlice)));
 
   rca = DBAdaptor_getRawContigAdaptor(sa->dba);
 

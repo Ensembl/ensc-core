@@ -13,5 +13,8 @@ struct MetaCoordContainerStruct {
 };
 
 MetaCoordContainer *MetaCoordContainer_new(DBAdaptor *dba);
+Vector *MetaCoordContainer_fetchAllCoordSystemsByFeatureType(MetaCoordContainer *mcc, char *origTable);
+long MetaCoordContainer_fetchMaxLengthByCoordSystemFeatureType(MetaCoordContainer *mcc, CoordSystem *cs, char *table);
+
 
 #endif

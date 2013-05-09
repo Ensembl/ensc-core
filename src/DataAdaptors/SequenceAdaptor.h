@@ -8,12 +8,13 @@
 #include "Cache.h"
 #include "IDHash.h"
 #include "StringHash.h"
+#include "LRUCache.h"
 
 struct SequenceAdaptorStruct {
   BASEADAPTOR_DATA
 
-//  Cache *seqCache;
-  StringHash *seqCache;
+  LRUCache *seqCache;
+//  StringHash *seqCache;
   IDHash *rnaEditsCache;
 };
 

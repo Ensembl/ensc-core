@@ -123,6 +123,9 @@ char *SeqFeature_setStableId(SeqFeature *sf, char *stableId);
 #define SeqFeature_setContig(sf,c) (sf)->contig = (BaseContig *)(c)
 #define SeqFeature_getContig(sf) (sf)->contig
 
+#define SeqFeature_setSlice(sf,c) (sf)->contig = (BaseContig *)(c)
+#define SeqFeature_getSlice(sf) ((Slice *)((sf)->contig))
+
 #define SeqFeature_getIsSplittable(sf) (sf)->isSplittable
 
 

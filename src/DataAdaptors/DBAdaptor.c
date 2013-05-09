@@ -99,6 +99,13 @@ MetaContainer *DBAdaptor_getMetaContainer(DBAdaptor *dba) {
   return dba->metaContainer;
 }
 
+MetaCoordContainer *DBAdaptor_getMetaCoordContainer(DBAdaptor *dba) {
+  if (!dba->metaCoordContainer) {
+    dba->metaCoordContainer = MetaCoordContainer_new(dba);
+  }
+  return dba->metaCoordContainer;
+}
+
 GeneAdaptor *DBAdaptor_getGeneAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,GENE_ADAPTOR)) {
     DBConnection_addAdaptor(dba->dbc,

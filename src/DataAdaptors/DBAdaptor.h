@@ -14,6 +14,8 @@ struct DBAdaptorStruct {
   char          *assemblyType;
   IDHash        *srIdCache;
   StringHash    *srNameCache;
+  int            noCache;
+  int            speciesId;
 };
 
 DBAdaptor *DBAdaptor_new(char *host, char *user, char *pass, char *dbname,
@@ -31,6 +33,7 @@ DNAAlignFeatureAdaptor      *DBAdaptor_getDNAAlignFeatureAdaptor(DBAdaptor *dba)
 ExonAdaptor                 *DBAdaptor_getExonAdaptor(DBAdaptor *dba);
 GeneAdaptor                 *DBAdaptor_getGeneAdaptor(DBAdaptor *dba);
 MetaContainer               *DBAdaptor_getMetaContainer(DBAdaptor *dba);
+MetaCoordContainer          *DBAdaptor_getMetaCoordContainer(DBAdaptor *dba);
 PredictionTranscriptAdaptor *DBAdaptor_getPredictionTranscriptAdaptor(DBAdaptor *dba);
 ProteinAlignFeatureAdaptor  *DBAdaptor_getProteinAlignFeatureAdaptor(DBAdaptor *dba);
 RawContigAdaptor            *DBAdaptor_getRawContigAdaptor(DBAdaptor *dba);
@@ -49,6 +52,12 @@ TranscriptAdaptor           *DBAdaptor_getTranscriptAdaptor(DBAdaptor *dba);
 
 #define DBAdaptor_getSeqRegionIdCache(dba) (dba)->srIdCache
 #define DBAdaptor_getSeqRegionNameCache(dba) (dba)->srNameCache
+
+#define DBAdaptor_setNoCache(dba, val) (dba)->noCache = (val)
+#define DBAdaptor_noCache(dba) (dba)->noCache
+
+#define DBAdaptor_setSpeciesId(dba, val) (dba)->speciesId = (val)
+#define DBAdaptor_getSpeciesId(dba) (dba)->speciesId
 
 #define DBAdaptor_prepare(dba,qStr,qLen) BaseDBAdaptor_prepare((dba),(qStr),(qLen))
 

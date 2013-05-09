@@ -2,6 +2,7 @@
 #include "StrUtil.h"
 #include "Error.h"
 #include "MysqlStatementHandle.h"
+#include "BaseAdaptor.h"
 
 DBConnection *DBConnection_new(char *host, char *user, char *pass, 
                                char *dbname, unsigned int port) {

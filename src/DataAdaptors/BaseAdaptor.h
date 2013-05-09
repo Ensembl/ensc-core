@@ -8,6 +8,10 @@
 #include "AdaptorTypes.h"
 //#include "DBAdaptor.h"
 #include "StatementHandle.h"
+#include "DBAdaptor.h"
+#include "Vector.h"
+#include "Slice.h"
+#include "AssemblyMapper.h"
 
 
 #ifdef __MAIN_C__
@@ -40,7 +44,8 @@ char *Adaptor_TypeStrings[] = {
   "COMPARADNAALIGNFEATURE",
   "SYNTENY",
   "SYNTENYREGION",
-  "HOMOLOGY"
+  "HOMOLOGY",
+  "METACOORDCONTAINER"
 };
 
 #else
@@ -76,15 +81,39 @@ enum Adaptor_Types {
   COMPARADNAALIGNFEATURE_ADAPTOR,
   SYNTENY_ADAPTOR,
   SYNTENYREGION_ADAPTOR,
-  HOMOLOGY_ADAPTOR
+  HOMOLOGY_ADAPTOR,
+  METACOORD_CONTAINER
 };
 
+typedef char * NameTableType[][2];
+
+typedef int      (*BaseAdaptor_StoreFunc)(BaseAdaptor *bfa, Vector *features);
+typedef NameTableType *(*BaseAdaptor_GetTablesFunc)(void);
+typedef char **  (*BaseAdaptor_GetColumnsFunc)(void);
+typedef Vector *    (*BaseAdaptor_ObjectsFromStatementHandleFunc)(BaseAdaptor *bfa,StatementHandle *sth,
+                                                                      AssemblyMapper *mapper, Slice *slice);
+typedef char *   (*BaseAdaptor_FinalClauseFunc)(void);
+typedef char *   (*BaseAdaptor_DefaultWhereClauseFunc)(void);
+typedef NameTableType *(*BaseAdaptor_LeftJoinFunc)(void);
+
 typedef StatementHandle *(*BaseAdaptor_PrepareFunc)(BaseAdaptor *ba, char *qStr,size_t len);
+
+#define NAME 0
+#define SYN  1
 
 #define BASEADAPTOR_DEF(DBADAPTOR_TYPE) \
   DBADAPTOR_TYPE *dba; \
   int adaptorType; \
-  BaseAdaptor_PrepareFunc prepare;
+  IDType speciesId; \
+  int straightJoinFlag; \
+  BaseAdaptor_PrepareFunc prepare; \
+  BaseAdaptor_StoreFunc store; \
+  BaseAdaptor_GetTablesFunc getTables; \
+  BaseAdaptor_GetColumnsFunc getColumns; \
+  BaseAdaptor_ObjectsFromStatementHandleFunc objectsFromStatementHandle; \
+  BaseAdaptor_FinalClauseFunc finalClause; \
+  BaseAdaptor_LeftJoinFunc leftJoin; \
+  BaseAdaptor_DefaultWhereClauseFunc defaultWhereClause;
 
 #define BASEADAPTOR_DATA BASEADAPTOR_DEF(DBAdaptor)
 
@@ -94,5 +123,27 @@ struct BaseAdaptorStruct {
 
 void BaseAdaptor_init(BaseAdaptor *ba, DBAdaptor *dba, int adaptorType);
 StatementHandle *BaseAdaptor_prepare(BaseAdaptor *ba, char *qStr,size_t len);
+NameTableType *BaseAdaptor_getTables(void);
+char **BaseAdaptor_getColumns(void);
+char *BaseAdaptor_finalClause(void);
+NameTableType *BaseAdaptor_leftJoin(void);
+char *BaseAdaptor_defaultWhereClause(void);
+int BaseAdaptor_store(BaseAdaptor *bfa, Vector *features);
+Vector *BaseAdaptor_objectsFromStatementHandle(BaseAdaptor *bfa, StatementHandle *sth,AssemblyMapper *mapper, Slice *slice);
 
+Vector *BaseAdaptor_genericFetch(BaseAdaptor *ba, char *constraint, AssemblyMapper *mapper, Slice *slice);
+Vector *BaseAdaptor_listDbIDs(BaseAdaptor *ba, char *table, char *pk, int ordered);
+int BaseAdaptor_genericCount(BaseAdaptor *ba, char *constraint);
+void BaseAdaptor_generateSql(BaseAdaptor *ba, char *constraint, char **inputColumns, char *sql);
+SeqFeature *BaseAdaptor_fetchByDbID(BaseAdaptor *ba, IDType id);
+Vector *BaseAdaptor_fetchAllByDbIDList(BaseAdaptor *ba, Vector *idList, Slice *slice);
+Vector *BaseAdaptor_uncachedFetchAllByDbIDList(BaseAdaptor *ba, Vector *idList, Slice *slice);
+SeqFeature *BaseAdaptor_uncachedFetchByDbID(BaseAdaptor *ba, IDType id);
+Vector *BaseAdaptor_fetchAll(BaseAdaptor *ba);
+int BaseAdaptor_hasNoIdCache(BaseAdaptor *ba);
+
+#define BaseAdaptor_setSpeciesId(ba,val) (ba)->speciesId = (val)
+#define BaseAdaptor_getSpeciesId(ba) (ba)->speciesId
+
+#define BaseAdaptor_isMultiSpecies(ba) (0)
 #endif

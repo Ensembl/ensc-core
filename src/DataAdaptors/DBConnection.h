@@ -1,7 +1,7 @@
 #ifndef __DBCONNECTION_H__
 #define __DBCONNECTION_H__
 
-#include "BaseAdaptor.h"
+//#include "BaseAdaptor.h"
 #include "AdaptorTypes.h"
 #include "StatementHandle.h"
 

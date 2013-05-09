@@ -1,13 +1,15 @@
 #ifndef __STORABLE_H__
 #define __STORABLE_H__
 
+#include "EnsC.h"
 #include "DataModelTypes.h"
-#include "BaseAdaptor.h"
+#include "AdaptorTypes.h"
 
 struct StorableStruct {
   IDType     dbID;
   BaseAdaptor *adaptor;
 };
+
 
 #define Storable_getDbID(st) (st)->dbID
 #define Storable_setDbID(st,id) (st)->dbID = id

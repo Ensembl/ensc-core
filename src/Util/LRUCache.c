@@ -87,7 +87,7 @@ void *LRUCache_get(LRUCache *cache, char *key) {
 
     // Move entry to tail of list - it is now most recently accessed
     if (cacheElem == cache->tail) {
-      // Don't rearranging of the linked list if its already the tail
+      // Don't rearrange the linked list if its already the tail
       cacheElem->nAccess++;
 
     } else { 
@@ -116,7 +116,7 @@ void *LRUCache_get(LRUCache *cache, char *key) {
 
   } else {
     // Not in cache
-    fprintf(stderr,"key %s not in LRUCache\n",key);
+    fprintf(stderr,"Warning: key %s not in LRUCache\n",key);
     return NULL;
   }
 }
@@ -151,20 +151,22 @@ void LRUCache_remove(LRUCache *cache, char *key) {
   
     // Remove from linked list
     if (cacheElem == cache->head && cache->head == cache->tail) {
+      // Its the only entry in cache - only need to unset head and tail, no list rearranging needed
       cache->head = NULL;
       cache->tail = NULL;
-    }
-    if (cacheElem == cache->head) {
-      cache->head = cache->head->next;
-    }
-    if (cacheElem == cache->tail) {
-      cache->tail = cache->tail->prev;
-    }
-    if (cacheElem->prev != NULL) {
-      cacheElem->prev->next = cacheElem->next;
-    }
-    if (cacheElem->next != NULL) {
-      cacheElem->next->prev = cacheElem->prev;
+    } else {
+      if (cacheElem == cache->head) {
+        cache->head = cache->head->next;
+      }
+      if (cacheElem == cache->tail) {
+        cache->tail = cache->tail->prev;
+      }
+      if (cacheElem->prev != NULL) {
+        cacheElem->prev->next = cacheElem->next;
+      }
+      if (cacheElem->next != NULL) {
+        cacheElem->next->prev = cacheElem->prev;
+      }
     }
   
     // Reduce size
@@ -174,7 +176,7 @@ void LRUCache_remove(LRUCache *cache, char *key) {
     LRUCacheElement_free(cacheElem);
     
   } else {
-    fprintf(stderr,"Tried to nonexistent remove entry from LRUCache: key %s\n", key);
+    fprintf(stderr,"Tried to remove nonexistent entry from LRUCache: key %s\n", key);
   }
 }
 

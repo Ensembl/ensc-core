@@ -78,6 +78,7 @@ long RawContig_getCloneID(RawContig *rc) {
   return rc->cloneId;
 }
 
+#ifdef OLD
 Vector *RawContig_getAllSimpleFeatures(RawContig *rc, char *logicName, double *scoreP) {
   RawContigAdaptor *rca = (RawContigAdaptor *)RawContig_getAdaptor(rc);
   SimpleFeatureAdaptor *sfa;
@@ -138,6 +139,7 @@ Vector *RawContig_getAllProteinAlignFeatures(RawContig *rc, char *logicName, dou
   pafa = DBAdaptor_getProteinAlignFeatureAdaptor(rca->dba);
   return ProteinAlignFeatureAdaptor_fetchAllByRawContigAndScore(pafa,rc,scoreP,logicName);
 }
+#endif
 
 char *RawContig_setSeq(RawContig *contig, char *seq) {
   // Sequence can be set manually
@@ -160,7 +162,8 @@ char *RawContig_getSeq(RawContig *contig) {
     
     dnadba = RawContig_getAdaptor(contig)->dba->dnadb;
     sa = DBAdaptor_getSequenceAdaptor(dnadba);
-    return SequenceAdaptor_fetchByRawContigStartEndStrand(sa, RawContig_getDbID(contig), 1, -1, 1);
+    //return SequenceAdaptor_fetchByRawContigStartEndStrand(sa, RawContig_getDbID(contig), 1, -1, 1);
+    return NULL;
   }
 
   fprintf(stderr,"Warning: RawContig seq not set, and no db is available\n");
@@ -197,7 +200,8 @@ char *RawContig_getSubSeq(RawContig *contig, int start, int end, int strand) {
 
   sa = DBAdaptor_getSequenceAdaptor(RawContig_getAdaptor(contig)->dba->dnadb);
 
-  return SequenceAdaptor_fetchByRawContigStartEndStrand(sa, RawContig_getDbID(contig), start, end, strand);
+  //return SequenceAdaptor_fetchByRawContigStartEndStrand(sa, RawContig_getDbID(contig), start, end, strand);
+  return NULL;
 
 }
 

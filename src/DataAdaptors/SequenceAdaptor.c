@@ -11,6 +11,7 @@
 #include "BaseContig.h"
 #include "Slice.h"
 #include "StrUtil.h"
+#include "LRUCache.h"
 
 #include "ProjectionSegment.h"
 #include "StatementHandle.h"
@@ -24,17 +25,15 @@ An adaptor for the retrieval of DNA sequence from the EnsEMBL database
 */
 
 static long const SEQ_CHUNK_PWR = 18; // 2^18 = approx. 250KB
-//static long const SEQ_CHUNK_PWR = 1; // 2^18 = approx. 250KB
+//static long const SEQ_CHUNK_PWR = 1; // Basically means don't cache
 static long const SEQ_CACHE_SZ  = 5;
-//static int SEQ_CACHE_MAX = (int)(pow((double)2, (double)SEQ_CHUNK_PWR)) * SEQ_CACHE_SZ;
-//int const SEQ_CACHE_MAX = (2 ** SEQ_CHUNK_PWR) * SEQ_CACHE_SZ;
 static long SEQ_CACHE_MAX;
 
 static int init = 0;
 
 void SequenceAdaptor_initFunc() {
   SEQ_CACHE_MAX = (1 << SEQ_CHUNK_PWR) * SEQ_CACHE_SZ;
-  fprintf(stderr, "seq_cache_max = %ld\n", SEQ_CACHE_MAX);
+//  fprintf(stderr, "seq_cache_max = %ld\n", SEQ_CACHE_MAX);
   init  = 1;
 }
 
@@ -69,7 +68,7 @@ SequenceAdaptor *SequenceAdaptor_new(DBAdaptor *dba) {
 
   // use an LRU cache to limit the size
   //sa->seqCache = Cache_new(SEQ_CACHE_SZ);
-  sa->seqCache = StringHash_new(STRINGHASH_SMALL);
+  sa->seqCache = LRUCache_new(SEQ_CACHE_SZ);
 
 //
 // See if this has any seq_region_attrib of type "_rna_edit_cache" if so store these
@@ -124,7 +123,9 @@ SequenceAdaptor *SequenceAdaptor_new(DBAdaptor *dba) {
 */
 
 void SequenceAdaptor_clearCache(SequenceAdaptor *sa) {
-  //Cache_empty(sa->seqCache);
+  LRUCache_empty(sa->seqCache);
+  //StringHash_free(sa->seqCache, free);
+  //sa->seqCache = StringHash_new(STRINGHASH_MEDIUM);
   return;
 }
 
@@ -348,7 +349,6 @@ char *SequenceAdaptor_fetchBySliceStartEndStrandRecursive(SequenceAdaptor *sa,
   if (strand == -1) {
     SeqUtil_reverseComplement(seq, Slice_getLength(slice));
   }
-  //reverse_comp(\$seq) if($strand == -1);
 
   return seq;
 }
@@ -603,11 +603,11 @@ char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long st
 
       long min = (i << SEQ_CHUNK_PWR) + 1;
 
-      //if (Cache_contains(sa->seqCache, chunkKey)) {
-      if (StringHash_contains(sa->seqCache, chunkKey)) {
+      if (LRUCache_contains(sa->seqCache, chunkKey)) {
+      //if (StringHash_contains(sa->seqCache, chunkKey)) {
  // What happens for length of last chunk???
-        //memcpy(&(entireSeq[min-minChunkMin]), Cache_findElem(sa->seqCache, chunkKey), 1<<SEQ_CHUNK_PWR); 
-        memcpy(&(entireSeq[min-minChunkMin]), StringHash_getValue(sa->seqCache, chunkKey), 1<<SEQ_CHUNK_PWR); 
+        memcpy(&(entireSeq[min-minChunkMin]), LRUCache_get(sa->seqCache, chunkKey), 1<<SEQ_CHUNK_PWR); 
+        //memcpy(&(entireSeq[min-minChunkMin]), StringHash_getValue(sa->seqCache, chunkKey), 1<<SEQ_CHUNK_PWR); 
       } else {
         // retrieve uncached portions of the sequence
 
@@ -629,6 +629,7 @@ char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long st
         ResultRow *row = sth->fetchRow(sth);
         char *tmpSeq   = row->getStringAt(row, 0);
 //        long lenTmpSeq = row->getLongAt(row, 1);
+        long lenTmpSeq = strlen(tmpSeq);
         sth->finish(sth);
 
         // always give back uppercased sequence so it can be properly softmasked
@@ -636,11 +637,10 @@ char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long st
 
         //fprintf(stderr, "lenTmpSeq = %ld  strlen(tmpSeq) = %d\n",lenTmpSeq, strlen(tmpSeq));
       
- //       memcpy(&(entireSeq[min-minChunkMin]), tmpSeq, lenTmpSeq);
-        memcpy(&(entireSeq[min-minChunkMin]), tmpSeq, strlen(tmpSeq));
+        memcpy(&(entireSeq[min-minChunkMin]), tmpSeq, lenTmpSeq);
  //       StrUtil_appendString(entireSeq,tmpSeq);
-        //Cache_addElement(sa->seqCache, chunkKey, tmpSeq, free);
-        StringHash_add(sa->seqCache, chunkKey, tmpSeq);
+        LRUCache_put(sa->seqCache, chunkKey, tmpSeq, free, lenTmpSeq);
+//        StringHash_add(sa->seqCache, chunkKey, tmpSeq);
       }
     }
 

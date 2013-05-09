@@ -91,15 +91,18 @@ NameTableType *SimpleFeatureAdaptor_getTables(void) {
   return &SimpleFeatureAdaptor_tableNames;
 }
 
-char *SimpleFeatureAdaptor_getColumns(void) {
-  return "sf.simple_feature_id," 
-	 "sf.contig_id,"
-         "sf.contig_start,"
-         "sf.contig_end,"
-         "sf.contig_strand,"
-	 "sf.display_label,"
-         "sf.analysis_id,"
-         "sf.score";
+char *SimpleFeature_cols[] = 
+        {"sf.simple_feature_id", 
+	 "sf.contig_id",
+         "sf.contig_start",
+         "sf.contig_end",
+         "sf.contig_strand",
+	 "sf.display_label",
+         "sf.analysis_id",
+         "sf.score"};
+
+char **SimpleFeatureAdaptor_getColumns(void) {
+  return SimpleFeature_cols;
 }
 
 Vector *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,

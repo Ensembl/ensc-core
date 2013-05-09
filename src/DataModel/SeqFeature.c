@@ -140,7 +140,7 @@ SeqFeature *SeqFeature_transformRawContigToSliceImpl(SeqFeature *sf, Slice *slic
   dba = RawContig_getAdaptor(rc)->dba;
 
   ama = DBAdaptor_getAssemblyMapperAdaptor(dba);
-  assMapper = AssemblyMapperAdaptor_fetchByType(ama, Slice_getAssemblyType(slice));
+  assMapper = AssemblyMapperAdaptor_fetchByType(ama, CoordSystem_getName(Slice_getCoordSystem(slice)));
 
   rca = DBAdaptor_getRawContigAdaptor(dba);
 
@@ -175,13 +175,13 @@ SeqFeature *SeqFeature_transformRawContigToSliceImpl(SeqFeature *sf, Slice *slic
 
   // the slice is an empty slice, create an enitre chromosome slice and
   // replace the empty slice with it
-  if (Slice_getEmptyFlag(slice)) {
-    SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
-    ChromosomeAdaptor *ca = DBAdaptor_getChromosomeAdaptor(dba);
-    char *chrName = Chromosome_getName(ChromosomeAdaptor_fetchByDbID(ca,mc->id));
-
-    slice = SliceAdaptor_fetchByChrName(sa, chrName);
-  }
+//  if (Slice_getEmptyFlag(slice)) {
+//    SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
+//    ChromosomeAdaptor *ca = DBAdaptor_getChromosomeAdaptor(dba);
+//    char *chrName = Chromosome_getName(ChromosomeAdaptor_fetchByDbID(ca,mc->id));
+//
+//    slice = SliceAdaptor_fetchByChrName(sa, chrName);
+//  }
 
   // mapped coords are on chromosome - need to convert to slice
   if(Slice_getStrand(slice) == 1) {
@@ -229,7 +229,7 @@ Vector *SeqFeature_transformSliceToRawContigImpl(SeqFeature *sf) {
   dba = Slice_getAdaptor(slice)->dba;
 
   ama = DBAdaptor_getAssemblyMapperAdaptor(dba);
-  assMapper = AssemblyMapperAdaptor_fetchByType(ama, Slice_getAssemblyType(slice));
+  assMapper = AssemblyMapperAdaptor_fetchByType(ama, CoordSystem_getName(Slice_getCoordSystem(slice)));
 
   rca = DBAdaptor_getRawContigAdaptor(dba);
 

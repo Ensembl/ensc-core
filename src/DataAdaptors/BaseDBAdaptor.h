@@ -7,7 +7,8 @@
 
 #define BASEDBADAPTOR_DATA \
   DBConnection  *dbc; \
-  MetaContainer *metaContainer;
+  MetaContainer *metaContainer; \
+  MetaCoordContainer *metaCoordContainer;
 
 struct BaseDBAdaptorStruct {
   BASEDBADAPTOR_DATA

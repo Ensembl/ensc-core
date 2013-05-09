@@ -3,6 +3,7 @@
 #include "BaseAdaptor.h"
 #include "MysqlUtil.h"
 #include "StatementHandle.h"
+#include "CoordSystemAdaptor.h"
 
 MetaCoordContainer *MetaCoordContainer_new(DBAdaptor *dba) {
   MetaCoordContainer *mcc;
@@ -11,7 +12,7 @@ MetaCoordContainer *MetaCoordContainer_new(DBAdaptor *dba) {
     fprintf(stderr, "ERROR: Failed allocating space for MetaCoordContainer\n");
     return NULL;
   }
-  BaseAdaptor_init((BaseAdaptor *)mc, dba, META_CONTAINER);
+  BaseAdaptor_init((BaseAdaptor *)mcc, dba, META_CONTAINER);
 
   mcc->featureCache = StringHash_new(STRINGHASH_SMALL);
   mcc->maxLenCache = IDHash_new(IDHASH_SMALL);
@@ -87,7 +88,7 @@ MetaCoordContainer *MetaCoordContainer_new(DBAdaptor *dba) {
   }
   sth->finish(sth);
 
-  return mc;
+  return mcc;
 }
 
 
@@ -130,8 +131,8 @@ Vector *MetaCoordContainer_fetchAllCoordSystemsByFeatureType(MetaCoordContainer 
 
   int i;
   for (i=0; i<Vector_getNumElement(csIds); i++) {
-    IDType csId = *(Vector_getElementAt(csIds, i);
-    CoordSystem *cs = CoordSystemAdaptor_fetchByDbID(csId);
+    IDType csId = *(IDType *)(Vector_getElementAt(csIds, i));
+    CoordSystem *cs = CoordSystemAdaptor_fetchByDbID(csa, csId);
 
     if (cs == NULL) {
       fprintf(stderr,"meta_coord table refers to non-existant coord_system with id "IDFMTSTR, csId);
@@ -185,7 +186,7 @@ long MetaCoordContainer_fetchMaxLengthByCoordSystemFeatureType(MetaCoordContaine
     return -1;
   }
 
-  return *StringHash_getValue(hash, lcTable);
+  return *((long *)StringHash_getValue(hash, lcTable));
 }
 
 

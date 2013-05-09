@@ -13,7 +13,7 @@ SimpleFeatureAdaptor *SimpleFeatureAdaptor_new(DBAdaptor *dba);
 
 int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *baf, Vector *features);
 NameTableType *SimpleFeatureAdaptor_getTables(void);
-char *SimpleFeatureAdaptor_getColumns(void);
+char **SimpleFeatureAdaptor_getColumns(void);
 Vector *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *baf,
                                                      StatementHandle *sth,
                                                      AssemblyMapper *mapper,
