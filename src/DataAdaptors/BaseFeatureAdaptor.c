@@ -1051,9 +1051,11 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
 
       } else {
         Vector *features = BaseAdaptor_genericFetch((BaseAdaptor *)bfa, qad->constraint, qad->mapper,  qad->slice);
+        fprintf(stderr,"Here!!!!!!!!!!!!!!!!!! with %d features and %d pan coord features\n", Vector_getNumElement(features),  Vector_getNumElement(panCoordFeatures));
         Vector *remappedFeatures = BaseFeatureAdaptor_remap(bfa, features, qad->mapper, qad->slice);
 
         Vector_append(panCoordFeatures, remappedFeatures);
+        fprintf(stderr,"Here 22!!!!!!!!!!!!!!!!!! with %d features and %d remapped features and %d pan coord features\n", Vector_getNumElement(features), Vector_getNumElement(remappedFeatures), Vector_getNumElement(panCoordFeatures));
 
         // NIY: Free stuff (features vector etc)
         Vector_free(features);
@@ -1296,7 +1298,7 @@ Vector *BaseFeatureAdaptor_remap(BaseFeatureAdaptor *bfa, Vector *features, Asse
 
   // remapping has not been done, we have to do our own conversion from
   // to slice coords
-  Vector *out;
+  Vector *out = Vector_new();
 
   long sliceStart      = Slice_getStart(slice);
   long sliceEnd        = Slice_getEnd(slice);

@@ -352,8 +352,8 @@ void BaseAdaptor_generateSql(BaseAdaptor *ba, char *constraint, char **inputColu
     }
 
     i = 0;
-    while ((*tabs)[i][0]) {
-      char **t = (*tabs)[i];
+    while ((*tables)[i][0]) {
+      char **t = (*tables)[i];
 
       char tAliasKey[1024];
       sprintf(tAliasKey,"%s %s", t[NAME],t[SYN]);
@@ -381,8 +381,8 @@ void BaseAdaptor_generateSql(BaseAdaptor *ba, char *constraint, char **inputColu
     StringHash_free(ljHash, NULL);
   } else {
     i=0;
-    while ((*tabs)[i][0]) {
-      char **t = (*tabs)[i];
+    while ((*tables)[i][0]) {
+      char **t = (*tables)[i];
       if (tableNamesStr[0]) {
         sprintf(tmpStr,", %s %s",t[NAME],t[SYN]);
       } else {

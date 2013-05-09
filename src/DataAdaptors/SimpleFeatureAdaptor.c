@@ -93,13 +93,14 @@ NameTableType *SimpleFeatureAdaptor_getTables(void) {
 
 char *SimpleFeature_cols[] = 
         {"sf.simple_feature_id", 
-	 "sf.contig_id",
-         "sf.contig_start",
-         "sf.contig_end",
-         "sf.contig_strand",
+	 "sf.seq_region_id",
+         "sf.seq_region_start",
+         "sf.seq_region_end",
+         "sf.seq_region_strand",
 	 "sf.display_label",
          "sf.analysis_id",
-         "sf.score"};
+         "sf.score",
+         NULL};
 
 char **SimpleFeatureAdaptor_getColumns(void) {
   return SimpleFeature_cols;
@@ -120,6 +121,7 @@ Vector *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
   features = Vector_new();
   
   while ((row = sth->fetchRow(sth))) {
+    fprintf(stderr, "Have a row\n");
     RawContig *contig = RawContigAdaptor_fetchByDbID(rca, row->getLongLongAt(row,1));
     Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,6));
 
