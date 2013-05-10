@@ -3,14 +3,13 @@
 #include "IDHash.h"
 #include "RepeatConsensusAdaptor.h"
 #include "AnalysisAdaptor.h"
-#include "RawContigAdaptor.h"
+#include "SliceAdaptor.h"
 
 #include "RepeatFeature.h"
 #include "RepeatConsensus.h"
 
 NameTableType RepeatFeatureAdaptor_tableNames = {{"repeat_feature","r"},
                                                  {"repeat_consensus","rc"},
-                                                 {"seq_region","sr"},
                                                  {NULL,NULL}};
 
 RepeatFeatureAdaptor *RepeatFeatureAdaptor_new(DBAdaptor *dba) {
@@ -184,35 +183,99 @@ NameTableType *RepeatFeatureAdaptor_getTables() {
   return &RepeatFeatureAdaptor_tableNames;
 }
 
-char *RepeatFeatureAdaptor_getColumns() {
-  return "r.repeat_feature_id,"
-         "r.seq_region_id,"
-         "r.analysis_id,"
-         "r.seq_region_start,"
-         "r.seq_region_end,"
-         "r.seq_region_strand,"
-         "r.repeat_consensus_id,"
-         "r.repeat_start,"
-         "r.repeat_end,"
-         "r.score,"
-         "rc.repeat_name,"
-         "rc.repeat_class,"
-         "rc.repeat_consensus";
+char *RepeatFeature_cols[] = {
+         "r.repeat_feature_id",
+         "r.seq_region_id",
+         "r.analysis_id",
+         "r.seq_region_start",
+         "r.seq_region_end",
+         "r.seq_region_strand",
+         "r.repeat_consensus_id",
+         "r.repeat_start",
+         "r.repeat_end",
+         "r.score",
+         "rc.repeat_name",
+         "rc.repeat_class",
+         "rc.repeat_consensus",
+         NULL };
+
+char **RepeatFeatureAdaptor_getColumns() {
+  return RepeatFeature_cols;
+}
+
+/*
+=head2 fetch_all_by_Slice
+
+  Arg [1]    : Bio::EnsEMBL::Slice $slice
+  Arg [2]    : (optional) string $logic_name
+               Limits RepeatFeatures obtained to those having an Analysis with
+               of the specified logic_name.  If no logic name is specified
+               Repeats of all analysis types are retrieved.
+  Arg [3]    : (optional) string/array $repeat_type
+               Limits RepeatFeatures obtained to those of specified
+               repeat_type
+  Example    : @rfeats = @{$rfa->fetch_all_by_Slice($slice, undef, 'Type II Transposons')};
+               @rfeats = @{$rfa->fetch_all_by_Slice($slice, undef, ['Type II Transposons', 'RNA repeats'])};
+  Description: Retrieves repeat features overlapping the area designated by
+               the provided slice argument.  Returned features will be in
+               in the same coordinate system as the provided slice and will
+               have coordinates relative to the slice start.
+  Returntype : reference to a list of Bio::EnsEMBL::RepeatFeatures.
+  Exceptions : throw on bad argument
+  Caller     : Slice::get_all_RepeatFeatures
+  Status     : Stable
+
+=cut
+*/
+// New!!!
+Vector *RepeatFeatureAdaptor_fetchAllBySlice(RepeatFeatureAdaptor *rfa, Slice *slice, char *logicName, Vector *repeatTypes) {
+  char constraint[1024];
+  constraint[0] = '\0';
+
+  // MySQL was optimising the query the incorrect way when joining to
+  // the repeat_consensus table on type
+
+  // Hack - direct access
+  rfa->straightJoinFlag = 1;
+
+  if (repeatTypes != NULL && Vector_getNumElement(repeatTypes) > 0) {
+    if (Vector_getNumElement(repeatTypes) > 1) {
+      strcpy(constraint, "rc.repeat_type IN (");
+      int i;
+      for (i=0; i<Vector_getNumElement(repeatTypes); i++) {
+        char *repeatType = Vector_getElementAt(repeatTypes, i);
+        if (i!=0) {
+          strcat(constraint, ", ");
+        }
+        sprintf(constraint, "'%s'", repeatType);
+      }
+      strcat(constraint,")");
+    } else {
+      char *repeatType = Vector_getElementAt(repeatTypes, 0);
+      sprintf(constraint, "rc.repeat_type = '%s'", repeatType);
+    }
+  }
+
+  Vector *result = RepeatFeatureAdaptor_fetchAllBySliceConstraint(rfa, slice, constraint, logicName);
+
+  rfa->straightJoinFlag = 0;
+
+  return result;
 }
 
 Vector *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
                                                      StatementHandle *sth,
                                                      AssemblyMapper *mapper,
-                                                     Slice *slice) {
+                                                     Slice *destSlice) {
   AnalysisAdaptor *aa;
-  RawContigAdaptor *rca;
+  SliceAdaptor *sa;
   RepeatConsensusAdaptor *rpca;
   Vector *features;
   ResultRow *row;
   IDHash *rcHash;
 
   aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
-  rca = DBAdaptor_getRawContigAdaptor(bfa->dba);
+  sa = DBAdaptor_getSliceAdaptor(bfa->dba);
   rpca = DBAdaptor_getRepeatConsensusAdaptor(bfa->dba);
 
 
@@ -222,8 +285,7 @@ Vector *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
   while ((row = sth->fetchRow(sth))) {
     RepeatFeature *rf;
     Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,2));
-//    RawContig *contig = RawContigAdaptor_fetchByDbID(rca, row->getLongLongAt(row,1));
-    RawContig *contig = (RawContig *)slice;
+    Slice *slice = SliceAdaptor_fetchBySeqRegionId(sa, row->getLongLongAt(row,1), POS_UNDEF, POS_UNDEF, 1);
     IDType repeatConsensusId = row->getLongLongAt(row,6);
     RepeatConsensus *rc;
 
@@ -249,7 +311,7 @@ Vector *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
     RepeatFeature_setStrand(rf,row->getIntAt(row,5));
     RepeatFeature_setHitStart(rf,row->getIntAt(row,7));
     RepeatFeature_setHitEnd(rf,row->getIntAt(row,8));
-    RepeatFeature_setContig(rf,contig); 
+    RepeatFeature_setContig(rf,slice); 
     RepeatFeature_setAnalysis(rf,analysis); 
     RepeatFeature_setConsensus(rf,rc); 
 

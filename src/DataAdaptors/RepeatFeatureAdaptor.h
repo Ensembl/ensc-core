@@ -13,7 +13,7 @@ RepeatFeatureAdaptor *RepeatFeatureAdaptor_new(DBAdaptor *dba);
 int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features);
 char *RepeatFeatureAdaptor_defaultWhereClause();
 NameTableType *RepeatFeatureAdaptor_getTables();
-char *RepeatFeatureAdaptor_getColumns();
+char **RepeatFeatureAdaptor_getColumns();
 Vector *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
                                                      StatementHandle *sth,
                                                      AssemblyMapper *mapper,
@@ -21,8 +21,8 @@ Vector *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
 
 
 #define RepeatFeatureAdaptor_fetchByDbID(rfa, id) BaseFeatureAdaptor_fetchByDbID((BaseFeatureAdaptor *)(rfa), (id))
-#define RepeatFeatureAdaptor_fetchAllBySlice(rfa, slice, lname) \
-          BaseFeatureAdaptor_fetchAllBySlice((BaseFeatureAdaptor *)(rfa), (slice), (lname))
+#define RepeatFeatureAdaptor_fetchAllBySliceConstraint(rfa, slice, constraint, lname) \
+          BaseFeatureAdaptor_fetchAllBySliceConstraint((BaseFeatureAdaptor *)(rfa), (slice), (constraint), (lname))
 #define RepeatFeatureAdaptor_fetchAllByRawContig(rfa, contig, lname) \
           BaseFeatureAdaptor_fetchAllByRawContig((BaseFeatureAdaptor *)(rfa), (contig), (lname))
 

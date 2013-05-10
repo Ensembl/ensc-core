@@ -1531,8 +1531,6 @@ Vector *Slice_getAllSimpleFeatures(Slice *slice, char *logicName, double *score,
 
 =cut
 */
-
-/*
 Vector *Slice_getAllRepeatFeatures(Slice *slice, char *logicName, char *repeatType, char *dbType) {
   if (!Slice_getAdaptor(slice)) {
     fprintf(stderr, "Warning: Cannot get RepeatFeatures without attached adaptor");
@@ -1550,7 +1548,6 @@ Vector *Slice_getAllRepeatFeatures(Slice *slice, char *logicName, char *repeatTy
 
   return RepeatFeatureAdaptor_fetchAllBySlice(rpfa, slice, logicName, repeatType);
 }
-*/
 
 /*
 =head2 get_all_LD_values

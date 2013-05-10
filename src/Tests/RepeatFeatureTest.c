@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 
   ok(2, rfa!=NULL);
 
-  features =  Slice_getAllRepeatFeatures(slice,"");
+  features =  Slice_getAllRepeatFeatures(slice,NULL,NULL, NULL);
 
   ok(3, features!=NULL);
   ok(4, Vector_getNumElement(features)!=0);
@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
     Vector *rrfVector;
     RepeatFeature *rrf;
 
-    printf("slice start = %d end = %d\n",start,end);
+//    printf("slice start = %d end = %d\n",start,end);
 /*
     rrfVector = RepeatFeature_transformToRawContig(rf);
     if (Vector_getNumElement(rrfVector) > 1) {
