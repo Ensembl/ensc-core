@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 
   ok(2, dafa!=NULL);
 
-  features =  Slice_getAllDNAAlignFeatures(slice,"",NULL);
+  features =  Slice_getAllDNAAlignFeatures(slice,NULL,NULL, NULL,NULL);
 
   ok(3, features!=NULL);
   ok(4, Vector_getNumElement(features)!=0);
@@ -38,6 +38,7 @@ int main(int argc, char *argv[]) {
     Vector *ungapped;
     char *oldCigar = DNAAlignFeature_getCigarString(daf);
 
+    //printf(" cigar = %s pre ungapped\n",DNAAlignFeature_getCigarString(daf));
     ungapped = DNAAlignFeature_getUngappedFeatures((BaseAlignFeature *)daf);
     if (!ungapped) failed = 1;
     //printf(" cigar = %s num ungapped %d\n",DNAAlignFeature_getCigarString(daf), Vector_getNumElement(ungapped));

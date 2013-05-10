@@ -19,7 +19,6 @@ int main(int argc, char *argv[]) {
   ok(2,retStr!=NULL); 
   ok(3,!strcmp(retStr,testStr1)); 
 
-  
   LRUCache_put(cache,"bloggs",testStr2,NULL,1);
   LRUCache_put(cache,"micky",testStr3,NULL,1);
 
@@ -46,6 +45,13 @@ int main(int argc, char *argv[]) {
   ok(9, cache->curSize == 1);
   retStr = LRUCache_get(cache,"fred");
   ok(10,!strcmp(retStr,testStr1));
+
+  // One with size > 1
+  LRUCache_put(cache,"bloggs",testStr2,NULL,2);
+  // Because bloggs is size 2 it should have removed fred
+  ok(11, ! LRUCache_contains(cache, "fred") && 
+           LRUCache_contains(cache, "bloggs"));
+
 
   
 

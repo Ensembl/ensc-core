@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 
   ok(2, pafa!=NULL);
 
-  features =  Slice_getAllDNAPepAlignFeatures(slice,"",NULL);
+  features =  Slice_getAllProteinAlignFeatures(slice,NULL,NULL,NULL,NULL);
 
   ok(3, features!=NULL);
   ok(4, Vector_getNumElement(features)!=0);

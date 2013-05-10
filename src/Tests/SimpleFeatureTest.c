@@ -4,6 +4,7 @@
 #include "DBAdaptor.h"
 #include "EnsC.h"
 #include "SimpleFeature.h"
+#include "BaseFeatureAdaptor.h"
 
 #include "BaseRODBTest.h"
 
@@ -27,7 +28,7 @@ int main(int argc, char *argv[]) {
 
   ok(2, sfa!=NULL);
 
-  features =  Slice_getAllSimpleFeatures(slice,"",NULL);
+  features =  Slice_getAllSimpleFeatures(slice, NULL, NULL, NULL);
 
   ok(3, features!=NULL);
   ok(4, Vector_getNumElement(features)!=0);

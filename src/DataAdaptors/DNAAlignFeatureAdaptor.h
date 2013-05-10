@@ -11,11 +11,12 @@ struct DNAAlignFeatureAdaptorStruct {
 DNAAlignFeatureAdaptor *DNAAlignFeatureAdaptor_new(DBAdaptor *dba);
 int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features);
 NameTableType *DNAAlignFeatureAdaptor_getTables(void); 
-char *DNAAlignFeatureAdaptor_getColumns(void);
+char **DNAAlignFeatureAdaptor_getColumns(void);
 Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
                                                        StatementHandle *sth,
                                                        AssemblyMapper *assMapper,
                                                        Slice *slice);
+int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features);
 
 
 #define DNAAlignFeatureAdaptor_fetchByDbID(dafa, id) BaseFeatureAdaptor_fetchByDbID((BaseFeatureAdaptor *)(dafa), (id))

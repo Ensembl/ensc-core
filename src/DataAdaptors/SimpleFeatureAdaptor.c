@@ -1,6 +1,6 @@
 #include "SimpleFeatureAdaptor.h"
 
-#include "RawContigAdaptor.h"
+#include "SliceAdaptor.h"
 #include "AnalysisAdaptor.h"
 
 NameTableType SimpleFeatureAdaptor_tableNames = {{"simple_feature","sf"},{NULL,NULL}};
@@ -109,20 +109,21 @@ char **SimpleFeatureAdaptor_getColumns(void) {
 Vector *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
                                                      StatementHandle *sth,
                                                      AssemblyMapper *mapper,
-                                                     Slice *slice) {
+                                                     Slice *destSlice) {
   AnalysisAdaptor *aa;
-  RawContigAdaptor *rca;
+  SliceAdaptor *sa;
   Vector *features;
   ResultRow *row;
 
   aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
-  rca = DBAdaptor_getRawContigAdaptor(bfa->dba);
+  sa = DBAdaptor_getSliceAdaptor(bfa->dba);
 
   features = Vector_new();
   
   while ((row = sth->fetchRow(sth))) {
-    fprintf(stderr, "Have a row\n");
-    RawContig *contig = RawContigAdaptor_fetchByDbID(rca, row->getLongLongAt(row,1));
+    //RawContig *contig = RawContigAdaptor_fetchByDbID(rca, row->getLongLongAt(row,1));
+    Slice *slice = SliceAdaptor_fetchBySeqRegionId(sa, row->getLongLongAt(row,1), POS_UNDEF, POS_UNDEF, 1);
+    
     Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,6));
 
     SimpleFeature *sf = SimpleFeature_new();
@@ -131,7 +132,8 @@ Vector *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
     SimpleFeature_setStrand(sf,row->getIntAt(row,4));
     SimpleFeature_setAnalysis(sf,analysis);
     SimpleFeature_setDisplayLabel(sf,row->getStringAt(row,5));
-    SimpleFeature_setContig(sf,contig); 
+    //SimpleFeature_setContig(sf,contig); 
+    SimpleFeature_setContig(sf,slice); 
 
     if (row->col(row,7)) {
       SimpleFeature_setScore(sf,row->getDoubleAt(row,7));

@@ -14,7 +14,7 @@ Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor
                                                            AssemblyMapper *assMapper,
                                                            Slice *slice);
 NameTableType *ProteinAlignFeatureAdaptor_getTables(void); 
-char *ProteinAlignFeatureAdaptor_getColumns(void);
+char **ProteinAlignFeatureAdaptor_getColumns(void);
 int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *baf, Vector *features);
 
 #define ProteinAlignFeatureAdaptor_fetchByDbID(pafa, id) BaseFeatureAdaptor_fetchByDbID((BaseFeatureAdaptor *)(pafa), (id))

@@ -1353,7 +1353,6 @@ Vector *Slice_getAllPredictionTranscripts(Slice *slice, char *logicName, int loa
 =cut
 */
 
-/*
 Vector *Slice_getAllDNAAlignFeatures(Slice *slice, char *logicName, double *score, char *dbType, double *hCoverage) {
   if (!Slice_getAdaptor(slice)) {
     fprintf(stderr, "Warning: Cannot get DnaAlignFeatures without attached adaptor");
@@ -1375,9 +1374,9 @@ Vector *Slice_getAllDNAAlignFeatures(Slice *slice, char *logicName, double *scor
   if (score){
     return DNAAlignFeatureAdaptor_fetchAllBySliceAndScore(dafa, slice, score, logicName);
   }
-  return DNAAlignFeatureAdaptor_fetchAllBySliceAndHCoverage(dafa, slice, hCoverage, logicName);
+    return DNAAlignFeatureAdaptor_fetchAllBySliceAndScore(dafa, slice, score, logicName);
+//  return DNAAlignFeatureAdaptor_fetchAllBySliceAndHCoverage(dafa, slice, hCoverage, logicName);
 }
-*/
 
 /*
 
@@ -1406,8 +1405,6 @@ Vector *Slice_getAllDNAAlignFeatures(Slice *slice, char *logicName, double *scor
 
 =cut
 */
-
-/*
 Vector *Slice_getAllProteinAlignFeatures(Slice *slice, char *logicName, double *score, char *dbType, double *hCoverage) {
   if (!Slice_getAdaptor(slice)) {
     fprintf(stderr, "Warning: Cannot get ProteinAlignFeatures without attached adaptor");
@@ -1429,9 +1426,9 @@ Vector *Slice_getAllProteinAlignFeatures(Slice *slice, char *logicName, double *
   if (score){
     return ProteinAlignFeatureAdaptor_fetchAllBySliceAndScore(pafa, slice, score, logicName);
   }
-  return ProteinAlignFeatureAdaptor_fetchAllBySliceAndHCoverage(pafa, slice, hCoverage, logicName);
+    return ProteinAlignFeatureAdaptor_fetchAllBySliceAndScore(pafa, slice, score, logicName);
+//  return ProteinAlignFeatureAdaptor_fetchAllBySliceAndHCoverage(pafa, slice, hCoverage, logicName);
 }
-*/
 
 
 /*

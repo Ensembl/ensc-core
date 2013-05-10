@@ -152,8 +152,8 @@ Vector *BaseAlignFeature_parseCigar(BaseAlignFeature *baf) {
       if ((int)mappedLength > mappedLength+0.00001 ||
           (int)mappedLength < mappedLength-0.00001) {
         fprintf(stderr, "Error: Internal error with mismapped length of hit, query "
-                        "%d, hit %d, length %d",queryUnit,hitUnit,length);
-        exit(1);
+                        "%d, hit %d, length %d (analysis %s)\n",queryUnit,hitUnit,length, Analysis_getLogicName(BaseAlignFeature_getAnalysis(baf)));
+        //exit(1);
       }
   
       if (*chP == 'M') {
@@ -515,8 +515,9 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
 
         // sanity check,  Should not be an insertion and deletion
         if (insertionFlag) {
-          fprintf(stderr, "Warning: Should not be an deletion and insertion on the "
-                          "same alignment region. cigar_line=%s\n",string);
+// This happens so nagging about it seems unnecessary
+//          fprintf(stderr, "Warning: Should not be an deletion and insertion on the "
+//                          "same alignment region. cigar_line=%s\n",string);
         }
       }
       // shift our position in the hit seq alignment

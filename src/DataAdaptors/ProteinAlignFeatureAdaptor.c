@@ -1,11 +1,11 @@
 #include "ProteinAlignFeatureAdaptor.h"
 
-#include "RawContigAdaptor.h"
 #include "AnalysisAdaptor.h"
+#include "SliceAdaptor.h"
 
 #include "DNAPepAlignFeature.h"
 
-NameTableType ProteinAlignFeatureAdaptor_tableNames = {{"protein_align_feature","paf"},{"seq_region","sr"},{NULL,NULL}};
+NameTableType ProteinAlignFeatureAdaptor_tableNames = {{"protein_align_feature","paf"},{NULL,NULL}};
 
 ProteinAlignFeatureAdaptor *ProteinAlignFeatureAdaptor_new(DBAdaptor *dba) {
   ProteinAlignFeatureAdaptor *pafa;
@@ -102,38 +102,41 @@ NameTableType *ProteinAlignFeatureAdaptor_getTables(void) {
   return &ProteinAlignFeatureAdaptor_tableNames;
 }
 
-char *ProteinAlignFeatureAdaptor_getColumns(void) {
+char *ProteinAlign_cols[] = {
+         "paf.protein_align_feature_id",
+         "paf.seq_region_id",
+         "paf.analysis_id",
+         "paf.seq_region_start",
+         "paf.seq_region_end",
+         "paf.seq_region_strand",
+         "paf.hit_start",
+         "paf.hit_end",
+         "paf.hit_name",
+         "paf.cigar_line",
+         "paf.evalue",
+         "paf.perc_ident",
+         "paf.score",
+         NULL };
 
-  return "paf.protein_align_feature_id,"
-         "paf.seq_region_id,"
-         "paf.analysis_id,"
-         "paf.seq_region_start,"
-         "paf.seq_region_end,"
-         "paf.seq_region_strand,"
-         "paf.hit_start,"
-         "paf.hit_end,"
-         "paf.hit_name,"
-         "paf.cigar_line,"
-         "paf.evalue,"
-         "paf.perc_ident,"
-         "paf.score";
+char **ProteinAlignFeatureAdaptor_getColumns(void) {
+  return ProteinAlign_cols;
 }
 
 Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
                                                            StatementHandle *sth,
                                                            AssemblyMapper *assMapper,
-                                                           Slice *slice) {
+                                                           Slice *destSlice) {
   AnalysisAdaptor *aa;
-  RawContigAdaptor *rca;
+  SliceAdaptor *sa;
   Vector *features;
   ResultRow *row;
 
   aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
-  rca = DBAdaptor_getRawContigAdaptor(bfa->dba);
+  sa = DBAdaptor_getSliceAdaptor(bfa->dba);
 
   features = Vector_new();
 
-  if (slice) {
+  if (destSlice) {
     int featStart, featEnd, featStrand;
     int sliceChrId;
     int sliceEnd;
@@ -141,10 +144,10 @@ Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor
     int sliceStrand;
 
 
-    sliceChrId = Slice_getChrId(slice);
-    sliceStart = Slice_getChrStart(slice);
-    sliceEnd   = Slice_getChrEnd(slice);
-    sliceStrand= Slice_getStrand(slice);
+    sliceChrId = Slice_getChrId(destSlice);
+    sliceStart = Slice_getChrStart(destSlice);
+    sliceEnd   = Slice_getChrEnd(destSlice);
+    sliceStrand= Slice_getStrand(destSlice);
 
     // Does this really need to be set ??? my $slice_name   = $slice->name();
 
@@ -196,6 +199,7 @@ Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor
       dpaf = DNAPepAlignFeature_new();
 
       DNAPepAlignFeature_setDbID(dpaf,row->getLongLongAt(row,0));
+      Slice *slice = SliceAdaptor_fetchBySeqRegionId(sa, row->getLongLongAt(row,1), POS_UNDEF, POS_UNDEF, 1);
       DNAPepAlignFeature_setContig(dpaf,slice); 
       DNAPepAlignFeature_setAnalysis(dpaf,analysis);
 
@@ -224,12 +228,12 @@ Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor
 // Perl has a cache for analysis types but the analysis adaptor should have one
       Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,2));
 // Perl has a cache for contigs - maybe important
-      RawContig *contig = RawContigAdaptor_fetchByDbID(rca, row->getLongLongAt(row,1));
+      Slice *slice = SliceAdaptor_fetchBySeqRegionId(sa, row->getLongLongAt(row,1), POS_UNDEF, POS_UNDEF, 1);
 
       dpaf = DNAPepAlignFeature_new();
 
       DNAPepAlignFeature_setDbID(dpaf,row->getLongLongAt(row,0));
-      DNAPepAlignFeature_setContig(dpaf,contig); 
+      DNAPepAlignFeature_setContig(dpaf,slice); 
       DNAPepAlignFeature_setAnalysis(dpaf,analysis);
 
       DNAPepAlignFeature_setStart(dpaf,row->getIntAt(row,3));

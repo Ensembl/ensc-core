@@ -9,6 +9,9 @@
 #include "MetaContainer.h"
 #include "MetaCoordContainer.h"
 
+// For testing
+//#include "DNAAlignFeature.h"
+
 
 /*
 =head1 NAME
@@ -834,7 +837,7 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
   Vector *featureCoordSystems;
 
   char tmpStr[1024];
-  sprintf(tmpStr, "%s.build.level", tableName);  
+  sprintf(tmpStr, "%sbuild.level", tableName);  
   Vector *metaValues = MetaContainer_listValueByKey(metaContainer, tmpStr);
 
   if (Vector_getNumElement(metaValues) && Slice_isTopLevel(slice)) {
@@ -1058,6 +1061,8 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
         fprintf(stderr,"Here 22!!!!!!!!!!!!!!!!!! with %d features and %d remapped features and %d pan coord features\n", Vector_getNumElement(features), Vector_getNumElement(remappedFeatures), Vector_getNumElement(panCoordFeatures));
 
         // NIY: Free stuff (features vector etc)
+        // NIY: Note hack hack hack to unset any freeFunc that has been set on the features vector - to stop the features we've transferred to another vector being freed
+        Vector_setFreeFunc(features, NULL);
         Vector_free(features);
         Vector_free(remappedFeatures);
       }
@@ -1379,6 +1384,8 @@ Vector *BaseFeatureAdaptor_remap(BaseFeatureAdaptor *bfa, Vector *features, Asse
     }
       
     SeqFeature_setSlice(f, slice);
+
+    //fprintf(stderr, "Cigar after remap = %s\n", DNAAlignFeature_getCigarString((DNAAlignFeature *)f));
 
     Vector_addElement(out, f);
   }
