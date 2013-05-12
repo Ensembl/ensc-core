@@ -55,19 +55,19 @@ typedef struct SeqFeatureFuncsStruct {
 
 #define SEQFEATURE_DATA \
   ENSROOT_DATA \
-  int         start; \
-  int         end; \
+  long        start; \
+  long        end; \
   signed char phase; \
   signed char endPhase; \
   signed char frame; \
   signed char strand; \
+  char        isSplittable; \
   ECOSTRING   seqName; \
   Storable    st; \
   Analysis *  analysis; \
-  double      score; \
   double      pValue; \
-  double      percentId; \
-  char        isSplittable; \
+  float       score; \
+  float       percentId; \
   BaseContig *contig;
 
 #define FUNCSTRUCTTYPE SeqFeatureFuncs
@@ -128,6 +128,10 @@ char *SeqFeature_setStableId(SeqFeature *sf, char *stableId);
 
 #define SeqFeature_getIsSplittable(sf) (sf)->isSplittable
 
+SeqFeature *SeqFeature_transfer(SeqFeature *sf, Slice *slice);
+Vector *SeqFeature_projectToSlice(SeqFeature *sf, Slice *toSlice);
+Vector *SeqFeature_project(SeqFeature *sf, char *csName, char *csVersion);
+SeqFeature *SeqFeature_transform(SeqFeature *sf, char *csName, char *csVersion, Slice *toSlice);
 
 int SeqFeature_startCompFunc(const void *a, const void *b);
 int SeqFeature_reverseStartCompFunc(const void *a, const void *b);

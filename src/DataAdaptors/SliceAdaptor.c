@@ -436,7 +436,6 @@ Slice *SliceAdaptor_fetchByRegion(SliceAdaptor *sa, char *coordSystemName, char 
                                    -ADAPTOR           => $self );
 */
   } else {
-    printf("Making slice\n");
     Slice *slice = Slice_new(seqRegionName, start, end, strand, length, cs, sa);
 
     free(seqRegionName);

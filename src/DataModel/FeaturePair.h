@@ -21,9 +21,9 @@ typedef struct FeaturePairFuncsStruct {
   signed char hitStrand; \
   signed char hitPhase; \
   signed char hitEndPhase; \
-  char       *hitId; \
-  char       *species; \
-  char       *hitSpecies;
+  ECOSTRING   hitId; \
+  ECOSTRING   species; \
+  ECOSTRING   hitSpecies;
 
 
 #define FUNCSTRUCTTYPE FeaturePairFuncs

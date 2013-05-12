@@ -81,3 +81,45 @@ int DBConnection_addAdaptor(DBConnection *dbc, BaseAdaptor *ba) {
 
   return 1;
 }
+
+/*
+=head2 from_date_to_seconds
+
+  Arg [1]    : date $date
+  Example    : my $string = $dbc->from_date_to_seconds($date);
+  Description: Giving a string representing a column of type date
+                applies the database function to convert to the number of seconds from 01-01-1970
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+  Status     : at risk
+
+=cut
+*/
+void DBConnection_fromDateToSeconds(DBConnection *dbc, char *column, char *wrappedColumn) {
+  if (!strcmp(DBConnection_getDriverName(dbc), "mysql")) {
+    sprintf(wrappedColumn, "UNIX_TIMESTAMP(%s)", column);
+    return;
+  }
+/* Who cares!
+  elsif ($self->driver eq 'odbc'){
+        $string = "DATEDIFF(second,'JAN 1 1970',$column)";
+    }
+    elsif ($self->driver eq 'SQLite'){
+        $string = "STRFTIME('%s', $column)";
+    }
+*/
+  else {
+    fprintf(stderr, "Not possible to convert %s due to an unknown database driver: %s - bye\n", column, DBConnection_getDriverName(dbc));
+// Huh why not just die - this isn't a good thing to happen 
+    //return '';
+    exit(1);
+  }
+
+  return; // wrappedColumn is returned filled with the required string
+}
+
+// Fixed to mysql for now
+char *DBConnection_getDriverName(DBConnection *dbc) {
+  return "mysql";
+} 

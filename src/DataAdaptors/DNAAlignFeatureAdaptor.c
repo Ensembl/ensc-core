@@ -132,6 +132,7 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
   features = Vector_new();
 
   Vector_setFreeFunc(features,Object_freeImpl);
+  IDHash *sliceHash = IDHash_new(IDHASH_SMALL);
 
   if (destSlice) {
     int featStart, featEnd, featStrand;
@@ -194,7 +195,14 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
       featEnd    = contigEnd;
       featStrand = contigStrand;
 
-    Slice *slice = SliceAdaptor_fetchBySeqRegionId(sa, row->getLongLongAt(row,1), POS_UNDEF, POS_UNDEF, 1);
+      IDType srId = row->getLongLongAt(row,1);
+      Slice *slice;
+      if (!IDHash_contains(sliceHash, srId)) {
+        slice = SliceAdaptor_fetchBySeqRegionId(sa, row->getLongLongAt(row,1), POS_UNDEF, POS_UNDEF, 1);
+        IDHash_add(sliceHash, srId, slice);
+      } else {
+        slice = IDHash_getValue(sliceHash, srId);
+      }
 
       daf = DNAAlignFeature_new();
 
@@ -228,7 +236,15 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
       Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,2));
 // Perl has a cache for contigs - maybe important
       //RawContig *contig = RawContigAdaptor_fetchByDbID(rca, row->getLongLongAt(row,1));
-    Slice *slice = SliceAdaptor_fetchBySeqRegionId(sa, row->getLongLongAt(row,1), POS_UNDEF, POS_UNDEF, 1);
+      IDType srId = row->getLongLongAt(row,1);
+      Slice *slice;
+      if (!IDHash_contains(sliceHash, srId)) {
+        slice = SliceAdaptor_fetchBySeqRegionId(sa, row->getLongLongAt(row,1), POS_UNDEF, POS_UNDEF, 1);
+        IDHash_add(sliceHash, srId, slice);
+      } else {
+        slice = IDHash_getValue(sliceHash, srId);
+      }
+    //Slice *slice = SliceAdaptor_fetchBySeqRegionId(sa, row->getLongLongAt(row,1), POS_UNDEF, POS_UNDEF, 1);
 
       daf = DNAAlignFeature_new();
 
@@ -255,6 +271,8 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
       Vector_addElement(features,daf);
     }
   }
+
+  IDHash_free(sliceHash, NULL);
   
   return features;
 }

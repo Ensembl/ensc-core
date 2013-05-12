@@ -2,6 +2,7 @@
 #include "BaseAlignFeature.h"
 #undef __BASEALIGNFEATURE_MAIN__
 
+#include "EnsC.h"
 #include "DBAdaptor.h"
 #include "StrUtil.h"
 #include "AssemblyMapperAdaptor.h"
@@ -32,7 +33,8 @@ BaseAlignFeature *BaseAlignFeature_new() {
 }
 
 char *BaseAlignFeature_setCigarString(BaseAlignFeature *baf, char *str) {
-  baf->cigarString = StrUtil_copyString(&(baf->cigarString),str,0);
+//  baf->cigarString = StrUtil_copyString(&(baf->cigarString),str,0);
+  EcoString_copyStr(ecoSTable, &(baf->cigarString),str,0);
 
   return baf->cigarString;
 }
@@ -157,7 +159,7 @@ Vector *BaseAlignFeature_parseCigar(BaseAlignFeature *baf) {
       }
   
       if (*chP == 'M') {
-        FeaturePair *fp = FeaturePair_new();
+        FeaturePair *fp = (FeaturePair *)SeqFeatureFactory_newFeature(baf->objectType);
         int a, b;
   
         if (strand1 == 1 ) {
@@ -926,7 +928,7 @@ Vector *BaseAlignFeature_transformFeatureSliceToRawContig(BaseAlignFeature *baf,
 }
 
 void BaseAlignFeature_freePtrs(BaseAlignFeature *baf) {
-  if (baf->cigarString) free(baf->cigarString);
+  if (baf->cigarString) EcoString_freeStr(ecoSTable, baf->cigarString);
 
   FeaturePair_freePtrs((FeaturePair *)baf);
 }

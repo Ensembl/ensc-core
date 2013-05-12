@@ -157,15 +157,25 @@ void *Vector_addElement(Vector *v, void *elem) {
 
 void Vector_setNumElement(Vector *v, int nElem) {
   int i;
+  int nToAlloc;
 
-  if ((v->elements = (void **)realloc(v->elements,nElem*sizeof(void *))) == NULL) {
-    fprintf(stderr,"ERROR: Failed allocating space for elem array\n");
-    return;
+  int batchSize = 200;
+
+  if (v->nAlloced < nElem) {
+    v->nAlloced = nElem-(nElem%batchSize)+batchSize;
+ //     fprintf(stderr, "v->nAlloced = %d nElem = %d\n", v->nAlloced, nElem);
+    if ((v->elements = (void **)realloc(v->elements,v->nAlloced*sizeof(void *))) == NULL) {
+      fprintf(stderr,"ERROR: Failed allocating space for elem array\n");
+      return;
+    }
+    
+      
+    memset(&(v->elements[v->nElement]), 0, sizeof(void *) * (v->nAlloced - v->nElement));
   }
 
-  for (i=v->nElement; i<nElem; i++) {
-    v->elements[i] = NULL;
-  }
+//  for (i=v->nElement; i<nElem; i++) {
+//    v->elements[i] = NULL;
+//  }
 
   v->nElement = nElem;
 
@@ -216,6 +226,7 @@ void Vector_free(Vector *v) {
 
 
   if (v->freeElement) {
+    //printf(" - freeing vector ELEMENTS\n");
     for (i=0;i<v->nElement;i++) {
       if (v->elements[i]) {
         v->freeElement(v->elements[i]);

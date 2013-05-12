@@ -102,7 +102,7 @@ void     Error_trace(char *Routine, char *Info);
 #define ENOARG          73
 #define EPARSEFF        74
 #define ENOBRACE        75
-#define ENOKEY          76
+#define ENOKEYVAL       76 // Note changed from ENOKEY to avoid conflict with errno.h
 #define EKEYID          77
 #define EKEYDEF         78
 #define EARG            79

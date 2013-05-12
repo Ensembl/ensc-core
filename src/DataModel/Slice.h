@@ -115,6 +115,7 @@ DBAdaptor *Slice_getSelectedDBAdaptor(Slice *slice, char *dbType);
 char *Slice_getSubSeq(Slice *slice, int start, int end, int strand);
 char *Slice_getSeq(Slice *slice);
 Vector *Slice_project(Slice *slice, char *csName, char *csVersion);
+Vector *Slice_projectToSlice(Slice *slice, Slice *toSlice);
 char *Slice_getCoordSystemName(Slice *slice);
 Slice *Slice_expand(Slice *slice, long fivePrimeShift, long threePrimeShift, int forceExpand, long *fpRef, long *tpRef);
 Slice *Slice_invert(Slice *slice);

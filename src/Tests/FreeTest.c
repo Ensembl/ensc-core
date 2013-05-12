@@ -4,8 +4,10 @@
 #include "DBAdaptor.h"
 #include "EnsC.h"
 #include "DNAAlignFeature.h"
+#include "DNAAlignFeatureAdaptor.h"
 
 #include "BaseRODBTest.h"
+#include "gperftools/tcmalloc.h"
 
 int main(int argc, char *argv[]) {
   DBAdaptor *dba;
@@ -27,10 +29,15 @@ int main(int argc, char *argv[]) {
 
   ok(2, dafa!=NULL);
 
-  features =  Slice_getAllDNAAlignFeatures(slice,"",NULL);
+  features =  Slice_getAllDNAAlignFeatures(slice,NULL,NULL,NULL,NULL);
 
   ok(3, features!=NULL);
   ok(4, Vector_getNumElement(features)!=0);
+
+  unsigned long long totNameLen=0;
+  unsigned long long totHitNameLen=0;
+  unsigned long long totCigarLen=0;
+  unsigned long long nFeat = Vector_getNumElement(features);
 
   for (i=0;i<Vector_getNumElement(features) && !failed;i++) {
     DNAAlignFeature *daf = Vector_getElementAt(features,i);
@@ -40,16 +47,39 @@ int main(int argc, char *argv[]) {
     ungapped = DNAAlignFeature_getUngappedFeatures((BaseAlignFeature *)daf);
     if (!ungapped) failed = 1;
 
+    totCigarLen += strlen(DNAAlignFeature_getCigarString(daf));
+    totNameLen += strlen(DNAAlignFeature_getSeqName(daf));
+    totHitNameLen += strlen(DNAAlignFeature_getHitSeqName(daf));
+
+
     BaseAlignFeature_parseFeatures(daf,ungapped); 
 
-    Object_incRefCount(ungapped);
+    // This is how it was written - not sure about how do do this
+    //Object_incRefCount(ungapped);
+    //Vector_free(ungapped);
+    // I know these will free it but not sure if its best way
+    Vector_setFreeFunc(ungapped, Object_freeImpl);
     Vector_free(ungapped);
   }
+  fprintf(stderr, "Average hit name len = "IDFMTSTR"\n", totHitNameLen/nFeat);
+  fprintf(stderr, "Average name len = "IDFMTSTR"\n", totNameLen/nFeat);
+  fprintf(stderr, "Average cigar len = "IDFMTSTR"\n", totCigarLen/nFeat);
   ok(5, !failed);
 
-  printf("Calling Vector_free on features\n");
+  printf("Before calling Vector_free on features\n");
+  tc_malloc_stats();
   Vector_free(features);
 
-  sleep(500);
+  MallocExtension_ReleaseFreeMemory();
+  printf("After calling Vector_free on features\n");
+  tc_malloc_stats();
+
+  DNAAlignFeatureAdaptor_clearCache(dafa);
+
+  MallocExtension_ReleaseFreeMemory();
+  printf("After calling DAFA_cacheClear\n");
+  tc_malloc_stats();
+
+  printf(" I THINK THERE's SOMETHING WRONG IN THE WAY THE ABOVE FREEs AND CLEARS ARE WORKING\n");
   return 0;
 }

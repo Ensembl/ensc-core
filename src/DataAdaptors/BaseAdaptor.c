@@ -33,6 +33,7 @@ StatementHandle *BaseAdaptor_prepare(BaseAdaptor *ba, char *qStr, size_t len) {
 # returns listref of IDs
 */
 // For ordered, the default should be 0 (if you just need to fill out the args)
+// Note ONLY stable_id can be char, all other pk's must be IDType (see code)
 Vector *BaseAdaptor_listDbIDs(BaseAdaptor *ba, char *table, char *pk, int ordered) {
   char colName[1024];
 
@@ -71,18 +72,27 @@ Vector *BaseAdaptor_listDbIDs(BaseAdaptor *ba, char *table, char *pk, int ordere
 
   Vector *out = Vector_new();
 
-  IDType *idP;
-  ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
-    IDType id = row->getLongLongAt(row, 0);
-
-    if ((idP = calloc(1,sizeof(IDType))) == NULL) {
-      fprintf(stderr, "Failed allocating space for a id\n");      
-      exit(1);
-    } 
-
-    *idP = id;
-    Vector_addElement(out, idP);
+  if (strcmp(pk, "stable_id")) {
+    ResultRow *row;
+    while (row = sth->fetchRow(sth)) {
+      char *stableId = row->getStringCopyAt(row, 0);
+  
+      Vector_addElement(out, stableId);
+    }
+  } else  {
+    IDType *idP;
+    ResultRow *row;
+    while (row = sth->fetchRow(sth)) {
+      IDType id = row->getLongLongAt(row, 0);
+  
+      if ((idP = calloc(1,sizeof(IDType))) == NULL) {
+        fprintf(stderr, "Failed allocating space for a id\n");      
+        exit(1);
+      } 
+  
+      *idP = id;
+      Vector_addElement(out, idP);
+    }
   }
 
   return out;
@@ -196,6 +206,7 @@ Vector *BaseAdaptor_genericFetch(BaseAdaptor *ba, char *constraint, AssemblyMapp
 
   Vector *res = ba->objectsFromStatementHandle(ba, sth, mapper, slice);
   sth->finish(sth);
+
   return res;
 }
 
@@ -445,7 +456,7 @@ void BaseAdaptor_generateSql(BaseAdaptor *ba, char *constraint, char **inputColu
   if ((ba->finalClause())[0]) strcat(sql, ba->finalClause());
   
   // FOR DEBUG:
-  fprintf(stderr, "SQL:\n%s\n", sql);
+  //fprintf(stderr, "SQL:\n%s\n", sql);
   
   return;
 }
@@ -513,6 +524,7 @@ SeqFeature *BaseAdaptor_uncachedFetchByDbID(BaseAdaptor *ba, IDType id) {
     Object_incRefCount(feat);
   }
   
+// NIY May want to set a free func???
   Vector_free(vec);
 
   return feat;
@@ -582,9 +594,9 @@ Vector *BaseAdaptor_uncachedFetchAllByDbIDList(BaseAdaptor *ba, Vector *idList, 
   sprintf(constraintPref, "%s.%s_id ", t[SYN], t[NAME] ); 
 
   // Ensure that we do not exceed MySQL's max_allowed_packet (defaults to
-  // 1 MB) splitting large queries into smaller queries of at most 256 KB
-  // (32768 8-bit characters).  Assuming a (generous) average dbID string
-  // length of 16, this means 2048 dbIDs in each query.
+  // 1 MB) splitting large queries into smaller queries of at most 256 KB.
+  // Assuming a (generous) average dbID string
+  // length of 16, this means 16384 dbIDs in each query.
   int maxSize = 16384;
 
   // Uniquify the list
@@ -632,6 +644,7 @@ Vector *BaseAdaptor_uncachedFetchAllByDbIDList(BaseAdaptor *ba, Vector *idList, 
 
     Vector_free(resChunk);
   }
+  free(uniqueIds);
 
   return out;
 }

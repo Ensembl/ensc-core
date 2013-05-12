@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
     Vector *rrfVector;
     RepeatFeature *rrf;
 
-//    printf("slice start = %d end = %d\n",start,end);
+    printf("slice start = %d end = %d\n",start,end);
 /*
     rrfVector = RepeatFeature_transformToRawContig(rf);
     if (Vector_getNumElement(rrfVector) > 1) {

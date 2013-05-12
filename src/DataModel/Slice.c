@@ -3940,21 +3940,24 @@ sub chr_end{
   deprecate('Use end() instead');
   end(@_);
 }
+*/
 
 
+/*
 =head2 assembly_type
 
   Description: DEPRECATED use version instead
 
 =cut
+*/
 
-sub assembly_type{
-  my $self = shift;
-  deprecate('Use $slice->coord_system()->version() instead.');
-  return $self->coord_system->version();
+char *Slice_getAssemblyType(Slice *slice) {
+  fprintf(stderr, "Slice_getAssemblyType deprecated. Use CoordSystem_getVersion(Slice_getCoordSystem(slice)) instead.\n");
+  return CoordSystem_getVersion(Slice_getCoordSystem(slice));
 }
 
 
+/*
 =head2 get_tiling_path
 
   Description: DEPRECATED use project instead

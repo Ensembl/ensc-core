@@ -112,7 +112,10 @@ int FileUtil_getRealPath(char *FNIn, char *Path) {
     return 0;
   }
    
-  realpath(FNIn,Path);
+  if (realpath(FNIn,Path) == NULL) {
+    Error_write(EREALPATH,"FileUtil_getRealPath",ERR_SEVERE,
+                "realpath returned NULL. File = %s Path = %s.\n",FNIn,Path);
+  }
 
   if (errno && errno!=EINVAL) {
     Error_write(EREALPATH,"FileUtil_getRealPath",ERR_SEVERE,

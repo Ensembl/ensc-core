@@ -627,7 +627,7 @@ char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long st
 
         sth->execute(sth);
         ResultRow *row = sth->fetchRow(sth);
-        char *tmpSeq   = row->getStringAt(row, 0);
+        char *tmpSeq   = row->getStringCopyAt(row, 0);
 //        long lenTmpSeq = row->getLongAt(row, 1);
         long lenTmpSeq = strlen(tmpSeq);
         sth->finish(sth);
@@ -666,7 +666,7 @@ char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long st
 
     sth->execute(sth);
     ResultRow *row = sth->fetchRow(sth);
-    char *tmpSeq = row->getStringAt(row, 0);
+    char *tmpSeq = row->getStringCopyAt(row, 0);
     sth->finish(sth);
     // always give back uppercased sequence so it can be properly softmasked
     StrUtil_strupr(tmpSeq);

@@ -6,7 +6,8 @@
 #undef __OBJECT_MAIN__
 
 void Object_freeImpl(Object *obj) {
-   (obj)->funcs->free == NULL ? \
+//  printf("Object_freeImpl called free func = %p\n", (obj)->funcs->free);
+  (obj)->funcs->free == NULL ? \
         (fprintf(stderr,"Error: Null pointer for free func - bye\n"),  exit(1), (void *)NULL) : \
         ((obj)->funcs->free((obj)), (void *)NULL);
 }

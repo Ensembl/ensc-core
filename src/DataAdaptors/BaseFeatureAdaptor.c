@@ -8,6 +8,9 @@
 #include "ProjectionSegment.h"
 #include "MetaContainer.h"
 #include "MetaCoordContainer.h"
+#include "Object.h"
+
+#include "DNAAlignFeature.h"
 
 // For testing
 //#include "DNAAlignFeature.h"
@@ -515,12 +518,16 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Sl
     }
   }
   // NIY: I need to free ProjectionSegments
+  Vector_setFreeFunc(projVec, ProjectionSegment_free);
+  Vector_free(projVec);
 
   // Will only use feature_cache when set attribute no_cache in DBAdaptor
   // Condition looks slightly odd, but key will have only been set to something if
   // the code entered the noCache controlled condition above
   if (key[0]) {
-    Cache_addElement(bfa->sliceFeatureCache, key, result, NULL);
+// Was null free func
+    Vector_setFreeFunc(result, Object_freeImpl);
+    Cache_addElement(bfa->sliceFeatureCache, key, result, Object_freeImpl);
   }
 
   return result;
@@ -1034,6 +1041,7 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
         }
       }
       // NIY: Free mapper range set
+      MapperRangeSet_free(coords);
     }
      
     int j;

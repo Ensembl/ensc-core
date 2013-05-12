@@ -22,6 +22,7 @@ struct VectorStruct {
   OBJECT_DATA
   void **elements;
   int nElement;
+  int nAlloced;
   int isSpecial;
   Vector_ElementFreeFunc freeElement;  
 };
@@ -57,10 +58,10 @@ void **Vector_toArray(Vector *v);
 #endif
 
 #ifdef __VECTOR_MAIN__
-  Vector  emptyVectorData = {CLASS_VECTOR,-1, &vectorFuncs, NULL,0,1};
+  Vector  emptyVectorData = {CLASS_VECTOR,-1, &vectorFuncs, NULL,0,0,1,NULL};
   Vector *emptyVector = &emptyVectorData;
   void   *singleEntryVectorArray[1] = { NULL };
-  Vector  singleEntryVectorData = {CLASS_VECTOR,-1, &vectorFuncs, singleEntryVectorArray,1,1,NULL};
+  Vector  singleEntryVectorData = {CLASS_VECTOR,-1, &vectorFuncs, singleEntryVectorArray,1,1,1,NULL};
   Vector *singleEntryVector = &singleEntryVectorData;
 #else
   extern Vector *emptyVector;

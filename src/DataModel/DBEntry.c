@@ -2,6 +2,8 @@
 #include "DBEntry.h"
 #undef __DBENTRY_MAIN__
 
+#include <string.h>
+
 DBEntry *DBEntry_new() {
   DBEntry *dbe;
 

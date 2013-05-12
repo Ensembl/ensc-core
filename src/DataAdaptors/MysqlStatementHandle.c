@@ -77,7 +77,7 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
     exit(1);
   }
 
-  printf("Statement after formatting = %s\n",statement);
+  //printf("Statement after formatting = %s\n",statement);
 
   if (mysql_real_query (m_sth->dbc->mysql, statement, qlen) != 0) {    /* the query failed */
     fprintf(stderr, "Could not execute query %s\n", statement);
@@ -183,7 +183,10 @@ void MysqlStatementHandle_finish(StatementHandle *sth) {
 
   m_sth = (MysqlStatementHandle *)sth;
 
-  if (m_sth->results) mysql_free_result(m_sth->results);
+  if (m_sth->results) {
+//    fprintf(stderr, "Freeing results\n");
+    mysql_free_result(m_sth->results);
+  }
 
   if (m_sth->statementFormat) free(m_sth->statementFormat);
   if (m_sth->m_row) free(m_sth->m_row);

@@ -26,7 +26,7 @@ typedef struct BaseAlignFeatureFuncsStruct {
 
 #define BASEALIGNFEATURE_DATA \
   FEATUREPAIR_DATA \
-  char       *cigarString;
+  ECOSTRING  cigarString;
 
 
 #define FUNCSTRUCTTYPE BaseAlignFeatureFuncs
@@ -37,7 +37,7 @@ struct BaseAlignFeatureStruct {
 
 BaseAlignFeature *BaseAlignFeature_new(void);
 
-char *BaseAlignFeature_setCigarString(BaseAlignFeature *fp, char *ciggy);
+ECOSTRING BaseAlignFeature_setCigarString(BaseAlignFeature *fp, char *ciggy);
 #define BaseAlignFeature_getCigarString(fp)  (fp)->cigarString
 
 #define BaseAlignFeature_getHitSeqName(fp)  FeaturePair_getHitSeqName((fp))

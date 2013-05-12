@@ -26,6 +26,8 @@ DBConnection    *DBConnection_new(char *host, char *user, char *pass, char *dbna
 BaseAdaptor     *DBConnection_getAdaptor(DBConnection *dbc, int type);
 StatementHandle *DBConnection_prepare(DBConnection *dbc, char *queryStr, int queryLen);
 int DBConnection_addAdaptor(DBConnection *dbc, BaseAdaptor *ba);
+char *DBConnection_getDriverName(DBConnection *dbc);
+void DBConnection_fromDateToSeconds(DBConnection *dbc, char *column, char *wrappedColumn);
 
 
 

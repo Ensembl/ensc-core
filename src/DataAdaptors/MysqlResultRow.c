@@ -19,14 +19,25 @@ MysqlResultRow *MysqlResultRow_new() {
 
   rr->funcs = &mysqlResultRowFuncs;
 
-  rr->getStringAt   = MysqlResultRow_getStringAt;
-  rr->getIntAt      = MysqlResultRow_getIntAt;
-  rr->getLongAt     = MysqlResultRow_getLongAt;
-  rr->getLongLongAt = MysqlResultRow_getLongLongAt;
-  rr->getDoubleAt   = MysqlResultRow_getDoubleAt;
-  rr->col           = MysqlResultRow_col;
+  rr->getStringAt     = MysqlResultRow_getStringAt;
+  rr->getStringCopyAt = MysqlResultRow_getStringCopyAt;
+  rr->getIntAt        = MysqlResultRow_getIntAt;
+  rr->getLongAt       = MysqlResultRow_getLongAt;
+  rr->getLongLongAt   = MysqlResultRow_getLongLongAt;
+  rr->getDoubleAt     = MysqlResultRow_getDoubleAt;
+  rr->col             = MysqlResultRow_col;
 
   return rr;
+}
+
+char * MysqlResultRow_getStringCopyAt(ResultRow *row, int ind) {
+  MysqlResultRow *m_row;
+
+  Class_assertType(CLASS_MYSQLRESULTROW, row->objectType);
+
+  m_row = (MysqlResultRow *)row;
+
+  return MysqlUtil_getStringCopy(m_row->mysql_row, ind);
 }
 
 char * MysqlResultRow_getStringAt(ResultRow *row, int ind) {

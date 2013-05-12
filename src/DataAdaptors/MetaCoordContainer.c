@@ -83,8 +83,6 @@ MetaCoordContainer *MetaCoordContainer_new(DBAdaptor *dba) {
     }
     *maxLenP = maxLen;
     StringHash_add(hash, tableName, maxLenP);
-
-    free(tableName);
   }
   sth->finish(sth);
 

@@ -20,6 +20,7 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features);
 
 
 #define DNAAlignFeatureAdaptor_fetchByDbID(dafa, id) BaseFeatureAdaptor_fetchByDbID((BaseFeatureAdaptor *)(dafa), (id))
+#define DNAAlignFeatureAdaptor_clearCache(dafa) BaseFeatureAdaptor_clearCache((BaseFeatureAdaptor *)(dafa))
 #define DNAAlignFeatureAdaptor_fetchAllBySliceAndScore(dafa, slice, score, lname) \
           BaseFeatureAdaptor_fetchAllBySliceAndScore((BaseFeatureAdaptor *)(dafa), (slice), (score), (lname))
 #define DNAAlignFeatureAdaptor_fetchAllByRawContigAndScore(dafa, contig, score, lname) \
