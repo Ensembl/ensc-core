@@ -51,7 +51,7 @@ struct BaseFeatureAdaptorStruct {
 #define BaseFeatureAdaptor_setSpeciesId(bfa,val) BaseAdaptor_setSpeciesId((bfa), (val))
 #define BaseFeatureAdaptor_getSpeciesId(bfa) BaseAdaptor_getSpeciesId((bfa))
 
-#define BaseFeatureAdaptor_fetchByDbID(bfa,val) BaseAdaptor_fetchByDbID((BaseFeatureAdaptor *)(bfa), (val))
+#define BaseFeatureAdaptor_fetchByDbID(bfa,val) BaseAdaptor_fetchByDbID((BaseAdaptor *)(bfa), (val))
 /*
 char *BaseFeatureAdaptor_finalClause(void);
 char **BaseFeatureAdaptor_leftJoin(void);

@@ -19,10 +19,18 @@ typedef struct GeneFuncsStruct {
 struct GeneStruct {
   ANNOTATEDSEQFEATURE_DATA
   FeatureSet fs;
-  char *type;
+  ECOSTRING biotype;
+  ECOSTRING status;
+  ECOSTRING source;
+  char *externalName;
+  ECOSTRING externalDb;
+  ECOSTRING externalStatus;
+  char *description;
   char startIsSet;
   char endIsSet;
   char strandIsSet;
+  IDType canonicalTranscriptId;
+  char *canonicalAnnotation;
   Vector *dbLinks;
 };
 #undef FUNCSTRUCTTYPE
@@ -41,6 +49,9 @@ Gene *Gene_new(void);
 #define Gene_setStrand(gene,strand) AnnotatedSeqFeature_setStrand((gene),strand)
 #define Gene_getStrand(gene) AnnotatedSeqFeature_getStrand((gene))
 
+#define Gene_setSlice(gene,sl) AnnotatedSeqFeature_setSlice((gene),(sl))
+#define Gene_getSlice(gene) AnnotatedSeqFeature_getSlice((gene))
+
 #define Gene_setAdaptor(gene,ad) AnnotatedSeqFeature_setAdaptor((gene),ad)
 #define Gene_getAdaptor(gene) AnnotatedSeqFeature_getAdaptor((gene))
 
@@ -50,8 +61,30 @@ Gene *Gene_new(void);
 #define Gene_setStableId(gene,stableId)  StableIdInfo_setStableId(&((gene)->si),stableId)
 char *Gene_getStableId(Gene *gene);
 
-char *Gene_setType(Gene *gene, char *type);
-#define Gene_getType(gene)  (gene)->type
+ECOSTRING Gene_setBiotype(Gene *gene, char *biotype);
+#define Gene_getBiotype(gene)  (gene)->biotype
+
+ECOSTRING Gene_setExternalStatus(Gene *gene, char *externalStatus);
+#define Gene_getExternalStatus(gene)  (gene)->externalStatus
+
+ECOSTRING Gene_setExternalDb(Gene *gene, char *externalDb);
+#define Gene_getExternalDb(gene)  (gene)->externalDb
+
+
+ECOSTRING Gene_setStatus(Gene *gene, char *status);
+#define Gene_getStatus(gene)  (gene)->status
+
+ECOSTRING Gene_setSource(Gene *gene, char *source);
+#define Gene_getSource(gene)  (gene)->source
+
+char *Gene_setDescription(Gene *gene, char *description);
+#define Gene_getDescription(gene)  (gene)->description
+
+char *Gene_setExternalName(Gene *gene, char *externalName);
+#define Gene_getExternalName(gene)  (gene)->externalName
+
+#define Gene_setCanonicalTranscriptId(gene, id)  (gene)->canonicalTranscriptId = (id)
+#define Gene_getCanonicalTranscriptId(gene)  (gene)->canonicalTranscriptId
 
 #define Gene_setCreated(gene,cd)  StableIdInfo_setCreated(&((gene)->si),cd)
 #define Gene_getCreated(gene)  StableIdInfo_getCreated(&((gene)->si))
@@ -61,6 +94,9 @@ char *Gene_setType(Gene *gene, char *type);
 
 #define Gene_setVersion(gene,ver)  StableIdInfo_setVersion(&((gene)->si),ver)
 #define Gene_getVersion(gene)  StableIdInfo_getVersion(&((gene)->si))
+
+#define Gene_setIsCurrent(gene,isC)  StableIdInfo_setIsCurrent(&((gene)->si),(isC))
+#define Gene_getIsCurrent(gene)  StableIdInfo_getIsCurrent(&((gene)->si))
 
 #define Gene_setAnalysis(gene,ana) AnnotatedSeqFeature_setAnalysis((gene),ana)
 #define Gene_getAnalysis(gene) AnnotatedSeqFeature_getAnalysis((gene))

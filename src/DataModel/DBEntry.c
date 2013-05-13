@@ -42,6 +42,18 @@ char *DBEntry_setPrimaryId(DBEntry *dbe, char *primaryId) {
   return dbe->primaryId;
 }
 
+// Not sure if this one should be char * or ECOSSTRING
+char *DBEntry_setInfoText(DBEntry *dbe, char *infoText) {
+  if ((dbe->infoText = (char *)malloc(strlen(infoText)+1)) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for infoText\n");
+    return NULL;
+  }
+
+  strcpy(dbe->infoText,infoText);
+
+  return dbe->infoText;
+}
+
 char *DBEntry_setDescription(DBEntry *dbe, char *description) {
   if ((dbe->description = (char *)malloc(strlen(description)+1)) == NULL) {
     fprintf(stderr,"ERROR: Failed allocating space for description\n");
@@ -64,6 +76,17 @@ ECOSTRING DBEntry_setDbName(DBEntry *dbe, char *dbName) {
   return dbe->dbName;
 }
 
+ECOSTRING DBEntry_setDbDisplayName(DBEntry *dbe, char *dbDisplayName) {
+  EcoString_copyStr(ecoSTable, &(dbe->dbDisplayName),dbDisplayName,0); 
+
+  if (dbe->dbDisplayName == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for dbDisplayName\n");
+    return NULL;
+  }
+
+  return dbe->dbDisplayName;
+}
+
 int DBEntry_addSynonym(DBEntry *dbe, char *syn) {
   if (!dbe->synonyms) {
     dbe->synonyms = Vector_new();
@@ -83,6 +106,39 @@ ECOSTRING DBEntry_setStatus(DBEntry *dbe, char *status) {
   return dbe->status;
 }
 
+ECOSTRING DBEntry_setVersion(DBEntry *dbe, char *version) {
+  EcoString_copyStr(ecoSTable, &(dbe->version),version,0); 
+
+  if (dbe->version == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for version\n");
+    return NULL;
+  }
+
+  return dbe->version;
+}
+
+ECOSTRING DBEntry_setRelease(DBEntry *dbe, char *release) {
+  EcoString_copyStr(ecoSTable, &(dbe->release),release,0); 
+
+  if (dbe->release == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for release\n");
+    return NULL;
+  }
+
+  return dbe->release;
+}
+
+ECOSTRING DBEntry_setInfoType(DBEntry *dbe, char *infoType) {
+  EcoString_copyStr(ecoSTable, &(dbe->infoType),infoType,0); 
+
+  if (dbe->infoType == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for infoType\n");
+    return NULL;
+  }
+
+  return dbe->infoType;
+}
+
 void DBEntry_free(DBEntry *dbe) {
   Object_decRefCount(dbe);
 
@@ -94,11 +150,16 @@ void DBEntry_free(DBEntry *dbe) {
   }
 
   if (dbe->dbName) EcoString_freeStr(ecoSTable, dbe->dbName);
+  if (dbe->dbDisplayName) EcoString_freeStr(ecoSTable, dbe->dbDisplayName);
   if (dbe->status) EcoString_freeStr(ecoSTable, dbe->status);
+  if (dbe->version) EcoString_freeStr(ecoSTable, dbe->version);
+  if (dbe->release) EcoString_freeStr(ecoSTable, dbe->release);
+  if (dbe->infoType) EcoString_freeStr(ecoSTable, dbe->infoType);
 
   if (dbe->displayId)   free(dbe->displayId);
   if (dbe->description) free(dbe->description);
   if (dbe->primaryId)   free(dbe->primaryId);
+  if (dbe->infoText)    free(dbe->infoText);
 
   if (dbe->synonyms) Vector_free(dbe->synonyms);
 

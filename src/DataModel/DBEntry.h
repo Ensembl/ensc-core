@@ -20,10 +20,13 @@ struct DBEntryStruct {
   Storable  st;
   char     *primaryId;
   ECOSTRING dbName;
+  ECOSTRING dbDisplayName;
   ECOSTRING status;
-  int       version;
+  ECOSTRING version;
   char     *displayId;
-  int       release;
+  ECOSTRING release;
+  ECOSTRING infoType;
+  char     *infoText;
   Vector   *synonyms;
   char     *description;
   IdentityXref *idXref;
@@ -39,10 +42,12 @@ DBEntry *DBEntry_new(void);
 #define DBEntry_setAdaptor(d,ad) Storable_setAdaptor(&((d)->st),ad)
 #define DBEntry_getAdaptor(d) Storable_getAdaptor(&((d)->st))
 
-#define DBEntry_setVersion(d,ver) (d)->version = (ver)
+//#define DBEntry_setVersion(d,ver) (d)->version = (ver)
+ECOSTRING DBEntry_setVersion(DBEntry *dbe, char *version);
 #define DBEntry_getVersion(d) (d)->version
 
-#define DBEntry_setRelease(d,rel) (d)->release = (rel)
+//#define DBEntry_setRelease(d,rel) (d)->release = (rel)
+ECOSTRING DBEntry_setRelease(DBEntry *dbe, char *release);
 #define DBEntry_getRelease(d) (d)->release
 
 #define DBEntry_setIdentityXref(d,idx) (d)->idXref = (idx)
@@ -50,6 +55,9 @@ DBEntry *DBEntry_new(void);
 
 ECOSTRING DBEntry_setDbName(DBEntry *dbe, char *name);
 #define DBEntry_getDbName(d) (d)->dbName
+
+ECOSTRING DBEntry_setDbDisplayName(DBEntry *dbe, char *name);
+#define DBEntry_getDbDisplayName(d) (d)->dbDisplayName
 
 char *DBEntry_setPrimaryId(DBEntry *dbe, char *id);
 #define DBEntry_getPrimaryId(d) (d)->primaryId
@@ -60,11 +68,18 @@ char *DBEntry_setDisplayId(DBEntry *dbe, char *id);
 char *DBEntry_setDescription(DBEntry *dbe, char *desc);
 #define DBEntry_getDescription(d) (d)->description
 
-
 int DBEntry_addSynonym(DBEntry *dbe, char *syn);
 #define DBEntry_getAllSynonyms(d) (d)->synonyms
 
 ECOSTRING DBEntry_setStatus(DBEntry *dbe, char *status);
+#define DBEntry_getStatus(d) (d)->status
+
+ECOSTRING DBEntry_setInfoType(DBEntry *dbe, char *infoType);
+#define DBEntry_getInfoType(d) (d)->infoType
+
+char *DBEntry_setInfoText(DBEntry *dbe, char *infoText);
+#define DBEntry_getInfoText(d) (d)->infoText
+
 
 void DBEntry_free(DBEntry *dbe);
 

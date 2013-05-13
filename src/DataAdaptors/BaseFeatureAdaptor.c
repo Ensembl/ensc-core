@@ -1072,7 +1072,7 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
         // NIY: Note hack hack hack to unset any freeFunc that has been set on the features vector - to stop the features we've transferred to another vector being freed
         Vector_setFreeFunc(features, NULL);
         Vector_free(features);
-        Vector_free(remappedFeatures);
+        if (remappedFeatures != features) Vector_free(remappedFeatures);
       }
 
       QueryAccumData_free(qad);

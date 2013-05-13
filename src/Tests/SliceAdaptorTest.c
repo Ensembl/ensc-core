@@ -77,8 +77,8 @@ int main(int argc, char *argv[]) {
   printf("slice name = %s\n",Slice_getName(slice));
   ok(nTest++, !strcmp(Slice_getName(slice),"chromosome:NCBI33:1:1:250000000:1"));
 
-  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","Y",1,3000000,1,NULL,0);
-  //slice = SliceAdaptor_fetchByRegion(sa,"chromosome","1",1,250000000,1,NULL,0);
+//  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","Y",1,3000000,1,NULL,0);
+  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","1",1,250000000,1,NULL,0);
   char *seq = Slice_getSeq(slice);
   //printf("slice seq = %s\n", seq);
  

@@ -82,6 +82,9 @@ time_t AnnotatedSeqFeature_getModified(AnnotatedSeqFeature *asf);
 #define AnnotatedSeqFeature_setContig(asf,c) SeqFeature_setContig((asf),(c))
 #define AnnotatedSeqFeature_getContig(asf) SeqFeature_getContig((asf))
 
+#define AnnotatedSeqFeature_setSlice(asf,c) SeqFeature_setSlice((asf),(c))
+#define AnnotatedSeqFeature_getSlice(asf) SeqFeature_getSlice((asf))
+
 #define AnnotatedSeqFeature_transformToSlice(asf, slice) SeqFeature_transformToSlice((asf),(slice))
 #define AnnotatedSeqFeature_transformToRawContig(asf) SeqFeature_transformToRawContig((asf))
 

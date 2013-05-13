@@ -19,6 +19,7 @@ Gene *Gene_new() {
   Gene_setModified(gene,0);
   Gene_setCreated(gene,0);
   Gene_setVersion(gene,-1);
+  Gene_setIsCurrent(gene,1);
 
   gene->objectType = CLASS_GENE;
   Object_incRefCount(gene);
@@ -56,22 +57,105 @@ char *Gene_getStableId(Gene *gene) {
   GeneAdaptor *ga = (GeneAdaptor *)Gene_getAdaptor(gene);
 
   if (StableIdInfo_getStableId(&(gene->si)) == NULL && ga) {
-    GeneAdaptor_getStableEntryInfo(ga,gene);
+//    GeneAdaptor_getStableEntryInfo(ga,gene);
+    fprintf(stderr, "New Gene code shouldn't need to lazy load stable ids\n");
+    exit(1);
   }
   return StableIdInfo_getStableId(&(gene->si));
 }
 
-char *Gene_setType(Gene *g, char *type) {
-  if ((g->type = (char *)malloc(strlen(type)+1)) == NULL) {
-    fprintf(stderr,"ERROR: Failed allocating space for gene type\n");
+char *Gene_setDescription(Gene *g, char *description) {
+  if ((g->description = (char *)malloc(strlen(description)+1)) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for description\n");
     return NULL;
   }
 
-  strcpy(g->type,type);
+  strcpy(g->description,description);
 
-  return g->type;
+  return g->description;
 }
 
+char *Gene_setCanonicalAnnotation(Gene *g, char *canonicalAnnotation) {
+  if ((g->canonicalAnnotation = (char *)malloc(strlen(canonicalAnnotation)+1)) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for canonicalAnnotation\n");
+    return NULL;
+  }
+
+  strcpy(g->canonicalAnnotation,canonicalAnnotation);
+
+  return g->canonicalAnnotation;
+}
+
+
+ECOSTRING Gene_setBiotype(Gene *g, char *biotype) {
+  EcoString_copyStr(ecoSTable, &(g->biotype),biotype,0);
+
+  if (g->biotype == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for biotype\n");
+    return NULL;
+  }
+
+  return g->biotype;
+}
+
+ECOSTRING Gene_setStatus(Gene *g, char *status) {
+  EcoString_copyStr(ecoSTable, &(g->status),status,0);
+
+  if (g->status == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for status\n");
+    return NULL;
+  }
+
+  return g->status;
+}
+
+ECOSTRING Gene_setSource(Gene *g, char *source) {
+  EcoString_copyStr(ecoSTable, &(g->source),source,0);
+
+  if (g->source == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for source\n");
+    return NULL;
+  }
+
+  return g->source;
+}
+
+ECOSTRING Gene_setExternalDb(Gene *g, char *externalDb) {
+  EcoString_copyStr(ecoSTable, &(g->externalDb),externalDb,0);
+
+  if (g->externalDb == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for externalDb\n");
+    return NULL;
+  }
+
+  return g->externalDb;
+}
+
+ECOSTRING Gene_setExternalStatus(Gene *g, char *externalStatus) {
+  EcoString_copyStr(ecoSTable, &(g->externalStatus),externalStatus,0);
+
+  if (g->externalStatus == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for externalStatus\n");
+    return NULL;
+  }
+
+  return g->externalStatus;
+}
+
+char *Gene_setExternalName(Gene *g, char *externalName) {
+  if (externalName == NULL) {
+    g->externalName = NULL;
+    return NULL;
+  }
+  if ((g->externalName = (char *)malloc(strlen(externalName)+1)) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for externalName\n");
+    return NULL;
+  }
+
+  strcpy(g->externalName,externalName);
+
+  return g->externalName;
+}
 
 Vector *Gene_getAllExons(Gene *gene) {
   IDHash *exonHash = IDHash_new(IDHASH_SMALL);

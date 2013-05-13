@@ -11,6 +11,7 @@ struct StableIdInfoStruct {
   int   version;
   time_t created;
   time_t modified;
+  char isCurrent;
 };
 
 char *StableIdInfo_setStableId(StableIdInfo *si, char *sid); 
@@ -24,5 +25,8 @@ char *StableIdInfo_setStableId(StableIdInfo *si, char *sid);
 
 #define StableIdInfo_setVersion(si,ver)  (si)->version = (ver)
 #define StableIdInfo_getVersion(si) (si)->version
+
+#define StableIdInfo_setIsCurrent(si,isC)  (si)->isCurrent = (isC)
+#define StableIdInfo_getIsCurrent(si) (si)->isCurrent
 
 #endif

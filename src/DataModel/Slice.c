@@ -2474,7 +2474,6 @@ sub get_all_SNPs_transcripts {
 =cut
 */
 
-/*
 Vector *Slice_getAllGenes(Slice *slice, char *logicName, char *dbType, int loadTranscripts, char *source, char *bioType) {
   if (!Slice_getAdaptor(slice)) {
     fprintf(stderr, "Warning: Cannot get Genes without attached adaptor");
@@ -2493,7 +2492,6 @@ Vector *Slice_getAllGenes(Slice *slice, char *logicName, char *dbType, int loadT
 
   return GeneAdaptor_fetchAllBySlice(ga, slice, logicName, loadTranscripts, source, bioType);
 }
-*/
 
 /*
 =head2 get_all_Genes_by_type
