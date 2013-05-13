@@ -32,9 +32,9 @@ int main(int argc, char *argv[]) {
 
   //features =  Slice_getAllDNAAlignFeatures(slice,NULL,NULL, NULL,NULL);
 
-  Slice *slice3 = SliceAdaptor_fetchByRegion(sa,"chromosome","1",2,260000000,1,NULL,0);
+  //Slice *slice3 = SliceAdaptor_fetchByRegion(sa,"chromosome","1",2,260000000,1,NULL,0);
   //Slice *slice2 = SliceAdaptor_fetchByRegion(sa,"chromosome","Y",1000000,4000000,1,NULL,0);
-  features =  Slice_getAllDNAAlignFeatures(slice3,NULL,NULL, NULL,NULL);
+  features =  Slice_getAllDNAAlignFeatures(slice,NULL,NULL, NULL,NULL);
 
   ok(3, features!=NULL);
   ok(4, Vector_getNumElement(features)!=0);
@@ -67,44 +67,46 @@ int main(int argc, char *argv[]) {
     }
   }
   ok(5, !failed);
-  fprintf(stderr,"Clearing dafa cache\n");
-  DNAAlignFeatureAdaptor_clearCache(dafa);
+
+//  fprintf(stderr,"Clearing dafa cache\n");
+//  DNAAlignFeatureAdaptor_clearCache(dafa);
 
 //  Slice *slice2 = SliceAdaptor_fetchByRegion(sa,"chromosome","Y",1000000,4000000,1,NULL,0);
 //  features =  Slice_getAllDNAAlignFeatures(slice2,NULL,NULL, NULL,NULL);
 //  Slice *slice3 = SliceAdaptor_fetchByRegion(sa,"chromosome","1",10000000,100000000,1,NULL,0);
 //  features =  Slice_getAllDNAAlignFeatures(slice3,NULL,NULL, NULL,NULL);
-  features =  Slice_getAllDNAAlignFeatures(slice,NULL,NULL, NULL,NULL);
+//  features =  Slice_getAllDNAAlignFeatures(slice,NULL,NULL, NULL,NULL);
 
-  fprintf(stderr," \n\n\nTest 6 commented out - NEED TO IMPLEMENT TRANSFORMS ON FEATURES\n\n\n");
-/*
+  fprintf(stderr," \n\n\nTest 6 needs work - using SeqFeature transform and transfer methods - need to implement BaseAlignFeature ones\n\n\n");
   failed = 0;
   for (i=0;i<Vector_getNumElement(features) && !failed;i++) {
     DNAAlignFeature *daf = Vector_getElementAt(features,i);
     int start = DNAAlignFeature_getStart(daf);
     int end   = DNAAlignFeature_getEnd(daf);
-    Vector *rdafVector;
     DNAAlignFeature *rdaf;
 
     // printf("slice start = %d end = %d id " IDFMTSTR "\n",start,end,DNAAlignFeature_getDbID(daf));
-    rdafVector = DNAAlignFeature_transformToRawContig(daf);
-    if (Vector_getNumElement(rdafVector) > 1) {
-      printf("Feature mapped to more than one rawcontig\n");
-      failed=1;
-    }
-    rdaf = Vector_getElementAt(rdafVector,0);
+    // Temporary:
+    rdaf = SeqFeature_transform(daf,"contig", NULL, NULL);
+    // SHOULD BE THISrdaf = DNAAlignFeature_transform(daf,"contig", NULL, NULL);
+    if (rdaf == NULL) {
+//      printf("Feature didn't map\n");
+    } else {
 
-    // printf("rc id " IDFMTSTR " rc start = %d end = %d\n",BaseContig_getDbID(DNAAlignFeature_getContig(rdaf)),
-    //       DNAAlignFeature_getStart(rdaf),DNAAlignFeature_getEnd(rdaf));
-    daf = DNAAlignFeature_transformToSlice(rdaf, slice);
-    if (DNAAlignFeature_getStart(daf) != start ||
-        DNAAlignFeature_getEnd(daf) != end) {
-      // printf("slice start now = %d end = %d\n",DNAAlignFeature_getStart(daf),DNAAlignFeature_getEnd(daf));
-      printf("Remapping to slice produced different coords for " IDFMTSTR "\n", DNAAlignFeature_getDbID(daf));
-      failed =1;
+      // printf("rc id " IDFMTSTR " rc start = %d end = %d\n",BaseContig_getDbID(DNAAlignFeature_getContig(rdaf)),
+      //       DNAAlignFeature_getStart(rdaf),DNAAlignFeature_getEnd(rdaf));
+  
+      // Temporary:
+      daf = SeqFeature_transfer(rdaf, slice);
+      // SHOULD BE daf = DNAAlignFeature_transfer(rdaf, slice);
+      if (DNAAlignFeature_getStart(daf) != start ||
+          DNAAlignFeature_getEnd(daf) != end) {
+        // printf("slice start now = %d end = %d\n",DNAAlignFeature_getStart(daf),DNAAlignFeature_getEnd(daf));
+        printf("Remapping to slice produced different coords for " IDFMTSTR "\n", DNAAlignFeature_getDbID(daf));
+        failed =1;
+      }
     }
   }
   ok(6, !failed);
-*/
   return 0;
 }

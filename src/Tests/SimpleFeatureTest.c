@@ -36,25 +36,29 @@ int main(int argc, char *argv[]) {
   failed = 0;
   for (i=0;i<Vector_getNumElement(features) && !failed;i++) {
     SimpleFeature *sf = Vector_getElementAt(features,i);
-    int start = SimpleFeature_getStart(sf);
-    int end   = SimpleFeature_getEnd(sf);
+    long start = SimpleFeature_getStart(sf);
+    long end   = SimpleFeature_getEnd(sf);
     Vector *rsfVector;
     SimpleFeature *rsf;
 
     //printf("slice start = %d end = %d\n",start,end);
-    rsfVector = SimpleFeature_transformToRawContig(sf);
-    if (Vector_getNumElement(rsfVector) > 1) {
-      printf("Feature mapped to more than one rawcontig\n");
-      failed=1;
-    }
-    rsf = Vector_getElementAt(rsfVector,0);
+    rsf = SeqFeature_transform(sf,"contig",NULL,NULL);
 
-    //printf("rc start = %d end = %d\n",SimpleFeature_getStart(rsf),SimpleFeature_getEnd(rsf));
-    sf = SimpleFeature_transformToSlice(rsf, slice);
-    if (SimpleFeature_getStart(sf) != start ||
-        SimpleFeature_getEnd(sf) != end) {
-      printf("Remapping to slice produced different coords\n");
-      failed =1;
+    if (rsf) {
+//      printf("rc start = %ld end = %ld\n",SimpleFeature_getStart(rsf),SimpleFeature_getEnd(rsf));
+    } else {
+//      printf("no mapped feature\n");
+    }
+
+    if (rsf) {
+      //sf = SeqFeature_transform(rsf,"chromosome",NULL,slice);
+      sf = SeqFeature_transfer(rsf, slice);
+      if (SimpleFeature_getStart(sf) != start ||
+          SimpleFeature_getEnd(sf) != end) {
+        printf("Remapping to slice produced different coords start %ld v %ld   end %ld v %ld\n", 
+               SimpleFeature_getStart(sf),start, SimpleFeature_getEnd(sf),end);
+        failed =1;
+      }
     }
   }
   ok(5, !failed);

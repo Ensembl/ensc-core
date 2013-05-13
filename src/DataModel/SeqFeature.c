@@ -540,7 +540,7 @@ SeqFeature *SeqFeature_transform(SeqFeature *sf, char *csName, char *csVersion, 
     return NULL;
   }
 
-  if (Slice_getAdaptor(slice)) {
+  if (!Slice_getAdaptor(slice)) {
     fprintf(stderr, "Feature cannot be transformed without adaptor on attached slice.\n");
     return NULL;
   }
@@ -597,7 +597,8 @@ SeqFeature *SeqFeature_transform(SeqFeature *sf, char *csName, char *csVersion, 
 
   if (nProjection != 1 && toSlice == NULL) {
 // Warns were commented out - I've reinstated them for now for C just in case they catch something
-    fprintf(stderr, "MORE than one projection and NO slice specified from %s to %s, %s\n", Slice_getName(SeqFeature_getSlice(sf)), csName, csVersion);
+    //fprintf(stderr, "MORE than one projection and NO slice specified from %s to %s, %s\n", 
+    //        Slice_getName(SeqFeature_getSlice(sf)), csName, csVersion);
     return NULL;
   }
 

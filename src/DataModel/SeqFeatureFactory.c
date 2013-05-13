@@ -26,6 +26,9 @@ SeqFeature *SeqFeatureFactory_newFeature(ClassType type) {
     case CLASS_PREDICTIONTRANSCRIPT:
       feature = PredictionTranscript_new(); 
       break;
+    case CLASS_SIMPLEFEATURE:
+      feature = SimpleFeature_new(); 
+      break;
     case CLASS_SEQFEATURE:
       feature = SeqFeature_new(); 
       break;

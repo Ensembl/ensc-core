@@ -168,14 +168,19 @@ void Vector_setNumElement(Vector *v, int nElem) {
       fprintf(stderr,"ERROR: Failed allocating space for elem array\n");
       return;
     }
-    
       
     memset(&(v->elements[v->nElement]), 0, sizeof(void *) * (v->nAlloced - v->nElement));
   }
 
-//  for (i=v->nElement; i<nElem; i++) {
-//    v->elements[i] = NULL;
-//  }
+/*
+  if ((v->elements = (void **)realloc(v->elements,nElem*sizeof(void *))) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for elem array\n");
+    return;
+  }
+  for (i=v->nElement; i<nElem; i++) {
+    v->elements[i] = NULL;
+  }
+*/
 
   v->nElement = nElem;
 

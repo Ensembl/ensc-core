@@ -3479,9 +3479,7 @@ Vector *Slice_projectToSlice(Slice *slice, Slice *toSlice) {
     return projection;
   }
 
-
   AssemblyMapperAdaptor *asma = DBAdaptor_getAssemblyMapperAdaptor(sa->dba);
-
 
   CoordSystem *cs = Slice_getCoordSystem(toSlice);
   CoordSystem *sliceCs = Slice_getCoordSystem(slice);
@@ -3573,8 +3571,7 @@ Vector *Slice_projectToSlice(Slice *slice, Slice *toSlice) {
 
   // delete the cache as we may want to map to different set next time and old
   // results will be cached.
-
-  AssemblyMapperAdaptor_deleteCache(asma);
+  //AssemblyMapperAdaptor_deleteCache(asma);
 
   return projection;
 }

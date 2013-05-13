@@ -10,7 +10,7 @@ SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools_parallel
 #SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools-0.1.18
 ZLIBDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/include
 
-CFLAGS =  -g -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
+CFLAGS =  -Ofast -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS)
 
 BINDIR=../bin
@@ -43,6 +43,7 @@ all	: directories \
           Tests/MapperTest \
           Tests/PredictionTranscriptTest \
           Tests/RepeatFeatureTest \
+          Tests/SequenceAdaptorTest \
           Tests/SeqUtilTest \
           Tests/SimpleFeatureTest \
           Tests/SliceAdaptorTest \
@@ -97,6 +98,7 @@ libensc.a	: \
 	objectfiles/DataAdaptors/ExonAdaptor.o \
 	objectfiles/DataAdaptors/GeneAdaptor.o \
 	objectfiles/DataAdaptors/MetaContainer.o \
+	objectfiles/DataAdaptors/MetaCoordContainer.o \
 	objectfiles/DataAdaptors/MysqlResultRow.o \
 	objectfiles/DataAdaptors/MysqlStatementHandle.o \
 	objectfiles/DataAdaptors/PredictionTranscriptAdaptor.o \
@@ -105,6 +107,7 @@ libensc.a	: \
 	objectfiles/DataAdaptors/RepeatConsensusAdaptor.o \
 	objectfiles/DataAdaptors/RepeatFeatureAdaptor.o \
 	objectfiles/DataAdaptors/SequenceAdaptor.o \
+	objectfiles/DataAdaptors/SeqRegionCacheEntry.o \
 	objectfiles/DataAdaptors/SimpleFeatureAdaptor.o \
 	objectfiles/DataAdaptors/SliceAdaptor.o \
 	objectfiles/DataAdaptors/SupportingFeatureAdaptor.o \
@@ -145,6 +148,7 @@ libensc.a	: \
 	objectfiles/DataModel/Mapper/RangeRegistry.o \
 	objectfiles/DataModel/Object.o \
 	objectfiles/DataModel/PredictionTranscript.o \
+	objectfiles/DataModel/ProjectionSegment.o \
 	objectfiles/DataModel/RawContig.o \
 	objectfiles/DataModel/RepeatConsensus.o \
 	objectfiles/DataModel/RepeatFeature.o \
@@ -167,6 +171,7 @@ libensc.a	: \
 	objectfiles/Util/Error.o \
 	objectfiles/Util/FileUtil.o \
 	objectfiles/Util/IDHash.o \
+	objectfiles/Util/LRUCache.o \
 	objectfiles/Util/MysqlUtil.o \
 	objectfiles/Util/ProcUtil.o \
 	objectfiles/Util/SeqUtil.o \
@@ -267,11 +272,13 @@ Tests/DBAdaptorTest: \
 
 Tests/DNAAlignFeatureTest: \
 	libensc.a \
+	Tests/BaseRODBTest.h \
 	Tests/DNAAlignFeatureTest.c
-	$(CC) $(CFLAGS) -o Tests/DNAAlignFeatureTest Tests/DNAAlignFeatureTest.c -L. -lensc $(LDFLAGS)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o Tests/DNAAlignFeatureTest Tests/DNAAlignFeatureTest.c -L. -lensc $(LDFLAGS)
 
 Tests/DNAPepAlignFeatureTest: \
 	libensc.a \
+	Tests/BaseRODBTest.h \
 	Tests/DNAPepAlignFeatureTest.c
 	$(CC) $(CFLAGS) -o Tests/DNAPepAlignFeatureTest Tests/DNAPepAlignFeatureTest.c -L. -lensc $(LDFLAGS)
 
@@ -283,7 +290,7 @@ Tests/EcoStringTest: \
 Tests/FreeTest: \
 	libensc.a \
 	Tests/FreeTest.c
-	$(CC) $(CFLAGS) -o Tests/FreeTest Tests/FreeTest.c -L. -lensc $(LDFLAGS)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o Tests/FreeTest Tests/FreeTest.c -L. -lensc $(LDFLAGS)
 
 Tests/GeneTest: \
 	libensc.a \
@@ -296,6 +303,11 @@ Tests/HomologyTest: \
 	Tests/HomologyTest.c
 	$(CC) $(CFLAGS) -o Tests/HomologyTest Tests/HomologyTest.c -L. -lensc $(LDFLAGS)
 
+Tests/LRUCacheTest: \
+	libensc.a \
+	Tests/LRUCacheTest.c
+	$(CC) $(CFLAGS) -o Tests/LRUCacheTest Tests/LRUCacheTest.c -L. -lensc $(LDFLAGS)
+
 Tests/MapperTest: \
 	libensc.a \
 	Tests/MapperTest.c
@@ -303,13 +315,21 @@ Tests/MapperTest: \
 
 Tests/PredictionTranscriptTest: \
 	libensc.a \
+	Tests/BaseRODBTest.h \
 	Tests/PredictionTranscriptTest.c
 	$(CC) $(CFLAGS) -o Tests/PredictionTranscriptTest Tests/PredictionTranscriptTest.c -L. -lensc $(LDFLAGS)
 
 Tests/RepeatFeatureTest: \
 	libensc.a \
+	Tests/BaseRODBTest.h \
 	Tests/RepeatFeatureTest.c
 	$(CC) $(CFLAGS) -o Tests/RepeatFeatureTest Tests/RepeatFeatureTest.c -L. -lensc $(LDFLAGS)
+
+Tests/SequenceAdaptorTest: \
+	libensc.a \
+	Tests/BaseRODBTest.h \
+	Tests/SequenceAdaptorTest.c
+	$(CC) $(CFLAGS) -o Tests/SequenceAdaptorTest Tests/SequenceAdaptorTest.c -L. -lensc $(LDFLAGS)
 
 Tests/SeqUtilTest: \
 	libensc.a \
@@ -318,11 +338,13 @@ Tests/SeqUtilTest: \
 
 Tests/SimpleFeatureTest: \
 	libensc.a \
+	Tests/BaseRODBTest.h \
 	Tests/SimpleFeatureTest.c
 	$(CC) $(CFLAGS) -o Tests/SimpleFeatureTest Tests/SimpleFeatureTest.c -L. -lensc $(LDFLAGS)
 
 Tests/SliceAdaptorTest: \
 	libensc.a \
+	Tests/BaseRODBTest.h \
 	Tests/SliceAdaptorTest.c
 	$(CC) $(CFLAGS) -o Tests/SliceAdaptorTest Tests/SliceAdaptorTest.c -L. -lensc $(LDFLAGS)
 

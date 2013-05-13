@@ -126,7 +126,7 @@ Vector *RangeRegistry_checkAndRegister(RangeRegistry *registry, IDType id, long 
     CoordPair *cp = CoordPair_new(rStart, rEnd);
     Vector_addElement(list, cp);
 
-    return list;
+    return Vector_copy(list);
   }
 
   //####

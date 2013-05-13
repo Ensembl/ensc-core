@@ -238,7 +238,6 @@ IDType ChainedAssemblyMapper_getSeqRegionId(ChainedAssemblyMapper *cam, char *se
 
 MapperRangeSet *ChainedAssemblyMapper_mapImpl(ChainedAssemblyMapper *cam, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, 
                               CoordSystem *frmCs, int fastmap, Slice *toSlice) {
-
   Mapper *mapper       = ChainedAssemblyMapper_getFirstLastMapper(cam);
   CoordSystem *firstCs = ChainedAssemblyMapper_getFirstCoordSystem(cam);
   CoordSystem *lastCs  = ChainedAssemblyMapper_getLastCoordSystem(cam);
