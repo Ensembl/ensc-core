@@ -7,7 +7,6 @@
 #include "DataModelTypes.h"
 #include "AnnotatedSeqFeature.h"
 #include "StableIdInfo.h"
-#include "FeatureSet.h"
 #include "Slice.h"
 
 #define EXONFUNC_TYPES(CLASSTYPE) \
@@ -37,6 +36,7 @@ typedef struct ExonFuncsStruct {
 #define EXON_DATA \
   ANNOTATEDSEQFEATURE_DATA \
   Vector *supportingFeatures; \
+  char isConstituitive; \
   char *seqCacheString;
 
 #define FUNCSTRUCTTYPE ExonFuncs
@@ -44,6 +44,12 @@ struct ExonStruct {
   EXON_DATA
 };
 #undef FUNCSTRUCTTYPE
+
+#define Exon_setIsCurrent(exon,isC)  StableIdInfo_setIsCurrent(&((exon)->si),(isC))
+#define Exon_getIsCurrent(exon)  StableIdInfo_getIsCurrent(&((exon)->si))
+
+#define Exon_setIsConstituitive(exon,isC) (exon)->isConstituitive = (isC)
+#define Exon_getIsConstituitive(exon) (exon)->isConstituitive
 
 #define Exon_setStart(exon,start) AnnotatedSeqFeature_setStart((exon),(start))
 #define Exon_getStart(exon) AnnotatedSeqFeature_getStart((exon))
@@ -95,15 +101,16 @@ time_t Exon_getModified(Exon *exon);
 
 #define Exon_getLength(exon) AnnotatedSeqFeature_getLength((exon))
 
-//#define Exon_getSupportingFeatureAt(exon,ind) FeatureSet_getFeatureAt(&((exon)->supportingFeatures),(ind))
-//#define Exon_addSupportingFeature(exon, sf) FeatureSet_addFeature(&((exon)->supportingFeatures),(sf))
 Vector *Exon_getAllSupportingFeaturesImpl(Exon *exon);
 void Exon_addSupportingFeaturesImpl(Exon *exon, Vector *features);
-//#define Exon_getSupportingFeatureCount(exon) FeatureSet_getNumFeature(&((exon)->supportingFeatures))
 
 
 #define Exon_setContig(exon,c) AnnotatedSeqFeature_setContig((exon),(c))
 #define Exon_getContig(exon) AnnotatedSeqFeature_getContig((exon))
+
+#define Exon_setSlice(exon,sl) AnnotatedSeqFeature_setSlice((exon),(sl))
+#define Exon_getSlice(exon) AnnotatedSeqFeature_getSlice((exon))
+
 
 Exon *Exon_transformRawContigToSliceImpl(Exon *exon, Slice *slice);
 Exon *Exon_transformSliceToRawContigImpl(Exon *exon);

@@ -32,6 +32,12 @@ SeqFeature *SeqFeatureFactory_newFeature(ClassType type) {
     case CLASS_SEQFEATURE:
       feature = SeqFeature_new(); 
       break;
+    case CLASS_EXON:
+      feature = Exon_new(); 
+      break;
+    case CLASS_TRANSCRIPT:
+      feature = Transcript_new(); 
+      break;
     default:
       fprintf(stderr,"Error: Unknown feature type %d\n",type);
       exit(1);

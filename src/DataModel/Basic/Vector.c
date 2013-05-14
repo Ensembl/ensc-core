@@ -211,6 +211,20 @@ void **Vector_toArray(Vector *v) {
   return array;
 }
 
+void Vector_removeAll(Vector *v) {
+  int i;
+
+  for (i=0;i<v->nElement;i++) {
+    if (v->freeElement) {
+      if (v->elements[i]) {
+        v->freeElement(v->elements[i]);
+      }
+    }
+    v->elements[i] = NULL;
+  }
+  v->nElement = 0;
+}
+
 void Vector_free(Vector *v) {
   int i;
 

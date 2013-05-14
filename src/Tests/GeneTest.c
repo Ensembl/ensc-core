@@ -32,7 +32,6 @@ int main(int argc, char *argv[]) {
   ok(3, genes!=NULL);
   ok(4, Vector_getNumElement(genes)!=0);
 
-#ifdef DONE
   failed = 0;
   for (i=0;i<Vector_getNumElement(genes) && !failed;i++) {
     Gene *g = Vector_getElementAt(genes,i);
@@ -48,15 +47,15 @@ int main(int argc, char *argv[]) {
         Exon *e = Transcript_getExonAt(t,k);
         fprintf(stdout,"  exon %s coords: %ld %ld %d\n",Exon_getStableId(e), Exon_getStart(e),Exon_getEnd(e),Exon_getStrand(e));
       }
+#ifdef DONE
       Translation *tln = Transcript_getTranslation(t);
       if (tln) {
         fprintf(stdout," translation: %s",Transcript_translate(t));
       }
+#endif
     }
-    
   }
   ok(5, !failed);
-#endif
 
   return 0;
 }

@@ -3,7 +3,6 @@
 
 #include "DataModelTypes.h"
 #include "AnnotatedSeqFeature.h"
-#include "FeatureSet.h"
 #include "StableIdInfo.h"
 #include "Slice.h"
 #include "Transcript.h"
@@ -18,7 +17,7 @@ typedef struct GeneFuncsStruct {
 #define FUNCSTRUCTTYPE GeneFuncs
 struct GeneStruct {
   ANNOTATEDSEQFEATURE_DATA
-  FeatureSet fs;
+  Vector *transcripts;
   ECOSTRING biotype;
   ECOSTRING status;
   ECOSTRING source;
@@ -57,6 +56,10 @@ Gene *Gene_new(void);
 
 #define Gene_setDisplayXref(gene,xref) AnnotatedSeqFeature_setDisplayXref((gene),xref)
 #define Gene_getDisplayXref(gene) AnnotatedSeqFeature_getDisplayXref((gene))
+
+#define Gene_getSeqRegionStart(t) SeqFeature_getSeqRegionStart((t))
+#define Gene_getSeqRegionEnd(t) SeqFeature_getSeqRegionEnd((t))
+#define Gene_getSeqRegionStrand(t) SeqFeature_getSeqRegionStrand((t))
 
 #define Gene_setStableId(gene,stableId)  StableIdInfo_setStableId(&((gene)->si),stableId)
 char *Gene_getStableId(Gene *gene);
@@ -101,10 +104,10 @@ char *Gene_setExternalName(Gene *gene, char *externalName);
 #define Gene_setAnalysis(gene,ana) AnnotatedSeqFeature_setAnalysis((gene),ana)
 #define Gene_getAnalysis(gene) AnnotatedSeqFeature_getAnalysis((gene))
 
-#define Gene_addTranscript(gene,trans) FeatureSet_addFeature(&((gene)->fs),trans)
-#define Gene_getTranscriptAt(gene,ind) (Transcript *)FeatureSet_getFeatureAt(&((gene)->fs),ind)
+#define Gene_addTranscript(gene,trans) Vector_addElement((gene)->transcripts,(trans))
+#define Gene_getTranscriptAt(gene,ind) (Transcript *)Vector_getElementAt((gene)->transcripts,ind)
 
-#define Gene_getTranscriptCount(gene) FeatureSet_getNumFeature(&((gene)->fs))
+#define Gene_getTranscriptCount(gene) Vector_getNumElement((gene)->transcripts)
 
 #define Gene_EachTranscript(gene,trans,iter) \
     for (iter=0; iter<Gene_getTranscriptCount(gene); iter++) { \

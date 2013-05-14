@@ -21,6 +21,8 @@ Gene *Gene_new() {
   Gene_setVersion(gene,-1);
   Gene_setIsCurrent(gene,1);
 
+  gene->transcripts = Vector_new();
+
   gene->objectType = CLASS_GENE;
   Object_incRefCount(gene);
 

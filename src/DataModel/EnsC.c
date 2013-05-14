@@ -11,3 +11,12 @@ void initEnsC(void) {
 
   Stream_setDefaults(0);
 }
+
+
+int idTypeCompFunc(const void *one, const void *two) {
+  IDType id1 = *((IDType *)one);
+  IDType id2 = *((IDType *)two);
+
+  return id1-id2;
+}
+

@@ -4,7 +4,6 @@
 #include "DataModelTypes.h"
 
 #include "AnnotatedSeqFeature.h"
-#include "FeatureSet.h"
 #include "Storable.h"
 #include "Translation.h"
 #include "IDHash.h"
@@ -20,7 +19,14 @@ typedef struct TranscriptFuncsStruct {
 #define FUNCSTRUCTTYPE TranscriptFuncs
 struct TranscriptStruct {
   ANNOTATEDSEQFEATURE_DATA
-  FeatureSet   fs;
+  ECOSTRING    biotype;
+  ECOSTRING    status;
+  ECOSTRING    externalDb;
+  ECOSTRING    externalStatus;
+  char        *externalName;
+  char        *description;
+  char         editsEnabled;
+  Vector      *exons;
   Vector      *dbLinks;
   Translation *translation;
   IDType       translationId;
@@ -36,6 +42,12 @@ struct TranscriptStruct {
   char        *type;
 };
 #undef FUNCSTRUCTTYPE
+
+#define Transcript_setIsCurrent(trans,isC)  StableIdInfo_setIsCurrent(&((trans)->si),(isC))
+#define Transcript_getIsCurrent(trans)  StableIdInfo_getIsCurrent(&((trans)->si))
+
+#define Transcript_setAnalysis(trans,ana) AnnotatedSeqFeature_setAnalysis((trans),(ana))
+#define Transcript_getAnalysis(trans) AnnotatedSeqFeature_getAnalysis((trans))
 
 #define Transcript_setStableId(transcript,sid)  StableIdInfo_setStableId(&((transcript)->si),(sid))
 char *Transcript_getStableId(Transcript *transcript);
@@ -63,13 +75,13 @@ int Transcript_getVersion(Transcript *transcript);
 
 Transcript *Transcript_new(void);
 
-#define Transcript_addExon(transcript,exon) FeatureSet_addFeature(&((transcript)->fs),exon)
-#define Transcript_getExonAt(transcript,ind) FeatureSet_getFeatureAt(&((transcript)->fs),ind)
+#define Transcript_addExon(transcript,exon, rank) Vector_addElement((transcript)->exons, (exon))
+#define Transcript_getExonAt(transcript,ind) Vector_getElementAt((transcript)->exons, (ind))
 
-#define Transcript_getExonCount(transcript) FeatureSet_getNumFeature(&((transcript)->fs))
-#define Transcript_getExons(transcript) FeatureSet_getFeatures(&((transcript)->fs))
+#define Transcript_getExonCount(transcript) Vector_getNumElement((transcript)->exons)
+#define Transcript_sortExons(transcript, func) Vector_sort((transcript)->exons, (func))
 
-#define Transcript_removeAllExons(transcript) FeatureSet_removeAll(&((transcript)->fs))
+#define Transcript_removeAllExons(transcript) Vector_removeAll((transcript)->exons)
 
 #define Transcript_setTranslationId(transcript,tid) (transcript)->translationId = (tid)
 #define Transcript_getTranslationId(transcript) (transcript)->translationId
@@ -94,6 +106,21 @@ Translation *Transcript_getTranslation(Transcript *trans);
 
 #define Transcript_setcDNACodingEndIsSet(transcript, flag)  (transcript)->cDNACodingEndIsSet = (flag)
 #define Transcript_getcDNACodingEndIsSet(transcript)  (transcript)->cDNACodingEndIsSet
+
+#define Transcript_setSlice(trans,sl) AnnotatedSeqFeature_setSlice((trans),(sl))
+#define Transcript_getSlice(trans) AnnotatedSeqFeature_getSlice((trans))
+
+#define Transcript_setEditsEnabled(transcript, flag)  (transcript)->editsEnabled = (flag)
+#define Transcript_getEditsEnabled(transcript)  (transcript)->editsEnabled
+
+#define Transcript_setDisplayXref(trans,xref) AnnotatedSeqFeature_setDisplayXref((trans),xref)
+#define Transcript_getDisplayXref(trans) AnnotatedSeqFeature_getDisplayXref((trans))
+
+
+#define Transcript_getSeqRegionStart(t) SeqFeature_getSeqRegionStart((t))
+#define Transcript_getSeqRegionEnd(t) SeqFeature_getSeqRegionEnd((t))
+#define Transcript_getSeqRegionStrand(t) SeqFeature_getSeqRegionStrand((t))
+
 
 Exon *Transcript_getStartExon(Transcript *trans);
 Exon *Transcript_getEndExon(Transcript *trans);

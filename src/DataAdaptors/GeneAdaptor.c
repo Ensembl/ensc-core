@@ -107,8 +107,8 @@ char *Gene_cols[] = {
                 "g.canonical_annotation",
                 "g.stable_id",
                 "g.version",
-                "UNIX_TIMESTAMP(created_date)",
-                "UNIX_TIMESTAMP(modified_date)",
+                "UNIX_TIMESTAMP(g.created_date)",
+                "UNIX_TIMESTAMP(g.modified_date)",
                 "x.display_label",
                 "x.dbprimary_acc",
                 "x.description",
@@ -623,12 +623,6 @@ Vector *GeneAdaptor_fetchAllBySliceAndExternalDbnameLink(GeneAdaptor *ga, Slice 
 
 =cut
 */
-int idTypeCompFunc(const void *one, const void *two) {
-  IDType id1 = *((IDType *)one);
-  IDType id2 = *((IDType *)two);
-
-  return id1-id2;
-}
 
 Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicName, int loadTranscripts, char *source, char *biotype) {
   char constraint[1024];
@@ -654,12 +648,12 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
   // Preload all of the transcripts now, instead of lazy loading later,
   // faster than one query per transcript.
 
-#ifdef DONE
   // First check if transcripts are already preloaded.
   // FIXME: Should check all transcripts.
   Gene *firstGene = Vector_getElementAt(genes, 0);
   // Deliberate direct reach into gene struct to avoid any lazy loading
-  if (firstGene->fs.features != NULL) { // any transcripts???
+  // Not sure if I should set transcripts to null when there aren't any loaded - maybe, but it makes everything harder
+  if (Vector_getNumElement(firstGene->transcripts) != 0) { // any transcripts???
 // NIY: Is there anything to free??
     return genes;
   }
@@ -712,7 +706,6 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
 
   free(uniqueIds);
 
-
   StatementHandle *sth = ga->prepare((BaseAdaptor *)ga,qStr,strlen(qStr));
   sth->execute(sth);
 
@@ -732,9 +725,9 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
   TranscriptAdaptor *ta = DBAdaptor_getTranscriptAdaptor(ga->dba);
 
   // Note this is a constraint rather than a complete query, but I'm using qStr to save stack space
-  uniqueIds = IDHash_getKeys(gHash);
+  uniqueIds = IDHash_getKeys(trGHash);
 
-  qsort(uniqueIds, sizeof(IDType), IDHash_getNumValues(trGHash), idTypeCompFunc);
+  qsort(uniqueIds, IDHash_getNumValues(trGHash), sizeof(IDType), idTypeCompFunc);
 //sprintf("t.transcript_id IN (%s)", join(',', sort { $a <=> $b } keys(%tr_g_hash))));
 
   strcpy(qStr, "t.transcript_id IN (");
@@ -742,7 +735,11 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
     if (i!=0) {
       strcat(qStr, ", ");
     }
-    sprintf(qStr, "%s"IDFMTSTR, qStr, uniqueIds[i]);
+    char tmpStr[1024];
+    sprintf(tmpStr,IDFMTSTR,uniqueIds[i]);
+    strcat(qStr, tmpStr);
+    //fprintf(stderr, "id %d %s\n", i, tmpStr);
+    //sprintf(qStr, "%s"IDFMTSTR, qStr, uniqueIds[i]);
   }
   strcat(qStr,")");
 
@@ -760,7 +757,7 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
     if (slice != extSlice) {
       newTr = Transcript_transfer(tr, slice);
       if (newTr == NULL) {
-        fprintf(stderr, "Unexpected. Transcript could not be transfered onto Gene slice.\n");
+        fprintf(stderr, "Unexpected. Transcript could not be transferred onto Gene slice.\n");
         exit(1);
       }
     } else {
@@ -773,7 +770,6 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
   }
 
   IDHash_free(trGHash, NULL);
-#endif
 
   return genes;
 }
@@ -1804,7 +1800,8 @@ Vector *GeneAdaptor_objectsFromStatementHandle(GeneAdaptor *ga,
     int version =                  row->getIntAt(row,15);
     int createdDate =              row->getIntAt(row,16);
     int modifiedDate =             row->getIntAt(row,17);
-    char *xrefDisplayId =          row->getStringAt(row,18);
+// Changed from perl xrefDisplayId  to xrefDisplayLabel to match Transcript version
+    char *xrefDisplayLabel =       row->getStringAt(row,18);
     char *xrefPrimaryAcc =         row->getStringAt(row,19);
     char *xrefDesc =               row->getStringAt(row,20);
     char *xrefVersion =            row->getStringAt(row,21);
@@ -1812,8 +1809,9 @@ Vector *GeneAdaptor_objectsFromStatementHandle(GeneAdaptor *ga,
     char *externalStatus =         row->getStringAt(row,23);
     char *externalRelease =        row->getStringAt(row,24);
     char *externalDbName =         row->getStringAt(row,25);
-    char *infoType =               row->getStringAt(row,26);
-    char *infoText =               row->getStringAt(row,27);
+// Added xref prefix to info* var names to match Transcript version
+    char *xrefInfoType =           row->getStringAt(row,26);
+    char *xrefInfoText =           row->getStringAt(row,27);
 
     // get the analysis object
     Analysis *analysis = AnalysisAdaptor_fetchByDbID(aa, analysisId);
@@ -1979,14 +1977,14 @@ Vector *GeneAdaptor_objectsFromStatementHandle(GeneAdaptor *ga,
       DBEntry_setAdaptor    (displayXref,   (BaseAdaptor *)dbea);
       DBEntry_setDbID       (displayXref,   displayXrefId);
       DBEntry_setPrimaryId  (displayXref,   xrefPrimaryAcc);
-      DBEntry_setDisplayId  (displayXref,   xrefDisplayId);
+      DBEntry_setDisplayId  (displayXref,   xrefDisplayLabel);
       DBEntry_setVersion    (displayXref,   xrefVersion);
       DBEntry_setDescription(displayXref,   xrefDesc);
       DBEntry_setRelease    (displayXref,   externalRelease);
       DBEntry_setDbName     (displayXref,   externalDb);
       DBEntry_setDbDisplayName(displayXref, externalDbName);
-      DBEntry_setInfoType   (displayXref,   infoType);
-      DBEntry_setInfoText   (displayXref,   infoText);
+      DBEntry_setInfoType   (displayXref,   xrefInfoType);
+      DBEntry_setInfoText   (displayXref,   xrefInfoText);
       DBEntry_setStatus     (displayXref,   externalStatus);
     }
 

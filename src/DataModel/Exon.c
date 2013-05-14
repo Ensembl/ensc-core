@@ -8,7 +8,6 @@
 #include "DBAdaptor.h"
 #include "SliceAdaptor.h"
 #include "ChromosomeAdaptor.h"
-#include "StickyExon.h"
 #include "RawContigAdaptor.h"
 #include "StrUtil.h"
 #include "BaseAlignFeature.h"
@@ -39,7 +38,7 @@ char *Exon_getStableId(Exon *exon) {
   ExonAdaptor *ea = (ExonAdaptor *)Exon_getAdaptor(exon);
 
   if (StableIdInfo_getStableId(&(exon->si)) == NULL && ea) {
-    ExonAdaptor_getStableEntryInfo(ea,exon);
+//    ExonAdaptor_getStableEntryInfo(ea,exon);
   }
   return StableIdInfo_getStableId(&(exon->si));
 }
@@ -48,7 +47,7 @@ time_t Exon_getCreated(Exon *exon) {
   ExonAdaptor *ea = (ExonAdaptor *)Exon_getAdaptor(exon);
 
   if (StableIdInfo_getCreated(&(exon->si)) == 0 && ea) {
-    ExonAdaptor_getStableEntryInfo(ea,exon);
+//    ExonAdaptor_getStableEntryInfo(ea,exon);
   }
   return StableIdInfo_getCreated(&(exon->si));
 }
@@ -57,7 +56,7 @@ time_t Exon_getModified(Exon *exon) {
   ExonAdaptor *ea = (ExonAdaptor *)Exon_getAdaptor(exon);
 
   if (StableIdInfo_getModified(&(exon->si)) == 0 && ea) {
-    ExonAdaptor_getStableEntryInfo(ea,exon);
+//    ExonAdaptor_getStableEntryInfo(ea,exon);
   }
   return StableIdInfo_getModified(&(exon->si));
 }
@@ -66,7 +65,7 @@ int Exon_getVersion(Exon *exon) {
   ExonAdaptor *ea = (ExonAdaptor *)Exon_getAdaptor(exon);
 
   if (StableIdInfo_getVersion(&(exon->si)) == -1 && ea) {
-    ExonAdaptor_getStableEntryInfo(ea,exon);
+//    ExonAdaptor_getStableEntryInfo(ea,exon);
   }
   return StableIdInfo_getVersion(&(exon->si));
 }
@@ -95,6 +94,49 @@ int Exon_reverseStrandCompFunc(const void *a, const void *b) {
   } else {
     return 0;
   }
+}
+
+/*
+=head2 transfer
+
+  Arg [1]    : Bio::EnsEMBL::Slice $destination_slice
+  Example    : none
+  Description: Moves this Exon to given target slice coordinates. If Features
+               are attached they are moved as well. Returns a new exon.
+  Returntype : Bio::EnsEMBL::Gene
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+*/
+// New
+Exon *Exon_transfer(Exon *exon, Slice *slice) {
+
+  // Call super transfer
+  //my $new_exon = $self->SUPER::transfer( @_ );
+  Exon *newExon = SeqFeature_transfer(exon, slice);
+
+  if (newExon == NULL) {
+    return NULL;
+  }
+
+  fprintf(stderr,"support transfer not implemented yet for exon\n");
+/*
+  if( exists $self->{'_supporting_evidence'} ) {
+    my @new_features;
+    for my $old_feature ( @{$self->{'_supporting_evidence'}} ) {
+      my $new_feature = $old_feature->transfer( @_ );
+      push( @new_features, $new_feature );
+    }
+    $new_exon->{'_supporting_evidence'} = \@new_features;
+  }
+
+  #dont want to share the same sequence cache
+  delete $new_exon->{'_seq_cache'};
+*/
+
+  return newExon;
 }
 
 Exon *Exon_transformRawContigToSliceImpl(Exon *exon, Slice *slice) {

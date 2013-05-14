@@ -57,10 +57,15 @@ void MysqlStatementHandle_execute(va_alist) {
  */
 void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
   va_list args;
-  char statement[EXTREMELEN];
+  char *statement;
   int qlen;
   MYSQL_RES *results;
   MysqlStatementHandle *m_sth;
+
+  if ((statement = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating statment\n");
+    exit(1);
+  }
 
   Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);
 
@@ -69,18 +74,19 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
   m_sth = (MysqlStatementHandle *)sth;
 
   va_start(args, sth);
-  qlen = vsnprintf(statement, EXTREMELEN, m_sth->statementFormat, args);
+  qlen = vsnprintf(statement, 655500, m_sth->statementFormat, args);
   va_end(args);
 
-  if (qlen < 0 || qlen > EXTREMELEN) {
+  if (qlen < 0 || qlen > 655500) {
     fprintf(stderr, "ERROR: vsnprintf call failed during statement execution\n");
     exit(1);
   }
 
-  //printf("Statement after formatting = %s\n",statement);
+  printf("Statement after formatting = %s\n",statement);
 
   if (mysql_real_query (m_sth->dbc->mysql, statement, qlen) != 0) {    /* the query failed */
     fprintf(stderr, "Could not execute query %s\n", statement);
+    free(statement);
     return;
   }
 
@@ -109,6 +115,7 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
       fprintf (stderr, "Could not retrieve result set");
     }
   }
+  free(statement);
 }
 
 #endif

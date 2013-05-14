@@ -1803,7 +1803,6 @@ Slice *SliceAdaptor_fetchByTranscriptId(SliceAdaptor *sa, IDType transcriptId, i
 =cut
 */
 
-/*
 Slice *SliceAdaptor_fetchByGeneStableId(SliceAdaptor *sa, char *geneId, int size, int isPercent) {
   if (geneId == NULL) {
     fprintf(stderr,"Gene argument is required.");
@@ -1811,7 +1810,7 @@ Slice *SliceAdaptor_fetchByGeneStableId(SliceAdaptor *sa, char *geneId, int size
   }
 
   GeneAdaptor *ga = DBAdaptor_getGeneAdaptor(sa->dba);
-  Gene *gene = GeneAdaptor_fetchByStableID(ga, geneId);
+  Gene *gene = GeneAdaptor_fetchByStableId(ga, geneId);
 
   if (gene == NULL) {
     fprintf(stderr,"Gene [%s] does not exist in DB.", geneId);
@@ -1820,7 +1819,6 @@ Slice *SliceAdaptor_fetchByGeneStableId(SliceAdaptor *sa, char *geneId, int size
 
   return SliceAdaptor_fetchByFeature(sa, (SeqFeature *)gene, size, isPercent);
 }
-*/
 
 /*
 

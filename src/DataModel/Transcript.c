@@ -23,6 +23,9 @@ Transcript *Transcript_new() {
   Transcript_setModified(transcript,0);
   Transcript_setCreated(transcript,0);
   Transcript_setVersion(transcript,-1);
+  Transcript_setIsCurrent(transcript,1);
+
+  transcript->exons = Vector_new();
 
   transcript->objectType = CLASS_TRANSCRIPT;
   Object_incRefCount(transcript);
@@ -56,22 +59,81 @@ int Transcript_addDBLink(Transcript *t, DBEntry *dbe) {
   return 1;
 }
 
-char *Transcript_setType(Transcript *t, char *type) {
-  if ((t->type = (char *)malloc(strlen(type)+1)) == NULL) {
-    fprintf(stderr,"ERROR: Failed allocating space for transcript type\n");
+ECOSTRING Transcript_setBiotype(Transcript *t, char *biotype) {
+  EcoString_copyStr(ecoSTable, &(t->biotype),biotype,0);
+
+  if (t->biotype == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for biotype\n");
     return NULL;
   }
 
-  strcpy(t->type,type);
+  return t->biotype;
+}
 
-  return t->type;
+ECOSTRING Transcript_setStatus(Transcript *t, char *status) {
+  EcoString_copyStr(ecoSTable, &(t->status),status,0);
+
+  if (t->status == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for status\n");
+    return NULL;
+  }
+
+  return t->status;
+}
+
+char *Transcript_setDescription(Transcript *t, char *description) {
+  if ((t->description = (char *)malloc(strlen(description)+1)) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for description\n");
+    return NULL;
+  }
+
+  strcpy(t->description,description);
+
+  return t->description;
+}
+
+ECOSTRING Transcript_setExternalDb(Transcript *t, char *externalDb) {
+  EcoString_copyStr(ecoSTable, &(t->externalDb),externalDb,0);
+
+  if (t->externalDb == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for externalDb\n");
+    return NULL;
+  }
+
+  return t->externalDb;
+}
+
+ECOSTRING Transcript_setExternalStatus(Transcript *t, char *externalStatus) {
+  EcoString_copyStr(ecoSTable, &(t->externalStatus),externalStatus,0);
+
+  if (t->externalStatus == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for externalStatus\n");
+    return NULL;
+  }
+
+  return t->externalStatus;
+}
+
+char *Transcript_setExternalName(Transcript *t, char *externalName) {
+  if (externalName == NULL) {
+    t->externalName = NULL;
+    return NULL;
+  }
+  if ((t->externalName = (char *)malloc(strlen(externalName)+1)) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for externalName\n");
+    return NULL;
+  }
+
+  strcpy(t->externalName,externalName);
+
+  return t->externalName;
 }
 
 char *Transcript_getStableId(Transcript *transcript) {
   TranscriptAdaptor *ta = (TranscriptAdaptor *)Transcript_getAdaptor(transcript);
 
   if (StableIdInfo_getStableId(&(transcript->si)) == NULL && ta) {
-    TranscriptAdaptor_getStableEntryInfo(ta,transcript);
+//    TranscriptAdaptor_getStableEntryInfo(ta,transcript);
   }
   return StableIdInfo_getStableId(&(transcript->si));
 }
@@ -80,9 +142,89 @@ int Transcript_getVersion(Transcript *transcript) {
   TranscriptAdaptor *ta = (TranscriptAdaptor *)Transcript_getAdaptor(transcript);
 
   if (StableIdInfo_getVersion(&(transcript->si)) == -1 && ta) {
-    TranscriptAdaptor_getStableEntryInfo(ta,transcript);
+//    TranscriptAdaptor_getStableEntryInfo(ta,transcript);
   }
   return StableIdInfo_getVersion(&(transcript->si));
+}
+
+/*
+=head2 transfer
+
+  Arg  1     : Bio::EnsEMBL::Slice $destination_slice
+  Example    : $transcript = $transcript->transfer($slice);
+  Description: Moves this transcript to the given slice.
+               If this Transcripts has Exons attached, they move as well.
+  Returntype : Bio::EnsEMBL::Transcript
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+*/
+// New
+Transcript *Transcript_transfer(Transcript *transcript, Slice *slice) {
+  // Call super transfer
+  Transcript *newTranscript = SeqFeature_transfer(transcript, slice);
+
+  if (newTranscript == NULL) {
+    return NULL;
+  }
+
+  fprintf(stderr,"support and exon transfer not implemented yet for transfer\n");
+/*
+  if( defined $self->{'translation'} ) {
+    my $new_translation;
+    %$new_translation = %{$self->{'translation'}};;
+    bless $new_translation, ref( $self->{'translation'} );
+    $new_transcript->{'translation'} = $new_translation;
+  }
+
+  if( exists $self->{'_trans_exon_array'} ) {
+    my @new_exons;
+    for my $old_exon ( @{$self->{'_trans_exon_array'}} ) {
+      my $new_exon = $old_exon->transfer( @_ );
+      if( defined $new_transcript->{'translation'} ) {
+        if( $new_transcript->translation()->start_Exon() == $old_exon ) {
+          $new_transcript->translation()->start_Exon( $new_exon );
+        }
+        if( $new_transcript->translation()->end_Exon() == $old_exon ) {
+          $new_transcript->translation()->end_Exon( $new_exon );
+        }
+      }
+      push( @new_exons, $new_exon );
+    }
+
+    $new_transcript->{'_trans_exon_array'} = \@new_exons;
+  }
+
+  if( exists $self->{'_supporting_evidence'} ) {
+    my @new_features;
+    for my $old_feature ( @{$self->{'_supporting_evidence'}} ) {
+      my $new_feature = $old_feature->transfer( @_ );
+      push( @new_features, $new_feature );
+    }
+    $new_transcript->{'_supporting_evidence'} = \@new_features;
+  }
+
+  if(exists $self->{_ise_array}) {
+    my @new_features;
+    foreach my $old_feature ( @{$self->{_ise_array}} ) {
+      my $new_feature = $old_feature->transfer(@_);
+      push( @new_features, $new_feature );
+    }
+    $new_transcript->{_ise_array} = \@new_features;
+  }
+
+
+  # flush cached internal values that depend on the exon coords
+  $new_transcript->{'transcript_mapper'}   = undef;
+  $new_transcript->{'coding_region_start'} = undef;
+  $new_transcript->{'coding_region_end'}   = undef;
+  $new_transcript->{'cdna_coding_start'}   = undef;
+  $new_transcript->{'cdna_coding_end'}     = undef;
+*/
+
+  return newTranscript;
 }
 
 //NIY Freeing old exons???
@@ -111,7 +253,8 @@ Transcript *Transcript_transform(Transcript *trans, IDHash *exonTransforms) {
 
   // attach the new list of exons to the transcript
   for (i=0; i<Vector_getNumElement(mappedExonVector); i++) {
-    Transcript_addExon(trans,(Exon *)Vector_getElementAt(mappedExonVector,i));
+// Added rank arg temporarily just to get to compile
+    Transcript_addExon(trans,(Exon *)Vector_getElementAt(mappedExonVector,i),0);
   }
 
   if ( Transcript_getTranslation(trans)) {
@@ -186,11 +329,9 @@ void Transcript_sort(Transcript *trans) {
   int strand = Exon_getStrand(firstExon);
 
   if (strand == 1) {
-    qsort(Transcript_getExons(trans),Transcript_getExonCount(trans),
-          sizeof(void *),Exon_forwardStrandCompFunc);
+    Transcript_sortExons(trans, Exon_forwardStrandCompFunc);
   } else if (strand == -1) {
-    qsort(Transcript_getExons(trans),Transcript_getExonCount(trans),
-          sizeof(void *),Exon_reverseStrandCompFunc);
+    Transcript_sortExons(trans, Exon_reverseStrandCompFunc);
   }
 }
 

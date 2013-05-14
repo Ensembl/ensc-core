@@ -1,18 +1,44 @@
 #include "ExonAdaptor.h"
+#include "AnalysisAdaptor.h"
+#include "AssemblyMapperAdaptor.h"
 #include "DBAdaptor.h"
+#include "DBEntryAdaptor.h"
+#include "StrUtil.h"
 #include "BaseAdaptor.h"
 #include "MysqlUtil.h"
-#include "RawContigAdaptor.h"
+#include "Exon.h"
 #include "IDHash.h"
+#include "Transcript.h"
+#include "Slice.h"
+#include "AssemblyMapper.h"
+#include "ChainedAssemblyMapper.h"
+#include "CoordSystemAdaptor.h"
+#include "MetaCoordContainer.h"
+
+#include "ExonAdaptor.h"
+#include "TranscriptAdaptor.h"
+#include "SliceAdaptor.h"
 
 #include "StatementHandle.h"
 #include "ResultRow.h"
 
-#include "Class.h"
-#include "BaseAlignFeature.h"
+#include "Error.h"
+/*
+=head1 DESCRIPTION
 
+The ExonAdaptor is responsible for retrieving and storing Exon objects
+from an Ensembl database.  Most of the ExonAdaptor functionality is
+inherited from the B<Bio::EnsEMBL::DBSQL::BaseFeatureAdaptor> class.
+*/
 
-Exon *ExonAdaptor_exonFromRow(ExonAdaptor *ea, ResultRow *row);
+static int ETMode = 0; // Hack to switch tables and final clause in fetchAllByTranscript
+NameTableType ExonAdaptor_tableNamesStandard = {{"exon","e"},
+                                                {NULL,NULL}};
+
+NameTableType ExonAdaptor_tableNamesWithET   = {{"exon","e"},
+                                                {"exon_transcript", "et"},
+                                                {NULL,NULL}};
+
 
 ExonAdaptor *ExonAdaptor_new(DBAdaptor *dba) {
   ExonAdaptor *ea;
@@ -21,442 +47,888 @@ ExonAdaptor *ExonAdaptor_new(DBAdaptor *dba) {
     fprintf(stderr, "ERROR: Failed allocating space for ExonAdaptor\n");
     return NULL;
   }
-  BaseAdaptor_init((BaseAdaptor *)ea, dba, EXON_ADAPTOR);
+  BaseFeatureAdaptor_init((BaseFeatureAdaptor *)ea, dba, EXON_ADAPTOR);
+
+  ea->getTables                  = ExonAdaptor_getTables;
+  ea->getColumns                 = ExonAdaptor_getColumns;
+  ea->store                      = ExonAdaptor_store;
+  ea->objectsFromStatementHandle = ExonAdaptor_objectsFromStatementHandle;
+  ea->finalClause                = ExonAdaptor_finalClause;
 
   return ea;
 }
 
-Exon *ExonAdaptor_fetchByDbID(ExonAdaptor *ea, IDType dbID) {
-  Exon *exon;
-  char qStr[256];
-  StatementHandle *sth;
-  ResultRow *row;
-
-  sprintf(qStr,
-    "SELECT exon_id"
-    " , seq_region_id"
-    " , seq_region_start"
-    " , seq_region_end"
-    " , seq_region_strand"
-    " , phase"
-    " , end_phase"
-    " FROM   exon"
-    " WHERE  exon_id = "
-    IDFMTSTR, 
-    dbID);
-
-  sth = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
-  sth->execute(sth);
-
-  row = sth->fetchRow(sth);
-  if( row == NULL ) {
-    sth->finish(sth);
-    return NULL;
-  }
-
-  exon = ExonAdaptor_exonFromResults(ea, sth, row);
-  sth->finish(sth);
-
-  return exon;
-}
-
-Exon *ExonAdaptor_exonFromResults(ExonAdaptor *ea, StatementHandle *sth, ResultRow *row) {
-  Exon *exon;
 /*
-  int maxRank = row->getIntAt(row,7);
-
-  if (maxRank > 1) {
-    int stickyLength = 0;
-    Exon *component;
-    StickyExon *stickyExon;
-    
-    // Hopefully not true anymore fprintf(stderr, "ERROR: Sticky exons not implemented yet\n");
-
-    // sticky exon
-    stickyExon = StickyExon_new();
-    exon = (Exon *)stickyExon;
-
-    StickyExon_setDbID(exon, row->getLongLongAt(row,0));
-
-    // make first component exon
-    component = ExonAdaptor_exonFromRow(ea, row);
-
-    StickyExon_addComponentExon(stickyExon,component);
-    stickyLength += Exon_getLength(component);
-
-    StickyExon_setPhase(stickyExon,Exon_getPhase(component));
-    StickyExon_setEndPhase(stickyExon,Exon_getEndPhase(component));
-    StickyExon_setAdaptor(stickyExon,(BaseAdaptor *)ea);
-
-    // continue while loop until we hit sticky_rank 1
-    while ((row = sth->fetchRow(sth))) {
-      component = ExonAdaptor_exonFromRow(ea, row);
-  
-      StickyExon_addComponentExon(stickyExon,component);
-      stickyLength += Exon_getLength(component);
-
-      if( Exon_getStickyRank(component) == 1 ) {
-        StickyExon_setContig(stickyExon, Exon_getContig(component));
-        break;
-      }
-    }
-
-    StickyExon_sortByStickyRank(stickyExon);
-
-    StickyExon_setStart(stickyExon,1);
-    StickyExon_setEnd(stickyExon,stickyLength);
-    StickyExon_setStrand(stickyExon, 1 );
-
+#_tables
+#
+#  Arg [1]    : none
+#  Example    : none
+#  Description: PROTECTED implementation of superclass abstract method
+#               returns the names, aliases of the tables to use for queries
+#  Returntype : list of listrefs of strings
+#  Exceptions : none
+#  Caller     : internal
+*/
+NameTableType *ExonAdaptor_getTables() {
+  if (ETMode == 0) {
+    return &ExonAdaptor_tableNamesStandard;
   } else {
-*/
-    exon = ExonAdaptor_exonFromRow(ea, row);
-/*
+    return &ExonAdaptor_tableNamesWithET;
   }
+}
+
+/*
+# _columns
+#
+#  Arg [1]    : none
+#  Example    : none
+#  Description: PROTECTED implementation of superclass abstract method
+#               returns a list of columns to use for queries
+#  Returntype : list of strings
+#  Exceptions : none
+#  Caller     : internal
 */
+char *Exon_cols[] = {
+                     "e.exon_id",
+                     "e.seq_region_id",
+                     "e.seq_region_start",
+                     "e.seq_region_end",
+                     "e.seq_region_strand",
+                     "e.phase",
+                     "e.end_phase",
+                     "e.is_current",
+                     "e.is_constitutive",
+                     "e.stable_id",
+                     "e.version",
+                     "UNIX_TIMESTAMP(e.created_date)",
+                     "UNIX_TIMESTAMP(e.modified_date)",
+                     NULL };
+
+char **ExonAdaptor_getColumns() {
+  return Exon_cols;
+}
+
+
+/*
+# _final_clause
+#
+#  Arg [1]    : none
+#  Example    : none
+#  Description: PROTECTED implementation of superclass abstract method
+#               returns a default end for the SQL-query (ORDER BY)
+#  Returntype : string
+#  Exceptions : none
+#  Caller     : internal
+*/
+char *ExonAdaptor_finalClause() {
+  if (ETMode == 0) {
+    return "";
+  } else {
+    return "ORDER BY et.transcript_id, et.rank";
+  }
+}
+
+Vector *ExonAdaptor_fetchAll(ExonAdaptor *ea) {
+  char constraint[1024];
+
+// NIY: Maybe just a constant string
+// Note: Doesn't ignore LRGs unlike genes and transcripts, so these bits of **** will get loaded
+  sprintf(constraint, "e.is_current = 1");
+
+  return ExonAdaptor_genericFetch(ea, constraint, NULL, NULL);
+}
+
+/*
+=head2 fetch_by_stable_id
+
+  Arg [1]    : string $stable_id
+               the stable id of the exon to retrieve
+  Example    : $exon = $exon_adaptor->fetch_by_stable_id('ENSE0000988221');
+  Description: Retrieves an Exon from the database via its stable id
+  Returntype : Bio::EnsEMBL::Exon in native coordinates.
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+*/
+Exon *ExonAdaptor_fetchByStableId(ExonAdaptor *ea, char *stableId) {
+  char constraint[1024];
+
+  sprintf(constraint, "e.stable_id = '%s' AND e.is_current = 1", stableId);
+
+  Vector *exons = ExonAdaptor_genericFetch(ea, constraint, NULL, NULL);
+  Exon *exon = Vector_getElementAt(exons, 0);
+// Need to free data for exons other than first one (same for gene and transcript in those adaptors)
+  Vector_free(exons);
 
   return exon;
 }
 
-Exon *ExonAdaptor_exonFromRow(ExonAdaptor *ea, ResultRow *row) {
-  Exon *exon = Exon_new();
-  RawContigAdaptor *rca;
-  RawContig *rc;
 
-  Exon_setDbID(exon,row->getLongLongAt(row,0));
-  // printf("Set exon id to " IDFMTSTR " from " IDFMTSTR "\n",Exon_getDbID(exon),row->getLongLongAt(row,0));
-  Exon_setStart(exon,row->getLongAt(row,2));
-  Exon_setEnd(exon,row->getLongAt(row,3));
-  Exon_setStrand(exon,row->getIntAt(row,4));
-  Exon_setPhase(exon,row->getIntAt(row,5));
-  Exon_setEndPhase(exon,row->getIntAt(row,6));
- // Exon_setStickyRank(exon,row->getIntAt(row,7));
-  Exon_setStableId(exon,row->getStringAt(row,7));
-  Exon_setCreated(exon,row->getIntAt(row,8));
-  Exon_setModified(exon,row->getIntAt(row,9));
-  Exon_setVersion(exon,row->getIntAt(row,10));
+/*
+=head2 fetch_all_versions_by_stable_id 
 
-  Exon_setAdaptor(exon,(BaseAdaptor *)ea);
+  Arg [1]     : String $stable_id 
+                The stable ID of the exon to retrieve
+  Example     : my $exon = $exon_adaptor->fetch_all_version_by_stable_id
+                  ('ENSE00000309301');
+  Description : Similar to fetch_by_stable_id, but retrieves all versions of an
+                exon stored in the database.
+  Returntype  : listref of Bio::EnsEMBL::Exon objects
+  Exceptions  : if we cant get the gene in given coord system
+  Caller      : general
+  Status      : At Risk
 
-  rca = DBAdaptor_getRawContigAdaptor(ea->dba);
-  rc = RawContigAdaptor_fetchByDbID(rca,row->getLongLongAt(row,1));
+=cut
+*/
+Vector *ExonAdaptor_fetchAllVersionsByStableId(ExonAdaptor *ea, char *stableId) {
+  char constraint[1024];
 
-  Exon_setContig(exon,rc);
+  sprintf(constraint, "e.stable_id = '%s'", stableId);
 
-  return exon; 
+  return ExonAdaptor_genericFetch(ea, constraint, NULL, NULL);
 }
 
-int ExonAdaptor_fetchAllByGeneId(ExonAdaptor *ea, IDType geneId, Exon ***retExons) {
-  char qStr[512];
-  StatementHandle *sth;
-  ResultRow *row;
-  IDHash *exonHash = IDHash_new(IDHASH_SMALL);
-  int nExon;
 
-  if( !geneId ) {
-    fprintf(stderr,"ERROR: Gene dbID not defined\n");
-  }
+/*
+=head2 fetch_all_by_Transcript
 
-  sprintf(qStr,
-    "SELECT STRAIGHT_JOIN e.exon_id"
-    "  , e.seq_region_id"
-    "  , e.seq_region_start"
-    "  , e.seq_region_end"
-    "  , e.seq_region_strand"
-    "  , e.phase"
-    "  , e.end_phase"
-    "  , e.stable_id"
-    "  , e.created_date"
-    "  , e.modified_date"
-    "  , e.version"
-    " FROM transcript t"
-    "  , exon_transcript et"
-    "  , exon e"
-    " WHERE t.gene_id = "
-    IDFMTSTR
-    "  AND et.transcript_id = t.transcript_id"
-    "  AND e.exon_id = et.exon_id"
-    " ORDER BY t.transcript_id,e.exon_id",
-      geneId);
+  Arg [1]    : Bio::EnsEMBL::Transcript $transcript
+  Example    : none
+  Description: Retrieves all Exons for the Transcript in 5-3 order
+  Returntype : listref Bio::EnsEMBL::Exon on Transcript slice 
+  Exceptions : throws if transcript has no slice
+  Caller     : Transcript->get_all_Exons()
+  Status     : Stable
 
-  sth = ea->prepare((BaseAdaptor *)ea, qStr, strlen(qStr));
-  sth->execute(sth);
+=cut
+*/
+Vector *ExonAdaptor_fetchAllByTranscript(ExonAdaptor *ea, Transcript *transcript) {
 
-  while ((row = sth->fetchRow(sth))) {
-    if( ! IDHash_contains(exonHash,row->getLongLongAt(row,0))) {
-      Exon *exon = ExonAdaptor_exonFromResults(ea,sth,row);
+  Slice *tSlice = Transcript_getSlice(transcript);
+  Slice *slice;
 
-      IDHash_add(exonHash,Exon_getDbID(exon),exon);
-    }
-  }
-  sth->finish(sth);
-
-  *retExons = (Exon **)IDHash_getValues(exonHash);
-
-  nExon = IDHash_getNumValues(exonHash);
-
-  IDHash_free(exonHash,NULL);
-
-  return nExon;
-
-}
-
-int ExonAdaptor_getStableEntryInfo(ExonAdaptor *ea, Exon *exon) {
-  char qStr[256];
-  StatementHandle *sth;
-  ResultRow *row;
-
-  if( !exon ) {
-    fprintf(stderr, "ERROR: ExonAdaptor_getStableEntryInfo needs a exon object\n");
+  if (tSlice == NULL) {
+    fprintf(stderr, "Transcript must have attached slice to retrieve exons.\n");
     exit(1);
   }
 
-  sprintf(qStr,
-          "SELECT stable_id, UNIX_TIMESTAMP(created_date),"
-          "                  UNIX_TIMESTAMP(modified_date), version"
-          " FROM exon"
-          " WHERE exon_id = " IDFMTSTR, Exon_getDbID(exon));
+  // use a small slice the same size as the transcript
+// No circular slice stuff
+//  if ( !$tslice->is_circular() ) {
+    SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(ea->dba);
+    slice = SliceAdaptor_fetchByFeature(sa, (SeqFeature *)transcript, 0, 0);
+//  } else {
+//    # Circular.
+//    $slice = $tslice;
+//  }
 
-  sth = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
-  sth->execute(sth);
+  // Override the tables definition to provide an additional join to the
+  // exon_transcript table.  For efficiency we cannot afford to have this
+  // in as a left join every time.
+  ETMode = 1; // Hacky flag to change behaviour of getTables and finalClause to add in the exon_transcript table
 
-  row = sth->fetchRow(sth);
-  if( row == NULL ) {
-    sth->finish(sth);
-    fprintf(stderr,"WARNING: Failed fetching stable id info\n");
-    return 0;
+  char constraint[1024];
+  sprintf(constraint, "et.transcript_id = "IDFMTSTR" AND e.exon_id = et.exon_id", Transcript_getDbID(transcript));
+
+  // fetch all of the exons
+  Vector *exons = ExonAdaptor_fetchAllBySliceConstraint(ea, slice, constraint, NULL);
+
+  // un-override the table definition
+  ETMode = 0;
+
+  // remap exon coordinates if necessary
+  if (EcoString_strcmp(Slice_getName(slice), Slice_getName(tSlice))) {
+    Vector *out = Vector_new();
+    int i;
+    for (i=0; i<Vector_getNumElement(exons); i++) {
+      Exon *ex = Vector_getElementAt(exons, i);
+      Vector_addElement(out, Exon_transfer(ex, tSlice));
+    }
+// NIY Do I need to set a free func here - probably???
+    Vector_free(exons);
+
+    exons = out;
   }
 
-  Exon_setStableId(exon,row->getStringAt(row,0));
-  Exon_setCreated(exon,row->getIntAt(row,1));
-  Exon_setModified(exon,row->getIntAt(row,2));
-  Exon_setVersion(exon,row->getIntAt(row,3));
+  return exons;
+}
 
-  sth->finish(sth);
+
+/* NIY
+=head2 store
+
+  Arg [1]    : Bio::EnsEMBL::Exon $exon
+               the exon to store in this database
+  Example    : $exon_adaptor->store($exon);
+  Description: Stores an exon in the database
+  Returntype : none
+  Exceptions : thrown if exon (or component exons) do not have a contig_id
+               or if $exon->start, $exon->end, $exon->strand, or $exon->phase 
+               are not defined or if $exon is not a Bio::EnsEMBL::Exon
+  Caller     : general
+  Status     : Stable
+
+=cut
+*/
+
+
+IDType ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
+  IDType exonId;
+/*
+  my ($self, $exon) = @_;
+
+  if( ! $exon->isa('Bio::EnsEMBL::Exon') ) {
+    throw("$exon is not a EnsEMBL exon - not storing.");
+  }
+
+  my $db = $self->db();
+
+  if($exon->is_stored($db)) {
+    return $exon->dbID();
+  }
+
+  if( ! $exon->start || ! $exon->end ||
+      ! $exon->strand || ! defined $exon->phase ) {
+    throw("Exon does not have all attributes to store");
+  }
+
+  # Default to is_current = 1 if this attribute is not set
+  my $is_current = $exon->is_current();
+  if ( !defined($is_current) ) { $is_current = 1 }
+
+  # Default to is_constitutive = 0 if this attribute is not set
+  my $is_constitutive = $exon->is_constitutive();
+  if ( !defined($is_constitutive) ) { $is_constitutive = 0 }
+
+  my $exon_sql = q{
+    INSERT into exon ( seq_region_id, seq_region_start,
+		       seq_region_end, seq_region_strand, phase,
+		       end_phase, is_current, is_constitutive                      
+  };
+  if ( defined($exon->stable_id) ) {
+      my $created = $self->db->dbc->from_seconds_to_date($exon->created_date());
+      my $modified = $self->db->dbc->from_seconds_to_date($exon->modified_date());
+      $exon_sql .= ", stable_id, version, created_date, modified_date) VALUES ( ?,?,?,?,?,?,?,?,?,?,". $created . ",". $modified ." )";
+     
+  } else {
+      $exon_sql .= q{
+         ) VALUES ( ?,?,?,?,?,?,?,?)
+      };
+  }
+
+
+  my $exonst = $self->prepare($exon_sql);
+
+  my $exonId = undef;
+
+  my $original = $exon;
+  my $seq_region_id;
+  ($exon, $seq_region_id) = $self->_pre_store($exon);
+
+  #store the exon
+  $exonst->bind_param( 1, $seq_region_id,   SQL_INTEGER );
+  $exonst->bind_param( 2, $exon->start,     SQL_INTEGER );
+  $exonst->bind_param( 3, $exon->end,       SQL_INTEGER );
+  $exonst->bind_param( 4, $exon->strand,    SQL_TINYINT );
+  $exonst->bind_param( 5, $exon->phase,     SQL_TINYINT );
+  $exonst->bind_param( 6, $exon->end_phase, SQL_TINYINT );
+  $exonst->bind_param( 7, $is_current,      SQL_TINYINT );
+  $exonst->bind_param( 8, $is_constitutive, SQL_TINYINT );
+
+  if ( defined($exon->stable_id) ) {
+
+     $exonst->bind_param( 9, $exon->stable_id, SQL_VARCHAR );
+     my $version = ($exon->version()) ? $exon->version() : 1;
+     $exonst->bind_param( 10, $version, SQL_INTEGER ); 
+  }
+
+  $exonst->execute();
+  $exonId = $exonst->{'mysql_insertid'};
+
+  # Now the supporting evidence
+  my $esf_adaptor = $db->get_SupportingFeatureAdaptor;
+  $esf_adaptor->store($exonId, $exon->get_all_supporting_features);
+
+  #
+  # Finally, update the dbID and adaptor of the exon (and any component exons)
+  # to point to the new database
+  #
+
+  $original->adaptor($self);
+  $original->dbID($exonId);
+
+*/
+  return exonId;
+}
+
+
+/* NIY
+=head2 remove
+
+  Arg [1]    : Bio::EnsEMBL::Exon $exon
+               the exon to remove from the database
+  Example    : $exon_adaptor->remove($exon);
+  Description: Removes an exon from the database.  This method is generally
+               called by the TranscriptAdaptor::store method. Database
+               integrity will not be maintained if this method is simply
+               called on its own without taking into account transcripts which
+               may refer to the exon being removed.
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub remove {
+  my $self = shift;
+  my $exon = shift;
+
+  if(!ref($exon) || !$exon->isa('Bio::EnsEMBL::Exon')) {
+    throw('Bio::EnsEMBL::Exon argument expected.');
+  }
+
+  if(!$exon->is_stored($self->db())) {
+    warning("Cannot remove exon " .$exon->dbID.
+            "Is not stored in this database.");
+    return;
+  }
+
+  # sanity check: make sure nobdody tries to slip past a prediction exon
+  # which inherits from exon but actually uses different tables
+  if($exon->isa('Bio::EnsEMBL::PredictionExon')) {
+    throw("ExonAdaptor can only remove Exons not PredictionExons.");
+  }
+
+  # Remove the supporting features of this exon
+
+  my $prot_adp = $self->db->get_ProteinAlignFeatureAdaptor;
+  my $dna_adp = $self->db->get_DnaAlignFeatureAdaptor;
+
+  my $sth = $self->prepare("SELECT feature_type, feature_id  " .
+                           "FROM supporting_feature " .            
+			   "WHERE exon_id = ?");
+  $sth->bind_param(1, $exon->dbID, SQL_INTEGER);
+  $sth->execute();
+
+  # statements to check for shared align_features
+  my $sth1 = $self->prepare("SELECT count(*) FROM supporting_feature " .
+			    "WHERE feature_type = ? AND feature_id = ?");
+  my $sth2 = $self->prepare("SELECT count(*) " .
+                            "FROM transcript_supporting_feature " .
+			    "WHERE feature_type = ? AND feature_id = ?");
+
+  SUPPORTING_FEATURE:
+  while(my ($type, $feature_id) = $sth->fetchrow()){
+    
+    # only remove align_feature if this is the last reference to it
+    $sth1->bind_param(1, $type, SQL_VARCHAR);
+    $sth1->bind_param(2, $feature_id, SQL_INTEGER);
+    $sth1->execute;
+    $sth2->bind_param(1, $type, SQL_VARCHAR);
+    $sth2->bind_param(2, $feature_id, SQL_INTEGER);
+    $sth2->execute;
+    my ($count1) = $sth1->fetchrow;
+    my ($count2) = $sth2->fetchrow;
+    if ($count1 + $count2 > 1) {
+      #warn "shared feature, not removing $type|$feature_id\n";
+      next SUPPORTING_FEATURE;
+    }
+    
+    #warn "removing $type|$feature_id\n";
+  
+    if($type eq 'protein_align_feature'){
+      my $f = $prot_adp->fetch_by_dbID($feature_id);
+      $prot_adp->remove($f);
+    }
+    elsif($type eq 'dna_align_feature'){
+      my $f = $dna_adp->fetch_by_dbID($feature_id);
+      $dna_adp->remove($f);
+    }
+    else {
+      warning("Unknown supporting feature type $type. Not removing feature.");
+    }
+  }
+  $sth->finish();
+  $sth1->finish();
+  $sth2->finish();
+
+  # delete the association to supporting features
+
+  $sth = $self->prepare("DELETE FROM supporting_feature WHERE exon_id = ?");
+  $sth->bind_param(1, $exon->dbID, SQL_INTEGER);
+  $sth->execute();
+  $sth->finish();
+
+
+  # delete the exon
+
+  $sth = $self->prepare( "DELETE FROM exon WHERE exon_id = ?" );
+  $sth->bind_param(1, $exon->dbID, SQL_INTEGER);
+  $sth->execute();
+  $sth->finish();
+
+  $exon->dbID(undef);
+  $exon->adaptor(undef);
+
+  return;
+}
+*/
+
+
+/*
+=head2 list_dbIDs
+
+  Arg [1]    : none
+  Example    : @exon_ids = @{$exon_adaptor->list_dbIDs()};
+  Description: Gets an array of internal ids for all exons in the current db
+  Arg[1]     : <optional> int. not 0 for the ids to be sorted by the seq_region.
+  Returntype : list of ints
+  Exceptions : none
+  Caller     : ?
+  Status     : Stable
+
+=cut
+*/
+Vector *ExonAdaptor_listDbIDs(ExonAdaptor *ea, int ordered) {
+
+// NIY: Shouldn't really do this direct BaseAdaptor call but ...
+  return BaseAdaptor_listDbIDs((BaseAdaptor *)ea, "exon", NULL, ordered);
+}
+
+
+/*
+=head2 list_stable_ids
+
+  Arg [1]    : none
+  Example    : @stable_exon_ids = @{$exon_adaptor->list_stable_dbIDs()};
+  Description: Gets an array of stable ids for all exons in the current db
+  Returntype : list of ints
+  Exceptions : none
+  Caller     : ?
+  Status     : Stable
+
+=cut
+*/
+Vector *ExonAdaptor_listStableIDs(ExonAdaptor *ea) {
+
+// NIY: Shouldn't really do this direct BaseAdaptor call but ...
+  return BaseAdaptor_listDbIDs((BaseAdaptor *)ea, "exon", "stable_id", 0);
+}
+
+
+/*
+#_objs_from_sth
+#
+#  Arg [1]    : StatementHandle $sth
+#  Example    : none 
+#  Description: PROTECTED implementation of abstract superclass method.
+#               responsible for the creation of Exons
+#  Returntype : listref of Bio::EnsEMBL::Exons in target coordinate system
+#  Exceptions : none
+#  Caller     : internal
+*/
+Vector *ExonAdaptor_objectsFromStatementHandle(ExonAdaptor *ea,
+                                               StatementHandle *sth,
+                                               AssemblyMapper *assMapper,
+                                               Slice *destSlice) {
+
+  //
+  // This code is ugly because an attempt has been made to remove as many
+  // function calls as possible for speed purposes.  Thus many caches and
+  // a fair bit of gymnastics is used.
+  //
+
+  SliceAdaptor *sa     = DBAdaptor_getSliceAdaptor(ea->dba);
+
+  Vector *exons = Vector_new();
+  IDHash *sliceHash = IDHash_new(IDHASH_SMALL);
+/* Don't bother with these three - analysis is cached in its adaptor, and I can't believe speed
+  my %sr_name_hash;
+  my %sr_cs_hash;
+*/
+
+
+
+/* Basically Unused! - used but in a non sensible way (see TranscriptAdaptor for further comment)
+  my $asm_cs;
+  my $cmp_cs;
+  my $asm_cs_vers;
+  my $asm_cs_name;
+  my $cmp_cs_vers;
+  my $cmp_cs_name;
+
+  if ($mapper) {
+    $asm_cs      = $mapper->assembled_CoordSystem();
+    $cmp_cs      = $mapper->component_CoordSystem();
+    $asm_cs_name = $asm_cs->name();
+    $asm_cs_vers = $asm_cs->version();
+    $cmp_cs_name = $cmp_cs->name();
+    $cmp_cs_vers = $cmp_cs->version();
+  }
+*/
+
+  long         destSliceStart;
+  long         destSliceEnd;
+  int          destSliceStrand;
+  long         destSliceLength;
+  CoordSystem *destSliceCs;
+  char *       destSliceSrName;
+  IDType       destSliceSrId = 0;
+  AssemblyMapperAdaptor *asma;
+
+  if (destSlice) {
+    destSliceStart  = Slice_getStart(destSlice);
+    destSliceEnd    = Slice_getEnd(destSlice);
+    destSliceStrand = Slice_getStrand(destSlice);
+    destSliceLength = Slice_getLength(destSlice);
+    destSliceCs     = Slice_getCoordSystem(destSlice);
+    destSliceSrName = Slice_getSeqRegionName(destSlice);
+    destSliceSrId   = Slice_getSeqRegionId(destSlice);
+    asma            = DBAdaptor_getAssemblyMapperAdaptor(ea->dba);
+  }
+
+// Note FEATURE label is here
+//FEATURE: while ($sth->fetch())
+  ResultRow *row;
+  while (row = sth->fetchRow(sth)) {
+    IDType exonId       = row->getLongLongAt(row, 0);
+    IDType seqRegionId  = row->getLongLongAt(row, 1);
+    long seqRegionStart = row->getLongAt(row, 2);
+    long seqRegionEnd   = row->getLongAt(row, 3);
+    int seqRegionStrand = row->getIntAt(row, 4);
+    int phase           = row->getIntAt(row, 5);
+    int endPhase        = row->getIntAt(row, 6);
+    int isCurrent       = row->getIntAt(row, 7);
+    int isConstitutive  = row->getIntAt(row, 8);
+    char *stableId      = row->getStringAt(row, 9);
+    int version         = row->getIntAt(row, 10);
+    int createdDate     = row->getIntAt(row, 11);
+    int modifiedDate    = row->getIntAt(row, 12);
+
+    // Not doing internal seq id stuff for now
+//    #need to get the internal_seq_region, if present
+//    $seq_region_id = $self->get_seq_region_id_internal($seq_region_id);
+//    my $slice       = $slice_hash{ "ID:" . $seq_region_id };
+//    my $dest_mapper = $mapper;
+//    if ( !$slice ) {
+//      $slice = $sa->fetch_by_seq_region_id($seq_region_id);
+//      $slice_hash{ "ID:" . $seq_region_id } = $slice;
+//      $sr_name_hash{$seq_region_id}         = $slice->seq_region_name();
+//      $sr_cs_hash{$seq_region_id}           = $slice->coord_system();
+//    }
+//    my $sr_name = $sr_name_hash{$seq_region_id};
+//    my $sr_cs   = $sr_cs_hash{$seq_region_id};
+
+    if (! IDHash_contains(sliceHash, seqRegionId)) {
+      IDHash_add(sliceHash, seqRegionId, SliceAdaptor_fetchBySeqRegionId(sa, seqRegionId, POS_UNDEF, POS_UNDEF, STRAND_UNDEF));
+    }
+    Slice *slice = IDHash_getValue(sliceHash, seqRegionId);
+
+    Slice *exonSlice = slice;
+
+    char *srName      = Slice_getSeqRegionName(slice);
+    CoordSystem *srCs = Slice_getCoordSystem(slice);
+
+    // obtain a mapper if none was defined, but a dest_seq_region was
+    if (assMapper == NULL &&
+        destSlice != NULL &&
+        CoordSystem_compare(destSliceCs, Slice_getCoordSystem(slice))) {
+      assMapper = AssemblyMapperAdaptor_fetchByCoordSystems(asma, destSliceCs, Slice_getCoordSystem(slice));
+/*
+      $asm_cs      = $dest_mapper->assembled_CoordSystem();
+      $cmp_cs      = $dest_mapper->component_CoordSystem();
+      $asm_cs_name = $asm_cs->name();
+      $asm_cs_vers = $asm_cs->version();
+      $cmp_cs_name = $cmp_cs->name();
+      $cmp_cs_vers = $cmp_cs->version();
+*/
+    }
+
+
+    // 
+    // Remap the feature coordinates to another coord system if a mapper
+    // was provided.
+    //
+    if (assMapper != NULL) {
+      MapperRangeSet *mrs;
+
+      // Slightly suspicious about need for this if statement so left in perl statements for now
+      if (destSlice != NULL &&
+          assMapper->objectType == CLASS_CHAINEDASSEMBLYMAPPER) {
+        MapperRangeSet *mrs = ChainedAssemblyMapper_map(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, 1, destSlice);
+      } else {
+        MapperRangeSet *mrs = AssemblyMapper_fastMap(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, NULL);
+      }
+
+      // skip features that map to gaps or coord system boundaries
+      //next FEATURE if (!defined($seq_region_id));
+      if (MapperRangeSet_getNumRange(mrs) == 0) {
+        continue;
+      }
+      MapperRange *range = MapperRangeSet_getRangeAt(mrs, 0);
+      if (range->rangeType == MAPPERRANGE_GAP) {
+        fprintf(stderr,"Got a mapper gap in gene obj_from_sth - not sure if this is allowed\n");
+        exit(1);
+      } else {
+        MapperCoordinate *mc = (MapperCoordinate *)range;
+
+        seqRegionId     = mc->id;
+        seqRegionStart  = mc->start;
+        seqRegionEnd    = mc->end;
+        seqRegionStrand = mc->strand;
+      }
+
+      MapperRangeSet_free(mrs);
+
+      // Get a slice in the coord system we just mapped to
+      //$slice = $slice_hash{ "ID:" . $seq_region_id } ||=
+      //  $sa->fetch_by_seq_region_id($seq_region_id);
+      if (! IDHash_contains(sliceHash, seqRegionId)) {
+        IDHash_add(sliceHash, seqRegionId, SliceAdaptor_fetchBySeqRegionId(sa, seqRegionId, POS_UNDEF, POS_UNDEF, STRAND_UNDEF));
+      }
+      exonSlice = IDHash_getValue(sliceHash, seqRegionId);
+    }
+
+    //
+    // If a destination slice was provided convert the coords.
+    //  
+    if (destSlice != NULL) {
+      if (destSliceStrand == 1) {
+        // Positive strand.
+        seqRegionStart = seqRegionStart - destSliceStart + 1;
+        seqRegionEnd   = seqRegionEnd - destSliceStart + 1;
+
+        if (0) {
+/*
+	if ( ( $seq_region_end > $dest_slice_start || $seq_region_end < 0 || ( $dest_slice_start > $dest_slice_end
+                 && $seq_region_end < 0 ) )  && $dest_slice->is_circular() ) {
+          # Handle circular chromosomes.
+
+          if ( $seq_region_start > $seq_region_end ) {
+            # Looking at a feature overlapping the chromsome origin.
+
+            if ( $seq_region_end > $dest_slice_start ) {
+              # Looking at the region in the beginning of the
+              # chromosome.
+              $seq_region_start -= $dest_slice->seq_region_length();
+            }
+
+            if ( $seq_region_end < 0 ) {
+              $seq_region_end += $dest_slice->seq_region_length();
+            }
+
+          } else {
+            if (    $dest_slice_start > $dest_slice_end
+                 && $seq_region_end < 0 )
+            {
+              # Looking at the region overlapping the chromosome
+              # origin and a feature which is at the beginning of the
+              # chromosome.
+              $seq_region_start += $dest_slice->seq_region_length();
+              $seq_region_end   += $dest_slice->seq_region_length();
+            }
+          }
+*/
+        }
+      } else {
+        // Negative strand.
+        if (0) {
+/*
+        if ( $seq_region_start > $seq_region_end && $dest_slice->is_circular() )
+          # Handle circular chromosomes.
+
+          if ( $dest_slice_start > $dest_slice_end ) {
+            my $tmp_seq_region_start = $seq_region_start;
+            $seq_region_start = $dest_slice_end - $seq_region_end + 1;
+            $seq_region_end =
+              $dest_slice_end +
+              $dest_slice->seq_region_length() -
+              $tmp_seq_region_start + 1;
+          } else {
+
+            if ( $seq_region_end > $dest_slice_start ) {
+              # Looking at the region in the beginning of the
+              # chromosome.
+              $seq_region_start = $dest_slice_end - $seq_region_end + 1;
+              $seq_region_end =
+                $seq_region_end -
+                $dest_slice->seq_region_length() -
+                $dest_slice_start + 1;
+            } else {
+              my $tmp_seq_region_start = $seq_region_start;
+              $seq_region_start =
+                $dest_slice_end -
+                $seq_region_end -
+                $dest_slice->seq_region_length() + 1;
+              $seq_region_end =
+                $dest_slice_end - $tmp_seq_region_start + 1;
+            }
+
+          }
+*/
+
+        } else {
+          // Non-circular chromosome - sanity
+          long tmpSeqRegionStart = seqRegionStart;
+          seqRegionStart = destSliceEnd - seqRegionEnd + 1;
+          seqRegionEnd   = destSliceEnd - tmpSeqRegionStart + 1;
+        }
+
+        seqRegionStrand = -seqRegionStrand;
+      }
+
+      // Throw away features off the end of the requested slice or on
+      // different seq_region.
+// Perl used 'ne' for comparison of ids but these are ints so that's not really very efficient
+      if (seqRegionEnd < 1 ||
+          seqRegionStart > destSliceLength ||
+          (destSliceSrId != seqRegionId)) {
+// Any freeing to do - don't think so??
+        //next FEATURE;
+        continue;
+      }
+      exonSlice = destSlice;
+    }
+
+    // Finally, create the new exon.
+    Exon *exon = Exon_new();
+    Exon_setStart          (exon, seqRegionStart);
+    Exon_setEnd            (exon, seqRegionEnd);
+    Exon_setStrand         (exon, seqRegionStrand);
+    Exon_setAdaptor        (exon, (BaseAdaptor *)ea);
+    Exon_setSlice          (exon, exonSlice);
+    Exon_setDbID           (exon, exonId);
+    Exon_setStableId       (exon, stableId);
+    Exon_setVersion        (exon, version);
+    Exon_setCreated        (exon, createdDate);
+    Exon_setModified       (exon, modifiedDate);
+    Exon_setPhase          (exon, phase);
+    Exon_setEndPhase       (exon, endPhase);
+    Exon_setIsCurrent      (exon, isCurrent);
+    Exon_setIsConstituitive(exon, isCurrent);
+ 
+    Vector_addElement(exons, exon);
+  }
+
+  // Don't free slices because they might be being used????
+  IDHash_free(sliceHash, NULL);
+
+  return exons;
+}
+
+/* Don't bother
+=head1 DEPRECATED METHODS
+
+=cut
+
+
+=head2 get_stable_entry_info
+
+  Description: DEPRECATED. This method is no longer necessary.  Exons are
+               always fetched with their stable identifiers (if they exist) and
+               no lazy loading is necessary.
+
+=cut
+
+sub get_stable_entry_info {
+  my ($self,$exon) = @_;
+
+  deprecated( "This method call shouldnt be necessary" );
+
+  if( !$exon || !ref $exon || !$exon->isa('Bio::EnsEMBL::Exon') ) {
+     $self->throw("Needs a exon object, not a $exon");
+  }
+  if(!$exon->dbID){
+    #$self->throw("can't fetch stable info with no dbID");
+    return;
+  }
+
+  my $created_date = $self->db->dbc->from_date_to_seconds("created_date");
+  my $modified_date = $self->db->dbc->from_date_to_seconds("modified_date");
+  my $sth = $self->prepare("SELECT stable_id, " . $created_date . ",
+                                   " . $modified_date . ", version 
+                            FROM   exon
+                            WHERE  exon_id = ");
+
+  $sth->bind_param(1, $exon->dbID, SQL_INTEGER);
+  $sth->execute();
+
+  # my @array = $sth->fetchrow_array();
+  if( my $aref = $sth->fetchrow_arrayref() ) {
+    $exon->{'_stable_id'} = $aref->[0];
+    $exon->{'_created'}   = $aref->[1];
+    $exon->{'_modified'}  = $aref->[2];
+    $exon->{'_version'}   = $aref->[3];
+  }
 
   return 1;
 }
 
-char *protType = "protein_align_feature";
-char *dnaType = "dna_align_feature";
 
-IDType  ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
-  StatementHandle *sth;
-  StatementHandle *sth2;
-  char qStr[1024];
-  int i;
-  IDType exonId;
-  DNAAlignFeatureAdaptor *dafa;
-  ProteinAlignFeatureAdaptor *pafa;
-  char *type;
-  int nExon;
-  //StickyExon *stickyExon = NULL;
+=head2 fetch_all_by_gene_id
+
+  Description: DEPRECATED. This method should not be needed - Exons can
+               be fetched by Transcript.
+
+=cut
+
+sub fetch_all_by_gene_id {
+  my ( $self, $gene_id ) = @_;
+  my %exons;
+  my $hashRef;
+  my ( $currentId, $currentTranscript );
+
+  deprecated( "Hopefully this method is not needed any more. Exons should be fetched by Transcript" );
+
+  if( !$gene_id ) {
+      $self->throw("Gene dbID not defined");
+  }
   
+  $self->{rchash} = {};
+  
+  my $query = qq {
+    SELECT 
+      STRAIGHT_JOIN 
+	e.exon_id
+      , e.contig_id
+      , e.contig_start
+      , e.contig_end
+      , e.contig_strand
+      , e.phase
+      , e.end_phase
+      , e.sticky_rank
+    FROM transcript t
+      , exon_transcript et
+      , exon e
+    WHERE t.gene_id = ?
+      AND et.transcript_id = t.transcript_id
+      AND e.exon_id = et.exon_id
+    ORDER BY t.transcript_id,e.exon_id
+      , e.sticky_rank DESC
+  };
 
-  Class_assertType(CLASS_EXON, exon->objectType);
+  my $sth = $self->prepare( $query );
+  $sth->bind_param(1,$gene_id,SQL_INTEGER);
+  $sth->execute();
 
-  if (Exon_getDbID(exon) && Exon_getAdaptor(exon) && Exon_getAdaptor(exon) == (BaseAdaptor *)ea) {
-    return Exon_getDbID(exon);
-  }
+  while( $hashRef = $sth->fetchrow_hashref() ) {
+    if( ! exists $exons{ $hashRef->{exon_id} } ) {
 
-  if( ! Exon_getStart(exon)  || ! Exon_getEnd(exon) ||
-      ! Exon_getStrand(exon) || ! Exon_getPhase(exon)) {
-    fprintf(stderr,"ERROR: Exon does not have all attributes to store");
-    exit(1);
-  }
+      my $exon = $self->_exon_from_sth( $sth, $hashRef );
 
-  // trap contig_id separately as it is likely to be a common mistake
-
-// HACK modified duplicate of query for first exon (with no setting of exonId
-  sprintf(qStr,
-    "INSERT into exon (exon_id, seq_region_id, seq_region_start,"
-                      "seq_region_end, seq_region_strand, phase,"
-                      "end_phase) "
-    " VALUES ( %" IDFMTSTR ", %" IDFMTSTR ", %%d, %%d, %%d, %%d, %%d )");
-
-
-  sth = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
-
-  sprintf(qStr,
-    "INSERT into exon (seq_region_id, seq_region_start,"
-                      "seq_region_end, seq_region_strand, phase,"
-                      "end_phase) "
-    " VALUES ( %" IDFMTSTR ", %%d, %%d, %%d, %%d, %%d )");
-
-  sth2 = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
-
-  exonId = 0;
-
-/* No more stickys!
-  if (exon->objectType == CLASS_STICKYEXON) {
-    stickyExon = (StickyExon *)exon;
-    // sticky storing. Sticky exons contain normal exons ...
-
-    for (i=0; i<StickyExon_getComponentExonCount(stickyExon); i++) {
-      Exon *componentExon = StickyExon_getComponentExonAt(stickyExon,i);
-      RawContig *contig; 
-
-      if (Exon_getContig(componentExon)->objectType != CLASS_RAWCONTIG) {
-        fprintf(stderr,"Error: contig isn't raw contig when trying to store\n");
-        exit(1);
-      }
-      contig = (RawContig *)Exon_getContig(componentExon);
-
-
-
-      if (!contig || !RawContig_getDbID(contig)) {
-        fprintf(stderr,"Component Exon does not have an attached contig "
-                       "with a valid set database id. "
-                       "Needs to have one set\n");
-        exit(1);
-      }
-
-      if (!exonId) {
-        sth->execute( sth2,
-                      (IDType)RawContig_getDbID(contig),
-                      Exon_getStart(componentExon),
-                      Exon_getEnd(componentExon),
-                      Exon_getStrand(componentExon),
-                      Exon_getPhase(componentExon),
-                      Exon_getEndPhase(componentExon));
-        exonId = sth->getInsertId(sth);
-      } else {
-        sth->execute( sth,
-                      (IDType)exonId,
-                      (IDType)RawContig_getDbID(contig),
-                      Exon_getStart(componentExon),
-                      Exon_getEnd(componentExon),
-                      Exon_getStrand(componentExon),
-                      Exon_getPhase(componentExon),
-                      Exon_getEndPhase(componentExon));
-      }
-    }
-  } else {
-*/
-    // normal storing
-    RawContig *contig;
-
-    if (Exon_getContig(exon)->objectType != CLASS_RAWCONTIG) {
-      fprintf(stderr,"Error: contig isn't raw contig when trying to store\n");
-      exit(1);
-    }
-    contig = (RawContig *)Exon_getContig(exon);
-
-    if (!contig || !RawContig_getDbID(contig)) {
-      fprintf(stderr,"Exon does not have an attached contig with a valid " 
-                     "database id.  Needs to have one set\n");
-      exit(1);
-    }
-
-    sth->execute( sth2,
-                  (IDType)RawContig_getDbID(contig),
-                  Exon_getStart(exon),
-                  Exon_getEnd(exon),
-                  Exon_getStrand(exon),
-                  Exon_getPhase(exon),
-                  Exon_getEndPhase(exon));
-    exonId = sth->getInsertId(sth);
-/*
-  }
-*/
-  sth->finish(sth);
-
-  if (Exon_getStableId(exon)) {
-    if (!Exon_getCreated(exon) ||
-        !Exon_getModified(exon) ||
-        Exon_getVersion(exon) == -1) {
-      fprintf(stderr, "Error: Trying to store incomplete stable id information for exon\n");
-      exit(1);
-    }
-
-    sprintf(qStr,
-        "INSERT INTO exon_stable_id(exon_id," 
-        "version, stable_id, created, modified)"
-                    " VALUES(" IDFMTSTR ",%d,'%s',FROM_UNIXTIME(%ld),FROM_UNIXTIME(%ld))",
-         exonId,
-         Exon_getVersion(exon),
-         Exon_getStableId(exon),
-         Exon_getCreated(exon),
-         Exon_getModified(exon));
-
-
-     sth = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
-     sth->execute(sth);
-     sth->finish(sth);
-   }
-
-
-  // Now the supporting evidence
-  // should be stored from featureAdaptor
-  sprintf(qStr,
-         "insert into supporting_feature (exon_id, feature_id, feature_type) "
-         "values(%" IDFMTSTR ", %" IDFMTSTR ", %%s)");
-
-  sth = ea->prepare((BaseAdaptor *)ea, qStr, strlen(qStr));
-
-  dafa = DBAdaptor_getDNAAlignFeatureAdaptor(ea->dba);
-  pafa = DBAdaptor_getProteinAlignFeatureAdaptor(ea->dba);
-
-  nExon = 1;
-
-/* nExon is 1 for non sticky and nComponent for sticky */
-  for (i=0;i<nExon;i++) {
-    int j;
-    Exon *e;
-    Vector *supportingFeatures;
-
-    e = exon;
-
-    supportingFeatures = Exon_getAllSupportingFeatures(e);
-
-    for (j=0; j<Vector_getNumElement(supportingFeatures); j++) {
-      BaseAlignFeature *sf = Vector_getElementAt(supportingFeatures, j);
-
-      Class_assertType(CLASS_BASEALIGNFEATURE, sf->objectType);
-
-      // sanity check
-/* NIY
-      if (!BaseAlignFeature_validate(sf)) {
-        fprintf(stderr,"Warning: Supporting feature invalid. Skipping feature\n");
-        continue;
-      }
-*/
-
-      BaseAlignFeature_setContig(sf, Exon_getContig(e));
-
-      if (Class_isDescendent(CLASS_DNADNAALIGNFEATURE, sf->objectType)) {
-        DNAAlignFeatureAdaptor_store(dafa,sf);
-        type = dnaType;
-      } else if (Class_isDescendent(CLASS_DNAPEPALIGNFEATURE, sf->objectType)) {
-        ProteinAlignFeatureAdaptor_store(pafa,sf);
-        type = protType;
-      } else {
-        fprintf(stderr,"Warning: Supporting feature of unknown type. Skipping\n");
-        continue;
-      }
-
-      sth->execute(sth, (IDType)exonId, BaseAlignFeature_getDbID(sf), type);
+      $exons{$exon->dbID} = $exon;
     }
   }
-  sth->finish(sth);
+  delete $self->{rchash};
+  
+  my @out = ();
 
-  // 
-  // Finally, update the dbID and adaptor of the exon (and any component exons)
-  // to point to the new database
-  // 
+  push @out, values %exons;
 
-/*
-  if (stickyExon) {
-    for (i=0; i<StickyExon_getComponentExonCount(stickyExon); i++) {
-      Exon *e = StickyExon_getComponentExonAt(stickyExon,i);
-      Exon_setDbID(e,exonId);
-      Exon_setAdaptor(e,(BaseAdaptor *)ea);
-    }
-  }
-*/
-
-  Exon_setAdaptor(exon,(BaseAdaptor *)ea);
-  Exon_setDbID(exon, exonId);
-
-  return Exon_getDbID(exon);
+  return \@out;
 }
 
+*/

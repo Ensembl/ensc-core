@@ -1111,7 +1111,9 @@ sub seq_region_length {
   return ($slice) ? $slice->seq_region_length() : undef;
 }
 
+*/
 
+/*
 =head2 seq_region_strand
 
   Arg [1]    : none
@@ -1125,16 +1127,23 @@ sub seq_region_length {
   Status     : Stable
 
 =cut
+*/
 
 
-sub seq_region_strand {
-  my $self = shift;
-  my $slice = $self->{'slice'};
+int SeqFeature_getSeqRegionStrand(SeqFeature *sf) {
+  Slice *slice = SeqFeature_getSlice(sf);
 
-  return ($slice) ? $slice->strand() * $self->{'strand'} : undef;
+  if (slice) {
+    return Slice_getStrand(slice) * SeqFeature_getStrand(sf);
+  } else {
+// Not sure what to return in this case
+    return STRAND_UNDEF;
+  }
+  //return ($slice) ? $slice->strand() * $self->{'strand'} : undef;
 }
 
 
+/*
 =head2 seq_region_start
 
   Arg [1]    : none
@@ -1150,43 +1159,43 @@ sub seq_region_strand {
   Status     : Stable
 
 =cut
+*/
 
-sub seq_region_start {
-  my ($self) = @_;
+int SeqFeature_getSeqRegionStart(SeqFeature *sf) {
+  Slice *slice = SeqFeature_getSlice(sf);
 
-  my $slice = $self->slice();
+  if (slice != NULL) {
+    long start = POS_UNDEF;
 
-  if ( defined($slice) ) {
-    my $start;
-
-    if ( $slice->strand() == 1 ) {
-      if ( defined( $self->start() ) ) {
-	  if ($self->start < 0 && $slice->is_circular) {
-	      $start = $slice->seq_region_length + $self->start;
-	  } else {
-        $start = $slice->start() + $self->start() - 1;
-    }
+    if ( Slice_getStrand(slice) == 1 ) {
+      if (SeqFeature_getStart(sf) != POS_UNDEF ) {
+//        if ($self->start < 0 && $slice->is_circular) {
+//          $start = $slice->seq_region_length + $self->start;
+//        } else {
+        start = Slice_getStart(slice) + SeqFeature_getStart(sf) - 1;
+//        }
       }
     } else {
-      if ( defined( $self->end() ) ) {
-        $start = $slice->end() - $self->end() + 1;
+      if (SeqFeature_getEnd(sf) != POS_UNDEF) {
+        start = Slice_getEnd(slice) - SeqFeature_getEnd(sf) + 1;
       }
     }
 
-    if (    defined($start)
+/* Circular shite
+    if (start != POS_UNDEF
          && $slice->is_circular()
-         && $start > $slice->seq_region_length() )
-    {
+         && $start > $slice->seq_region_length() ) {
       $start -= $slice->seq_region_length();
     }
-
-    return $start;
+*/
+    return start;
   }
 
-  return undef;
-} ## end sub seq_region_start
+  return POS_UNDEF;
+}
 
 
+/*
 =head2 seq_region_end
 
   Arg [1]    : none
@@ -1202,39 +1211,41 @@ sub seq_region_start {
   Status     : Stable
 
 =cut
+*/
 
-sub seq_region_end {
-  my ($self) = @_;
+int SeqFeature_getSeqRegionEnd(SeqFeature *sf) {
+  Slice *slice = SeqFeature_getSlice(sf);
 
-  my $slice = $self->slice();
+  if (slice != NULL) {
+    long end = POS_UNDEF;
 
-  if ( defined($slice) ) {
-    my $end;
-
-    if ( $slice->strand() == 1 ) {
-      if ( defined( $self->end() ) ) {
-        $end = $slice->start() + $self->end() - 1;
+    if ( Slice_getStrand(slice) == 1 ) {
+      if (SeqFeature_getEnd(sf) != POS_UNDEF) {
+        end = Slice_getStart(slice) + SeqFeature_getEnd(sf) - 1;
       }
     } else {
-      if ( defined( $self->start() ) ) {
-        $end = $slice->end() - $self->start() + 1;
+      if (SeqFeature_getStart(sf) != POS_UNDEF) {
+        end = Slice_getEnd(slice) - SeqFeature_getStart(sf) + 1;
       }
     }
 
+
+/* Circular shite
     if (    defined($end)
          && $slice->is_circular()
-         && $end > $slice->seq_region_length() )
-    {
+         && $end > $slice->seq_region_length() ) {
       $end -= $slice->seq_region_length();
     }
+*/
 
-    return $end;
+    return end;
   }
 
-  return undef;
-} ## end sub seq_region_end
+  return POS_UNDEF;
+}
 
 
+/*
 =head2 coord_system_name
 
   Arg [1]    : none

@@ -11,8 +11,7 @@
 #include "StringHash.h"
 
 struct GeneAdaptorStruct {
-  BASEADAPTOR_DATA
-  StringHash *sliceGeneCache;
+  BASEFEATUREADAPTOR_DATA
 };
 
 GeneAdaptor *GeneAdaptor_new(DBAdaptor *dba);
