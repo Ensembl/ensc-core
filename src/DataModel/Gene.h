@@ -123,12 +123,15 @@ Vector *Gene_getAllDBLinks(Gene *g);
 int Gene_addDBLink(Gene *gene, DBEntry *dbe);
 
 void Gene_free(Gene *gene);
+Gene *Gene_shallowCopy(Gene *gene);
 
 
 #ifdef __GENE_MAIN__
   GeneFuncs 
     geneFuncs = {
                  Gene_free,
+                 Gene_shallowCopy, // shallowCopy
+                 NULL, // deepCopy
                  NULL,
                  NULL,
                  NULL,

@@ -35,7 +35,9 @@ void Species_free(Species *species);
 #ifdef __SPECIES_MAIN__
   SpeciesFuncs
     speciesFuncs = {
-                    Species_free
+                    Species_free,
+                    NULL, // shallowCopy
+                    NULL  // deepCopy
                    };
 #else
   extern SpeciesFuncs speciesFuncs;

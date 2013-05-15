@@ -36,7 +36,9 @@ struct MysqlResultRowStruct {
 #ifdef __MYSQLRESULTROW_MAIN__
   MysqlResultRowFuncs
     mysqlResultRowFuncs = {
-                      NULL // free
+                      NULL, // free
+                      NULL, // shallowCopy
+                      NULL  // deepCopy
                      };
 #else
   extern MysqlResultRowFuncs mysqlResultRowFuncs;

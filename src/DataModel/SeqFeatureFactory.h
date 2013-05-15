@@ -4,5 +4,6 @@
 #include "SeqFeature.h"
 
 SeqFeature *SeqFeatureFactory_newFeature(ClassType type);
+SeqFeature *SeqFeatureFactory_newFeatureFromFeature(SeqFeature *sf);
 
 #endif

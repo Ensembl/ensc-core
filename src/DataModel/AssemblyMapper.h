@@ -112,6 +112,8 @@ void AssemblyMapper_registerAssembled(AssemblyMapper *am, IDType asmSeqRegionId,
   AssemblyMapperFuncs
     assemblyMapperFuncs = {
                       AssemblyMapper_freeImpl, // free
+                      NULL, // shallowCopy
+                      NULL, // deepCopy
                       AssemblyMapper_mapImpl,   // map
                       AssemblyMapper_flushImpl,   // flush
                       AssemblyMapper_fastMapImpl,  //fastMap

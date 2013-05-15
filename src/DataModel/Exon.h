@@ -121,6 +121,9 @@ Exon *Exon_transformSliceToRawContigImpl(Exon *exon);
 void Exon_freeImpl(Exon *exon);
 #define Exon_free(exon) AnnotatedSeqFeature_free((exon))
 
+Exon *Exon_shallowCopyImpl(Exon *exon);
+#define Exon_shallowCopy(exon) AnnotatedSeqFeature_shallowCopy((exon))
+
 Exon *Exon_new();
 Exon *Exon_copy(Exon *copy, Exon *orig, CopyDepth depth);
 char *Exon_getSeqStringImpl(Exon *exon);
@@ -167,6 +170,8 @@ Exon *Exon_adjustStartEndImpl(Exon *exon, int startAdjust, int endAdjust);
   ExonFuncs 
     exonFuncs = {
                  Exon_freeImpl, // free
+                 Exon_shallowCopyImpl, // shallowCopy
+                 NULL, // deepCopy
                  NULL, // getStart
                  NULL, // setStart
                  NULL, // getEnd

@@ -6,14 +6,14 @@
 #include "EnsC.h"
 
 #define SEQUENCEFUNC_TYPES(CLASSTYPE) \
-  typedef void (*CLASSTYPE ## _FreeFunc)(CLASSTYPE *seq); \
+  OBJECTFUNC_TYPES(CLASSTYPE) \
   typedef ECOSTRING (*CLASSTYPE ## _GetNameFunc)(CLASSTYPE *seq); \
   typedef char * (*CLASSTYPE ## _GetSeqFunc)(CLASSTYPE *seq); \
   typedef char * (*CLASSTYPE ## _GetSubSeqFunc)(CLASSTYPE *seq, int start, int end, int strand);
 
 
 #define SEQUENCEFUNCS_DATA(CLASSTYPE) \
-  CLASSTYPE ## _FreeFunc free; \
+  OBJECTFUNCS_DATA(CLASSTYPE) \
   CLASSTYPE ## _GetNameFunc getName; \
   CLASSTYPE ## _GetSeqFunc getSeq; \
   CLASSTYPE ## _GetSubSeqFunc getSubSeq;

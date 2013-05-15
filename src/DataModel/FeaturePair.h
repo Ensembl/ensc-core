@@ -99,6 +99,8 @@ void FeaturePair_freeImpl(FeaturePair *fp);
   FeaturePairFuncs 
     featurePairFuncs = {
                         FeaturePair_freeImpl, // free
+                        NULL, // shallowCopy
+                        NULL, // deepCopy
                         NULL, // getStart
                         NULL, // setStart
                         NULL, // getEnd

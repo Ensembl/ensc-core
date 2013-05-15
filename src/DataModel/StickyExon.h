@@ -121,6 +121,8 @@ void StickyExon_freeImpl(StickyExon *stickyExon);
   StickyExonFuncs 
     stickyExonFuncs = {
                        StickyExon_freeImpl, // free
+                       NULL, // shallowCopy
+                       NULL, // deepCopy
                        NULL, // getStart
                        NULL, // setStart
                        NULL, // getEnd

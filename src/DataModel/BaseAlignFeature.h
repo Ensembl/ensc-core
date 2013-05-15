@@ -127,6 +127,8 @@ void BaseAlignFeature_freeImpl(BaseAlignFeature *baf);
   BaseAlignFeatureFuncs 
     baseAlignFeatureFuncs = {
                              BaseAlignFeature_freeImpl, // free
+                             NULL, // shallowCopy
+                             NULL, // deepCopy
                              NULL, // getStart
                              NULL, // setStart
                              NULL, // getEnd

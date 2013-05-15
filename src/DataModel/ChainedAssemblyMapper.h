@@ -126,6 +126,8 @@ Vector *ChainedAssemblyMapper_listSeqRegionsImpl(ChainedAssemblyMapper *cam, cha
   ChainedAssemblyMapperFuncs
     chainedAssemblyMapperFuncs = {
                       ChainedAssemblyMapper_freeImpl, // free
+                      NULL, // shallowCopy
+                      NULL, // deepCopy
                       ChainedAssemblyMapper_mapImpl,   // map
                       ChainedAssemblyMapper_flushImpl,   // flush
                       ChainedAssemblyMapper_fastMapImpl,  //fastMap

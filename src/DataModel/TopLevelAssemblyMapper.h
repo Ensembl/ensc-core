@@ -99,6 +99,8 @@ Vector *TopLevelAssemblyMapper_listContigIdsImpl(TopLevelAssemblyMapper *am, cha
   TopLevelAssemblyMapperFuncs
     topLevelAssemblyMapperFuncs = {
                       TopLevelAssemblyMapper_freeImpl, // free
+                      NULL, // shallowCopy
+                      NULL, // deepCopy
                       TopLevelAssemblyMapper_mapImpl,   // map
                       TopLevelAssemblyMapper_flushImpl,   // flush
                       TopLevelAssemblyMapper_fastMapImpl,  //fastMap

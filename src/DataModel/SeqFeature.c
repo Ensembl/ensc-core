@@ -569,11 +569,14 @@ SeqFeature *SeqFeature_transform(SeqFeature *sf, char *csName, char *csVersion, 
       Slice_getStart(slice) == 1 &&
       Slice_getStrand(slice) == 1) {
     // Temporary Hack - really need a clone method
-    SeqFeature *newFeature = SeqFeatureFactory_newFeature(sf->objectType);
+    SeqFeature *newFeature = SeqFeatureFactory_newFeatureFromFeature(sf);
     SeqFeature_setStart(newFeature, SeqFeature_getStart(sf));
     SeqFeature_setEnd(newFeature, SeqFeature_getEnd(sf));
     SeqFeature_setStrand(newFeature, SeqFeature_getStrand(sf));
     SeqFeature_setSlice(newFeature, SeqFeature_getSlice(sf));
+
+    SeqFeature_setDbID(newFeature, SeqFeature_getDbID(sf));
+
     return newFeature;
 
 //    my $new_feature;
@@ -664,10 +667,12 @@ SeqFeature *SeqFeature_transform(SeqFeature *sf, char *csName, char *csVersion, 
 //  %$new_feature = %$self;
 //  bless $new_feature, ref $self;
 // Temporary hack
-  newFeature = SeqFeatureFactory_newFeature(sf->objectType);
+  newFeature = SeqFeatureFactory_newFeatureFromFeature(sf);
 
   SeqFeature_setStart(newFeature, Slice_getStart(pSlice));
   SeqFeature_setEnd(newFeature, Slice_getEnd(pSlice));
+      
+  SeqFeature_setDbID(newFeature, SeqFeature_getDbID(sf));
 
 // Huhhh?  What's this strand 0 stuff???????
   if (SeqFeature_getSlice(sf) == 0) {
@@ -721,12 +726,13 @@ SeqFeature *SeqFeature_transfer(SeqFeature *sf, Slice *slice) {
   SeqFeature *feature;
 // NIY: How to do the copy, that is the question???
 // Temporary hack
-  feature = SeqFeatureFactory_newFeature(sf->objectType);
+  feature = SeqFeatureFactory_newFeatureFromFeature(sf);
   SeqFeature_setStart(feature, SeqFeature_getStart(sf));
   SeqFeature_setEnd(feature, SeqFeature_getEnd(sf));
   SeqFeature_setStrand(feature, SeqFeature_getStrand(sf));
   SeqFeature_setSlice(feature, SeqFeature_getSlice(sf));
 
+  SeqFeature_setDbID(feature, SeqFeature_getDbID(sf));
   //%{$feature} = %{$self};
   //bless $feature, ref($self);
   //weaken $feature->{adaptor};
@@ -1942,7 +1948,7 @@ Vector *SeqFeature_transformSliceToRawContigImpl(SeqFeature *sf) {
     
           mc = (MapperCoordinate *)mr;
   
-          feat = SeqFeatureFactory_newFeature(sf->objectType);
+          feat = SeqFeatureFactory_newFeatureFromFeature(sf);
     
           SeqFeature_setStart(feat, mc->start);
           SeqFeature_setEnd(feat, mc->end);
@@ -1950,6 +1956,8 @@ Vector *SeqFeature_transformSliceToRawContigImpl(SeqFeature *sf) {
           fprintf(stderr, "3 setting contig to be " IDFMTSTR "\n",mc->id);
           SeqFeature_setContig(feat, RawContigAdaptor_fetchByDbID(rca, mc->id));
           if (SeqFeature_getAdaptor(sf)) SeqFeature_setAdaptor(sf, SeqFeature_getAdaptor(sf));
+
+
     // HACK HACK HACK
           if (Class_isDescendent(CLASS_SIMPLEFEATURE, sf->objectType)) {
             SimpleFeature_setDisplayLabel((SimpleFeature *)feat, SimpleFeature_getDisplayLabel((SimpleFeature *)sf));

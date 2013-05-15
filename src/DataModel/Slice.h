@@ -125,6 +125,8 @@ Slice *Slice_invert(Slice *slice);
 #ifdef __SLICE_MAIN__
   SliceFuncs sliceFuncs = {
                            NULL, // free
+                           NULL, // shallowCopy
+                           NULL, // deepCopy
                            Slice_getName, 
                            Slice_getSeq,
                            Slice_getSubSeq

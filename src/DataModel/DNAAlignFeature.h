@@ -88,6 +88,8 @@ void DNAAlignFeature_freeImpl(DNAAlignFeature *daf);
   DNAAlignFeatureFuncs 
     dnaAlignFeatureFuncs = {
                              DNAAlignFeature_freeImpl,
+                             NULL, // shallowCopy
+                             NULL, // deepCopy
                              NULL, // getStart
                              NULL, // setStart
                              NULL, // getEnd

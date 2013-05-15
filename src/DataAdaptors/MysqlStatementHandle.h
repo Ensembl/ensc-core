@@ -47,7 +47,9 @@ struct MysqlStatementHandleStruct {
 #ifdef __MYSQLSTATEMENTHANDLE_MAIN__
   MysqlStatementHandleFuncs
     mysqlStatementHandleFuncs = {
-                            NULL
+                            NULL,
+                            NULL, // shallowCopy
+                            NULL  // deepCopy
                            };
 #else
   extern MysqlStatementHandleFuncs mysqlStatementHandleFuncs;

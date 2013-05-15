@@ -34,6 +34,14 @@ Exon *Exon_new() {
   return exon;
 }
 
+Exon *Exon_shallowCopyImpl(Exon *exon) {
+  Exon *newExon = Exon_new();
+
+  memcpy(newExon,exon,sizeof(Exon));
+
+  return newExon;
+}
+
 char *Exon_getStableId(Exon *exon) {
   ExonAdaptor *ea = (ExonAdaptor *)Exon_getAdaptor(exon);
 

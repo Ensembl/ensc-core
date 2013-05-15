@@ -130,6 +130,7 @@ void Transcript_flushExons(Transcript *transcript);
 int Transcript_addDBLink(Transcript *transcript, DBEntry *dbe);
 
 Transcript *Transcript_transform(Transcript *transcript, IDHash *exonTransforms);
+Transcript *Transcript_transfer(Transcript *transcript, Slice *slice);
 
 void Transcript_sort(Transcript *trans);
 
@@ -157,13 +158,16 @@ Mapper *Transcript_getcDNACoordMapper(Transcript *trans);
 char *Transcript_translate(Transcript *trans);
 
 void Transcript_free(Transcript *trans);
+Transcript *Transcript_shallowCopy(Transcript *trans);
 int Transcript_getLength(Transcript *trans);
 
 
 #ifdef __TRANSCRIPT_MAIN__
   TranscriptFuncs 
     transcriptFuncs = {
-                       Transcript_free,
+                       Transcript_free, // free
+                       Transcript_shallowCopy, // shallowCopy
+                       NULL, // deepCopy
                        NULL,
                        NULL,
                        NULL,

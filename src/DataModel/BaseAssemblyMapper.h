@@ -110,6 +110,8 @@ Vector *BaseAssemblyMapper_listContigIdsImpl(BaseAssemblyMapper *am, char *chrNa
  BaseAssemblyMapperFuncs 
    baseAssemblyMapperFuncs = {
                       BaseAssemblyMapper_freeImpl,   // free
+                      NULL, // shallowCopy
+                      NULL, // deepCopy
                       BaseAssemblyMapper_mapImpl,   // map
                       BaseAssemblyMapper_flushImpl,   // flush
                       BaseAssemblyMapper_fastMapImpl,  //fastMap

@@ -78,6 +78,8 @@ void DNAPepAlignFeature_freeImpl(DNAPepAlignFeature *dpaf);
   DNAPepAlignFeatureFuncs
     dnaPepAlignFeatureFuncs = {
                              DNAPepAlignFeature_freeImpl,
+                             NULL, // shallowCopy
+                             NULL, // deepCopy
                              NULL, // getStart
                              NULL, // setStart
                              NULL, // getEnd

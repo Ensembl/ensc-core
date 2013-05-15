@@ -72,6 +72,8 @@ void SimpleFeature_freeImpl(SimpleFeature *sf);
  SimpleFeatureFuncs
    simpleFeatureFuncs = {
                       SimpleFeature_freeImpl,
+                      NULL, // shallowCopy
+                      NULL, // deepCopy
                       NULL, // getStart
                       NULL, // setStart
                       NULL, // getEnd

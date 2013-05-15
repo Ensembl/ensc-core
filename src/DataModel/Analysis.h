@@ -87,6 +87,8 @@ void Analysis_free(Analysis *anal);
   AnalysisFuncs
     analysisFuncs = {
                     Analysis_free,
+                    NULL, // shallowCopy
+                    NULL  // deepCopy
                    };
 #else
   extern AnalysisFuncs analysisFuncs;

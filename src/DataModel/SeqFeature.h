@@ -11,8 +11,10 @@
 
 #include "EnsRoot.h"
 
+//typedef void (*CLASSTYPE ## _FreeFunc)(CLASSTYPE *); \
+
 #define SEQFEATUREFUNC_TYPES(CLASSTYPE) \
-typedef void (*CLASSTYPE ## _FreeFunc)(CLASSTYPE *); \
+OBJECTFUNC_TYPES(CLASSTYPE) \
 typedef int (*CLASSTYPE ## _GetStartFunc)(CLASSTYPE *); \
 typedef int (*CLASSTYPE ## _SetStartFunc)(CLASSTYPE *, int start); \
 typedef int (*CLASSTYPE ## _GetEndFunc)(CLASSTYPE *); \
@@ -29,8 +31,10 @@ typedef CLASSTYPE * (*CLASSTYPE ## _TransformToSliceFunc)(CLASSTYPE *sf, Slice *
 typedef CLASSTYPE * (*CLASSTYPE ## _TransformRawContigToSliceFunc)(CLASSTYPE *sf, Slice *slice); \
 typedef CLASSTYPE * (*CLASSTYPE ## _TransformSliceToSliceFunc)(CLASSTYPE *sf, Slice *slice);
 
+//  CLASSTYPE ## _FreeFunc free; \
+
 #define SEQFEATUREFUNCS_DATA(CLASSTYPE) \
-  CLASSTYPE ## _FreeFunc free; \
+  OBJECTFUNCS_DATA(CLASSTYPE) \
   CLASSTYPE ## _GetStartFunc getStart; \
   CLASSTYPE ## _SetStartFunc setStart; \
   CLASSTYPE ## _GetEndFunc getEnd; \
@@ -169,11 +173,15 @@ ECOSTRING SeqFeature_getSeqName(SeqFeature *sf);
 
 #define SeqFeature_free(sf) EnsRoot_free((sf))
 
+#define SeqFeature_shallowCopy(sf) EnsRoot_shallowCopy((sf))
+#define SeqFeature_deepCopy(sf) EnsRoot_deepCopy((sf))
 
 #ifdef __SEQFEATURE_MAIN__
  SeqFeatureFuncs 
    seqFeatureFuncs = {
                       NULL, // free
+                      NULL, // shallowCopy
+                      NULL, // deepCopy
                       NULL, // getStart
                       NULL, // setStart
                       NULL, // getEnd

@@ -63,8 +63,10 @@ void Clone_free(Clone *clone);
 #ifdef __CLONE_MAIN__
   CloneFuncs
     cloneFuncs = {
-                    Clone_free
-                   };
+                  Clone_free,
+                  NULL, // shallowCopy
+                  NULL  // deepCopy
+                 };
 #else
   extern CloneFuncs cloneFuncs;
 #endif

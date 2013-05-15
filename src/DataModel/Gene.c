@@ -31,6 +31,14 @@ Gene *Gene_new() {
   return gene;
 }
 
+Gene *Gene_shallowCopy(Gene *gene) {
+  Gene *newGene = Gene_new();
+
+  memcpy(newGene,gene,sizeof(Gene));
+
+  return newGene;
+}
+
 Vector *Gene_getAllDBLinks(Gene *g) {
   if (!g->dbLinks) {
     GeneAdaptor *ga = (GeneAdaptor *)Gene_getAdaptor(g);

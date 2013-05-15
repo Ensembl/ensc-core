@@ -57,15 +57,17 @@ void MysqlStatementHandle_execute(va_alist) {
  */
 void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
   va_list args;
-  char *statement;
+  char statement[655500];
   int qlen;
   MYSQL_RES *results;
   MysqlStatementHandle *m_sth;
 
+/*
   if ((statement = (char *)calloc(655500,sizeof(char))) == NULL) {
     fprintf(stderr,"Failed allocating statment\n");
     exit(1);
   }
+*/
 
   Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);
 
@@ -115,7 +117,7 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
       fprintf (stderr, "Could not retrieve result set");
     }
   }
-  free(statement);
+  //free(statement);
 }
 
 #endif

@@ -75,6 +75,8 @@ void RepeatFeature_freeImpl(RepeatFeature *repeat);
  RepeatFeatureFuncs 
    repeatFeatureFuncs = {
                       RepeatFeature_freeImpl, // free
+                      NULL, // shallowCopy
+                      NULL, // deepCopy
                       NULL, // getStart
                       NULL, // setStart
                       NULL, // getEnd

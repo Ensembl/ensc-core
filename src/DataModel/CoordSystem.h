@@ -53,8 +53,10 @@ void CoordSystem_free(CoordSystem *coordSystem);
 #ifdef __COORDSYSTEM_MAIN__
   CoordSystemFuncs
     coordSystemFuncs = {
-                    CoordSystem_free,
-                   };
+                        CoordSystem_free,
+                        NULL, // shallowCopy
+                        NULL  // deepCopy
+                       };
 #else
   extern CoordSystemFuncs coordSystemFuncs;
 #endif

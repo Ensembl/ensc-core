@@ -5,10 +5,14 @@
 
 typedef struct ObjectStruct Object;
 #define OBJECTFUNC_TYPES(CLASSTYPE) \
-typedef void (*CLASSTYPE ## _FreeFunc)(CLASSTYPE *);
+typedef void (*CLASSTYPE ## _FreeFunc)(CLASSTYPE *); \
+typedef CLASSTYPE *(*CLASSTYPE ## _ShallowCopyFunc)(CLASSTYPE *); \
+typedef CLASSTYPE *(*CLASSTYPE ## _DeepCopyFunc)(CLASSTYPE *);
 
 #define OBJECTFUNCS_DATA(CLASSTYPE) \
-  CLASSTYPE ## _FreeFunc free;
+  CLASSTYPE ## _FreeFunc free; \
+  CLASSTYPE ## _ShallowCopyFunc shallowCopy; \
+  CLASSTYPE ## _DeepCopyFunc deepCopy;
 
 OBJECTFUNC_TYPES(Object)
 
@@ -44,5 +48,10 @@ void Object_freeImpl(Object *obj);
       ((obj)->funcs->free == NULL ? \
          (fprintf(stderr,"Error: Null pointer for free func - bye\n"),  exit(1), (void *)NULL) : \
          ((obj)->funcs->free((obj)), (void *)NULL))
+
+#define Object_shallowCopy(obj) \
+      ((obj)->funcs->shallowCopy == NULL ? \
+         (fprintf(stderr,"Error: Null pointer for shallowCopy func - bye\n"),  exit(1), (void *)NULL) : \
+         ((obj)->funcs->shallowCopy((obj)), (void *)NULL))
 
 #endif

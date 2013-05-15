@@ -90,10 +90,14 @@ time_t AnnotatedSeqFeature_getModified(AnnotatedSeqFeature *asf);
 
 #define AnnotatedSeqFeature_free(asf) SeqFeature_free((asf))
 
+#define AnnotatedSeqFeature_shallowCopy(asf) SeqFeature_shallowCopy((asf))
+
 #ifdef __ANNOTATEDSEQFEATURE_MAIN__
   AnnotatedSeqFeatureFuncs 
        annotatedSeqFeatureFuncs = {
                                    NULL, // free
+                                   NULL, // shallowCopy
+                                   NULL, // deepCopy
                                    NULL, // getStart
                                    NULL, // setStart
                                    NULL, // getEnd

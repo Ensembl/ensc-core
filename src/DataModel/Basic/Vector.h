@@ -52,6 +52,8 @@ void **Vector_toArray(Vector *v);
   VectorFuncs
     vectorFuncs = {
                     Vector_free,
+                    NULL, // shallowCopy
+                    NULL  // deepCopy
                    };
 #else
   extern VectorFuncs vectorFuncs;

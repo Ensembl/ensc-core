@@ -35,7 +35,6 @@ int main(int argc, char *argv[]) {
   //
   // 2 Test fetch_by_CoordSystems
   //
-
   CoordSystemAdaptor *csa = DBAdaptor_getCoordSystemAdaptor(dba);
 
   CoordSystem *ctgCs  = CoordSystemAdaptor_fetchByName(csa, "contig", NULL);

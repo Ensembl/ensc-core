@@ -110,6 +110,8 @@ void PredictionTranscript_free(PredictionTranscript *trans);
   PredictionTranscriptFuncs 
     predictionTranscriptFuncs = {
                        PredictionTranscript_free,
+                       NULL, // shallowCopy
+                       NULL, // deepCopy
                        PredictionTranscript_getStart,
                        PredictionTranscript_setStart,
                        PredictionTranscript_getEnd,

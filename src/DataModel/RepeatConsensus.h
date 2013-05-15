@@ -44,7 +44,9 @@ void RepeatConsensus_free(RepeatConsensus *rc);
 #ifdef __REPEATCONSENSUS_MAIN__
   RepeatConsensusFuncs
     repeatConsensusFuncs = {
-                    RepeatConsensus_free
+                    RepeatConsensus_free,
+                    NULL, // shallowCopy
+                    NULL // deepCopy
                    };
 #else
   extern RepeatConsensusFuncs repeatConsensusFuncs;

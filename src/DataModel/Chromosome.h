@@ -40,7 +40,9 @@ void Chromosome_free(Chromosome *chr);
 #ifdef __CHROMOSOME_MAIN__
   ChromosomeFuncs
     chromosomeFuncs = {
-                    Chromosome_free
+                    Chromosome_free,
+                    NULL, // shallowCopy
+                    NULL  // deepCopy
                    };
 #else
   extern ChromosomeFuncs chromosomeFuncs;

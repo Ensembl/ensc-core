@@ -390,6 +390,8 @@ TranscriptRankPair *TranscriptRankPair_new(Transcript *transcript, int rank) {
   }
   trp->transcript = transcript;
   trp->rank = rank;
+
+  return trp;
 }
 
 void TranscriptRankPair_free(TranscriptRankPair *trp) {
@@ -400,7 +402,7 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
   char constraint[655500];
 
   strcpy(constraint, "t.is_current = 1");
-  fprintf(stderr, "Length of input constraint = %d\n", strlen(inputConstraint));
+  fprintf(stderr, "Length of input constraint = %ld\n", strlen(inputConstraint));
 
   if (inputConstraint != NULL && inputConstraint[0] != '\0') {
     sprintf(constraint,"%s AND %s", constraint, inputConstraint);
@@ -461,9 +463,9 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
 
   IDType *uniqueIds = IDHash_getKeys(trHash);
 
-  char *qStr;
-  qStr = calloc(1655500,sizeof(char));
-//  char qStr[655500];
+//  char *qStr;
+//  qStr = calloc(1655500,sizeof(char));
+  char qStr[655500];
   strcpy(qStr, "SELECT transcript_id, exon_id, rank FROM exon_transcript WHERE transcript_id IN (" );
   for (i=0; i<IDHash_getNumValues(trHash); i++) {
     if (i!=0) {
@@ -491,7 +493,8 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
       IDHash_add(exTrHash, exId, vec);
     }
     Vector *exVec = IDHash_getValue(exTrHash, exId);
-    Vector_addElement(exVec, TranscriptRankPair_new(IDHash_getValue(trHash, trId), rank));
+    TranscriptRankPair *trp = TranscriptRankPair_new(IDHash_getValue(trHash, trId), rank);
+    Vector_addElement(exVec, trp);
   }
 
   IDHash_free(trHash, NULL);
@@ -555,7 +558,7 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
   fprintf(stderr,"Translation fetching not yet implemented in transcript adaptor\n");
 
   // Free stuff
-  //IDHash_free(exTrHash, Vector_free);
+  IDHash_free(exTrHash, Vector_free);
 
   return transcripts;
 }

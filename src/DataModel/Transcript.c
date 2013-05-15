@@ -35,6 +35,14 @@ Transcript *Transcript_new() {
   return transcript;
 }
 
+Transcript *Transcript_shallowCopy(Transcript *transcript) {
+  Transcript *newTranscript = Transcript_new();
+
+  memcpy(newTranscript,transcript,sizeof(Transcript));
+
+  return newTranscript;
+}
+
 Vector *Transcript_getAllDBLinks(Transcript *t) {
   if (!t->dbLinks) {
     TranscriptAdaptor *ta = (TranscriptAdaptor *)Transcript_getAdaptor(t);

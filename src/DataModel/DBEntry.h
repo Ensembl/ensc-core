@@ -87,7 +87,9 @@ void DBEntry_free(DBEntry *dbe);
 #ifdef __DBENTRY_MAIN__
   DBEntryFuncs
     dBEntryFuncs = {
-                    DBEntry_free
+                    DBEntry_free,
+                    NULL, // shallowCopy
+                    NULL  // deepCopy
                    };
 #else
   extern DBEntryFuncs dBEntryFuncs;

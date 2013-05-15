@@ -57,7 +57,9 @@ void Translation_free(Translation *translation);
 #ifdef __TRANSLATION_MAIN__
   TranslationFuncs
     translationFuncs = {
-                    Translation_free
+                    Translation_free,
+                    NULL, // shallowCopy
+                    NULL // deepCopy
                    };
 #else
   extern TranslationFuncs translationFuncs;
