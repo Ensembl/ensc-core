@@ -6,6 +6,7 @@
 #include "Gene.h"
 
 #include "BaseRODBTest.h"
+#include "gperftools/tcmalloc.h"
 
 int main(int argc, char *argv[]) {
   DBAdaptor *dba;
@@ -29,6 +30,7 @@ int main(int argc, char *argv[]) {
 
   genes =  Slice_getAllGenes(slice, NULL, NULL, 0, NULL, NULL);
 
+  fprintf(stdout, "Have %d genes\n", Vector_getNumElement(genes));
   ok(3, genes!=NULL);
   ok(4, Vector_getNumElement(genes)!=0);
 
@@ -56,6 +58,9 @@ int main(int argc, char *argv[]) {
     }
   }
   ok(5, !failed);
+  tc_malloc_stats();
+
+  EcoString_getInfo(ecoSTable);
 
   return 0;
 }

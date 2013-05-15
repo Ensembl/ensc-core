@@ -463,20 +463,32 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
 
   IDType *uniqueIds = IDHash_getKeys(trHash);
 
+  printf("HERE\n");
 //  char *qStr;
 //  qStr = calloc(1655500,sizeof(char));
+  char tmpStr[1024];
   char qStr[655500];
-  strcpy(qStr, "SELECT transcript_id, exon_id, rank FROM exon_transcript WHERE transcript_id IN (" );
+  int lenNum;
+//  bzero(qStr,655500);
+  int endPoint = sprintf(qStr, "SELECT transcript_id, exon_id, rank FROM exon_transcript WHERE transcript_id IN (" );
   for (i=0; i<IDHash_getNumValues(trHash); i++) {
     if (i!=0) {
-      strcat(qStr, ", ");
+      qStr[endPoint++] = ',';
+      qStr[endPoint++] = ' ';
+//strcat(qStr, ", ");
     }
-    sprintf(qStr, "%s"IDFMTSTR, qStr, uniqueIds[i]);
+    lenNum = sprintf(tmpStr,IDFMTSTR,uniqueIds[i]);
+    memcpy(&(qStr[endPoint]), tmpStr, lenNum);
+    endPoint+=lenNum;
+    //endPoint=sprintf(qStr, "%s"IDFMTSTR, qStr, uniqueIds[i]);
   }
-  strcat(qStr,")");
+  qStr[endPoint++] = ')';
+  qStr[endPoint] = '\0';
+//  strcat(qStr,")");
 
   free(uniqueIds);
 
+  printf("HERE2\n");
   StatementHandle *sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
   sth->execute(sth);
 
@@ -497,10 +509,10 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
     Vector_addElement(exVec, trp);
   }
 
+  printf("HERE3\n");
   IDHash_free(trHash, NULL);
 
   sth->finish(sth);
-
 
   //  sprintf( "e.exon_id IN (%s)",
   //    join( ',', sort { $a <=> $b } keys(%ex_tr_hash) ) ) );
@@ -508,15 +520,26 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
   uniqueIds = IDHash_getKeys(exTrHash);
 
   qsort(uniqueIds, IDHash_getNumValues(exTrHash), sizeof(IDType), idTypeCompFunc); 
-  strcpy(qStr, "e.exon_id IN (");
+
+//  bzero(qStr,655500);
+  endPoint = sprintf(qStr, "e.exon_id IN (");
   for (i=0; i<IDHash_getNumValues(exTrHash); i++) {
     if (i!=0) {
-      strcat(qStr, ", ");
+      qStr[endPoint++] = ',';
+      qStr[endPoint++] = ' ';
+      //strcat(qStr, ", ");
     }
-    sprintf(qStr, "%s"IDFMTSTR, qStr, uniqueIds[i]);
+    
+    lenNum = sprintf(tmpStr,IDFMTSTR,uniqueIds[i]);
+    memcpy(&(qStr[endPoint]), tmpStr, lenNum);
+    endPoint+=lenNum;
+   // endPoint = sprintf(qStr, "%s"IDFMTSTR, qStr, uniqueIds[i]);
   }
-  strcat(qStr,")");
+  qStr[endPoint++] = ')';
+  qStr[endPoint] = '\0';
+  //strcat(qStr,")");
 
+  printf("HERE4\n");
   free(uniqueIds);
 
 
@@ -551,6 +574,7 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
     }
   }
 
+  printf("HERE5\n");
   TranslationAdaptor *tla = DBAdaptor_getTranslationAdaptor(ta->dba);
 
   // load all of the translations at once

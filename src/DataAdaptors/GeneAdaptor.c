@@ -730,18 +730,25 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
   qsort(uniqueIds, IDHash_getNumValues(trGHash), sizeof(IDType), idTypeCompFunc);
 //sprintf("t.transcript_id IN (%s)", join(',', sort { $a <=> $b } keys(%tr_g_hash))));
 
-  strcpy(qStr, "t.transcript_id IN (");
+
+  char tmpStr[1024];
+  int lenNum;
+  int endPoint = sprintf(qStr, "t.transcript_id IN (");
   for (i=0; i<IDHash_getNumValues(trGHash); i++) {
     if (i!=0) {
-      strcat(qStr, ", ");
+      qStr[endPoint++] = ',';
+      qStr[endPoint++] = ' ';
+      //strcat(qStr, ", ");
     }
-    char tmpStr[1024];
-    sprintf(tmpStr,IDFMTSTR,uniqueIds[i]);
-    strcat(qStr, tmpStr);
     //fprintf(stderr, "id %d %s\n", i, tmpStr);
     //sprintf(qStr, "%s"IDFMTSTR, qStr, uniqueIds[i]);
+    lenNum = sprintf(tmpStr,IDFMTSTR,uniqueIds[i]);
+    memcpy(&(qStr[endPoint]), tmpStr, lenNum);
+    endPoint+=lenNum;
   }
-  strcat(qStr,")");
+  //strcat(qStr,")");
+  qStr[endPoint++] = ')';
+  qStr[endPoint] = '\0';
 
   free(uniqueIds);
 

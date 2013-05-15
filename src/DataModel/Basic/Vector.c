@@ -159,7 +159,7 @@ void Vector_setNumElement(Vector *v, int nElem) {
   int i;
   int nToAlloc;
 
-  int batchSize = 200;
+  int batchSize = 10;
 
   if (v->nAlloced < nElem) {
     v->nAlloced = nElem-(nElem%batchSize)+batchSize;
