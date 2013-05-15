@@ -170,6 +170,7 @@ int Transcript_getVersion(Transcript *transcript) {
 =cut
 */
 // New
+int notWarned = 1;
 Transcript *Transcript_transfer(Transcript *transcript, Slice *slice) {
   // Call super transfer
   Transcript *newTranscript = SeqFeature_transfer(transcript, slice);
@@ -178,7 +179,6 @@ Transcript *Transcript_transfer(Transcript *transcript, Slice *slice) {
     return NULL;
   }
 
-  fprintf(stderr,"support and exon transfer not implemented yet for transfer\n");
 /*
   if( defined $self->{'translation'} ) {
     my $new_translation;
@@ -186,11 +186,19 @@ Transcript *Transcript_transfer(Transcript *transcript, Slice *slice) {
     bless $new_translation, ref( $self->{'translation'} );
     $new_transcript->{'translation'} = $new_translation;
   }
+*/
 
-  if( exists $self->{'_trans_exon_array'} ) {
-    my @new_exons;
-    for my $old_exon ( @{$self->{'_trans_exon_array'}} ) {
-      my $new_exon = $old_exon->transfer( @_ );
+//
+//Perl  if ( exists $self->{'_trans_exon_array'} ) {
+  if (transcript->exons != NULL && Vector_getNumElement(transcript->exons)) {
+    Vector *newExons = Vector_new();
+
+    int i;
+    for (i=0;i<Vector_getNumElement(transcript->exons);i++) {
+      Exon *oldExon = Vector_getElementAt(transcript->exons, i);
+      Exon *newExon = Exon_transfer(oldExon, slice);
+
+/*
       if( defined $new_transcript->{'translation'} ) {
         if( $new_transcript->translation()->start_Exon() == $old_exon ) {
           $new_transcript->translation()->start_Exon( $new_exon );
@@ -199,12 +207,22 @@ Transcript *Transcript_transfer(Transcript *transcript, Slice *slice) {
           $new_transcript->translation()->end_Exon( $new_exon );
         }
       }
-      push( @new_exons, $new_exon );
+*/
+      Vector_addElement(newExons, newExon );
     }
 
-    $new_transcript->{'_trans_exon_array'} = \@new_exons;
+    newTranscript->exons = newExons;
+
+// NIY Free old stuff
+
   }
 
+  if (notWarned) {
+    fprintf(stderr,"support and translation transfer not implemented yet for transcript\n");
+    notWarned = 0;
+  }
+
+/*
   if( exists $self->{'_supporting_evidence'} ) {
     my @new_features;
     for my $old_feature ( @{$self->{'_supporting_evidence'}} ) {

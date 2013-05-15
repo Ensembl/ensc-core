@@ -52,6 +52,6 @@ void Object_freeImpl(Object *obj);
 #define Object_shallowCopy(obj) \
       ((obj)->funcs->shallowCopy == NULL ? \
          (fprintf(stderr,"Error: Null pointer for shallowCopy func - bye\n"),  exit(1), (void *)NULL) : \
-         ((obj)->funcs->shallowCopy((obj)), (void *)NULL))
+         ((obj)->funcs->shallowCopy((obj))))
 
 #endif

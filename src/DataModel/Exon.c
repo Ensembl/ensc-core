@@ -119,6 +119,7 @@ int Exon_reverseStrandCompFunc(const void *a, const void *b) {
 =cut
 */
 // New
+static int notWarned = 1;
 Exon *Exon_transfer(Exon *exon, Slice *slice) {
 
   // Call super transfer
@@ -129,7 +130,10 @@ Exon *Exon_transfer(Exon *exon, Slice *slice) {
     return NULL;
   }
 
-  fprintf(stderr,"support transfer not implemented yet for exon\n");
+  if (notWarned) {
+    fprintf(stderr,"support transfer not implemented yet for exon\n");
+    notWarned = 0;
+  }
 /*
   if( exists $self->{'_supporting_evidence'} ) {
     my @new_features;
