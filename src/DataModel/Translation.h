@@ -41,6 +41,12 @@ struct TranslationStruct {
 #define Translation_setAdaptor(t,ad) Storable_setAdaptor(&((t)->st),(ad))
 #define Translation_getAdaptor(t) Storable_getAdaptor(&((t)->st))
 
+#define Translation_setCreated(translation,cd)  StableIdInfo_setCreated(&((translation)->si),cd)
+#define Translation_getCreated(translation)  StableIdInfo_getCreated(&((translation)->si))
+
+#define Translation_setModified(translation,mod)  StableIdInfo_setModified(&((translation)->si),mod)
+#define Translation_getModified(translation)  StableIdInfo_getModified(&((translation)->si))
+
 #define Translation_setStableId(translation,sid)  StableIdInfo_setStableId(&((translation)->si),(sid))
 char *Translation_getStableId(Translation *translation);
 

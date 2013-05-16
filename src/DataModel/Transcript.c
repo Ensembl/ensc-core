@@ -179,14 +179,14 @@ Transcript *Transcript_transfer(Transcript *transcript, Slice *slice) {
     return NULL;
   }
 
-/*
-  if( defined $self->{'translation'} ) {
-    my $new_translation;
-    %$new_translation = %{$self->{'translation'}};;
-    bless $new_translation, ref( $self->{'translation'} );
-    $new_transcript->{'translation'} = $new_translation;
+  if (transcript->translation) {
+    Translation *newTranslation = Translation_new();
+    memcpy(newTranslation, transcript->translation, sizeof(Translation));
+//
+//    Transcript_setTranslation(new_transcript->{'translation'} = $new_translation;
+    // Perl did direct set so maybe I'll do same
+    newTranscript->translation = newTranslation;
   }
-*/
 
 //
 //Perl  if ( exists $self->{'_trans_exon_array'} ) {
@@ -198,16 +198,16 @@ Transcript *Transcript_transfer(Transcript *transcript, Slice *slice) {
       Exon *oldExon = Vector_getElementAt(transcript->exons, i);
       Exon *newExon = Exon_transfer(oldExon, slice);
 
-/*
-      if( defined $new_transcript->{'translation'} ) {
-        if( $new_transcript->translation()->start_Exon() == $old_exon ) {
-          $new_transcript->translation()->start_Exon( $new_exon );
+      if (newTranscript->translation) {
+        Translation *newTranslation = Transcript_getTranslation(newTranscript);
+
+        if( Translation_getStartExon(newTranslation) == oldExon ) {
+          Translation_setStartExon(newTranslation, newExon);
         }
-        if( $new_transcript->translation()->end_Exon() == $old_exon ) {
-          $new_transcript->translation()->end_Exon( $new_exon );
+        if( Translation_getEndExon(newTranslation) == oldExon ) {
+          Translation_setEndExon(newTranslation, newExon);
         }
       }
-*/
       Vector_addElement(newExons, newExon );
     }
 
@@ -373,7 +373,7 @@ Translation *Transcript_getTranslation(Transcript *trans) {
   if (!trans->translation && trans->translationId ) {
     TranslationAdaptor *ta = DBAdaptor_getTranslationAdaptor(Transcript_getAdaptor(trans)->dba);
     
-    trans->translation = TranslationAdaptor_fetchByDbID(ta, trans->translationId, trans);
+    trans->translation = TranslationAdaptor_fetchByTranscript(ta, trans);
   }
   return trans->translation;
 }
@@ -405,18 +405,19 @@ char *Transcript_getTranslateableSeq(Transcript *trans) {
  
   for (i=0; i<Vector_getNumElement(translateableExons); i++) {
     Exon *exon = Vector_getElementAt(translateableExons, i);
+    //fprintf(stderr, "translateable exons %d from %ld to %ld\n", i, Exon_getStart(exon), Exon_getEnd(exon));
     int phase = 0;
 
 // NIY    if (defined($exon->phase)) {
       phase = Exon_getPhase(exon);
 //    }
 
-    // startpadding is needed if MONKEY_EXONS are on
-    if (first && (!getenv("MONKEY_EXONS"))) {
+    if (first) {
       mrna = SeqUtil_addNs(mrna,phase);
       first = 0;
     }
 
+/*
     if (phase != lastPhase && getenv("MONKEY_EXONS")) {
       // endpadding for the last exon
       if (lastPhase == 1 ) {
@@ -427,11 +428,18 @@ char *Transcript_getTranslateableSeq(Transcript *trans) {
       //startpadding for this exon
       mrna = SeqUtil_addNs(mrna,phase);
     }
+*/
     mrna = StrUtil_appendString(mrna, Exon_getSeqString(exon));
     lastPhase = Exon_getEndPhase(exon);
   }
 
   Vector_free(translateableExons);
+
+//  int startPhase = Exon_getPhase(Translation_getStartExon(Transcript_getTranslation(trans)));
+//  if (startPhase > 0) {
+    
+
+  //fprintf(stderr,"Length of seq = %d\n", strlen(mrna));
 
 // NIY free adjusted
 
@@ -563,15 +571,24 @@ Vector *Transcript_getAllTranslateableExons(Transcript *trans) {
   tlnStart       = Translation_getStart(translation);
   tlnEnd         = Translation_getEnd(translation);
 
+// Hack
+  Transcript_sort(trans);
+
   translateable = Vector_new();
 
+  //fprintf(stderr,"Looking for start exon %p %s\n",startExon, Exon_getStableId(startExon));
+  //fprintf(stderr,"Exon count %d\n",Transcript_getExonCount(trans));
   for (i=0; i<Transcript_getExonCount(trans); i++) {
     Exon *ex = Transcript_getExonAt(trans,i);
     int length;
     int adjustStart = 0;
     int adjustEnd   = 0;
 
+    //fprintf(stderr,"   exon %p %s\n",ex, Exon_getStableId(ex));
+ 
     if (ex != startExon && !Vector_getNumElement(translateable)) {
+       //fprintf(stderr,"  skip %p %s\n",ex, Exon_getStableId(ex));
+ 
       continue;   // Not yet in translated region
     }
 
@@ -608,6 +625,7 @@ Vector *Transcript_getAllTranslateableExons(Transcript *trans) {
     // Exit the loop when we've found the last exon
     if (ex == endExon) break;
   }
+  //fprintf(stderr," Have %d translateable exons\n", Vector_getNumElement(translateable));
   return translateable;
 }
 

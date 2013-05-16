@@ -26,7 +26,7 @@ char *Translation_getStableId(Translation *translation) {
   TranslationAdaptor *ta = (TranslationAdaptor *)Translation_getAdaptor(translation);
 
   if (StableIdInfo_getStableId(&(translation->si)) == NULL && ta) {
-    TranslationAdaptor_getStableEntryInfo(ta,translation);
+//    TranslationAdaptor_getStableEntryInfo(ta,translation);
   }
   return StableIdInfo_getStableId(&(translation->si));
 }
@@ -35,7 +35,7 @@ int Translation_getVersion(Translation *translation) {
   TranslationAdaptor *ta = (TranslationAdaptor *)Translation_getAdaptor(translation);
 
   if (StableIdInfo_getVersion(&(translation->si)) == -1 && ta) {
-    TranslationAdaptor_getStableEntryInfo(ta,translation);
+//    TranslationAdaptor_getStableEntryInfo(ta,translation);
   }
   return StableIdInfo_getVersion(&(translation->si));
 }

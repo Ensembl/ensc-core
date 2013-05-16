@@ -121,6 +121,21 @@ void *LRUCache_get(LRUCache *cache, char *key) {
   }
 }
 
+// Size doesn't count as used
+void *LRUCache_getSize(LRUCache *cache, char *key) {
+
+  // Check hash for key
+  if (StringHash_contains(cache->hash, key)) {
+    LRUCacheElement *cacheElem = StringHash_getValue(cache->hash, key);
+
+    return cacheElem->size;
+
+  } else {
+    // Not in cache
+    fprintf(stderr,"Warning: key %s not in LRUCache\n",key);
+    return NULL;
+  }
+}
 void LRUCache_empty(LRUCache *cache) {
   // Free the LRUCacheElements using the list
   LRUCacheElement *elem = cache->head;

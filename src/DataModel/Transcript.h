@@ -39,9 +39,12 @@ struct TranscriptStruct {
   int          cDNACodingStart;
   int          cDNACodingEnd;
   Mapper      *exonCoordMapper;
-  char        *type;
 };
 #undef FUNCSTRUCTTYPE
+
+
+ECOSTRING Transcript_setBiotype(Transcript *transcript, char *biotype);
+#define Transcript_getBiotype(transcript)  (transcript)->biotype
 
 #define Transcript_setIsCurrent(trans,isC)  StableIdInfo_setIsCurrent(&((trans)->si),(isC))
 #define Transcript_getIsCurrent(trans)  StableIdInfo_getIsCurrent(&((trans)->si))
@@ -51,9 +54,6 @@ struct TranscriptStruct {
 
 #define Transcript_setStableId(transcript,sid)  StableIdInfo_setStableId(&((transcript)->si),(sid))
 char *Transcript_getStableId(Transcript *transcript);
-
-char *Transcript_setType(Transcript *transcript,char *type);
-#define Transcript_getType(transcript) (transcript)->type
 
 #define Transcript_setVersion(transcript,ver)  StableIdInfo_setVersion(&((transcript)->si),(ver))
 int Transcript_getVersion(Transcript *transcript);

@@ -55,15 +55,22 @@ char *MysqlUtil_getString(MYSQL_ROW row, int col) {
 char *MysqlUtil_getStringCopy(MYSQL_ROW row, int col) {
   char *copy;
   if (row[col] == NULL) {
-    if ((copy = StrUtil_copyString(&copy,"",0)) == NULL) {
+    if ((StrUtil_copyString(&copy,"",0)) == NULL) {
       fprintf(stderr,"ERROR: Failed copying mysql col\n");
       return NULL;
     }
   } else {
-    if ((copy = StrUtil_copyString(&copy,row[col],0)) == NULL) {
+    if ((StrUtil_copyString(&copy,row[col],0)) == NULL) {
       fprintf(stderr,"ERROR: Failed copying mysql col\n");
       return NULL;
     }
   }
+// Sanity check
+  if (copy == row[col]) {
+    fprintf(stderr,"ERROR: copy == row[col] in copying mysql col\n");
+    exit(1);
+  }
+  fprintf(stderr,"StringCopy\n");
+    
   return copy;
 }

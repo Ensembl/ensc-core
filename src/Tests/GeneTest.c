@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 
   ok(2, ga!=NULL);
 
-  genes =  Slice_getAllGenes(slice, NULL, NULL, 0, NULL, NULL);
+  genes =  Slice_getAllGenes(slice, NULL, NULL, 1, NULL, NULL);
 
   fprintf(stdout, "Have %d genes\n", Vector_getNumElement(genes));
   ok(3, genes!=NULL);
@@ -37,24 +37,26 @@ int main(int argc, char *argv[]) {
   failed = 0;
   for (i=0;i<Vector_getNumElement(genes) && !failed;i++) {
     Gene *g = Vector_getElementAt(genes,i);
-    fprintf(stdout,"Gene %s coords: %ld %ld %d\n",Gene_getStableId(g),Gene_getStart(g),Gene_getEnd(g),Gene_getStrand(g));
+    fprintf(stderr,"Gene %s coords: %ld %ld %d\n",Gene_getStableId(g),Gene_getStart(g),Gene_getEnd(g),Gene_getStrand(g));
 
     int j;
     for (j=0;j<Gene_getTranscriptCount(g);j++) {
       Transcript *t = Gene_getTranscriptAt(g,j);
      
-      fprintf(stdout," Trans %s coords: %ld %ld %d\n",Transcript_getStableId(t), Transcript_getStart(t),Transcript_getEnd(t),Transcript_getStrand(t));
+      fprintf(stderr," Trans %s coords: %ld %ld %d\n",Transcript_getStableId(t), Transcript_getStart(t),Transcript_getEnd(t),Transcript_getStrand(t));
       int k;
       for (k=0;k<Transcript_getExonCount(t);k++) {
         Exon *e = Transcript_getExonAt(t,k);
-        fprintf(stdout,"  exon %s coords: %ld %ld %d\n",Exon_getStableId(e), Exon_getStart(e),Exon_getEnd(e),Exon_getStrand(e));
+        fprintf(stderr,"  exon %s coords: %ld %ld %d\n",Exon_getStableId(e), Exon_getStart(e),Exon_getEnd(e),Exon_getStrand(e));
       }
-#ifdef DONE
       Translation *tln = Transcript_getTranslation(t);
       if (tln) {
-        fprintf(stdout," translation: %s",Transcript_translate(t));
+ 
+        fprintf(stderr," translation id: %s %s %d %s %d\n",Translation_getStableId(tln), 
+                Exon_getStableId(Translation_getStartExon(tln)), Translation_getStart(tln),
+                Exon_getStableId(Translation_getEndExon(tln)), Translation_getEnd(tln));
+        fprintf(stderr," translation: %s\n",Transcript_translate(t));
       }
-#endif
     }
   }
   ok(5, !failed);

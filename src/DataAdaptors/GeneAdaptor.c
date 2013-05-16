@@ -641,7 +641,7 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
   Vector *genes = GeneAdaptor_fetchAllBySliceConstraint(ga, slice, constraint, logicName);
 
   // If there are less than two genes, still do lazy-loading.
-  if (loadTranscripts || Vector_getNumElement(genes) < 2) {
+  if (!loadTranscripts || Vector_getNumElement(genes) < 2) {
     return genes;
   }
 

@@ -578,8 +578,8 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
   TranslationAdaptor *tla = DBAdaptor_getTranslationAdaptor(ta->dba);
 
   // load all of the translations at once
-  //TranslationAdaptor_fetchAllByTranscriptList(tla, transcripts);
-  fprintf(stderr,"Translation fetching not yet implemented in transcript adaptor\n");
+  TranslationAdaptor_fetchAllByTranscriptList(tla, transcripts);
+  //fprintf(stderr,"Translation fetching not yet implemented in transcript adaptor\n");
 
   // Free stuff
   IDHash_free(exTrHash, Vector_free);
