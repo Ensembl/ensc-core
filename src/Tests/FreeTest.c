@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
   int i;
   int failed = 0;
   
-  initEnsC();
+  initEnsC(argc, argv);
 
   dba = Test_initROEnsDB();
 

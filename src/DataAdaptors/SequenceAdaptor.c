@@ -27,7 +27,7 @@ An adaptor for the retrieval of DNA sequence from the EnsEMBL database
 
 static long const SEQ_CHUNK_PWR = 18; // 2^18 = approx. 250KB
 //static long const SEQ_CHUNK_PWR = 1; // Basically means don't cache
-static long const SEQ_CACHE_SZ  = 5000;
+static long const SEQ_CACHE_SZ  = 5;
 static long SEQ_CACHE_MAX;
 
 static int init = 0;
@@ -68,7 +68,6 @@ SequenceAdaptor *SequenceAdaptor_new(DBAdaptor *dba) {
 
 
   // use an LRU cache to limit the size
-  //sa->seqCache = Cache_new(SEQ_CACHE_SZ);
   sa->seqCache = LRUCache_new(SEQ_CACHE_MAX);
 //  sa->seqCache = StringHash_new(STRINGHASH_MEDIUM);
 
@@ -125,9 +124,10 @@ SequenceAdaptor *SequenceAdaptor_new(DBAdaptor *dba) {
 */
 
 void SequenceAdaptor_clearCache(SequenceAdaptor *sa) {
+  //fprintf(stderr,"clearCache called\n");
   LRUCache_empty(sa->seqCache);
+
   //StringHash_free(sa->seqCache, free);
-  fprintf(stderr,"clearCache called\n");
   //sa->seqCache = StringHash_new(STRINGHASH_MEDIUM);
   return;
 }
@@ -239,6 +239,7 @@ char *SequenceAdaptor_fetchBySliceStartEndStrandRecursive(SequenceAdaptor *sa,
   SliceAdaptor *sliceAdaptor = (SliceAdaptor *)Slice_getAdaptor(slice);
 
   Vector *symProj = SliceAdaptor_fetchNormalizedSliceProjection(sliceAdaptor, slice, 0);
+  Vector_setFreeFunc(symProj, ProjectionSegment_free);
 
   if (Vector_getNumElement(symProj) == 0) {
     fprintf(stderr,"Could not retrieve normalized Slices. Database contains incorrect assembly_exception information.\n");
@@ -271,9 +272,11 @@ char *SequenceAdaptor_fetchBySliceStartEndStrandRecursive(SequenceAdaptor *sa,
     if (strand == -1) {
       SeqUtil_reverseComplement(seq, Slice_getLength(slice));
     }
+    Vector_free(symProj);
 
     return seq;
   }
+  Vector_free(symProj);
 
   // we need to project this slice onto the sequence coordinate system
   // even if the slice is in the same coord system, we want to trim out
@@ -325,7 +328,6 @@ char *SequenceAdaptor_fetchBySliceStartEndStrandRecursive(SequenceAdaptor *sa,
       fprintf(stderr," segment off end of slice start = %ld lenSegment = %ld slice length = %ld len tmpSeq (%ld)\n", 
               start, lenSegment, Slice_getLength(slice),strlen(tmpSeq));
     }
-    //fprintf(stderr," seqment slice start = %ld lenSegment = %ld slice length = %ld\n", start, lenSegment, Slice_getLength(slice));
 // Do with memcpy rather than strcpy
 // Think projection segment from coordinates are slice coordinates so relative to slice and starting at 1
     memcpy(&(seq[start-1]), tmpSeq, lenSegment);
@@ -509,6 +511,7 @@ void SequenceAdaptor_rnaEdit(SequenceAdaptor *sa, Slice *slice, char **seqPP, in
 
 // Note: In C use Slice length rather than length($$seq) because length should be slice length and its quicker than doing a strlen on a huge string
 //       ???? Maybe this isn't true if edits have been applied at a higher recursion level ????
+//       Edits may not be different length so is true
   long sEnd   = sStart + Slice_getLength(slice); // length($$seq);
 
   long lenString = Slice_getLength(slice);
@@ -600,7 +603,6 @@ char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long st
 
     // piece together sequence from cached component parts
 
-    //fprintf(stderr, "Allocating %ld bytes for entireSeq\n", ((chunkMax-chunkMin+1) * (1<<SEQ_CHUNK_PWR)));
     char *entireSeq = NULL;
     if ((entireSeq = calloc(((chunkMax-chunkMin+1) * (1<<SEQ_CHUNK_PWR))+1, sizeof(char))) == NULL) {
       fprintf(stderr,"Failed allocating entireSeq\n");
@@ -618,53 +620,40 @@ char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long st
       if (LRUCache_contains(sa->seqCache, chunkKey)) {
       //if (StringHash_contains(sa->seqCache, chunkKey)) {
  // What happens for length of last chunk???
-        //memcpy(&(entireSeq[min-minChunkMin]), LRUCache_get(sa->seqCache, chunkKey), 1<<SEQ_CHUNK_PWR); 
         memcpy(&(entireSeq[min-minChunkMin]), LRUCache_get(sa->seqCache, chunkKey), LRUCache_getSize(sa->seqCache, chunkKey));
-        //fprintf(stderr, "Size of cached string for key %s = %d\n", chunkKey, strlen((char *)StringHash_getValue(sa->seqCache, chunkKey)));
-        //fprintf(stderr, "Cached string for key %s = %p\n", chunkKey, StringHash_getValue(sa->seqCache, chunkKey));
         //memcpy(&(entireSeq[min-minChunkMin]), StringHash_getValue(sa->seqCache, chunkKey), 1<<SEQ_CHUNK_PWR); 
         
       } else {
         // retrieve uncached portions of the sequence
         char qStr[1024];
         // Modified from perl to also return the length of the substring
-//        sprintf(qStr,"SELECT SUBSTRING(d.sequence, %ld, %ld) "
-//                     "FROM dna d "
-//                     "WHERE d.seq_region_id = "IDFMTSTR, min, 1L<<SEQ_CHUNK_PWR, seqRegionId);
+        sprintf(qStr,"SELECT SUBSTRING(d.sequence, %ld, %ld) "
+                     "FROM dna d "
+                     "WHERE d.seq_region_id = "IDFMTSTR, min, 1L<<SEQ_CHUNK_PWR, seqRegionId);
 //        sprintf(qStr,"SELECT SUBSTRING(d.sequence, %ld, %ld), LENGTH(SUBSTRING(d.sequence, %ld, %ld)) "
 //                     "FROM dna d "
 //                     "WHERE d.seq_region_id = "IDFMTSTR, min, 1L<<SEQ_CHUNK_PWR, min, 1L<<SEQ_CHUNK_PWR, seqRegionId);
-        sprintf(qStr,"SELECT SUBSTRING(d.sequence, %ld, %ld), if (sr.length-%ld+1 >  %ld, %ld, sr.length-%ld+1) "
-                     "FROM dna d, seq_region sr "
-                     "WHERE sr.seq_region_id = d.seq_region_id and d.seq_region_id = "IDFMTSTR, min, 1L<<SEQ_CHUNK_PWR, min, 1L<<SEQ_CHUNK_PWR, 1L<<SEQ_CHUNK_PWR, min, seqRegionId);
+//        sprintf(qStr,"SELECT SUBSTRING(d.sequence, %ld, %ld), if (sr.length-%ld+1 >  %ld, %ld, sr.length-%ld+1) "
+//                     "FROM dna d, seq_region sr "
+//                     "WHERE sr.seq_region_id = d.seq_region_id and d.seq_region_id = "IDFMTSTR, min, 1L<<SEQ_CHUNK_PWR, min, 1L<<SEQ_CHUNK_PWR, 1L<<SEQ_CHUNK_PWR, min, seqRegionId);
 
         StatementHandle *sth = sa->prepare((BaseAdaptor *)sa,qStr,strlen(qStr));
 
         sth->execute(sth);
         ResultRow *row = sth->fetchRow(sth);
         char *tmpSeq   = row->getStringCopyAt(row, 0);
-        long lenTmpSeq = row->getLongAt(row, 1);
-//        long lenTmpSeq = strlen(tmpSeq);
+//        long lenTmpSeq = row->getLongAt(row, 1);
+        long lenTmpSeq = strlen(tmpSeq);
         sth->finish(sth);
-
-//        if (tmpSeq == NULL) { fprintf(stderr, "HELP\n"); exit(1); }
-//        if (strlen(tmpSeq) == 0) { fprintf(stderr, "HELP\n"); exit(1); }
-         
 
         // always give back uppercased sequence so it can be properly softmasked
         StrUtil_strupr(tmpSeq);
 
-//        fprintf(stderr, "key %s lenTmpSeq = %ld  strlen(tmpSeq) = %d min-minChunkMin = %d\n",chunkKey, lenTmpSeq, strlen(tmpSeq),min-minChunkMin);
-      
         memcpy(&(entireSeq[min-minChunkMin]), tmpSeq, lenTmpSeq);
 //        StrUtil_appendString(entireSeq,tmpSeq);
         LRUCache_put(sa->seqCache, chunkKey, tmpSeq, free, lenTmpSeq);
         //StringHash_add(sa->seqCache, chunkKey, tmpSeq);
 
-//        char *t2 = calloc(1<<SEQ_CHUNK_PWR, sizeof(char));
-//        strcpy(t2, tmpSeq);
-//        StringHash_add(sa->seqCache, chunkKey, t2);
-        //free(tmpSeq);
       }
     }
 
@@ -676,9 +665,6 @@ char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long st
     // memmove it down and set '\0' at position length
     if (start-min != 0) {
       memmove(entireSeq, &entireSeq[start-min], length);
-//      char *tmp2Seq;
-//      StrUtil_copyNString(&tmp2Seq, entireSeq, start-min, length);
-//      strcpy(entireSeq, tmp2Seq);
     }
     entireSeq[length] = '\0';
 

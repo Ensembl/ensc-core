@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
   AssemblyMapperAdaptor *asma;
   int testNum = 1;
   
-  initEnsC();
+  initEnsC(argc, argv);
 
   dba = Test_initROEnsDB();
 

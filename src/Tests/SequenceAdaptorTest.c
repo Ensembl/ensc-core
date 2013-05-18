@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
   SliceAdaptor *sliceA;
   SequenceAdaptor *seqA;
 
-  initEnsC();
+  initEnsC(argc, argv);
 
   //dba = DBAdaptor_new("ensembldb.ensembl.org","anonymous",NULL,"homo_sapiens_core_70_37",5306,NULL);
   //dba = DBAdaptor_new("ens-livemirror.internal.sanger.ac.uk","ensro",NULL,"homo_sapiens_core_70_37",3306,NULL);

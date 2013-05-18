@@ -39,12 +39,15 @@ typedef long long IDType;
 #ifdef __ECOS_MAIN__
  ECOSTRTABLE *ecoSTable;
  int trueVal = 1;
+ char *EnsC_progName;
+ 
 #else
  extern ECOSTRTABLE *ecoSTable;
  extern int trueVal;
+ extern char *EnsC_progName;
 #endif
 
-void initEnsC(void);
+void initEnsC(int argc, char **argv);
 
 typedef int (*SortCompFunc)(const void *a, const void *b);
 int idTypeCompFunc(const void *one, const void *two);

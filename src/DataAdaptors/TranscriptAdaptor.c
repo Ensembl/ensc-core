@@ -402,7 +402,7 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
   char constraint[655500];
 
   strcpy(constraint, "t.is_current = 1");
-  fprintf(stderr, "Length of input constraint = %ld\n", strlen(inputConstraint));
+  //fprintf(stderr, "Length of input constraint = %ld\n", strlen(inputConstraint));
 
   if (inputConstraint != NULL && inputConstraint[0] != '\0') {
     sprintf(constraint,"%s AND %s", constraint, inputConstraint);
@@ -463,7 +463,6 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
 
   IDType *uniqueIds = IDHash_getKeys(trHash);
 
-  printf("HERE\n");
 //  char *qStr;
 //  qStr = calloc(1655500,sizeof(char));
   char tmpStr[1024];
@@ -488,7 +487,6 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
 
   free(uniqueIds);
 
-  printf("HERE2\n");
   StatementHandle *sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
   sth->execute(sth);
 
@@ -509,7 +507,6 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
     Vector_addElement(exVec, trp);
   }
 
-  printf("HERE3\n");
   IDHash_free(trHash, NULL);
 
   sth->finish(sth);
@@ -539,7 +536,6 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
   qStr[endPoint] = '\0';
   //strcat(qStr,")");
 
-  printf("HERE4\n");
   free(uniqueIds);
 
 
@@ -574,7 +570,6 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
     }
   }
 
-  printf("HERE5\n");
   TranslationAdaptor *tla = DBAdaptor_getTranslationAdaptor(ta->dba);
 
   // load all of the translations at once

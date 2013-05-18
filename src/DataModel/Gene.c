@@ -279,5 +279,5 @@ void Gene_free(Gene *gene) {
     fprintf(stderr,"Error: Negative reference count for Gene\n"
                    "       Freeing it anyway\n");
   }
-  printf("Gene_free not implemented\n");
+//  printf("Gene_free not implemented\n");
 }

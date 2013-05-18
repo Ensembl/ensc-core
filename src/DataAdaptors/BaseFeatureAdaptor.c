@@ -1062,11 +1062,11 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
 
       } else {
         Vector *features = BaseAdaptor_genericFetch((BaseAdaptor *)bfa, qad->constraint, qad->mapper,  qad->slice);
-        fprintf(stderr,"Here!!!!!!!!!!!!!!!!!! with %d features and %d pan coord features\n", Vector_getNumElement(features),  Vector_getNumElement(panCoordFeatures));
+        //fprintf(stderr,"Here!!!!!!!!!!!!!!!!!! with %d features and %d pan coord features\n", Vector_getNumElement(features),  Vector_getNumElement(panCoordFeatures));
         Vector *remappedFeatures = BaseFeatureAdaptor_remap(bfa, features, qad->mapper, qad->slice);
 
         Vector_append(panCoordFeatures, remappedFeatures);
-        fprintf(stderr,"Here 22!!!!!!!!!!!!!!!!!! with %d features and %d remapped features and %d pan coord features\n", Vector_getNumElement(features), Vector_getNumElement(remappedFeatures), Vector_getNumElement(panCoordFeatures));
+        //fprintf(stderr,"Here 22!!!!!!!!!!!!!!!!!! with %d features and %d remapped features and %d pan coord features\n", Vector_getNumElement(features), Vector_getNumElement(remappedFeatures), Vector_getNumElement(panCoordFeatures));
 
         // NIY: Free stuff (features vector etc)
         // NIY: Note hack hack hack to unset any freeFunc that has been set on the features vector - to stop the features we've transferred to another vector being freed

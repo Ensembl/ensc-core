@@ -94,24 +94,33 @@ void AssemblyMapperAdaptor_cacheSeqIdsWithMultAssemblies(AssemblyMapperAdaptor *
 }
 
 
-char *makeMappingPathKey(Vector *path) {
+char *makeMappingPathKey(Vector *path, char *key) {
   int i;
-  char *key;
+//  char *key;
 
-  StrUtil_copyString(&key, "", 0);
+//  StrUtil_copyString(&key, "", 0);
+  key[0] = '\0';
   
 
+  int pos=0;
   for (i=0; i<Vector_getNumElement(path); i++) {
     CoordSystem *cs = Vector_getElementAt(path, i);
     if (cs == NULL) {
-      key = StrUtil_appendString(key, "-");
+      key[pos++] = '-';
+      //key = StrUtil_appendString(key, "-");
     } else {
       char tmp[1024];
-      sprintf(tmp,IDFMTSTR,CoordSystem_getDbID(cs));
-      key = StrUtil_appendString(key, tmp );
+      int lenNum = sprintf(tmp,IDFMTSTR,CoordSystem_getDbID(cs));
+      //key = StrUtil_appendString(key, tmp );
+      memcpy(&key[pos],tmp,lenNum);
+      pos+=lenNum;
     }
-    if (i < Vector_getNumElement(path)-1) key = StrUtil_appendString(key, ":");
+    if (i < Vector_getNumElement(path)-1) {
+      //key = StrUtil_appendString(key, ":");
+      key[pos++] = ':';
+    }
   }
+  //fprintf(stderr, "Made mapping path key %s\n", key);
   
   return key;
 }
@@ -169,7 +178,9 @@ AssemblyMapper *AssemblyMapperAdaptor_fetchByCoordSystems(AssemblyMapperAdaptor 
     return NULL;
   }
 
-  char *key = makeMappingPathKey(mappingPath);
+  //char *key = makeMappingPathKey(mappingPath);
+  char key[2048];
+  makeMappingPathKey(mappingPath, key);
 
   if (StringHash_contains(ama->asmMapperCache, key)) {
     return StringHash_getValue(ama->asmMapperCache, key);
@@ -195,7 +206,7 @@ AssemblyMapper *AssemblyMapperAdaptor_fetchByCoordSystems(AssemblyMapperAdaptor 
   
         StringHash_add(ama->asmMapperCache, key, asmMapper);
   
-        free(key);
+        //free(key);
   
         return asmMapper;
       }
@@ -213,7 +224,7 @@ AssemblyMapper *AssemblyMapperAdaptor_fetchByCoordSystems(AssemblyMapperAdaptor 
         // e.g.   chr <-> contig <-> clone   and   clone <-> contig <-> chr
     
         StringHash_add(ama->asmMapperCache, key, casmMapper);
-        free(key);
+        //free(key);
   
         // Make a reverse COPY of the mapping path (as its a copy I'm not using Vector_reverse which is inplace reverse 
         Vector *revMappingPath = Vector_new();
@@ -221,11 +232,12 @@ AssemblyMapper *AssemblyMapperAdaptor_fetchByCoordSystems(AssemblyMapperAdaptor 
         for (i=Vector_getNumElement(mappingPath)-1; i>=0; i--) {
           Vector_addElement(revMappingPath, Vector_getElementAt(mappingPath, i));
         }
-        key = makeMappingPathKey(revMappingPath);
+        //key = makeMappingPathKey(revMappingPath);
+        makeMappingPathKey(revMappingPath, key);
         StringHash_add(ama->asmMapperCache, key, casmMapper);
   
         Vector_free(revMappingPath);
-        free(key);
+        //free(key);
   
         return (AssemblyMapper *)casmMapper;
       }
@@ -757,7 +769,9 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
   // NIY Free path - NO DON't FREE IT, Its in the cache
 
   if (Vector_getNumElement(path) != 2 && Vector_getElementAt(path,1) != NULL) {
-    char *pathStr = makeMappingPathKey(path);
+    //char *pathStr = makeMappingPathKey(path);
+    char pathStr[2048];
+    makeMappingPathKey(path, pathStr);
     int len  = Vector_getNumElement(path)-1;
 
     fprintf(stderr, "Unexpected mapping path between start and intermediate coord systems (%s  %s and %s %s).\n"
@@ -956,7 +970,9 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
     asmCs = Vector_getElementAt(path, 0);
     cmpCs = Vector_getLastElement(path);
   } else {
-    char *pathStr = makeMappingPathKey(path);
+    //char *pathStr = makeMappingPathKey(path);
+    char pathStr[2048];
+    makeMappingPathKey(path, pathStr);
     int len  = Vector_getNumElement(path)-1;
 
     fprintf(stderr, "Unexpected mapping path between intermediate and last coord systems (%s  %s and %s %s).\n"
@@ -1168,7 +1184,9 @@ void AssemblyMapperAdaptor_registerChainedSpecial(AssemblyMapperAdaptor *ama, Ch
   }
 
   if (Vector_getNumElement(path) != 2 && Vector_getElementAt(path,1) != NULL) {
-    char *pathStr = makeMappingPathKey(path);
+    //char *pathStr = makeMappingPathKey(path);
+    char pathStr[2048];
+    makeMappingPathKey(path, pathStr);
     int len  = Vector_getNumElement(path)-1;
 
     fprintf(stderr, "Unexpected mapping path between start and intermediate coord systems (%s  %s and %s %s).\n"
@@ -1510,7 +1528,9 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
   }
 
   if (Vector_getNumElement(path) != 2 && Vector_getElementAt(path,1) != NULL) {
-    char *pathStr = makeMappingPathKey(path);
+    //char *pathStr = makeMappingPathKey(path);
+    char pathStr[2048];
+    makeMappingPathKey(path, pathStr);
     int len  = Vector_getNumElement(path)-1;
 
     fprintf(stderr, "Unexpected mapping path between start and intermediate coord systems (%s  %s and %s %s).\n"
@@ -1622,7 +1642,9 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
   }
 
   if (Vector_getNumElement(path) != 2 && Vector_getElementAt(path,1) != NULL) {
-    char *pathStr = makeMappingPathKey(path);
+    //char *pathStr = makeMappingPathKey(path);
+    char pathStr[2048];
+    makeMappingPathKey(path, pathStr);
     int len  = Vector_getNumElement(path)-1;
 
     fprintf(stderr, "Unexpected mapping path between intermediate and last coord systems (%s  %s and %s %s).\n"

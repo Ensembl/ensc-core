@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
   Vector *v2;
   char *str;
 
-  initEnsC();
+  initEnsC(argc, argv);
 
   v1 = Vector_new();
 

@@ -8,7 +8,7 @@
 int main(int argc, char *argv[]) {
   ComparaDBAdaptor *cdba;
 
-  initEnsC();
+  initEnsC(argc, argv);
 
   cdba = ComparaDBAdaptor_new("kaka.sanger.ac.uk","anonymous",NULL,"ensembl_compara_14_1",3306,"Tests/Compara.conf");
 

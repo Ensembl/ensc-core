@@ -6,6 +6,11 @@
 #include <malloc.h>
 #endif
 
+#ifdef linux
+#define UNW_LOCAL_ONLY
+#include "libunwind.h"
+#endif
+
 #ifndef dos
 #include <unistd.h>
 #include <sys/times.h>
@@ -99,3 +104,81 @@ void ProcUtil_mallInfo() {
 #endif
 }
 
+
+// Adapted from code from http://blog.bigpixel.ro/2010/09/stack-unwinding-stack-trace-with-gcc/
+// Needs libunwind
+void ProcUtil_showBacktrace(char *prog) {
+#ifdef linux
+  char name[1024];
+  unw_cursor_t cursor; unw_context_t uc;
+  unw_word_t ip, sp, offp;
+
+  unw_getcontext(&uc);
+  unw_init_local(&cursor, &uc);
+
+  while (unw_step(&cursor) > 0) {
+    char file[1024];
+    int line = 0;
+
+    name[0] = '\0';
+    unw_get_proc_name(&cursor, name, 1024, &offp);
+    unw_get_reg(&cursor, UNW_REG_IP, &ip);
+    unw_get_reg(&cursor, UNW_REG_SP, &sp);
+
+    if (prog == NULL) {
+      printf ("%s ip = %lx, sp = %lx\n", name, (long) ip, (long) sp);
+    } else {
+      ProcUtil_getFileAndLine(prog, (long)ip, file, 1024, &line);
+      printf("%s in file %s line %d\n", name, file, line);
+    }
+  }
+#else
+  fprintf(stderr, "backtrace not supported on this platform\n");
+#endif
+}
+
+
+int ProcUtil_getFileAndLine(char *prog, unw_word_t addr, char *file, size_t flen, int *line) {
+#ifdef linux
+  static char buf[1024];
+  char *p;
+
+  // prepare command to be executed
+  // our program need to be passed after the -e parameter
+  sprintf (buf, "/usr/bin/addr2line -C -e %s -f -i %lx", prog, addr);
+  FILE* f = popen (buf, "r");
+
+  if (f == NULL) {
+    perror (buf);
+    return 0;
+  }
+
+  // get function name
+  fgets (buf, 1024, f);
+
+  // get file and line
+  fgets (buf, 1024, f);
+
+  if (buf[0] != '?') {
+    int l;
+    char *p = buf;
+
+    // file name is until ':'
+    while (*p != ':') {
+      p++;
+    }
+
+    *p++ = 0;
+    // after file name follows line number
+    strcpy (file , buf);
+    sscanf (p,"%d", line);
+  } else {
+    strcpy (file,"unkown");
+    *line = 0;
+  }
+
+  pclose(f);
+#else
+  fprintf(stderr, "getFileAndLine not supported on this platform\n");
+#endif
+}

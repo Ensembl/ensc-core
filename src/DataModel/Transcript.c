@@ -431,13 +431,12 @@ char *Transcript_getTranslateableSeq(Transcript *trans) {
 */
     mrna = StrUtil_appendString(mrna, Exon_getSeqString(exon));
     lastPhase = Exon_getEndPhase(exon);
+// Hack to test memory usage
+//    free(Exon_getSeqCacheString(exon));
+//    Exon_setSeqCacheString(exon, NULL);
   }
 
   Vector_free(translateableExons);
-
-//  int startPhase = Exon_getPhase(Translation_getStartExon(Transcript_getTranslation(trans)));
-//  if (startPhase > 0) {
-    
 
   //fprintf(stderr,"Length of seq = %d\n", strlen(mrna));
 
@@ -659,6 +658,7 @@ char *Transcript_translate(Transcript *trans) {
     frm[i] = (char *)malloc(lenmRNA/3 + 2);
   }
 
+  //fprintf(stderr, "translateable seq = %s\n",mRNA);
   translate(mRNA, frm, lengths);
 
   free(mRNA);
@@ -853,5 +853,5 @@ void Transcript_free(Transcript *trans) {
                    "       Freeing it anyway\n");
   }
 
-  printf("Transcript_free not implemented\n");
+//  printf("Transcript_free not implemented\n");
 }

@@ -35,6 +35,7 @@
 #include "EnsC.h"
 
 #include "DBAdaptor.h"
+#include "CoordSystemAdaptor.h"
 #include "BaseAdaptor.h"
 #include "Basic/Vector.h"
 #include "Slice.h"
@@ -135,7 +136,7 @@ int main(int argc, char *argv[]) {
 
   memset(&totalStats, 0, sizeof(ReadMapStats));
 
-  initEnsC();
+  initEnsC(argc, argv);
 
   while (argNum < argc) {
     char *arg = argv[argNum];
@@ -343,7 +344,7 @@ int verifyBam(samfile_t *sam) {
 }
 
 void printMapping(FILE *fp, Mapping *mapping) {
-  fprintf(fp, "%s\t%d\t%d\t%s\t%d\t%d\t%d\n",Slice_getChrName(mapping->destSlice),
+  fprintf(fp, "%s\t%ld\t%ld\t%s\t%ld\t%ld\t%d\n",Slice_getChrName(mapping->destSlice),
                                         Slice_getChrStart(mapping->destSlice),
                                         Slice_getChrEnd(mapping->destSlice),
                                         Slice_getChrName(mapping->sourceSlice),
@@ -372,12 +373,12 @@ int getPairedMappingFailLists(samfile_t *in, Vector **mappingVectors, Vector ***
   long long nFUn          = 0;
 
   bam1_t *b = bam_init1();
-// don't know why I need to check for b->core.tid >= 0 but I do otherwise I get a bam entry with -1 tid
 
   Vector **unmapped = calloc(in->header->n_targets, sizeof(Vector *));
 
   Vector **remoteMates = calloc(in->header->n_targets, sizeof(Vector *));
 
+// don't know why I need to check for b->core.tid >= 0 but I do otherwise I get a bam entry with -1 tid
   while (bam_read1(in->x.bam, b) > 0 && b->core.tid >= 0) {
     nRead++;
 
@@ -701,7 +702,7 @@ samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlic
   int i;
   for (i=0; i<Vector_getNumElement(destinationSlices); i++) {
     Slice *slice = Vector_getElementAt(destinationSlices,i);
-    sprintf(line,"@SQ\tSN:%s\tLN:%d\n", Slice_getChrName(slice), 
+    sprintf(line,"@SQ\tSN:%s\tLN:%ld\n", Slice_getChrName(slice), 
                                         Slice_getChrEnd(slice));
     if (buff) {
       buff = StrUtil_appendString(buff,line);
@@ -796,12 +797,12 @@ int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionSt
   char region[1024];
 
 
-  sprintf(region,"%s:%d-%d", Slice_getChrName(mapping->sourceSlice), 
+  sprintf(region,"%s:%ld-%ld", Slice_getChrName(mapping->sourceSlice), 
                              Slice_getChrStart(mapping->sourceSlice), 
                              Slice_getChrEnd(mapping->sourceSlice));
   bam_parse_region(in->header, region, &ref, &begRange, &endRange);
   if (ref < 0) {
-    fprintf(stderr, "Invalid region %s %d %d\n", Slice_getChrName(mapping->sourceSlice), 
+    fprintf(stderr, "Invalid region %s %ld %ld\n", Slice_getChrName(mapping->sourceSlice), 
                                                  Slice_getChrStart(mapping->sourceSlice), 
                                                  Slice_getChrEnd(mapping->sourceSlice));
     return 1;
@@ -1067,7 +1068,7 @@ int mapMateLocation(Mapping *mapping, bam1_t *b, int end, samfile_t *in, samfile
 
           if (tmend > Slice_getChrEnd(containingMapping->sourceSlice)) {
             fprintf(stderr,"Error: Remote mate doesn't cleanly map for %s. Shouldn't happen\n", bam1_qname(b));
-            fprintf(stderr,"  containing slice = %s %d %d\n",
+            fprintf(stderr,"  containing slice = %s %ld %ld\n",
                     Slice_getChrName(containingMapping->sourceSlice),
                     Slice_getChrStart(containingMapping->sourceSlice),
                     Slice_getChrEnd(containingMapping->sourceSlice)
@@ -1161,7 +1162,7 @@ int mapMateLocation(Mapping *mapping, bam1_t *b, int end, samfile_t *in, samfile
         int mend = bam_calend(&mate->core, bam1_cigar(mate));
         if (mend > Slice_getChrEnd(mapping->sourceSlice)) {
           fprintf(stderr,"Error: Reverse local mate doesn't cleanly map for %s. Shouldn't happen\n", bam1_qname(b));
-          fprintf(stderr,"  containing slice = %s %d %d\n",
+          fprintf(stderr,"  containing slice = %s %ld %ld\n",
                   Slice_getChrName(mapping->sourceSlice),
                   Slice_getChrStart(mapping->sourceSlice),
                   Slice_getChrEnd(mapping->sourceSlice)
@@ -1380,21 +1381,21 @@ Vector *getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAs
   StatementHandle *sth;
   ResultRow *      row;
   char             qStr[1024];
-  char *           coordSys1;
-  char *           coordSys2;
+  char *           coordSysName1;
+  char *           coordSysName2;
   Vector *         mappingVector = Vector_new();
 
   int i;
   for (i=0;i<2;i++) {
     if (!i) {
-      coordSys1 = toAssName;
-      coordSys2 = fromAssName;
+      coordSysName1 = toAssName;
+      coordSysName2 = fromAssName;
     } else {
-      coordSys1 = fromAssName;
-      coordSys2 = toAssName;
+      coordSysName1 = fromAssName;
+      coordSysName2 = toAssName;
     }
     sprintf(qStr,
-            "select sr1.name, a.asm_start, a.asm_end, sr2.name, a.cmp_start, a.cmp_end, a.ori"
+            "select sr1.name, a.asm_start, a.asm_end, cs1.coord_system_id, sr1.length, sr2.name, a.cmp_start, a.cmp_end, cs2.coord_system_id, sr2.length, a.ori"
             " from seq_region sr1, seq_region sr2, assembly a, coord_system cs1, coord_system cs2"
             " where sr1.seq_region_id=a.asm_seq_region_id and"
             "       sr2.seq_region_id=a.cmp_seq_region_id and"
@@ -1403,7 +1404,7 @@ Vector *getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAs
             "       cs1.version='%s' and"
             "       cs2.version='%s' and"
             "       sr%d.name='%s' order by a.%s_start",
-            coordSys1, coordSys2, i+1,  seqName, (!i ? "asm" : "cmp"));
+            coordSysName1, coordSysName2, i+1,  seqName, (!i ? "asm" : "cmp"));
 
     if (verbosity > 2) printf("%s\n",qStr);
   
@@ -1411,15 +1412,21 @@ Vector *getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAs
   
     sth->execute(sth);
   
+    CoordSystemAdaptor *csa = DBAdaptor_getCoordSystemAdaptor(dba);
+    SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
   
     while (row = sth->fetchRow(sth)) {
       char *destName;
       int   destStart;
       int   destEnd;
+      int   destLen;
       char *sourceName;
       int   sourceStart;
       int   sourceEnd;
+      int   sourceLen;
       int   ori;
+      IDType destCsId;
+      IDType sourceCsId;
       Mapping *mapping;
       Slice *dest;
       Slice *source;
@@ -1427,10 +1434,15 @@ Vector *getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAs
       if (row->col(row,0))  destName   = row->getStringAt(row,0);
       if (row->col(row,1))  destStart  = row->getIntAt(row,1);
       if (row->col(row,2))  destEnd    = row->getIntAt(row,2);
-      if (row->col(row,3))  sourceName   = row->getStringAt(row,3);
-      if (row->col(row,4))  sourceStart  = row->getIntAt(row,4);
-      if (row->col(row,5))  sourceEnd    = row->getIntAt(row,5);
-      if (row->col(row,6))  ori          = row->getIntAt(row,6);
+      if (row->col(row,3))  destCsId   = row->getLongLongAt(row,3);
+      if (row->col(row,4))  destLen    = row->getIntAt(row,4);
+        
+      if (row->col(row,5))  sourceName   = row->getStringAt(row,5);
+      if (row->col(row,6))  sourceStart  = row->getIntAt(row,6);
+      if (row->col(row,7))  sourceEnd    = row->getIntAt(row,7);
+      if (row->col(row,8))  sourceCsId   = row->getLongLongAt(row,8);
+      if (row->col(row,9))  sourceLen    = row->getIntAt(row,9);
+      if (row->col(row,10))  ori         = row->getIntAt(row,10);
 
 // Maybe should do this after getting mappings - for now do it here
       if (flags & M_UCSC_NAMING) {
@@ -1452,8 +1464,10 @@ Vector *getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAs
         *chP = strcat(tmp,*chP);
       }
        
-      dest    = Slice_new(destName,destStart,destEnd,1,toAssName,NULL,0,0);
-      source  = Slice_new(sourceName,sourceStart,sourceEnd,1,fromAssName,NULL,0,0);
+      CoordSystem *destCs = CoordSystemAdaptor_fetchByDbID(csa, destCsId);
+      dest    = Slice_new(destName,destStart,destEnd,1,destLen,destCs,sa);
+      CoordSystem *sourceCs = CoordSystemAdaptor_fetchByDbID(csa, sourceCsId);
+      source  = Slice_new(sourceName,sourceStart,sourceEnd,1,sourceLen, sourceCs,sa);
       mapping = calloc(1,sizeof(Mapping)); 
   
       if (!rev) {
@@ -1528,17 +1542,22 @@ Vector *getDestinationSlices(DBAdaptor *dba, char *assName) {
 
   Vector *toplevelSliceVector = Vector_new();
 
+  CoordSystemAdaptor *csa = DBAdaptor_getCoordSystemAdaptor(dba);
+  SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
   while (row = sth->fetchRow(sth)) {
     char *name;
     int   length;
-    int   cs;
+    IDType csId;
     Slice *slice;
 
     if (row->col(row,0))  name   = row->getStringAt(row,0);
     if (row->col(row,1))  length = row->getIntAt(row,1);
-    if (row->col(row,2))  cs     = row->getIntAt(row,2);
+    if (row->col(row,2))  csId   = row->getLongLongAt(row,2);
+
+    CoordSystem *cs = CoordSystemAdaptor_fetchByDbID(csa, csId);
+
      
-    slice = Slice_new(name,1,length,1,assName,NULL,0,0);
+    slice = Slice_new(name,1,length,1,length,cs,sa);
 
     Vector_addElement(toplevelSliceVector,slice); 
   }

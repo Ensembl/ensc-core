@@ -29,7 +29,7 @@
 int main(int argc, char *argv[]) {
   DBAdaptor *dba;
 
-  initEnsC();
+  initEnsC(argc, argv);
 
   printf("Opening connection ...");
   //dba = DBAdaptor_new("localhost","root",NULL,"test_ensembl",3306,NULL);

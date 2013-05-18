@@ -33,6 +33,8 @@ objects.
 
 #include "Error.h"
 
+#include "ProcUtil.h"
+
 NameTableType GeneAdaptor_tableNames = {{"gene","g"},
                                         {"xref","x"},
                                         {"external_db","exdb"},
@@ -644,6 +646,7 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
   if (!loadTranscripts || Vector_getNumElement(genes) < 2) {
     return genes;
   }
+
 
   // Preload all of the transcripts now, instead of lazy loading later,
   // faster than one query per transcript.

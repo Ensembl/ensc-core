@@ -70,7 +70,6 @@ char *MysqlUtil_getStringCopy(MYSQL_ROW row, int col) {
     fprintf(stderr,"ERROR: copy == row[col] in copying mysql col\n");
     exit(1);
   }
-  fprintf(stderr,"StringCopy\n");
     
   return copy;
 }

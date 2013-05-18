@@ -50,7 +50,7 @@ int main(int argc, char **argv){
   char *emptyStr = "";
   int argNum = 1;
 
-  initEnsC();
+  initEnsC(argc, argv);
 
   primary_parser = secondary_parser = secondary_multi_parser = emptyStr;
   line_prefix = secondary_line_prefix = record_prefix = gtStr;

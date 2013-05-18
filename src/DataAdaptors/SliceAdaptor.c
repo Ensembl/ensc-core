@@ -1254,7 +1254,9 @@ Vector *SliceAdaptor_fetchAll(SliceAdaptor *sa, char *csName, char *csVersion, i
     while (row = sth->fetchRow(sth)) {
       IDType seqRegionId = row->getLongLongAt(row,0);
       
-      IDHash_add(badVals, seqRegionId, &trueVal);
+      if (!IDHash_contains(badVals, seqRegionId)) {
+        IDHash_add(badVals, seqRegionId, &trueVal);
+      }
     }
 
     sth->finish(sth);
@@ -1333,6 +1335,7 @@ Vector *SliceAdaptor_fetchAll(SliceAdaptor *sa, char *csName, char *csVersion, i
           // any regions which are symlinked because these are duplicates
 
           Vector *projection = SliceAdaptor_fetchNormalizedSliceProjection(sa, slice, 0);
+          Vector_setFreeFunc(projection, ProjectionSegment_free);
 
           int i;
           for (i=0; i<Vector_getNumElement(projection); i++) {
@@ -1345,6 +1348,7 @@ Vector *SliceAdaptor_fetchAll(SliceAdaptor *sa, char *csName, char *csVersion, i
               Vector_addElement(out, toSlice);
             }
           }
+          Vector_free(projection);
         } else {
           // no duplicate regions
           Vector_addElement(out, slice);

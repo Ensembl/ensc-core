@@ -98,7 +98,7 @@ Vector *Slice_getAllDNAAlignFeatures(Slice *slice, char *logicName, double *scor
 Vector *Slice_getAllProteinAlignFeatures(Slice *slice, char *logicName, double *score, char *dbType, double *hCoverage);
 Vector *Slice_getAllSimilarityFeatures(Slice *slice, char *logicName, double *score);
 Vector *Slice_getAllSimpleFeatures(Slice *slice, char *logicName, double *score, char *dbType);
-Vector *Slice_getAllRepeatFeatures(Slice *slice, char *logicName, char *repeatType, char *dbType);
+Vector *Slice_getAllRepeatFeatures(Slice *slice, char *logicName, Vector *repeatTypes, char *dbType);
 Vector *Slice_getAllGenes(Slice *slice, char *logicName, char *dbType, int loadTranscripts, char *source, char *bioType);
 Vector *Slice_getAllGenesByType(Slice *slice, char *type, char *logicName, int loadTranscripts);
 Vector *Slice_getAllGenesBySource(Slice *slice, char *source, int loadTranscripts);

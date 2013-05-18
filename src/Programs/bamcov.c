@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
 
   int flags = 0;
 
-  initEnsC();
+  initEnsC(argc, argv);
 
   while (argNum < argc) {
     char *arg = argv[argNum];
@@ -142,7 +142,7 @@ int main(int argc, char *argv[]) {
 
   SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
 
-  Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,chrName,1,7000000);
+  Slice *slice = SliceAdaptor_fetchByRegion(sa,NULL,chrName,1,7000000,1,NULL, 0);
 
   Vector_addElement(slices,slice);
 
@@ -250,7 +250,7 @@ void printBam(FILE *fp, bam1_t *b, bam_header_t *header) {
 
 Vector *getGenes(Slice *slice, int flags) { 
   Vector *genes;
-  genes = Slice_getAllGenes(slice, NULL);
+  genes = Slice_getAllGenes(slice, NULL, NULL, 1, NULL, NULL);
 
   Vector_sort(genes, geneStartCompFunc);
 
@@ -269,17 +269,17 @@ int calcCoverage(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int
     return 1;
   }
   if (flags & M_UCSC_NAMING) {
-    sprintf(region,"chr%s:%d-%d", Slice_getChrName(slice), 
+    sprintf(region,"chr%s:%ld-%ld", Slice_getChrName(slice), 
                                   Slice_getChrStart(slice), 
                                   Slice_getChrEnd(slice));
   } else {
-    sprintf(region,"%s:%d-%d", Slice_getChrName(slice), 
+    sprintf(region,"%s:%ld-%ld", Slice_getChrName(slice), 
                                Slice_getChrStart(slice), 
                                Slice_getChrEnd(slice));
   }
   bam_parse_region(in->header, region, &ref, &begRange, &endRange);
   if (ref < 0) {
-    fprintf(stderr, "Invalid region %s %d %d\n", Slice_getChrName(slice), 
+    fprintf(stderr, "Invalid region %s %ld %ld\n", Slice_getChrName(slice), 
                                                  Slice_getChrStart(slice), 
                                                  Slice_getChrEnd(slice));
     return 1;

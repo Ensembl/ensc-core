@@ -8,7 +8,7 @@
 int main(int argc, char *argv[]) {
   DBAdaptor *dba;
 
-  initEnsC();
+  initEnsC(argc, argv);
 
   dba = DBAdaptor_new("ensembldb.ensembl.org","anonymous",NULL,"homo_sapiens_core_29_35b",3306,NULL);
 

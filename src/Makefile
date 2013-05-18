@@ -11,7 +11,7 @@ SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools_parallel
 ZLIBDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/include
 
 CFLAGS =  -Ofast -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
-LDFLAGS = $(MYSQLLIBS)
+LDFLAGS = $(MYSQLLIBS) -lunwind
 
 BINDIR=../bin
 
@@ -68,7 +68,7 @@ directories	:
 	mkdir -p objectfiles/Compara/DataAdaptors
 
 objectfiles/%.o: %.c
-	$(CC) -c $(CFLAGS) -o $@ $<
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) -o $@ $<
 
 libensc.a	: \
 	objectfiles/Compara/DataAdaptors/BaseComparaAdaptor.o \
@@ -296,7 +296,7 @@ Tests/GeneTest: \
 	libensc.a \
 	Tests/BaseRODBTest.h \
 	Tests/GeneTest.c
-	$(CC) $(CFLAGS) -o Tests/GeneTest Tests/GeneTest.c -L. -lensc $(LDFLAGS)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o Tests/GeneTest Tests/GeneTest.c -L. -lensc $(LDFLAGS)
 
 Tests/HomologyTest: \
 	libensc.a \

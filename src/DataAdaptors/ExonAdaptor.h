@@ -31,6 +31,9 @@ Vector *ExonAdaptor_objectsFromStatementHandle(ExonAdaptor *ea, StatementHandle 
 #define ExonAdaptor_fetchByDbID(ea,id)  \
    BaseFeatureAdaptor_fetchByDbID((BaseFeatureAdaptor *)(ea), (id))
 
+#define ExonAdaptor_fetchAllBySlice(ea,slice)  \
+   BaseFeatureAdaptor_fetchAllBySliceConstraint((BaseFeatureAdaptor *)(ea), (slice), NULL, NULL)
+
 #define ExonAdaptor_fetchAllBySliceConstraint(ea,slice,constraint,logicName)  \
    BaseFeatureAdaptor_fetchAllBySliceConstraint((BaseFeatureAdaptor *)(ea), (slice), (constraint), (logicName))
 

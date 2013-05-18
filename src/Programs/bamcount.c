@@ -26,9 +26,11 @@
 #include "DBAdaptor.h"
 #include "BaseAdaptor.h"
 #include "Basic/Vector.h"
+#include "SliceAdaptor.h"
 #include "Slice.h"
 #include "StrUtil.h"
 #include "IDHash.h"
+#include "Transcript.h"
 
 #include "sam.h"
 #include "bam.h"
@@ -79,7 +81,7 @@ int main(int argc, char *argv[]) {
   char *dbPass = NULL;
   int   dbPort = 3306;
 
-  char *dbHost = "ens-staging.internal.sanger.ac.uk";
+  char *dbHost = "ens-livemirror.internal.sanger.ac.uk";
   char *dbName = "homo_sapiens_core_71_37";
 
   char *assName = "GRCh37";
@@ -89,7 +91,7 @@ int main(int argc, char *argv[]) {
 
   int flags = 0;
 
-  initEnsC();
+  initEnsC(argc, argv);
 
   while (argNum < argc) {
     char *arg = argv[argNum];
@@ -151,7 +153,7 @@ int main(int argc, char *argv[]) {
 
   SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
 
-  Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa,chrName,1,300000000);
+  Slice *slice = SliceAdaptor_fetchByRegion(sa,"chromosome", chrName,1,300000000,1, NULL, 0);
 
   Vector_addElement(slices,slice);
 
@@ -164,7 +166,8 @@ int main(int argc, char *argv[]) {
 #ifdef _PBGZF_USE
   bam_set_num_threads_per(5);
 #endif
-  long long totalUsableReads = countReadsInFile(inFName);
+//  long long totalUsableReads = countReadsInFile(inFName);
+long long totalUsableReads = 1;
 
   printf("Have %lld total usable reads\n",totalUsableReads);
 
@@ -188,7 +191,7 @@ int main(int argc, char *argv[]) {
   for (i=0; i<Vector_getNumElement(slices); i++) {
     Slice *slice = Vector_getElementAt(slices,i);
 
-    if (verbosity > 0) printf("Working on '%s'\n",Slice_getChrName(slice));
+    if (verbosity > 0) printf("Working on '%s'\n",Slice_getSeqRegionName(slice));
 
     if (verbosity > 0) printf("Stage 1 - retrieving annotation from database\n");
     Vector *genes = getGenes(slice, flags);
@@ -326,7 +329,7 @@ void printBam(FILE *fp, bam1_t *b, bam_header_t *header) {
 
 Vector *getGenes(Slice *slice, int flags) { 
   Vector *genes;
-  genes = Slice_getAllGenes(slice, NULL);
+  genes = Slice_getAllGenes(slice, NULL, NULL, 1, NULL, NULL);
 
   Vector_sort(genes, geneStartCompFunc);
 
@@ -403,24 +406,24 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
   Vector *genes = Vector_copy(origGenesVec);
 
 
-  if (Slice_getChrStart(slice) != 1) {
+  if (Slice_getSeqRegionStart(slice) != 1) {
     fprintf(stderr, "Currently only allow a slice start position of 1\n");
     return 1;
   }
   if (flags & M_UCSC_NAMING) {
-    sprintf(region,"chr%s:%d-%d", Slice_getChrName(slice), 
-                                  Slice_getChrStart(slice), 
-                                  Slice_getChrEnd(slice));
+    sprintf(region,"chr%s:%ld-%ld", Slice_getSeqRegionName(slice), 
+                                  Slice_getSeqRegionStart(slice), 
+                                  Slice_getSeqRegionEnd(slice));
   } else {
-    sprintf(region,"%s:%d-%d", Slice_getChrName(slice), 
-                               Slice_getChrStart(slice), 
-                               Slice_getChrEnd(slice));
+    sprintf(region,"%s:%ld-%ld", Slice_getSeqRegionName(slice), 
+                               Slice_getSeqRegionStart(slice), 
+                               Slice_getSeqRegionEnd(slice));
   }
   bam_parse_region(in->header, region, &ref, &begRange, &endRange);
   if (ref < 0) {
-    fprintf(stderr, "Invalid region %s %d %d\n", Slice_getChrName(slice), 
-                                                 Slice_getChrStart(slice), 
-                                                 Slice_getChrEnd(slice));
+    fprintf(stderr, "Invalid region %s %ld %ld\n", Slice_getSeqRegionName(slice), 
+                                                 Slice_getSeqRegionStart(slice), 
+                                                 Slice_getSeqRegionEnd(slice));
     return 1;
   }
 
@@ -468,7 +471,7 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
         int doneGene = 0;
         for (k=0; k<Gene_getTranscriptCount(gene) && !doneGene; k++) {
           Transcript *trans = Gene_getTranscriptAt(gene,k);
-          if (strcmp(Transcript_getType(trans),"protein_coding")) {
+          if (strcmp(Transcript_getBiotype(trans),"protein_coding")) {
             continue;
           }
 
@@ -503,7 +506,7 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
 //                                          gr->score);
 
         if (verbosity > 1) { 
-          printf("Removing gene %s (index %d) with extent %d to %d\n", 
+          printf("Removing gene %s (index %d) with extent %ld to %ld\n", 
                  Gene_getStableId(gene), 
                  gr->index,
                  Gene_getStart(gene),

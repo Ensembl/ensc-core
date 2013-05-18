@@ -47,7 +47,8 @@ void AssemblyMapperAdaptor_registerContig(AssemblyMapperAdaptor *ama, AssemblyMa
 
 
 
-char *makeMappingPathKey(Vector *path);
+//char *makeMappingPathKey(Vector *path);
+char *makeMappingPathKey(Vector *path, char *key);
 
 AssemblyMapper *AssemblyMapperAdaptor_fetchByType(AssemblyMapperAdaptor *ama, char *type);
 

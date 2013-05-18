@@ -11,6 +11,7 @@ char *StrUtil_appendString(char *to, char *from) {
   int lenTo = strlen(to);
   int lenFrom = strlen(from);
 
+  //fprintf(stderr,"lenTo = %d lenFrom = %d\n",lenTo, lenFrom);
   if ((to = (char *)realloc(to,lenTo+lenFrom+1))== NULL) {
     fprintf(stderr,"ERROR: Failed reallocating string\n");
     exit(1);
@@ -72,7 +73,7 @@ int StrUtil_strupr(char *string) {
 
   while (*chP != '\0') {
     *chP = toupper(*chP);
-    len++;
+    //len++;
     chP++;
   }
   return len;

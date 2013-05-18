@@ -29,6 +29,7 @@ Slice *Test_getStandardSlice(DBAdaptor *dba) {
 
 //  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","2",10000000,100000000,1,NULL,0);
   slice = SliceAdaptor_fetchByRegion(sa,"chromosome","1",1000000,260000000,1,NULL,0);
+//  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","2",1000000,260000000,1,NULL,0);
   //PAR + boundary cross
   //slice = SliceAdaptor_fetchByRegion(sa,"chromosome","Y",1000000,4000000,1,NULL,0);
 

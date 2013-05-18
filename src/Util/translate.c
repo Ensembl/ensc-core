@@ -220,10 +220,12 @@ void translate(char *in, char **out, int *l) {
   index = (basebits[(int)in[0]] << 2) | basebits[(int)in[1]];
 
   for (p = in; p<=end; p+=3) {
-      
     /* Frame 0/3 */
 
     index = ((index << 2) & 0x3C) | basebits[(int)p[2]];
+
+// Hack for N's
+    if (p[0] == 'N' || p[1] == 'N' || p[2] == 'N') index = index | 0x80;
 
     if (index & 0x80) {
       *r0++ = 'X';

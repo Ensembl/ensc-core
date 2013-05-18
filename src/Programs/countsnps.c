@@ -37,10 +37,9 @@ int main(int argc, char **argv) {
   SliceAdaptor *sa;
   GeneAdaptor *ga;
   DNAAlignFeatureAdaptor *dafa;
-  ChromosomeAdaptor *ca;
 
 
-  initEnsC();
+  initEnsC(argc, argv);
 
   dba = DBAdaptor_new(host,user,NULL,dbname,port,NULL);
 
@@ -51,17 +50,15 @@ int main(int argc, char **argv) {
   sa   = DBAdaptor_getSliceAdaptor(dba);
   ga   = DBAdaptor_getGeneAdaptor(dba);
   dafa = DBAdaptor_getDNAAlignFeatureAdaptor(dba);
-  ca   = DBAdaptor_getChromosomeAdaptor(dba);
 
   chrName = chromosomes;
   while (*chrName) {
     char **geneType;
     Vector *genes = Vector_new();
     Vector *snps = Vector_new();
-    Chromosome *chrom = ChromosomeAdaptor_fetchByChrName(ca, *chrName);
     int chrStart = 1;
-    int chrEnd = Chromosome_getLength(chrom);
-    Slice *slice = SliceAdaptor_fetchByChrStartEnd(sa, *chrName,chrStart,chrEnd);
+    Slice *slice = SliceAdaptor_fetchByRegion(sa, NULL, *chrName, POS_UNDEF, POS_UNDEF, STRAND_UNDEF, NULL, 0);
+    int chrEnd = Slice_getLength(slice);
     int i;
     StringHash *snpCodingType = StringHash_new(STRINGHASH_SMALL);
     char **snpType;
@@ -73,7 +70,7 @@ int main(int argc, char **argv) {
     geneType = geneTypes;
 
     while (*geneType) {
-      Vector *genesOfType = Slice_getAllGenesByType(slice, *geneType);
+      Vector *genesOfType = Slice_getAllGenesByType(slice, *geneType, NULL, 1);
       printf("Got %d %s genes\n",Vector_getNumElement(genesOfType),*geneType);
 
       Vector_append(genes,genesOfType);
@@ -90,10 +87,10 @@ int main(int argc, char **argv) {
 
     snpType = snpTypes;
     if (!(*snpType)) {
-      snps = Slice_getAllDNAAlignFeatures(slice,"",NULL);
+      snps = Slice_getAllDNAAlignFeatures(slice,NULL,NULL,NULL,NULL);
     } else {
       while (*snpType) {
-        Vector *snpsOfType = Slice_getAllDNAAlignFeatures(slice,*snpType,NULL);
+        Vector *snpsOfType = Slice_getAllDNAAlignFeatures(slice,*snpType,NULL,NULL,NULL);
         printf("Got %d %s SNPs\n",Vector_getNumElement(snpsOfType),*snpType);
 
         Vector_append(snps,snpsOfType);

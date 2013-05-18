@@ -135,6 +135,8 @@ int Exon_forwardStrandCompFunc(const void *a, const void *b);
 void Exon_loadGenomicMapperImpl(Exon *exon, Mapper *mapper, IDType id, int start);
 Exon *Exon_adjustStartEndImpl(Exon *exon, int startAdjust, int endAdjust);
 
+Exon *Exon_transfer(Exon *exon, Slice *slice);
+
 #define Exon_loadGenomicMapper(exon,mapper,id,start) \
       ((exon)->funcs->loadGenomicMapper == NULL ? \
          (fprintf(stderr,"Error: Null pointer for loadGenomicMapper - bye\n"),  exit(1)) : \

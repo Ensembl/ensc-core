@@ -60,8 +60,8 @@ DBEntry *DBEntryAdaptor_fetchByDbID(DBEntryAdaptor *dbea, IDType dbID) {
       DBEntry_setDbID(dbe, dbID);
       DBEntry_setPrimaryId(dbe, row->getStringAt(row,1));
       DBEntry_setDisplayId(dbe, row->getStringAt(row,2));
-      DBEntry_setVersion(dbe, row->getIntAt(row,3));
-      DBEntry_setRelease(dbe, row->getIntAt(row,6));
+      DBEntry_setVersion(dbe, row->getStringAt(row,3));
+      DBEntry_setRelease(dbe, row->getStringAt(row,6));
       DBEntry_setDbName(dbe, row->getStringAt(row,5));
       
       if (row->col(row,4)) DBEntry_setDescription(dbe, row->getStringAt(row,4));
@@ -91,7 +91,7 @@ IDType DBEntryAdaptor_store(DBEntryAdaptor *dbea, DBEntry *exObj,
      "SELECT external_db_id"
      "  FROM external_db"
      " WHERE db_name = '%s'"
-     "   AND db_release = %d",
+     "   AND db_release = %s",
      DBEntry_getDbName(exObj),
      DBEntry_getRelease(exObj));
 
@@ -101,7 +101,7 @@ IDType DBEntryAdaptor_store(DBEntryAdaptor *dbea, DBEntry *exObj,
   row = sth->fetchRow(sth);
   if( row == NULL ) {
     sth->finish(sth);
-    fprintf(stderr,"Error: external_db [%s] release [%d] does not exist\n", 
+    fprintf(stderr,"Error: external_db [%s] release [%s] does not exist\n", 
             DBEntry_getDbName(exObj), DBEntry_getRelease(exObj));
     exit(1);
   }
@@ -117,7 +117,7 @@ IDType DBEntryAdaptor_store(DBEntryAdaptor *dbea, DBEntry *exObj,
        "  FROM xref"
        " WHERE external_db_id = " IDFMTSTR
        "   AND dbprimary_acc = '%s'"
-       "   AND version = %d",
+       "   AND version = %s",
       dbRef,
       DBEntry_getPrimaryId(exObj),
       DBEntry_getVersion(exObj));
@@ -143,7 +143,7 @@ IDType DBEntryAdaptor_store(DBEntryAdaptor *dbea, DBEntry *exObj,
        "INSERT ignore INTO xref"
        " SET dbprimary_acc = '%s',"
        "    display_label = '%s',"
-       "    version = %d,"
+       "    version = %s,"
        "    description = '%s',"
        "    external_db_id = " IDFMTSTR,
        DBEntry_getPrimaryId(exObj),
@@ -461,9 +461,9 @@ Vector *DBEntryAdaptor_fetchByObjectType(DBEntryAdaptor *dbea, IDType ensObj, ch
       DBEntry_setDbID(exDB, refID);
       DBEntry_setPrimaryId(exDB, row->getStringAt(row,1));
       DBEntry_setDisplayId(exDB, row->getStringAt(row,2));
-      DBEntry_setVersion(exDB, row->getIntAt(row,3));
+      DBEntry_setVersion(exDB, row->getStringAt(row,3));
       DBEntry_setDbName(exDB, row->getStringAt(row,5));
-      DBEntry_setRelease(exDB, row->getIntAt(row,6));
+      DBEntry_setRelease(exDB, row->getStringAt(row,6));
 
       if (row->col(row,10)) {
         IdentityXref *idx = IdentityXref_new();

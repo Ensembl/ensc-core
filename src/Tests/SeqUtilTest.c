@@ -6,7 +6,7 @@
 int main(int argc, char *argv[]) {
   char transTab[4][4][4];
 
-  initEnsC();
+  initEnsC(argc, argv);
   SeqUtil_readTransTab("../data/trans0.txt",transTab);
 
   return 0;

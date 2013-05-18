@@ -11,6 +11,8 @@
 #include "SliceAdaptor.h"
 #include "CoordSystemAdaptor.h"
 #include "AssemblyMapperAdaptor.h"
+#include "ExonAdaptor.h"
+#include "TranscriptAdaptor.h"
 
 #include "Gene.h"
 
@@ -1454,7 +1456,6 @@ Vector *Slice_getAllProteinAlignFeatures(Slice *slice, char *logicName, double *
 =cut
 */
 
-/*
 Vector *Slice_getAllSimilarityFeatures(Slice *slice, char *logicName, double *score) {
 
   Vector *out = Slice_getAllProteinAlignFeatures(slice, logicName, score, NULL, NULL);
@@ -1464,7 +1465,6 @@ Vector *Slice_getAllSimilarityFeatures(Slice *slice, char *logicName, double *sc
 
   return out;
 }
-*/
 
 /*
 =head2 get_all_SimpleFeatures
@@ -1531,7 +1531,7 @@ Vector *Slice_getAllSimpleFeatures(Slice *slice, char *logicName, double *score,
 
 =cut
 */
-Vector *Slice_getAllRepeatFeatures(Slice *slice, char *logicName, char *repeatType, char *dbType) {
+Vector *Slice_getAllRepeatFeatures(Slice *slice, char *logicName, Vector *repeatTypes, char *dbType) {
   if (!Slice_getAdaptor(slice)) {
     fprintf(stderr, "Warning: Cannot get RepeatFeatures without attached adaptor");
     return Vector_new();
@@ -1546,7 +1546,7 @@ Vector *Slice_getAllRepeatFeatures(Slice *slice, char *logicName, char *repeatTy
 
   RepeatFeatureAdaptor *rpfa = DBAdaptor_getRepeatFeatureAdaptor(db);
 
-  return RepeatFeatureAdaptor_fetchAllBySlice(rpfa, slice, logicName, repeatType);
+  return RepeatFeatureAdaptor_fetchAllBySlice(rpfa, slice, logicName, repeatTypes);
 }
 
 /*
@@ -2521,7 +2521,6 @@ Vector *Slice_getAllGenes(Slice *slice, char *logicName, char *dbType, int loadT
 =cut
 */
 
-/*
 Vector *Slice_getAllGenesByType(Slice *slice, char *type, char *logicName, int loadTranscripts) {
   if (!Slice_getAdaptor(slice)) {
     fprintf(stderr, "Warning: Cannot get Genes without attached adaptor");
@@ -2530,7 +2529,6 @@ Vector *Slice_getAllGenesByType(Slice *slice, char *type, char *logicName, int l
 
   return Slice_getAllGenes(slice, logicName, NULL, loadTranscripts, NULL, type);
 }
-*/
 
 
 /*
@@ -2553,7 +2551,6 @@ Vector *Slice_getAllGenesByType(Slice *slice, char *type, char *logicName, int l
 =cut
 */
 
-/*
 Vector *Slice_getAllGenesBySource(Slice *slice, char *source, int loadTranscripts) {
   if (!Slice_getAdaptor(slice)) {
     fprintf(stderr, "Warning: Cannot get Genes without attached adaptor");
@@ -2562,7 +2559,6 @@ Vector *Slice_getAllGenesBySource(Slice *slice, char *source, int loadTranscript
 
   return Slice_getAllGenes(slice, NULL, NULL, loadTranscripts, source, NULL);
 }
-*/
 
 /*
 =head2 get_all_Transcripts
@@ -2587,7 +2583,6 @@ Vector *Slice_getAllGenesBySource(Slice *slice, char *source, int loadTranscript
 =cut
 */
 
-/*
 Vector *Slice_getAllTranscripts(Slice *slice, int loadExons, char *logicName, char *dbType) {
   if (!Slice_getAdaptor(slice)) {
     fprintf(stderr, "Warning: Cannot get Transcripts without attached adaptor");
@@ -2604,9 +2599,8 @@ Vector *Slice_getAllTranscripts(Slice *slice, int loadExons, char *logicName, ch
 
   TranscriptAdaptor *ta = DBAdaptor_getTranscriptAdaptor(db);
 
-  return TranscriptAdaptor_fetchAllBySlice(ta, slice, loadExons, logicName);
+  return TranscriptAdaptor_fetchAllBySlice(ta, slice, loadExons, logicName, NULL);
 }
-*/
 
 
 /*
@@ -2625,7 +2619,6 @@ Vector *Slice_getAllTranscripts(Slice *slice, int loadExons, char *logicName, ch
 =cut
 */
 
-/*
 Vector *Slice_getAllExons(Slice *slice, char *dbType) {
   if (!Slice_getAdaptor(slice)) {
     fprintf(stderr, "Warning: Cannot get Exons without attached adaptor");
@@ -2644,7 +2637,6 @@ Vector *Slice_getAllExons(Slice *slice, char *dbType) {
 
   return ExonAdaptor_fetchAllBySlice(ea, slice);
 }
-*/
 
 
 /*

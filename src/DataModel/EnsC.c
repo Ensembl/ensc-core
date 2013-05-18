@@ -3,11 +3,13 @@
 #undef __ECOS_MAIN__
 #include "Stream.h"
 
-void initEnsC(void) {
+void initEnsC(int argc, char **argv) {
   if (!EcoString_initTable(&ecoSTable)) {
     fprintf(stderr, "Failed initialising ecoSTable\n");
     exit(1);
   }
+
+  StrUtil_copyString(&EnsC_progName, argv[0]);
 
   Stream_setDefaults(0);
 }

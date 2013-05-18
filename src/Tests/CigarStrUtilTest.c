@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
   char *str;
   char *reverse;
 
-  initEnsC();
+  initEnsC(argc, argv);
 
   pieces = CigarStrUtil_getPieces(cigar1);
 
