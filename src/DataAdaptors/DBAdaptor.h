@@ -26,6 +26,7 @@ char *DBAdaptor_getAssemblyType(DBAdaptor *dba);
 
 AnalysisAdaptor             *DBAdaptor_getAnalysisAdaptor(DBAdaptor *dba);
 AssemblyMapperAdaptor       *DBAdaptor_getAssemblyMapperAdaptor(DBAdaptor *dba);
+AttributeAdaptor            *DBAdaptor_getAttributeAdaptor(DBAdaptor *dba);
 ChromosomeAdaptor           *DBAdaptor_getChromosomeAdaptor(DBAdaptor *dba);
 CoordSystemAdaptor          *DBAdaptor_getCoordSystemAdaptor(DBAdaptor *dba);
 DBEntryAdaptor              *DBAdaptor_getDBEntryAdaptor(DBAdaptor *dba);
@@ -43,8 +44,9 @@ SliceAdaptor                *DBAdaptor_getSliceAdaptor(DBAdaptor *dba);
 SimpleFeatureAdaptor        *DBAdaptor_getSimpleFeatureAdaptor(DBAdaptor *dba); 
 SupportingFeatureAdaptor    *DBAdaptor_getSupportingFeatureAdaptor(DBAdaptor *dba);
 SequenceAdaptor             *DBAdaptor_getSequenceAdaptor(DBAdaptor *dba); 
-TranslationAdaptor          *DBAdaptor_getTranslationAdaptor(DBAdaptor *dba);
 TranscriptAdaptor           *DBAdaptor_getTranscriptAdaptor(DBAdaptor *dba);
+TranscriptSupportingFeatureAdaptor    *DBAdaptor_getTranscriptSupportingFeatureAdaptor(DBAdaptor *dba);
+TranslationAdaptor          *DBAdaptor_getTranslationAdaptor(DBAdaptor *dba);
 
 
 #define DBAdaptor_getDNADBAdaptor(dba) (dba)->dnadb

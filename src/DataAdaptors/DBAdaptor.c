@@ -127,6 +127,14 @@ AnalysisAdaptor *DBAdaptor_getAnalysisAdaptor(DBAdaptor *dba) {
   return (AnalysisAdaptor *)DBConnection_getAdaptor(dba->dbc,ANALYSIS_ADAPTOR);
 }
 
+AttributeAdaptor *DBAdaptor_getAttributeAdaptor(DBAdaptor *dba) {
+  if (!DBConnection_getAdaptor(dba->dbc,ATTRIBUTE_ADAPTOR)) {
+    DBConnection_addAdaptor(dba->dbc,
+                            (BaseAdaptor *)AttributeAdaptor_new(dba));
+  }
+  return (AttributeAdaptor *)DBConnection_getAdaptor(dba->dbc,ATTRIBUTE_ADAPTOR);
+}
+
 SimpleFeatureAdaptor *DBAdaptor_getSimpleFeatureAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,SIMPLEFEATURE_ADAPTOR)) {
     DBConnection_addAdaptor(dba->dbc,

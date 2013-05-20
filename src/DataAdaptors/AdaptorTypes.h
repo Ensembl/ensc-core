@@ -5,6 +5,7 @@ typedef struct StatementHandleStruct StatementHandle;
 
 typedef struct AnalysisAdaptorStruct AnalysisAdaptor;
 typedef struct AssemblyMapperAdaptorStruct AssemblyMapperAdaptor;
+typedef struct AttributeAdaptorStruct AttributeAdaptor;
 typedef struct BaseAdaptorStruct BaseAdaptor;
 typedef struct BaseDBAdaptorStruct BaseDBAdaptor;
 typedef struct BaseFeatureAdaptorStruct BaseFeatureAdaptor;

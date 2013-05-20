@@ -4,6 +4,7 @@
 typedef struct AnalysisStruct Analysis;
 typedef struct AnnotatedSeqFeatureStruct AnnotatedSeqFeature;
 typedef struct AssemblyMapperStruct AssemblyMapper;
+typedef struct AttributeStruct Attribute;
 typedef struct BaseAlignFeatureStruct BaseAlignFeature;
 typedef struct BaseAssemblyMapperStruct BaseAssemblyMapper;
 typedef struct BaseContigStruct BaseContig;
