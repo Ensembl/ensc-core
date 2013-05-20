@@ -70,15 +70,17 @@ int DNAPepAlignFeature_getQueryUnit(void);
 #define DNAPepAlignFeature_transformToRawContig(fp) BaseAlignFeature_transformToRawContig((fp))
 
 #define DNAPepAlignFeature_free(fp) BaseAlignFeature_free((fp))
+#define DNAPepAlignFeature_shallowCopy(fp) DNAPepAlignFeature_shallowCopyImpl((fp))
 
 void DNAPepAlignFeature_freeImpl(DNAPepAlignFeature *dpaf);
+DNAPepAlignFeature *DNAPepAlignFeature_shallowCopyImpl(DNAPepAlignFeature *dpaf);
 
 
 #ifdef __DNAPEPALIGNFEATURE_MAIN__
   DNAPepAlignFeatureFuncs
     dnaPepAlignFeatureFuncs = {
                              DNAPepAlignFeature_freeImpl,
-                             NULL, // shallowCopy
+                             DNAPepAlignFeature_shallowCopyImpl, // shallowCopy
                              NULL, // deepCopy
                              NULL, // getStart
                              NULL, // setStart

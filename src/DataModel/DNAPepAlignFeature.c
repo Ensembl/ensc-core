@@ -40,3 +40,10 @@ void DNAPepAlignFeature_freeImpl(DNAPepAlignFeature *dpaf) {
   free(dpaf);
 }
 
+DNAPepAlignFeature *DNAPepAlignFeature_shallowCopyImpl(DNAPepAlignFeature *dpaf) {
+  DNAPepAlignFeature *newDNAPepAlignFeature = DNAPepAlignFeature_new();
+
+  memcpy(newDNAPepAlignFeature,dpaf,sizeof(DNAPepAlignFeature));
+
+  return newDNAPepAlignFeature;
+}

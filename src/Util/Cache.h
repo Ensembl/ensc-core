@@ -30,5 +30,6 @@ CacheElement *CacheElement_new(char *key, void *val, Cache_FreeFunc freeFunc);
 int Cache_addElement(Cache *cache, char *key, void *data, Cache_FreeFunc freeFunc);
 
 void CacheElement_free(CacheElement *ce);
+int Cache_contains(Cache *cache, char *key);
 
 #endif

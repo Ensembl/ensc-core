@@ -259,7 +259,7 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
   Analysis *analysis;
   int phase;
   int ori;
-  int prev1; // where last feature q part ended
+  long prev1; // where last feature q part ended
   int prev2; // where last feature s part ended
   char *string = NULL;
   FeaturePair *firstFeature;
@@ -408,7 +408,7 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
         if (FeaturePair_getStart(f) < prev1) {
           fprintf(stderr,"Error: Inconsistent coordinates feature is forward strand "
                          "hstart in current feature should be greater than "
-                         "hend in previous feature %d < %d\n",
+                         "hend in previous feature %ld < %ld\n",
                          FeaturePair_getStart(f),prev1);
           exit(1);
         }
@@ -416,7 +416,7 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
         if (FeaturePair_getEnd(f) > prev1) {
           fprintf(stderr,"Error: Inconsistent coordinates in feature array feature "
                          "is reverse strand hend should be less than previous "
-                         "hstart %d > %d\n", FeaturePair_getEnd(f),prev1);
+                         "hstart %ld > %ld\n", FeaturePair_getEnd(f),prev1);
           exit(1);
         }
       }
@@ -464,13 +464,13 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
     if (strand == 1) {
       if (i!=0 && ( FeaturePair_getStart(f) > prev1 + 1 )) {
         // there is an insertion
-        int gap = FeaturePair_getStart(f) - prev1 - 1;
+        long gap = FeaturePair_getStart(f) - prev1 - 1;
 
         insertionFlag = 1;
         if (gap == 1 ) {
           string = StrUtil_appendString(string,"I");
         } else {
-          sprintf(piece,"%dI",gap);
+          sprintf(piece,"%ldI",gap);
           string = StrUtil_appendString(string,piece);
         }
       }
@@ -480,14 +480,14 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
     } else {
 
       if (i!=0 && (FeaturePair_getEnd(f)+1 < prev1)) {
-        int gap = prev1 - FeaturePair_getEnd(f) - 1;
+        long gap = prev1 - FeaturePair_getEnd(f) - 1;
 
         // there is an insertion
         insertionFlag = 1;
         if (gap == 1) {
           string = StrUtil_appendString(string,"I");
         } else {
-          sprintf(piece,"%dI",gap);
+          sprintf(piece,"%ldI",gap);
           string = StrUtil_appendString(string,piece);
         }
       }
@@ -543,7 +543,7 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
 
         if(insertionFlag) {
           fprintf(stderr, "Error: Should not be an deletion and insertion on the "
-                          "same alignment region. prev2 = %d f->hend() = %d; cigar_line = %s\n",
+                          "same alignment region. prev2 = %d f->hend() = %ld; cigar_line = %s\n",
                            prev2, FeaturePair_getHitEnd(f),string); 
           exit(1);
         }

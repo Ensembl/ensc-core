@@ -1771,7 +1771,7 @@ Slice *SliceAdaptor_fetchByTranscriptStableId(SliceAdaptor *sa, char *transcript
 
 Slice *SliceAdaptor_fetchByTranscriptId(SliceAdaptor *sa, IDType transcriptId, int size, int isPercent) {
   TranscriptAdaptor *ta = DBAdaptor_getTranscriptAdaptor(sa->dba);
-  Transcript *transcript = TranscriptAdaptor_fetchByDbID(ta, transcriptId);
+  Transcript *transcript = (Transcript *)TranscriptAdaptor_fetchByDbID(ta, transcriptId);
 
   if (transcript == NULL) {
     fprintf(stderr,"Transcript ["IDFMTSTR"] does not exist in DB.", transcriptId);

@@ -109,7 +109,7 @@ void ProcUtil_mallInfo() {
 // Needs libunwind
 void ProcUtil_showBacktrace(char *prog) {
 #ifdef linux
-  char name[1024];
+  char name[2048];
   unw_cursor_t cursor; unw_context_t uc;
   unw_word_t ip, sp, offp;
 
@@ -117,19 +117,19 @@ void ProcUtil_showBacktrace(char *prog) {
   unw_init_local(&cursor, &uc);
 
   while (unw_step(&cursor) > 0) {
-    char file[1024];
+    char file[2048];
     int line = 0;
 
     name[0] = '\0';
-    unw_get_proc_name(&cursor, name, 1024, &offp);
+    unw_get_proc_name(&cursor, name, 2048, &offp);
     unw_get_reg(&cursor, UNW_REG_IP, &ip);
     unw_get_reg(&cursor, UNW_REG_SP, &sp);
 
     if (prog == NULL) {
-      printf ("%s ip = %lx, sp = %lx\n", name, (long) ip, (long) sp);
+      fprintf(stderr, "%s ip = %lx, sp = %lx\n", name, (long)ip, (long)sp);
     } else {
-      ProcUtil_getFileAndLine(prog, (long)ip, file, 1024, &line);
-      printf("%s in file %s line %d\n", name, file, line);
+      ProcUtil_getFileAndLine(prog, (long)ip, file, 2048, &line);
+      fprintf(stderr, "%s in file %s line %d\n", name, file, line);
     }
   }
 #else
@@ -140,7 +140,7 @@ void ProcUtil_showBacktrace(char *prog) {
 
 int ProcUtil_getFileAndLine(char *prog, unw_word_t addr, char *file, size_t flen, int *line) {
 #ifdef linux
-  static char buf[1024];
+  static char buf[2048];
   char *p;
 
   // prepare command to be executed
@@ -154,10 +154,10 @@ int ProcUtil_getFileAndLine(char *prog, unw_word_t addr, char *file, size_t flen
   }
 
   // get function name
-  fgets (buf, 1024, f);
+  fgets (buf, 2048, f);
 
   // get file and line
-  fgets (buf, 1024, f);
+  fgets (buf, 2048, f);
 
   if (buf[0] != '?') {
     int l;
@@ -173,7 +173,7 @@ int ProcUtil_getFileAndLine(char *prog, unw_word_t addr, char *file, size_t flen
     strcpy (file , buf);
     sscanf (p,"%d", line);
   } else {
-    strcpy (file,"unkown");
+    strcpy (file,"unknown");
     *line = 0;
   }
 

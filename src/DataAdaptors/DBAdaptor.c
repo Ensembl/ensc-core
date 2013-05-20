@@ -21,9 +21,13 @@
 #include "SupportingFeatureAdaptor.h"
 #include "TranscriptAdaptor.h"
 #include "TranslationAdaptor.h"
+#include "MetaCoordContainer.h"
+#include "TranscriptSupportingFeatureAdaptor.h"
 
 #include "StrUtil.h"
 #include "SeqRegionCacheEntry.h"
+
+#include "ProcUtil.h"
 
 DBAdaptor *DBAdaptor_new(char *host, char *user, char *pass, char *dbname,
                          unsigned int port, DBAdaptor *dnadb) {
@@ -53,7 +57,8 @@ void DBAdaptor_addToSrCaches(DBAdaptor *dba, IDType regionId, char *regionName, 
 
   // Do a quick sanity check
   if (IDHash_contains(dba->srIdCache, regionId)) {
-    fprintf(stderr,"Hmm - seq region already in id cache - odd\n");
+    //fprintf(stderr,"Hmm - seq region already in id cache - odd\n");
+    //ProcUtil_showBacktrace(EnsC_progName);
     return;
   }
 
@@ -136,6 +141,14 @@ SupportingFeatureAdaptor *DBAdaptor_getSupportingFeatureAdaptor(DBAdaptor *dba) 
                             (BaseAdaptor *)SupportingFeatureAdaptor_new(dba));
   }
   return (SupportingFeatureAdaptor *)DBConnection_getAdaptor(dba->dbc,SUPPORTINGFEATURE_ADAPTOR);
+}
+
+TranscriptSupportingFeatureAdaptor *DBAdaptor_getTranscriptSupportingFeatureAdaptor(DBAdaptor *dba) {
+  if (!DBConnection_getAdaptor(dba->dbc,TRANSCRIPTSUPPORTINGFEATURE_ADAPTOR)) {
+    DBConnection_addAdaptor(dba->dbc,
+                            (BaseAdaptor *)TranscriptSupportingFeatureAdaptor_new(dba));
+  }
+  return (TranscriptSupportingFeatureAdaptor *)DBConnection_getAdaptor(dba->dbc,TRANSCRIPTSUPPORTINGFEATURE_ADAPTOR);
 }
 
 DNAAlignFeatureAdaptor *DBAdaptor_getDNAAlignFeatureAdaptor(DBAdaptor *dba) {

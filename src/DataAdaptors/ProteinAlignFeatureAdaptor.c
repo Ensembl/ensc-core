@@ -134,7 +134,9 @@ Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor
   aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
   sa = DBAdaptor_getSliceAdaptor(bfa->dba);
 
+  IDHash *sliceHash = IDHash_new(IDHASH_SMALL);
   features = Vector_new();
+  Vector_setFreeFunc(features,Object_freeImpl);
 
   if (destSlice) {
     int featStart, featEnd, featStrand;
@@ -199,7 +201,15 @@ Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor
       dpaf = DNAPepAlignFeature_new();
 
       DNAPepAlignFeature_setDbID(dpaf,row->getLongLongAt(row,0));
-      Slice *slice = SliceAdaptor_fetchBySeqRegionId(sa, row->getLongLongAt(row,1), POS_UNDEF, POS_UNDEF, 1);
+      IDType srId = row->getLongLongAt(row,1);
+      Slice *slice;
+      if (!IDHash_contains(sliceHash, srId)) {
+        slice = SliceAdaptor_fetchBySeqRegionId(sa, srId, POS_UNDEF, POS_UNDEF, 1);
+        IDHash_add(sliceHash, srId, slice);
+      } else {
+        slice = IDHash_getValue(sliceHash, srId);
+      }
+      //Slice *slice = SliceAdaptor_fetchBySeqRegionId(sa, row->getLongLongAt(row,1), POS_UNDEF, POS_UNDEF, 1);
       DNAPepAlignFeature_setContig(dpaf,slice); 
       DNAPepAlignFeature_setAnalysis(dpaf,analysis);
 
@@ -228,7 +238,15 @@ Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor
 // Perl has a cache for analysis types but the analysis adaptor should have one
       Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,2));
 // Perl has a cache for contigs - maybe important
-      Slice *slice = SliceAdaptor_fetchBySeqRegionId(sa, row->getLongLongAt(row,1), POS_UNDEF, POS_UNDEF, 1);
+      IDType srId = row->getLongLongAt(row,1);
+      Slice *slice;
+      if (!IDHash_contains(sliceHash, srId)) {
+        slice = SliceAdaptor_fetchBySeqRegionId(sa, srId, POS_UNDEF, POS_UNDEF, 1);
+        IDHash_add(sliceHash, srId, slice);
+      } else {
+        slice = IDHash_getValue(sliceHash, srId);
+      }
+      //Slice *slice = SliceAdaptor_fetchBySeqRegionId(sa, row->getLongLongAt(row,1), POS_UNDEF, POS_UNDEF, 1);
 
       dpaf = DNAPepAlignFeature_new();
 
@@ -254,6 +272,7 @@ Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor
       Vector_addElement(features,dpaf);
     }
   }
+  IDHash_free(sliceHash, NULL);
   
   return features;
 }

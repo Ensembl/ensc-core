@@ -1,6 +1,9 @@
 #define __DNAALIGNFEATURE_MAIN__
 #include "DNAAlignFeature.h"
 #undef __DNAALIGNFEATURE_MAIN__
+#include "ProcUtil.h"
+
+#include <string.h>
 
 DNAAlignFeature *DNAAlignFeature_new() {
   DNAAlignFeature *daf;
@@ -30,7 +33,8 @@ void DNAAlignFeature_freeImpl(DNAAlignFeature *daf) {
   Object_decRefCount(daf);
 
   if (Object_getRefCount(daf) > 0) {
-    printf("return\n");
+//    ProcUtil_showBacktrace(EnsC_progName);
+//    printf("return\n");
     return;
   } else if (Object_getRefCount(daf) < 0) {
     fprintf(stderr,"Error: Negative reference count for DNAAlignFeature\n"
@@ -40,4 +44,12 @@ void DNAAlignFeature_freeImpl(DNAAlignFeature *daf) {
   BaseAlignFeature_freePtrs((BaseAlignFeature *)daf);
   
   free(daf);
+}
+
+DNAAlignFeature *DNAAlignFeature_shallowCopyImpl(DNAAlignFeature *daf) {
+  DNAAlignFeature *newDNAAlignFeature = DNAAlignFeature_new();
+
+  memcpy(newDNAAlignFeature,daf,sizeof(DNAAlignFeature));
+
+  return newDNAAlignFeature;
 }

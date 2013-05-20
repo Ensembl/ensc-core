@@ -45,7 +45,7 @@ int Cache_addElement(Cache *cache, char *key, void *data, Cache_FreeFunc freeFun
   return 1;
 }
 
-void *Cache_contains(Cache *cache, char *key) {
+int Cache_contains(Cache *cache, char *key) {
   int i=0;
   for (i=0;i<cache->size;i++) {
     if (cache->array[i] != NULL &&
@@ -88,7 +88,7 @@ void CacheElement_free(CacheElement *ce) {
   free(ce->key);
   free(ce);
 
-  return 1;
+  return;
 }
 
 CacheElement *CacheElement_new(char *key, void *data, Cache_FreeFunc freeFunc) {

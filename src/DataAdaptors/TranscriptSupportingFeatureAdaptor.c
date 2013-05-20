@@ -1,12 +1,11 @@
 /*
 =head1 NAME
 
-Bio::EnsEMBL::DBSQL::SupportingFeatureAdaptor - Retrieves supporting
-features from the database.
+Bio::EnsEMBL::DBSQL::TranscriptSupportingFeatureAdaptor - Retrieves
+supporting features from the database.
 */
 
-
-#include "SupportingFeatureAdaptor.h"
+#include "TranscriptSupportingFeatureAdaptor.h"
 
 #include "DNAAlignFeatureAdaptor.h"
 #include "ProteinAlignFeatureAdaptor.h"
@@ -16,41 +15,35 @@ features from the database.
 
 #include <string.h>
 
+TranscriptSupportingFeatureAdaptor *TranscriptSupportingFeatureAdaptor_new(DBAdaptor *dba) {
+  TranscriptSupportingFeatureAdaptor *tsfa;
 
-SupportingFeatureAdaptor *SupportingFeatureAdaptor_new(DBAdaptor *dba) {
-  SupportingFeatureAdaptor *sfa;
-
-  if ((sfa = (SupportingFeatureAdaptor *)calloc(1,sizeof(SupportingFeatureAdaptor))) == NULL) {
-    fprintf(stderr, "ERROR: Failed allocating space for SupportingFeatureAdaptor\n");
+  if ((tsfa = (TranscriptSupportingFeatureAdaptor *)calloc(1,sizeof(TranscriptSupportingFeatureAdaptor))) == NULL) {
+    fprintf(stderr, "ERROR: Failed allocating space for TranscriptSupportingFeatureAdaptor\n");
     return NULL;
   }
-  BaseAdaptor_init((BaseAdaptor *)sfa, dba, SUPPORTINGFEATURE_ADAPTOR);
+  BaseAdaptor_init((BaseAdaptor *)tsfa, dba, SUPPORTINGFEATURE_ADAPTOR);
 
-  return sfa;
+  return tsfa;
 }
 
-
 /*
-=head2 fetch_all_by_Exon
+=head2 fetch_all_by_Transcript
 
-  Arg [1]    : Bio::EnsEMBL::Exon $exon 
-               The exon to fetch supporting features.
-  Example    : @sfs =
-                @{ $supporting_feat_adaptor->fetch_all_by_Exon($exon) };
-  Description: Retrieves supporting features (evidence) for a given
-               exon.
-  Returntype : List of Bio::EnsEMBL::BaseAlignFeatures in the same
-               coordinate system as the $exon argument
-  Exceptions : Warning if $exon is not in the database (i.e. dbID
-               not defined).
-               Throw if a retrieved supporting feature is of unknown
-               type.
-  Caller     : Bio::EnsEMBL::Exon
+  Arg [1]    : Bio::EnsEMBL::Transcript $transcript 
+               The transcript to fetch supporting features for
+  Example    : @sfs = @{$supporting_feat_adaptor->fetch_all_by_Transcript($transcript)};
+  Description: Retrieves supporting features (evidence) for a given transcript. 
+  Returntype : list of Bio::EnsEMBL::BaseAlignFeatures in the same coordinate
+               system as the $transcript argument
+  Exceptions : warning if $transcript is not in the database (i.e. dbID not defined)
+               throw if a retrieved supporting feature is of unknown type 
+  Caller     : Bio::EnsEMBL::Transcript
   Status     : Stable
 
 =cut
 */
-Vector *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, Exon *exon) {
+Vector *TranscriptSupportingFeatureAdaptor_fetchAllByTranscript(TranscriptSupportingFeatureAdaptor *tsfa, Transcript *transcript) {
   StatementHandle *sth;
   char qStr[512];
   ResultRow *row;
@@ -58,23 +51,23 @@ Vector *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, E
   ProteinAlignFeatureAdaptor *pafa;
 
 
-  if (!Exon_getDbID(exon)) {
-    fprintf(stderr,"WARNING: exon has no dbID can't fetch evidence from db "
+  if (!Transcript_getDbID(transcript)) {
+    fprintf(stderr,"WARNING: transcript has no dbID can't fetch evidence from db "
                    "no relationship exists\n");
     return Vector_new();
   }
 
   Vector *out = Vector_new();
-  sprintf(qStr,"SELECT sf.feature_type, sf.feature_id "
-               "FROM   supporting_feature sf "
-               "WHERE  exon_id = " IDFMTSTR, Exon_getDbID(exon));
+  sprintf(qStr,"SELECT tsf.feature_type, tsf.feature_id "
+               "FROM   transcript_supporting_feature tsf "
+               "WHERE  transcript_id = " IDFMTSTR, Transcript_getDbID(transcript));
 
-  sth = sfa->prepare((BaseAdaptor *)sfa, qStr, strlen(qStr));
+  sth = tsfa->prepare((BaseAdaptor *)tsfa, qStr, strlen(qStr));
 
   sth->execute(sth);
 
-  pafa = DBAdaptor_getProteinAlignFeatureAdaptor(sfa->dba);
-  dafa = DBAdaptor_getDNAAlignFeatureAdaptor(sfa->dba);
+  pafa = DBAdaptor_getProteinAlignFeatureAdaptor(tsfa->dba);
+  dafa = DBAdaptor_getDNAAlignFeatureAdaptor(tsfa->dba);
 
   while ((row = sth->fetchRow(sth))) {
     SeqFeature *sf = NULL;
@@ -92,11 +85,15 @@ Vector *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, E
     }
 
     if (sf == NULL) {
-      fprintf(stderr,"Warning: Supporting feature %s "IDFMTSTR" does not exist in DB\n", type, dbId);
+      fprintf(stderr,"Warning: Transcript supporting feature %s "IDFMTSTR" does not exist in DB\n", type, dbId);
     } else {
-      SeqFeature *newSf = SeqFeature_transfer(sf, (Slice *)Exon_getSlice(exon));
+      SeqFeature *newSf = SeqFeature_transfer(sf, (Slice *)Transcript_getSlice(transcript));
       // NIY: Free pretranferred one??
-      Vector_addElement(out, newSf);
+      if (newSf) {
+        Vector_addElement(out, newSf);
+      } else {
+        fprintf(stderr,"Warning: Failed to transfer transcript supporting feature %s "IDFMTSTR" onto transcript slice\n", type, dbId);
+      }
     }
   }
 
@@ -105,17 +102,15 @@ Vector *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, E
 }
 
 
-/* NIY
+/*
 =head2 store
-
-  Arg [1]    : Int $exonsID
-               The dbID of an EnsEMBL exon to associate with
-               supporting features.
-  Arg [2]    : Ref to array of Bio::EnsEMBL::BaseAlignFeature
-               (the support)
-  Example    : $sfa->store($exon_id, \@features);
-  Description: Stores a set of alignment features and associates an
-               EnsEMBL exon with them
+  Arg [2]    : Int $transID
+               The dbID of an EnsEMBL transcript to associate with supporting
+               features
+  Arg [1]    : Ref to array of Bio::EnsEMBL::BaseAlignFeature (the support)
+  Example    : $dbea->store($transcript_id, \@features);
+  Description: Stores a set of alignment features and associates an EnsEMBL transcript
+               with them
   Returntype : none
   Exceptions : thrown when invalid dbID is passed to this method
   Caller     : TranscriptAdaptor
@@ -124,7 +119,7 @@ Vector *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, E
 =cut
 
 sub store {
-  my ( $self, $exon_dbID, $aln_objs ) = @_;
+  my ( $self, $tran_dbID, $aln_objs ) = @_;
 
   my $pep_check_sql = 
       "SELECT protein_align_feature_id " . 
@@ -137,11 +132,12 @@ sub store {
       "AND   hit_start = ? " . 
       "AND   hit_end   = ? " . 
       "AND   analysis_id = ? " . 
-      "AND   cigar_line = ? ";
+      "AND   cigar_line = ? " .
+      "AND   hcoverage = ? ";
 
   my $dna_check_sql = 
       "SELECT dna_align_feature_id " . 
-      "FROM dna_align_feature " . 
+      "FROM  dna_align_feature " . 
       "WHERE seq_region_id = ? " . 
       "AND   seq_region_start = ? " . 
       "AND   seq_region_end   = ? " .
@@ -150,18 +146,19 @@ sub store {
       "AND   hit_start = ? " . 
       "AND   hit_end   = ? " . 
       "AND   analysis_id = ? " . 
-      "AND   cigar_line = ? " . 
+      "AND   cigar_line = ? " .
+      "AND   hcoverage = ? " . 
       "AND   hit_strand = ? ";
 
   my $assoc_check_sql = 
       "SELECT * " .  
-      "FROM  supporting_feature " . 
-      "WHERE exon_id = $exon_dbID " . 
+      "FROM  transcript_supporting_feature " . 
+      "WHERE transcript_id = $tran_dbID " . 
       "AND   feature_type = ? " . 
       "AND   feature_id   = ? ";
 
-  my $assoc_write_sql = "INSERT into supporting_feature " . 
-      "(exon_id, feature_id, feature_type) " . 
+  my $assoc_write_sql = "INSERT into transcript_supporting_feature " . 
+      "(transcript_id, feature_id, feature_type) " . 
       "values(?, ?, ?)";
 
   my $pep_check_sth = $self->prepare($pep_check_sql);
@@ -195,7 +192,7 @@ sub store {
       throw("$f must be an align feature otherwise" .
             "it can't be stored");
     }
-    
+       
     my ($sf_dbID, $type, $adap, $check_sth);
     
     my @check_args = ($self->db->get_SliceAdaptor->get_seq_region_id($f->slice),
@@ -206,8 +203,9 @@ sub store {
                       $f->hstart,
                       $f->hend,
                       $f->analysis->dbID,
-                      $f->cigar_string);
-
+                      $f->cigar_string,
+		      $f->hcoverage);
+    
     if($f->isa("Bio::EnsEMBL::DnaDnaAlignFeature")){
       $adap = $dna_adaptor;      
       $check_sth = $dna_check_sth;
@@ -224,7 +222,9 @@ sub store {
 
     $check_sth->execute(@check_args);
     $sf_dbID = $check_sth->fetchrow_array;
+    
     if (not $sf_dbID) {
+ 
       $adap->store($f);
       $sf_dbID = $f->dbID;
     }
@@ -233,7 +233,7 @@ sub store {
     $assoc_check_sth->execute($type,
                               $sf_dbID);
     if (not $assoc_check_sth->fetchrow_array) {    
-      $sf_sth->bind_param(1, $exon_dbID, SQL_INTEGER);
+      $sf_sth->bind_param(1, $tran_dbID, SQL_INTEGER);
       $sf_sth->bind_param(2, $sf_dbID, SQL_INTEGER);
       $sf_sth->bind_param(3, $type, SQL_VARCHAR);
       $sf_sth->execute();
@@ -246,6 +246,5 @@ sub store {
   $sf_sth->finish;
   
 }
-
 */
 

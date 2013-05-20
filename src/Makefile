@@ -112,6 +112,7 @@ libensc.a	: \
 	objectfiles/DataAdaptors/SliceAdaptor.o \
 	objectfiles/DataAdaptors/SupportingFeatureAdaptor.o \
 	objectfiles/DataAdaptors/TranscriptAdaptor.o \
+	objectfiles/DataAdaptors/TranscriptSupportingFeatureAdaptor.o \
 	objectfiles/DataAdaptors/TranslationAdaptor.o \
 	objectfiles/DataModel/Analysis.o \
 	objectfiles/DataModel/AnnotatedSeqFeature.o \

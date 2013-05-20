@@ -693,16 +693,14 @@ int BaseFeatureAdaptor_countBySliceConstraint(BaseFeatureAdaptor *bfa, Slice *sl
       char tmpStr[1024];
       //Do not cross the start boundary so our feature must be less than slice end on all counts
       if (limitStart) {
-        sprintf(tmpStr,"%s.seq_region_start <= %ld AND %s.seq_region_end <= %ld", 
-                       tableSynonym, Slice_getEnd(segSlice), tableSynonym, Slice_getEnd(segSlice));
+        sprintf(tmpStr,"%s.seq_region_start >= %ld", tableSynonym, Slice_getStart(segSlice));
         strcat(allConstraint, tmpStr);
       }
       //Do not cross the start boundary so our feature must be larger than slice start on all counts
       if (limitEnd) {
         if (limitStart) strcat(allConstraint, " AND ");
 
-        sprintf(tmpStr, "%s.seq_region_start >= %ld AND %s.seq_region_end >= %ld",
-                       tableSynonym, Slice_getStart(segSlice), tableSynonym, Slice_getStart(segSlice));
+        sprintf(tmpStr, "%s.seq_region_end <= %ld", tableSynonym, Slice_getEnd(segSlice));
         strcat(allConstraint, tmpStr);
       }
     }

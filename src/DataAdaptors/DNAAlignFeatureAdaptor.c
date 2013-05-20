@@ -3,6 +3,7 @@
 #include "RawContigAdaptor.h"
 #include "AnalysisAdaptor.h"
 #include "DNAAlignFeature.h"
+#include "SliceAdaptor.h"
 
 //NameTableType DNAAlignFeatureAdaptor_tableNames = {{"dna_align_feature","daf"},{"seq_region","sr"},{NULL, NULL}};
 NameTableType DNAAlignFeatureAdaptor_tableNames = {{"dna_align_feature","daf"},{NULL, NULL}};
@@ -198,7 +199,7 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
       IDType srId = row->getLongLongAt(row,1);
       Slice *slice;
       if (!IDHash_contains(sliceHash, srId)) {
-        slice = SliceAdaptor_fetchBySeqRegionId(sa, row->getLongLongAt(row,1), POS_UNDEF, POS_UNDEF, 1);
+        slice = SliceAdaptor_fetchBySeqRegionId(sa, srId, POS_UNDEF, POS_UNDEF, 1);
         IDHash_add(sliceHash, srId, slice);
       } else {
         slice = IDHash_getValue(sliceHash, srId);
@@ -239,7 +240,7 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
       IDType srId = row->getLongLongAt(row,1);
       Slice *slice;
       if (!IDHash_contains(sliceHash, srId)) {
-        slice = SliceAdaptor_fetchBySeqRegionId(sa, row->getLongLongAt(row,1), POS_UNDEF, POS_UNDEF, 1);
+        slice = SliceAdaptor_fetchBySeqRegionId(sa, srId, POS_UNDEF, POS_UNDEF, 1);
         IDHash_add(sliceHash, srId, slice);
       } else {
         slice = IDHash_getValue(sliceHash, srId);

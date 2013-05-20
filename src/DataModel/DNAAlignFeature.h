@@ -80,15 +80,18 @@ int DNAAlignFeature_getQueryUnit(void);
 #define DNAAlignFeature_transformToSlice(fp,slice) BaseAlignFeature_transformToSlice((fp),(slice))
 
 #define DNAAlignFeature_free(fp) BaseAlignFeature_free((fp))
+// Why go down the inheritance tree here??
+#define DNAAlignFeature_shallowCopy(fp) DNAAlignFeature_shallowCopyImpl((fp))
 
 void DNAAlignFeature_freeImpl(DNAAlignFeature *daf);
+DNAAlignFeature *DNAAlignFeature_shallowCopyImpl(DNAAlignFeature *daf);
 
 
 #ifdef __DNAALIGNFEATURE_MAIN__
   DNAAlignFeatureFuncs 
     dnaAlignFeatureFuncs = {
-                             DNAAlignFeature_freeImpl,
-                             NULL, // shallowCopy
+                             DNAAlignFeature_freeImpl, // free
+                             DNAAlignFeature_shallowCopyImpl, // shallowCopy
                              NULL, // deepCopy
                              NULL, // getStart
                              NULL, // setStart

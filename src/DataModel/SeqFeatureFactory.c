@@ -57,10 +57,10 @@ SeqFeature *SeqFeatureFactory_newFeatureFromFeature(SeqFeature *sf) {
       feature = BaseAlignFeature_new(); 
       break;
     case CLASS_DNADNAALIGNFEATURE:
-      feature = DNAAlignFeature_new(); 
+      feature = DNAAlignFeature_shallowCopy((DNAAlignFeature *)sf); 
       break;
     case CLASS_DNAPEPALIGNFEATURE:
-      feature = DNAPepAlignFeature_new(); 
+      feature = DNAPepAlignFeature_shallowCopy((DNAPepAlignFeature *)sf); 
       break;
     case CLASS_FEATUREPAIR:
       feature = FeaturePair_new(); 

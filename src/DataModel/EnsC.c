@@ -2,6 +2,7 @@
 #include "EnsC.h"
 #undef __ECOS_MAIN__
 #include "Stream.h"
+#include "StrUtil.h"
 
 void initEnsC(int argc, char **argv) {
   if (!EcoString_initTable(&ecoSTable)) {
@@ -9,7 +10,7 @@ void initEnsC(int argc, char **argv) {
     exit(1);
   }
 
-  StrUtil_copyString(&EnsC_progName, argv[0]);
+  StrUtil_copyString(&EnsC_progName, argv[0], 0);
 
   Stream_setDefaults(0);
 }

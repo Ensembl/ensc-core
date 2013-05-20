@@ -29,6 +29,7 @@ typedef struct SimpleFeatureAdaptorStruct SimpleFeatureAdaptor;
 typedef struct SupportingFeatureAdaptorStruct SupportingFeatureAdaptor;
 typedef struct SliceAdaptorStruct SliceAdaptor;
 typedef struct TranscriptAdaptorStruct TranscriptAdaptor;
+typedef struct TranscriptSupportingFeatureAdaptorStruct TranscriptSupportingFeatureAdaptor;
 typedef struct TranslationAdaptorStruct TranslationAdaptor;
 
 #endif
