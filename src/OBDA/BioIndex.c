@@ -256,7 +256,9 @@ int BioIndex_get_fasta_entry(BioIndex *bi, BioIndex_Location *loc) {
   }
   
   fseek(FpDat,loc->start,SEEK_SET);
-  fgets(line,1024,FpDat);
+  if (fgets(line,1024,FpDat) == NULL) {
+    Error_write(EFGETSNULL,"BioIndex_get_fasta_entry",ERR_SEVERE,"Failed reading first line of fasta entry %s from %s",loc->entry, faFile);
+  }
   
   if (line[0] != '>' || !strstr(line, loc->entry)) {
     Error_write(EOBDA,"BioIndex_get_fasta_entry",ERR_SEVERE,"ERROR: Seek didn't go to correct entry for %s\n",loc->entry);
@@ -264,7 +266,8 @@ int BioIndex_get_fasta_entry(BioIndex *bi, BioIndex_Location *loc) {
   
   do {
     printf("%s",line);
-    fgets(line,1024,FpDat);
+    // Keep compiler happy by getting return value even though not really needed because of feof check just after
+    char *ret = fgets(line,1024,FpDat);
   } while(!feof(FpDat) && line[0] != '>');
   
   fclose(FpDat);
@@ -441,7 +444,7 @@ Vector* BioIndex_get_by_secondary_key(BioIndex *bi, char *key,
 
 
 static BioIndex_FileID *BioIndex_FileID_create(char *id, char *name, 
-                                               long length) {
+                                               off_t length) {
   BioIndex_FileID *bfid = xcalloc(sizeof(BioIndex_FileID), 1);
   bfid->id = atoi(id);
   bfid->name = StrUtil_copyString(&bfid->name,name,0);
@@ -509,7 +512,9 @@ static void BioIndex_parse_config(BioIndex *bi, char *path) {
   printf("File = %s\n",config_fname);
   config_fp = fopen(config_fname, "r");
    
-  fgets(line,1024,config_fp);
+  if (fgets(line,1024,config_fp) == NULL) {
+    Error_write(EFGETSNULL,"BioIndex_parse_primary_namespace",ERR_SEVERE,"Failed reading first line from file %s",config_fname);
+  }
 
   bi->fileids = NULL;
   bi->num_secondary = 0;
@@ -641,7 +646,7 @@ static void BioIndex_write_fileids(BioIndex *bi, FILE *config_fp) {
 
   for (i=0; i<Vector_getNumElement(bi->fileids); i++) {
     BioIndex_FileID *fid = (BioIndex_FileID *)Vector_getElementAt(bi->fileids,i);
-    fprintf(config_fp,"fileid_%d\t%s\t" IDFMTSTR "\n",fid->id, fid->name, fid->length);
+    fprintf(config_fp,"fileid_%d\t%s\t" IDFMTSTR "\n",fid->id, fid->name, (long long)fid->length);
   }
 }
 
@@ -714,7 +719,9 @@ static void BioIndex_add_file(BioIndex *bi, char *fname,
   rewind(fpSeq);
 
   filePos = 0;
-  fgets(line,MAXSTRLEN,fpSeq);
+  if (fgets(line,MAXSTRLEN,fpSeq) == NULL) {
+    Error_write(EFGETSNULL,"BioIndex_add_file",ERR_SEVERE,"Failed reading first line from file %s",fname);
+  }
   first = 1;
   lastPos = 0;
    
@@ -767,7 +774,9 @@ static void BioIndex_add_file(BioIndex *bi, char *fname,
       }
     }
     filePos = newPos;
-    fgets(line,MAXSTRLEN,fpSeq);
+    // Don't really need to check for return value here as going to do an feof check at the top of the loop - 
+    // get the return value to satify the compiler
+    char *ret = fgets(line,MAXSTRLEN,fpSeq);
   }
 }         
 
@@ -855,7 +864,7 @@ BioIndex *BioIndex_generate_flat(char *path, char *seq_path,
     getFullFName(FullFName, seq_path, FileNames[i]->d_name);
     if (stat(FullFName,&stats) == 0) {
       sprintf(numString,"%d",i);
-      printf("Size of %s = " IDFMTSTR "\n",FullFName,stats.st_size);
+      printf("Size of %s = " IDFMTSTR "\n",FullFName,(long long)stats.st_size);
       fileid = BioIndex_FileID_create(numString,FullFName,
                                       stats.st_size);
       Vector_addElement(bi->fileids,fileid);
