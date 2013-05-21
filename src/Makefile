@@ -10,7 +10,7 @@ SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools_parallel
 #SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools-0.1.18
 ZLIBDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/include
 
-CFLAGS =  -Ofast -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
+CFLAGS =  -g -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS) -lunwind
 
 BINDIR=../bin
@@ -86,6 +86,7 @@ libensc.a	: \
 	objectfiles/Compara/DataModel/SyntenyRegion.o \
 	objectfiles/DataAdaptors/AnalysisAdaptor.o \
 	objectfiles/DataAdaptors/AssemblyMapperAdaptor.o \
+	objectfiles/DataAdaptors/AttributeAdaptor.o \
 	objectfiles/DataAdaptors/BaseAdaptor.o \
 	objectfiles/DataAdaptors/BaseFeatureAdaptor.o \
 	objectfiles/DataAdaptors/ChromosomeAdaptor.o \
@@ -117,6 +118,7 @@ libensc.a	: \
 	objectfiles/DataModel/Analysis.o \
 	objectfiles/DataModel/AnnotatedSeqFeature.o \
 	objectfiles/DataModel/AssemblyMapper.o \
+	objectfiles/DataModel/Attribute.o \
 	objectfiles/DataModel/BaseAlignFeature.o \
 	objectfiles/DataModel/BaseAssemblyMapper.o \
 	objectfiles/DataModel/BaseContig.o \
@@ -157,6 +159,7 @@ libensc.a	: \
 	objectfiles/DataModel/SeqFeatureFactory.o \
 	objectfiles/DataModel/SeqRegionRange.o \
 	objectfiles/DataModel/Sequence.o \
+	objectfiles/DataModel/SeqEdit.o \
 	objectfiles/DataModel/SimpleFeature.o \
 	objectfiles/DataModel/Slice.o \
 	objectfiles/DataModel/Species.o \
