@@ -22,6 +22,8 @@ typedef struct FeatureSetStruct FeatureSet;
 typedef struct GeneStruct Gene;
 typedef struct GenomicRangeStruct GenomicRange;
 typedef struct IdentityXrefStruct IdentityXref;
+typedef struct IntronStruct Intron;
+typedef struct IntronSupportingEvidenceStruct IntronSupportingEvidence;
 typedef struct MapperStruct Mapper;
 typedef struct PredictionTranscriptStruct PredictionTranscript;
 typedef struct ProjectionSegmentStruct ProjectionSegment;

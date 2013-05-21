@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 
 //  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","17",1000000,5000000,1,NULL,0);
 // Has a seleno
-//  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","1",26000000,27000000,1,NULL,0);
+  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","1",26000000,27000000,1,NULL,0);
 //  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","MT",1,17000,1,NULL,0);
   genes =  Slice_getAllGenes(slice, NULL, NULL, 1, NULL, NULL);
 
@@ -86,7 +86,13 @@ int dumpGenes(Vector *genes) {
       Transcript *t = Gene_getTranscriptAt(g,j);
      
       fprintf(fp," Trans %s coords: %ld %ld %d biotype: %s\n",Transcript_getStableId(t), Transcript_getStart(t),Transcript_getEnd(t),Transcript_getStrand(t),Transcript_getBiotype(t));
+      Vector *support = Transcript_getAllSupportingFeatures(t);
       int k;
+      for (k=0; k<Vector_getNumElement(support); k++) {
+        BaseAlignFeature *baf = Vector_getElementAt(support, k);
+        fprintf(fp,"   support %s coords: %ld %ld %d\n", BaseAlignFeature_getHitSeqName(baf), BaseAlignFeature_getStart(baf), BaseAlignFeature_getEnd(baf), BaseAlignFeature_getStrand(baf));
+      }
+
       for (k=0;k<Transcript_getExonCount(t);k++) {
         Exon *e = Transcript_getExonAt(t,k);
         fprintf(fp,"  exon %s coords: %ld %ld %d\n",Exon_getStableId(e), Exon_getStart(e),Exon_getEnd(e),Exon_getStrand(e));

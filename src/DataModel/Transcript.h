@@ -39,12 +39,16 @@ struct TranscriptStruct {
   int          cDNACodingStart;
   int          cDNACodingEnd;
   Mapper      *exonCoordMapper;
+  Vector      *iseVector;
+  Vector      *supportingEvidence;
 };
 #undef FUNCSTRUCTTYPE
 
 
 ECOSTRING Transcript_setBiotype(Transcript *transcript, char *biotype);
 #define Transcript_getBiotype(transcript)  (transcript)->biotype
+
+Vector *Transcript_getAllSupportingFeatures(Transcript *transcript);
 
 #define Transcript_setIsCurrent(trans,isC)  StableIdInfo_setIsCurrent(&((trans)->si),(isC))
 #define Transcript_getIsCurrent(trans)  StableIdInfo_getIsCurrent(&((trans)->si))

@@ -1136,9 +1136,11 @@ Vector *GeneAdaptor_fetchAllAltAlleles(GeneAdaptor *ga, Gene *gene) {
   }
   sth->finish(sth);
 
-  Vector *out = Vector_new();
+  Vector *out;
   if (Vector_getNumElement(altIds) > 0) {
     out = GeneAdaptor_fetchAllByDbIDList(ga, altIds, NULL);
+  } else {
+    out = Vector_new();
   }
 
   Vector_setFreeFunc(altIds, free);

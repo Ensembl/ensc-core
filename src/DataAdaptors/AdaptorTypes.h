@@ -18,6 +18,7 @@ typedef struct DBEntryAdaptorStruct DBEntryAdaptor;
 typedef struct DNAAlignFeatureAdaptorStruct DNAAlignFeatureAdaptor;
 typedef struct ExonAdaptorStruct ExonAdaptor;
 typedef struct GeneAdaptorStruct GeneAdaptor;
+typedef struct IntronSupportingEvidenceAdaptorStruct IntronSupportingEvidenceAdaptor;
 typedef struct MetaContainerStruct MetaContainer;
 typedef struct MetaCoordContainerStruct MetaCoordContainer;
 typedef struct PredictionTranscriptAdaptorStruct PredictionTranscriptAdaptor;

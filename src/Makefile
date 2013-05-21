@@ -98,6 +98,7 @@ libensc.a	: \
 	objectfiles/DataAdaptors/DNAAlignFeatureAdaptor.o \
 	objectfiles/DataAdaptors/ExonAdaptor.o \
 	objectfiles/DataAdaptors/GeneAdaptor.o \
+	objectfiles/DataAdaptors/IntronSupportingEvidenceAdaptor.o \
 	objectfiles/DataAdaptors/MetaContainer.o \
 	objectfiles/DataAdaptors/MetaCoordContainer.o \
 	objectfiles/DataAdaptors/MysqlResultRow.o \
@@ -139,6 +140,8 @@ libensc.a	: \
 	objectfiles/DataModel/Gene.o \
 	objectfiles/DataModel/GenomicRange.o \
 	objectfiles/DataModel/IdentityXref.o \
+	objectfiles/DataModel/Intron.o \
+	objectfiles/DataModel/IntronSupportingEvidence.o \
 	objectfiles/DataModel/Mapper.o \
 	objectfiles/DataModel/Mapper/CoordPair.o \
 	objectfiles/DataModel/Mapper/IndelCoordinate.o \

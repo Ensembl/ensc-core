@@ -5,6 +5,8 @@
 #include "DBAdaptor.h"
 #include "TranscriptAdaptor.h"
 #include "TranslationAdaptor.h"
+#include "IntronSupportingEvidenceAdaptor.h"
+#include "TranscriptSupportingFeatureAdaptor.h"
 #include "DBEntryAdaptor.h"
 #include "StrUtil.h"
 #include "SeqUtil.h"
@@ -293,6 +295,57 @@ Transcript *Transcript_transform(Transcript *trans, IDHash *exonTransforms) {
 
   return trans;
 }
+
+/*
+=head2 get_all_supporting_features
+
+  Example    : my @evidence = @{ $transcript->get_all_supporting_features };
+  Description: Retreives any supporting features added manually by
+               calls to add_supporting_features.
+  Returntype : Listref of Bio::EnsEMBL::FeaturePair objects
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+*/
+Vector *Transcript_getAllSupportingFeatures(Transcript *transcript) {
+
+  if( transcript->supportingEvidence == NULL && Transcript_getAdaptor(transcript) != NULL) {
+    TranscriptAdaptor *adaptor = (TranscriptAdaptor *)Transcript_getAdaptor(transcript);
+    TranscriptSupportingFeatureAdaptor *tsfa = DBAdaptor_getTranscriptSupportingFeatureAdaptor(adaptor->dba);
+ 
+    transcript->supportingEvidence = TranscriptSupportingFeatureAdaptor_fetchAllByTranscript(tsfa, transcript);
+  }
+  //return $self->{_supporting_evidence} || [];
+  return transcript->supportingEvidence;
+}
+
+
+
+/*
+=head2 get_all_IntronSupportingEvidence
+
+  Example     : $ise->get_all_IntronSupportingEvidence();
+  Description : Fetches all ISE instances linked to this Transript
+  Returntype  : ArrayRef[Bio::EnsEMBL::IntronSupportEvidence] retrieved from
+                the DB or from those added via C<add_IntronSupportingEvidence>
+  Exceptions  : None
+
+=cut
+*/
+// New
+Vector *Transcript_getAllIntronSupportingEvidence(Transcript *transcript) {
+
+  if( transcript->iseVector == NULL && Transcript_getAdaptor(transcript) != NULL) {
+    TranscriptAdaptor *adaptor = (TranscriptAdaptor *)Transcript_getAdaptor(transcript);
+    IntronSupportingEvidenceAdaptor *isea = DBAdaptor_getIntronSupportingEvidenceAdaptor(adaptor->dba);
+ 
+    transcript->iseVector = IntronSupportingEvidenceAdaptor_fetchAllByTranscript(isea, transcript);
+  }
+  return transcript->iseVector;
+}
+
 
 void Transcript_flushExons(Transcript *trans) {
   Transcript_removeAllExons(trans);

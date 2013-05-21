@@ -33,6 +33,7 @@ DBEntryAdaptor              *DBAdaptor_getDBEntryAdaptor(DBAdaptor *dba);
 DNAAlignFeatureAdaptor      *DBAdaptor_getDNAAlignFeatureAdaptor(DBAdaptor *dba);
 ExonAdaptor                 *DBAdaptor_getExonAdaptor(DBAdaptor *dba);
 GeneAdaptor                 *DBAdaptor_getGeneAdaptor(DBAdaptor *dba);
+IntronSupportingEvidenceAdaptor *DBAdaptor_getIntronSupportingEvidenceAdaptor(DBAdaptor *dba);
 MetaContainer               *DBAdaptor_getMetaContainer(DBAdaptor *dba);
 MetaCoordContainer          *DBAdaptor_getMetaCoordContainer(DBAdaptor *dba);
 PredictionTranscriptAdaptor *DBAdaptor_getPredictionTranscriptAdaptor(DBAdaptor *dba);

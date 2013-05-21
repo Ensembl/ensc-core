@@ -185,7 +185,7 @@ void translate(char *in, char **out, int *l, int codonTableId) {
   char *r1 = out[1];
   char *r2 = out[2];
 
-  if (!initTable != codonTableId) {
+  if (initTable != codonTableId) {
  // Hack for now
     switch (codonTableId) {
       case 1:

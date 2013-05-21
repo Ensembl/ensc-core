@@ -22,7 +22,7 @@ TranscriptSupportingFeatureAdaptor *TranscriptSupportingFeatureAdaptor_new(DBAda
     fprintf(stderr, "ERROR: Failed allocating space for TranscriptSupportingFeatureAdaptor\n");
     return NULL;
   }
-  BaseAdaptor_init((BaseAdaptor *)tsfa, dba, SUPPORTINGFEATURE_ADAPTOR);
+  BaseAdaptor_init((BaseAdaptor *)tsfa, dba, TRANSCRIPTSUPPORTINGFEATURE_ADAPTOR);
 
   return tsfa;
 }
@@ -98,6 +98,7 @@ Vector *TranscriptSupportingFeatureAdaptor_fetchAllByTranscript(TranscriptSuppor
   }
 
   sth->finish(sth);
+  fprintf(stderr,"Here with %d supporting features for transcript\n", Vector_getNumElement(out));
   return out;
 }
 

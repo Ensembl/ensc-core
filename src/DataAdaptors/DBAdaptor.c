@@ -151,6 +151,14 @@ SupportingFeatureAdaptor *DBAdaptor_getSupportingFeatureAdaptor(DBAdaptor *dba) 
   return (SupportingFeatureAdaptor *)DBConnection_getAdaptor(dba->dbc,SUPPORTINGFEATURE_ADAPTOR);
 }
 
+IntronSupportingEvidenceAdaptor *DBAdaptor_getIntronSupportingEvidenceAdaptor(DBAdaptor *dba) {
+  if (!DBConnection_getAdaptor(dba->dbc,INTRONSUPPORTINGEVIDENCE_ADAPTOR)) {
+    DBConnection_addAdaptor(dba->dbc,
+                            (BaseAdaptor *)IntronSupportingEvidenceAdaptor_new(dba));
+  }
+  return (IntronSupportingEvidenceAdaptor *)DBConnection_getAdaptor(dba->dbc,INTRONSUPPORTINGEVIDENCE_ADAPTOR);
+}
+
 TranscriptSupportingFeatureAdaptor *DBAdaptor_getTranscriptSupportingFeatureAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,TRANSCRIPTSUPPORTINGFEATURE_ADAPTOR)) {
     DBConnection_addAdaptor(dba->dbc,
