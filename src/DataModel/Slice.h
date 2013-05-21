@@ -93,6 +93,7 @@ ECOSTRING Slice_setSeqRegionName(Slice *sl,char *seqRegionName);
 ECOSTRING Slice_getName(Slice *sl);
 Vector *Slice_constrainToRegion(Slice *slice);
 Slice *Slice_expand(Slice *slice, long fivePrimeShift, long threePrimeShift, int forceExpand, long *fpRef, long *tpRef);
+Vector *Slice_getAllAttributes(Slice *slice, char *attribCode);
 Vector *Slice_getAllPredictionTranscripts(Slice *slice, char *logicName, int loadExons, char *dbType);
 Vector *Slice_getAllDNAAlignFeatures(Slice *slice, char *logicName, double *score, char *dbType, double *hCoverage);
 Vector *Slice_getAllProteinAlignFeatures(Slice *slice, char *logicName, double *score, char *dbType, double *hCoverage);

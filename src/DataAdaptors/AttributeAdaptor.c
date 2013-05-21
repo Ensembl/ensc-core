@@ -460,10 +460,10 @@ Vector *AttributeAdaptor_objectsFromStatementHandle(AttributeAdaptor *ata, State
     char *value = row->getStringAt(row, 3);
 
     Attribute *attr = Attribute_new();
-    Attribute_setCode(code);
-    Attribute_setName(name);
-    Attribute_setDescription(desc);
-    Attribute_setValue(value);
+    Attribute_setCode(attr, code);
+    Attribute_setName(attr, name);
+    Attribute_setDescription(attr, desc);
+    Attribute_setValue(attr, value);
     
     Vector_addElement(results, attr);
   }

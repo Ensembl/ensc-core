@@ -4,6 +4,7 @@
 #include "DataModelTypes.h"
 #include "Exon.h"
 #include "IDHash.h"
+#include "Vector.h"
 
 OBJECTFUNC_TYPES(Translation)
 
@@ -20,6 +21,7 @@ struct TranslationStruct {
   Exon *endExon;
   Storable st; 
   StableIdInfo si;
+  Vector *attributes;
 };
 #undef FUNCSTRUCTTYPE
 
@@ -56,6 +58,11 @@ int Translation_getVersion(Translation *translation);
 Translation *Translation_new(void);
 
 void Translation_transform(Translation *translation, IDHash *exonTransforms);
+char *Translation_modifyTranslation(Translation *translation, char *seq);
+
+Vector *Translation_getAllSeqEdits(Translation *translation);
+Vector *Translation_getAllAttributes(Translation *translation, char *attribCode);
+
 
 void Translation_free(Translation *translation);
 

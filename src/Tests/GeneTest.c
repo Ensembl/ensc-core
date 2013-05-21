@@ -4,6 +4,7 @@
 #include "DBAdaptor.h"
 #include "EnsC.h"
 #include "Gene.h"
+#include "Attribute.h"
 #include "BaseAlignFeature.h"
 
 #include "BaseRODBTest.h"
@@ -36,7 +37,10 @@ int main(int argc, char *argv[]) {
 
   ok(2, ga!=NULL);
 
-  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","17",1000000,5000000,1,NULL,0);
+//  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","17",1000000,5000000,1,NULL,0);
+// Has a seleno
+//  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","1",26000000,27000000,1,NULL,0);
+//  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","MT",1,17000,1,NULL,0);
   genes =  Slice_getAllGenes(slice, NULL, NULL, 1, NULL, NULL);
 
   fprintf(stdout, "Have %d genes\n", Vector_getNumElement(genes));
@@ -46,7 +50,7 @@ int main(int argc, char *argv[]) {
   failed = dumpGenes(genes);
   ok(5, !failed);
 
-/*
+  exit(1);
   Vector *toplevelSlices = SliceAdaptor_fetchAll(sa, "toplevel", NULL, 0);
 
   for (i=0;i<Vector_getNumElement(toplevelSlices) && !failed;i++) {
@@ -55,7 +59,6 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Got %d genes on %s\n", Vector_getNumElement(genes), Slice_getName(tlSlice));
     failed = dumpGenes(genes);
   }
-*/
 
 
   tc_malloc_stats();
@@ -87,12 +90,14 @@ int dumpGenes(Vector *genes) {
       for (k=0;k<Transcript_getExonCount(t);k++) {
         Exon *e = Transcript_getExonAt(t,k);
         fprintf(fp,"  exon %s coords: %ld %ld %d\n",Exon_getStableId(e), Exon_getStart(e),Exon_getEnd(e),Exon_getStrand(e));
+/*
         Vector *support = Exon_getAllSupportingFeatures(e);
         int m;
         for (m=0; m<Vector_getNumElement(support); m++) {
           BaseAlignFeature *baf = Vector_getElementAt(support, m);
           fprintf(fp,"   support %s coords: %ld %ld %d\n", BaseAlignFeature_getHitSeqName(baf), BaseAlignFeature_getStart(baf), BaseAlignFeature_getEnd(baf), BaseAlignFeature_getStrand(baf));
         }
+*/
        
       }
       Translation *tln = Transcript_getTranslation(t);
@@ -104,6 +109,19 @@ int dumpGenes(Vector *genes) {
         char *tSeq = Transcript_translate(t);
         fprintf(fp," translation: %s\n",tSeq);
         free(tSeq);
+        Vector *tlnAttribs = Translation_getAllAttributes(tln, NULL);
+        if (Vector_getNumElement(tlnAttribs)) {
+          fprintf(fp, " translation attributes:\n");
+          int n;
+          for (n=0; n<Vector_getNumElement(tlnAttribs); n++) {
+            Attribute *attrib = Vector_getElementAt(tlnAttribs, n);
+            fprintf(fp, "  code %s name %s desc %s value %s\n", 
+                    Attribute_getCode(attrib), 
+                    Attribute_getName(attrib),
+                    Attribute_getDescription(attrib),
+                    Attribute_getValue(attrib));
+          }
+        }
       }
     }
   }

@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
     frm[i]=malloc(200);
   }
 
-  translate("ATGATGATGATG",frm,lengths);
+  translate("ATGATGATGATG",frm,lengths,1);
   for (i=0;i<6;i++) {
     printf("frm %d = %s\n", i+1, frm[i]);
   }

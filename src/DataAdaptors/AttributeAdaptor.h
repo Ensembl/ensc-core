@@ -4,6 +4,7 @@
 #include "BaseAdaptor.h"
 #include "AdaptorTypes.h"
 #include "DataModelTypes.h"
+#include "Attribute.h"
 
 struct AttributeAdaptorStruct {
   BASEADAPTOR_DATA

@@ -30,16 +30,25 @@
 /* The following matrix encodes the Universal genetic code.  During
    execution any matrix supplied via the -m option will overwrite it */
 
-txmatrix matrix = {
+txmatrix matrix;
+
+txmatrix standard_matrix = {
   { "KNKN", "TTTT", "RSRS", "IIMI" },
   { "QHQH", "PPPP", "RRRR", "LLLL" },
   { "EDED", "AAAA", "GGGG", "VVVV" },
   { "*Y*Y", "SSSS", "*CWC", "LFLF" }
 };
 
+txmatrix ct2id_matrix = {
+  { "KNKN", "TTTT", "*S*S", "MIMI" },
+  { "QHQH", "PPPP", "RRRR", "LLLL" },
+  { "EDED", "AAAA", "GGGG", "VVVV" },
+  { "*Y*Y", "SSSS", "WCWC", "LFLF" }
+};
+
 txmatrix revmatrix;
 
-static int initDone = 0;
+static int initTable = 0;
 
 /* make_revmatrix() creates the reverse complemented matrix by
    swapping bits 4 and 5 with bits 0 and 1, inverting the bits, and
@@ -169,16 +178,30 @@ void initbasebits(void)
 
    Thanks to Peter Benie for help optimising the code */
 
-void translate(char *in, char **out, int *l) {
+void translate(char *in, char **out, int *l, int codonTableId) {
   int n, rem, index;
   char *p, *end, *r3, *r4, *r5;
   char *r0 = out[0];
   char *r1 = out[1];
   char *r2 = out[2];
 
-  if (!initDone) {
+  if (!initTable != codonTableId) {
+ // Hack for now
+    switch (codonTableId) {
+      case 1:
+        memcpy(matrix, standard_matrix, sizeof(txmatrix));
+        break;
+      case 2:
+        memcpy(matrix, ct2id_matrix, sizeof(txmatrix));
+        break;
+      default:
+        fprintf(stderr,"Error: Currently unsupported codon table id (%d)\n", codonTableId);
+        exit(1);
+    }
+
     initbasebits();
     make_revmatrix();
+    initTable = codonTableId;
   }
 
   n = strlen(in);

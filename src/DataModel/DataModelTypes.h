@@ -30,6 +30,7 @@ typedef struct RepeatConsensusStruct RepeatConsensus;
 typedef struct RepeatFeatureStruct RepeatFeature;
 typedef struct SeqFeatureStruct SeqFeature;
 typedef struct SequenceStruct Sequence;
+typedef struct SeqEditStruct SeqEdit;
 typedef struct SeqRegionRangeStruct SeqRegionRange;
 typedef struct SimpleFeatureStruct SimpleFeature;
 typedef struct SliceStruct Slice;

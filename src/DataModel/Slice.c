@@ -13,12 +13,16 @@
 #include "AssemblyMapperAdaptor.h"
 #include "ExonAdaptor.h"
 #include "TranscriptAdaptor.h"
+#include "AttributeAdaptor.h"
+#include "Attribute.h"
 
 #include "Gene.h"
 
 #include "Vector.h"
 #include "StrUtil.h"
 #include "ProjectionSegment.h"
+
+#include <strings.h>
 /*
 =head1 DESCRIPTION
 
@@ -1227,46 +1231,33 @@ IDType Slice_getSeqRegionId(Slice *slice) {
 
 =cut
 */
-
-/* NIY: Need to implement AttributeAdaptor before enabling this
 Vector *Slice_getAllAttributes(Slice *slice, char *attribCode) {
-  SliceAdaptor *sa = Slice_getAdaptor(slice);
+  SliceAdaptor *sa = (SliceAdaptor *)Slice_getAdaptor(slice);
   if (sa == NULL) {
     fprintf(stderr,"Warning: Cannot get attributes without an adaptor.\n");
     return Vector_new();
   }
 
-
   AttributeAdaptor *aa = DBAdaptor_getAttributeAdaptor(sa->dba);
 
-  AttributeAdaptor
-  Vector *results = AttributeAdaptor_fetchAllBySlice( slice );
-
+// ??? Why don't pass in code
+  Vector *results = AttributeAdaptor_fetchAllBySlice(aa, slice, attribCode);
   
+/*
   if (attribCode!=NULL) {
-    char *ucAttribCode;
-    StrUtil_copyString(&ucAttribCode, attribCode, 0);
-    StrUtil_strupr(ucAttribCode);
-
     int i;
     for  (i=0;i<Vector_getNumElement(results);i++) {
       Attribute *attrib = Vector_getElementAt(results, i);
-      char *ucCode;
-      StrUtil_copyString(&ucCode, Attribute_getCode(attrib), 0);
-      StrUtil_strupr(ucCode);
-      
-      if (strcmp(ucCode, ucAttribCode)) {
+      if (strcasecmp(Attribute_getCode(attrib), attribCode)) {
         Vector_removeElementAt(results, i);
         i--;
       }
-      free(ucCode);
     }
-    free(ucAttribCode);
   }
+*/
 
   return results;
 }
-*/
 
 
 /*

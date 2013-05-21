@@ -3,6 +3,7 @@
 #undef __ATTRIBUTE_MAIN__
 #include "StrUtil.h"
 #include <string.h>
+#include "EcoString.h"
 
 Attribute *Attribute_new() {
   Attribute *attribute;
@@ -13,6 +14,8 @@ Attribute *Attribute_new() {
   }
 
   attribute->funcs = &attributeFuncs;
+
+  attribute->objectType = CLASS_ATTRIBUTE;
 
   return attribute;
 }
@@ -57,5 +60,11 @@ ECOSTRING Attribute_setDescription(Attribute *attrib, char *description) {
 }
 
 void Attribute_free(Attribute *attribute) {
-  fprintf(stderr,"Warning: Attribute_free NIY\n");
+  EcoString_freeStr(ecoSTable, attribute->name);
+  EcoString_freeStr(ecoSTable, attribute->description);
+  EcoString_freeStr(ecoSTable, attribute->code);
+
+  free(attribute->value);
+
+  free(attribute);
 }

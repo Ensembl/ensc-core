@@ -2,6 +2,7 @@
 #include "Vector.h"
 #undef __VECTOR_MAIN__
 #include "EnsC.h"
+#include "ProcUtil.h"
 
 #include <string.h>
 
@@ -144,6 +145,7 @@ void Vector_sort(Vector *v, SortCompFunc sortFunc) {
 void *Vector_addElement(Vector *v, void *elem) {
   if (elem == NULL) {
     fprintf(stderr, "WARNING: Element null in Vector_addElement call\n");
+    ProcUtil_showBacktrace(EnsC_progName);
   }
 
   if (!v->nElement) v->elements = NULL;

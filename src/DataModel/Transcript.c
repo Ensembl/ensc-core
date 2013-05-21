@@ -10,6 +10,8 @@
 #include "SeqUtil.h"
 #include "translate.h"
 
+#include "Attribute.h"
+
 #include <stdlib.h>
 
 Transcript *Transcript_new() {
@@ -638,6 +640,29 @@ char *Transcript_translate(Transcript *trans) {
 
   mRNA = Transcript_getTranslateableSeq(trans);
 
+  long codonTableId = 1; // Default to 'standard' table
+
+  Slice *slice = Transcript_getSlice(trans);
+  if (slice) {
+    Vector *ctAttribs = Slice_getAllAttributes(slice, "codon_table");
+    // NIY free properly - Slice attributes current are NOT cached in Slice
+    if (Vector_getNumElement(ctAttribs) > 1) {
+      fprintf(stderr,"Invalid number of codon_table attributes for slice %s\n", Slice_getName(slice));
+      exit(1);
+    }
+    if (Vector_getNumElement(ctAttribs) == 1) {
+      Attribute *attrib = Vector_getElementAt(ctAttribs, 0);
+      if (!StrUtil_isLongInteger(&codonTableId, Attribute_getValue(attrib))) {
+        fprintf(stderr,"Invalid codon_table attribute format for slice %s attribute value %s\n", Slice_getName(slice),Attribute_getValue(attrib));
+        exit(1);
+      }
+
+      Vector_setFreeFunc(ctAttribs, Attribute_free);
+    }
+    Vector_free(ctAttribs);
+  }
+  
+    
   lenmRNA = strlen(mRNA);
 
   if (lenmRNA%3 == 0 && lenmRNA) {
@@ -659,7 +684,7 @@ char *Transcript_translate(Transcript *trans) {
   }
 
   //fprintf(stderr, "translateable seq = %s\n",mRNA);
-  translate(mRNA, frm, lengths);
+  translate(mRNA, frm, lengths, codonTableId);
 
   free(mRNA);
 
@@ -668,7 +693,7 @@ char *Transcript_translate(Transcript *trans) {
     free(frm[i]);
   }
 
-  return frm[0];
+  return Translation_modifyTranslation(Transcript_getTranslation(trans), frm[0]);
 }
 
 
