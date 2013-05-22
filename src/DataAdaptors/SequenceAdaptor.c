@@ -66,6 +66,7 @@ SequenceAdaptor *SequenceAdaptor_new(DBAdaptor *dba) {
   }
   BaseAdaptor_init((BaseAdaptor *)sa, dba, SEQUENCE_ADAPTOR);
 
+  sa->prepare = SequenceAdaptor_prepare;
 
   // use an LRU cache to limit the size
   sa->seqCache = LRUCache_new(SEQ_CACHE_MAX);
@@ -109,6 +110,13 @@ SequenceAdaptor *SequenceAdaptor_new(DBAdaptor *dba) {
   }
   
   return sa;
+}
+
+
+
+StatementHandle *SequenceAdaptor_prepare(BaseAdaptor *ba, char *qStr, size_t len) {
+  //printf("Query = %s len = %d\n",qStr,len);
+  return DBAdaptor_prepare(ba->dba->dnadb,qStr,len);
 }
 
 

@@ -54,10 +54,15 @@ NameTableType *IntronSupportingEvidenceAdaptor_getTables() {
 }
 
 char *IntronSupportingEvidence_cols[] = { 
-                                         "ise.intron_supporting_evidence_id ",
-                                         "ise.analysis_id ",
-                                         "ise.seq_region_id ise.seq_region_start ise.seq_region_end ise.seq_region_strand",
-                                         "ise.hit_name ise.score ise.score_type",
+                                         "ise.intron_supporting_evidence_id",
+                                         "ise.analysis_id",
+                                         "ise.seq_region_id",
+                                         "ise.seq_region_start",
+                                         "ise.seq_region_end",
+                                         "ise.seq_region_strand",
+                                         "ise.hit_name",
+                                         "ise.score",
+                                         "ise.score_type",
                                          "ise.is_splice_canonical",
                                          NULL };
 

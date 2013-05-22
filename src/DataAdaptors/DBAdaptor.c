@@ -3,6 +3,7 @@
 
 #include "AnalysisAdaptor.h"
 #include "AssemblyMapperAdaptor.h"
+#include "AttributeAdaptor.h"
 #include "ChromosomeAdaptor.h"
 #include "CoordSystemAdaptor.h"
 #include "CloneAdaptor.h"
@@ -10,6 +11,7 @@
 #include "DNAAlignFeatureAdaptor.h"
 #include "ExonAdaptor.h"
 #include "GeneAdaptor.h"
+#include "IntronSupportingEvidenceAdaptor.h"
 #include "PredictionTranscriptAdaptor.h"
 #include "ProteinAlignFeatureAdaptor.h"
 #include "RawContigAdaptor.h"
@@ -66,20 +68,12 @@ void DBAdaptor_addToSrCaches(DBAdaptor *dba, IDType regionId, char *regionName, 
 
   sprintf(key,"%s:"IDFMTSTR, regionName, csId);
 
-  //if (StringHash_contains(dba->srNameCache, key)) {
-    //fprintf(stderr,"Hmm - seq region already in name cache - odd\n");
-  //} else {
-    StringHash_add(dba->srNameCache, key, cacheData);
-  //}
-
-  //if (IDHash_contains(dba->srIdCache, regionId)) {
-    //fprintf(stderr,"Hmm - seq region already in id cache - odd\n");
-  //} else {
-    IDHash_add(dba->srIdCache, regionId, cacheData);
-  //}
+  StringHash_add(dba->srNameCache, key, cacheData);
+  IDHash_add(dba->srIdCache, regionId, cacheData);
 
   return;
 }
+
 char *DBAdaptor_setAssemblyType(DBAdaptor *dba, char *type) {
   StrUtil_copyString(&(dba->assemblyType),type,0);
 

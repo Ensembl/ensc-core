@@ -19,6 +19,8 @@ struct SliceAdaptorStruct {
 
 SliceAdaptor *SliceAdaptor_new(DBAdaptor *dba);
 
+StatementHandle *SliceAdaptor_prepare(BaseAdaptor *ba, char *qStr, size_t len);
+
 Slice *SliceAdaptor_fetchByLocation(SliceAdaptor *sa, char *location, char *coordSystemName, char *coordSystemVersion, int noWarnings, int noFuzz);
 void SliceAdaptor_parseLocationToValues(SliceAdaptor *sa, char *location, int noWarnings, int noErrors,
                                         char **retSeqRegionName, long *retStart, long *retEnd, int *retStrand );

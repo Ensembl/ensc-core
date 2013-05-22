@@ -19,6 +19,8 @@ struct SequenceAdaptorStruct {
 };
 
 SequenceAdaptor *SequenceAdaptor_new(DBAdaptor *dba);
+StatementHandle *SequenceAdaptor_prepare(BaseAdaptor *ba, char *qStr, size_t len);
+
 char *SequenceAdaptor_fetchByRawContigStartEndStrand(SequenceAdaptor *sa,
                                                      //RawContig *rc,
                                                      IDType rcId, 

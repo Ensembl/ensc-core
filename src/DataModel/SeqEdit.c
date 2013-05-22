@@ -405,30 +405,30 @@ char *SeqEdit_applyEdit(SeqEdit *seqEd, char *seq) {
   long len = SeqEdit_getEnd(seqEd) - SeqEdit_getStart(seqEd) + 1;
   long lenDiff = SeqEdit_getLengthDiff(seqEd);
 
-  char *newSeq;
-
-  if ((newSeq = calloc(strlen(seq) + lenDiff + 1, sizeof(char))) == NULL) {
-    fprintf(stderr,"Failed allocating new seq string in SeqEdit_applyEdit\n");
-    exit(1);
+  if (lenDiff) {
+    char *newSeq;
+  
+    if ((newSeq = calloc(strlen(seq) + lenDiff + 1, sizeof(char))) == NULL) {
+      fprintf(stderr,"Failed allocating new seq string in SeqEdit_applyEdit\n");
+      exit(1);
+    }
+  
+  // Think its always the same
+  //    1) First part of seq (upto getStart -1)
+  //    2) Next the replacement string
+  //    3) Next the rest of seq starting from the end position of the edit
+    strncat(newSeq, seq, SeqEdit_getStart(seqEd)-1);
+    strcat(newSeq, SeqEdit_getAltSeq(seqEd));
+    strcat(newSeq, &seq[SeqEdit_getEnd(seqEd)]);
+  
+    free(seq);
+    seq = newSeq;
+  } else { // Replacement is same length as region replaced - no need to make a copy
+    fprintf(stderr,"DOING NON REPLACE CHANGE\n");
+    memcpy(&seq[SeqEdit_getStart(seqEd)-1], SeqEdit_getAltSeq(seqEd), len);
   }
-
-//  if (len == 0) { // Insert
-// Think its always the same
-//    1) First part of seq (upto getStart -1)
-//    2) Next the replacement string
-//    3) Next the rest of seq starting from the end position of the edit
-  strncat(newSeq, seq, SeqEdit_getStart(seqEd)-1);
-  strcat(newSeq, SeqEdit_getAltSeq(seqEd));
-  strcat(newSeq, &seq[SeqEdit_getEnd(seqEd)]);
-//  } else {
-//  }
   
-  
- // substr($$seqref, $self->{'start'} - 1, $len) = $self->{'alt_seq'};
-   
-  free(seq);
-
-  return newSeq;
+  return seq;
 }
 
 int SeqEdit_reverseStartCompFunc(const void *one, const void *two) {

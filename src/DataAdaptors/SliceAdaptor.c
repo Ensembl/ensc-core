@@ -72,6 +72,8 @@ SliceAdaptor *SliceAdaptor_new(DBAdaptor *dba) {
   }
   BaseAdaptor_init((BaseAdaptor *)sa, dba, SLICE_ADAPTOR);
 
+  sa->prepare = SliceAdaptor_prepare;
+
   // use a shared cache (for this database) that contains info about
   // seq regions
   sa->srNameCache = DBAdaptor_getSeqRegionNameCache(sa->dba);
@@ -2502,12 +2504,10 @@ sub store_assembly{
 =cut
 */
 
-/* NIY: dnadb prepare - not thought about how to do this yet
-sub prepare {
-  my ( $self, $sql ) = @_;
-  return $self->db()->dnadb()->dbc->prepare($sql);
+StatementHandle *SliceAdaptor_prepare(BaseAdaptor *ba, char *qStr, size_t len) {
+  printf("Query = %s len = %ld\n",qStr,len);
+  return DBAdaptor_prepare(ba->dba->dnadb,qStr,len);
 }
-*/
 
 
 void SliceAdaptor_buildExceptionCache(SliceAdaptor *sa) {

@@ -623,7 +623,7 @@ Vector *BaseAdaptor_uncachedFetchAllByDbIDList(BaseAdaptor *ba, Vector *idList, 
   
     // Special case for one remaining Id
     if (i == nUniqueId-1) {
-      sprintf(constraint, " = "IDFMTSTR, uniqueIds[i]);
+      sprintf(constraint, "%s = "IDFMTSTR, constraint, uniqueIds[i]);
     } else {
       char tmpStr[1024];
       strcat(constraint, " IN (");

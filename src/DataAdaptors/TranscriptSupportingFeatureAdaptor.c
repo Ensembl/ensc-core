@@ -98,7 +98,6 @@ Vector *TranscriptSupportingFeatureAdaptor_fetchAllByTranscript(TranscriptSuppor
   }
 
   sth->finish(sth);
-  fprintf(stderr,"Here with %d supporting features for transcript\n", Vector_getNumElement(out));
   return out;
 }
 

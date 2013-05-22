@@ -17,18 +17,20 @@
 int main(int argc, char *argv[]) {
   DBAdaptor *dba;
   GeneAdaptor *ga;
-  Slice *slice;
-  Vector *genes;
-  int i;
-  int failed;
+  Slice *slice = NULL;
+  Vector *genes = NULL;
+  int i = 0;
+  int failed = 0;
   
   initEnsC(argc, argv);
 
 //  ProcUtil_showBacktrace(EnsC_progName);
 
-  dba = Test_initROEnsDB();
+//  dba = Test_initROEnsDB();
+//  slice = Test_getStandardSlice(dba);
 
-  slice = Test_getStandardSlice(dba);
+  DBAdaptor *seqdba = DBAdaptor_new("genebuild6.internal.sanger.ac.uk","ensadmin","ensembl","steve_chicken_rnaseq_missing_reference",3306,NULL);
+  dba = DBAdaptor_new("genebuild1.internal.sanger.ac.uk","ensadmin","ensembl","steve_chicken_rnaseq_missing_refined",3306,seqdba);
 
   ok(1, slice!=NULL);
 
@@ -39,7 +41,7 @@ int main(int argc, char *argv[]) {
 
 //  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","17",1000000,5000000,1,NULL,0);
 // Has a seleno
-  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","1",26000000,27000000,1,NULL,0);
+  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","1",1000000,27000000,1,NULL,0);
 //  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","MT",1,17000,1,NULL,0);
   genes =  Slice_getAllGenes(slice, NULL, NULL, 1, NULL, NULL);
 
@@ -92,19 +94,21 @@ int dumpGenes(Vector *genes) {
         BaseAlignFeature *baf = Vector_getElementAt(support, k);
         fprintf(fp,"   support %s coords: %ld %ld %d\n", BaseAlignFeature_getHitSeqName(baf), BaseAlignFeature_getStart(baf), BaseAlignFeature_getEnd(baf), BaseAlignFeature_getStrand(baf));
       }
+      Vector *intronSupport = Transcript_getAllIntronSupportingEvidence(t);
+      for (k=0; k<Vector_getNumElement(intronSupport); k++) {
+        IntronSupportingEvidence *ise = Vector_getElementAt(intronSupport, k);
+        fprintf(fp,"   intron support %s coords: %ld %ld %d\n", IntronSupportingEvidence_getHitName(ise), IntronSupportingEvidence_getStart(ise), IntronSupportingEvidence_getEnd(ise), IntronSupportingEvidence_getStrand(ise));
+      }
 
       for (k=0;k<Transcript_getExonCount(t);k++) {
         Exon *e = Transcript_getExonAt(t,k);
         fprintf(fp,"  exon %s coords: %ld %ld %d\n",Exon_getStableId(e), Exon_getStart(e),Exon_getEnd(e),Exon_getStrand(e));
-/*
         Vector *support = Exon_getAllSupportingFeatures(e);
         int m;
         for (m=0; m<Vector_getNumElement(support); m++) {
           BaseAlignFeature *baf = Vector_getElementAt(support, m);
           fprintf(fp,"   support %s coords: %ld %ld %d\n", BaseAlignFeature_getHitSeqName(baf), BaseAlignFeature_getStart(baf), BaseAlignFeature_getEnd(baf), BaseAlignFeature_getStrand(baf));
         }
-*/
-       
       }
       Translation *tln = Transcript_getTranslation(t);
       if (tln) {

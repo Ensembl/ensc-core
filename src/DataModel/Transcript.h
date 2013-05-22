@@ -9,6 +9,7 @@
 #include "IDHash.h"
 #include "Vector.h"
 #include "Mapper.h"
+#include "IntronSupportingEvidence.h"
 
 ANNOTATEDSEQFEATUREFUNC_TYPES(Transcript)
 
@@ -49,6 +50,7 @@ ECOSTRING Transcript_setBiotype(Transcript *transcript, char *biotype);
 #define Transcript_getBiotype(transcript)  (transcript)->biotype
 
 Vector *Transcript_getAllSupportingFeatures(Transcript *transcript);
+Vector *Transcript_getAllIntronSupportingEvidence(Transcript *transcript);
 
 #define Transcript_setIsCurrent(trans,isC)  StableIdInfo_setIsCurrent(&((trans)->si),(isC))
 #define Transcript_getIsCurrent(trans)  StableIdInfo_getIsCurrent(&((trans)->si))
