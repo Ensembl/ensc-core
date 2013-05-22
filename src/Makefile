@@ -104,6 +104,7 @@ libensc.a	: \
 	objectfiles/DataAdaptors/MysqlResultRow.o \
 	objectfiles/DataAdaptors/MysqlStatementHandle.o \
 	objectfiles/DataAdaptors/PredictionTranscriptAdaptor.o \
+	objectfiles/DataAdaptors/PredictionExonAdaptor.o \
 	objectfiles/DataAdaptors/ProteinAlignFeatureAdaptor.o \
 	objectfiles/DataAdaptors/RawContigAdaptor.o \
 	objectfiles/DataAdaptors/RepeatConsensusAdaptor.o \

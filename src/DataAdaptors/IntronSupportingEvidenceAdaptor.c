@@ -262,7 +262,6 @@ Vector *IntronSupportingEvidenceAdaptor_objectsFromStatementHandle(IntronSupport
     //??asma            = DBAdaptor_getAssemblyMapperAdaptor(ea->dba);
   }
 
-  int count = 0;
   ResultRow *row;
   while (row = sth->fetchRow(sth)) {
     IDType id =           row->getLongLongAt(row,0);
@@ -276,7 +275,6 @@ Vector *IntronSupportingEvidenceAdaptor_objectsFromStatementHandle(IntronSupport
     char *scoreType =     row->getStringAt(row,8);
     int spliceCanonical = row->getIntAt(row,9); 
 
-    count++;
     // get the analysis object
     Analysis *analysis = AnalysisAdaptor_fetchByDbID(aa, analysisId);
 

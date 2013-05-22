@@ -610,6 +610,7 @@ There can be spaces anywhere but they will be ignored - they have no meaning
    1 : 1 .. 1 0  is also fine BUT is also equivalent to 1:1-10
 
 I'm NOT currently allowing a ':' separated range which is just one position and a strand, because that's difficult to distinguish from a 
+start end range
 */
 
 void SliceAdaptor_parseLocationToValues(SliceAdaptor *sa, char *location, int noWarnings, int noErrors, 
@@ -1681,8 +1682,6 @@ Slice *SliceAdaptor_fetchByChrBand(SliceAdaptor *sa, char *chr, char *band) {
 
 =cut
 */
-
-/*
 Slice *SliceAdaptor_fetchByExonStableId(SliceAdaptor *sa, char *exonId, int size, int isPercent) {
   if (exonId == NULL) {
     fprintf(stderr,"Exon argument is required.");
@@ -1690,7 +1689,7 @@ Slice *SliceAdaptor_fetchByExonStableId(SliceAdaptor *sa, char *exonId, int size
   }
 
   ExonAdaptor *ea = DBAdaptor_getExonAdaptor(sa->dba);
-  Exon *exon = ExonAdaptor_fetchByStableID(ea, exonId);
+  Exon *exon = ExonAdaptor_fetchByStableId(ea, exonId);
 
   if (exon == NULL) {
     fprintf(stderr,"Exon [%s] does not exist in DB.", exonId);
@@ -1699,7 +1698,6 @@ Slice *SliceAdaptor_fetchByExonStableId(SliceAdaptor *sa, char *exonId, int size
 
   return SliceAdaptor_fetchByFeature(sa, (SeqFeature *)exon, size, isPercent);
 }
-*/
 
 /*
 =head2 fetch_by_transcript_stable_id
@@ -1725,8 +1723,6 @@ Slice *SliceAdaptor_fetchByExonStableId(SliceAdaptor *sa, char *exonId, int size
 
 =cut
 */
-
-/*
 Slice *SliceAdaptor_fetchByTranscriptStableId(SliceAdaptor *sa, char *transcriptId, int size, int isPercent) {
   if (transcriptId == NULL) {
     fprintf(stderr,"Transcript argument is required.");
@@ -1734,7 +1730,7 @@ Slice *SliceAdaptor_fetchByTranscriptStableId(SliceAdaptor *sa, char *transcript
   }
 
   TranscriptAdaptor *ta = DBAdaptor_getTranscriptAdaptor(sa->dba);
-  Transcript *transcript = TranscriptAdaptor_fetchByStableID(ta, transcriptId);
+  Transcript *transcript = TranscriptAdaptor_fetchByStableId(ta, transcriptId);
 
   if (transcript == NULL) {
     fprintf(stderr,"Transcript [%s] does not exist in DB.", transcriptId);
@@ -1743,7 +1739,6 @@ Slice *SliceAdaptor_fetchByTranscriptStableId(SliceAdaptor *sa, char *transcript
 
   return SliceAdaptor_fetchByFeature(sa, (SeqFeature *)transcript, size, isPercent);
 }
-*/
 
 /*
 =head2 fetch_by_transcript_id

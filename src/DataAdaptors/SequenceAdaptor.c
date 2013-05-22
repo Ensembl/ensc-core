@@ -4,7 +4,6 @@
 #include "BaseAdaptor.h"
 #include "MysqlUtil.h"
 #include "SeqUtil.h"
-#include "RawContig.h"
 #include "AssemblyMapperAdaptor.h"
 #include "CoordSystemAdaptor.h"
 #include "SliceAdaptor.h"

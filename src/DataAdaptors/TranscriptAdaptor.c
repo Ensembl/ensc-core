@@ -544,7 +544,6 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
 
 
   // move exons onto transcript slice, and add them to transcripts
-  // Move transcripts onto gene slice, and add them to genes.
   for (i=0; i<Vector_getNumElement(exons); i++) {
     Exon *ex = Vector_getElementAt(exons, i);
 
@@ -555,7 +554,7 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
     if (slice != extSlice) {
       newEx = Exon_transfer(ex, slice);
       if (newEx == NULL) {
-        fprintf(stderr, "Unexpected. Exon could not be transferred onto Gene slice.\n");
+        fprintf(stderr, "Unexpected. Exon could not be transferred onto Transcript slice.\n");
         exit(1);
       }
     } else {

@@ -3,13 +3,13 @@
 
 #include "BaseFeatureAdaptor.h"
 #include "AdaptorTypes.h"
+#include "PredictionTranscript.h"
 
 struct PredictionTranscriptAdaptorStruct {
   BASEFEATUREADAPTOR_DATA
 };
 
 PredictionTranscriptAdaptor *PredictionTranscriptAdaptor_new(DBAdaptor *dba);
-
 int PredictionTranscriptAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features);
 NameTableType *PredictionTranscriptAdaptor_getTables(void);
 char *PredictionTranscriptAdaptor_getColumns(void);
@@ -17,13 +17,10 @@ Vector *PredictionTranscriptAdaptor_objectsFromStatementHandle(BaseFeatureAdapto
                                                        StatementHandle *sth,
                                                        AssemblyMapper *mapper,
                                                        Slice *slice);
-char *PredictionTranscriptAdaptor_finalClause(void);
 
 #define PredictionTranscriptAdaptor_fetchByDbID(pta, id) BaseFeatureAdaptor_fetchByDbID((BaseFeatureAdaptor *)(pta), (id))
 #define PredictionTranscriptAdaptor_fetchAllBySlice(pta, slice) \
-          BaseFeatureAdaptor_fetchAllBySlice((BaseFeatureAdaptor *)(pta), (slice), "")
-#define PredictionTranscriptAdaptor_fetchAllByRawContig(pta, contig, logicName ) \
-          BaseFeatureAdaptor_fetchAllByRawContig((BaseFeatureAdaptor *)(pta), (contig), (logicName))
+          BaseFeatureAdaptor_fetchAllBySlice((BaseFeatureAdaptor *)(pta), (slice), NULL, NULL)
 
 
 #endif

@@ -309,6 +309,7 @@ Transcript *Transcript_transform(Transcript *trans, IDHash *exonTransforms) {
 
 =cut
 */
+// New
 Vector *Transcript_getAllSupportingFeatures(Transcript *transcript) {
 
   if( transcript->supportingEvidence == NULL && Transcript_getAdaptor(transcript) != NULL) {
