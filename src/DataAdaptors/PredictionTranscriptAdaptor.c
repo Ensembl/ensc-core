@@ -6,9 +6,12 @@ Performs database interaction related to PredictionTranscripts
 */
 
 #include "PredictionTranscriptAdaptor.h"
+#include "PredictionExonAdaptor.h"
 
 #include "PredictionTranscript.h"
 #include "AnalysisAdaptor.h"
+#include "SliceAdaptor.h"
+#include "ChainedAssemblyMapper.h"
 
 NameTableType PredictionTranscriptAdaptor_tableNames = {{"prediction_transcript","pt"},
                                                         {NULL,NULL}};
@@ -99,7 +102,7 @@ PredictionTranscript *PredictionTranscriptAdaptor_fetchByStableId(PredictionTran
     exit(1);
   }
 
-  NameTableType *tables = bfa->getTables();
+  NameTableType *tables = pta->getTables();
   char **primTab = (*tables)[0];
   char *tableSynonym = primTab[SYN];
 
@@ -252,19 +255,19 @@ Vector *PredictionTranscriptAdaptor_fetchAllBySlice(PredictionTranscriptAdaptor 
 
   sth->finish(sth);
 
-  PredictionExonAdaptor *ea = DBAdaptor_getPredictionExonAdaptor(ta->dba);
-  Vector *exons = ExonAdaptor_fetchAllBySlice(ea, extSlice);
+  PredictionExonAdaptor *pea = DBAdaptor_getPredictionExonAdaptor(pta->dba);
+  Vector *exons = PredictionExonAdaptor_fetchAllBySlice(pea, extSlice);
 
   // move exons onto transcript slice, and add them to transcripts
   for (i=0; i<Vector_getNumElement(exons); i++) {
     PredictionExon *ex = Vector_getElementAt(exons, i);
 
   // Perl didn't have this line - it was in GeneAdaptor version so I think I'm going to keep it
-    if (!IDHash_contains(exTrHash, Exon_getDbID(ex))) continue;
+    if (!IDHash_contains(exTrHash, PredictionExon_getDbID(ex))) continue;
 
     Exon *newEx;
     if (slice != extSlice) {
-      newEx = Exon_transfer(ex, slice);
+      newEx = PredictionExon_transfer(ex, slice);
       if (newEx == NULL) {
         fprintf(stderr, "Unexpected. Exon could not be transferred onto PredictionTranscript slice.\n");
         exit(1);
@@ -273,7 +276,7 @@ Vector *PredictionTranscriptAdaptor_fetchAllBySlice(PredictionTranscriptAdaptor 
       newEx = ex;
     }
 
-    Vector *exVec = IDHash_getValue(exTrHash, Exon_getDbID(newEx));
+    Vector *exVec = IDHash_getValue(exTrHash, PredictionExon_getDbID(newEx));
     int j;
     for (j=0; j<Vector_getNumElement(exVec); j++) {
       PredictionTranscriptRankPair *trp = Vector_getElementAt(exVec, j);
@@ -316,8 +319,8 @@ Vector *PredictionTranscriptAdaptor_objectsFromStatementHandle(PredictionTranscr
                                                                StatementHandle *sth, 
                                                                AssemblyMapper *assMapper, 
                                                                Slice *destSlice) {
-  SliceAdaptor *sa     = DBAdaptor_getSliceAdaptor(isea->dba);
-  AnalysisAdaptor *aa  = DBAdaptor_getAnalysisAdaptor(isea->dba);
+  SliceAdaptor *sa     = DBAdaptor_getSliceAdaptor(pta->dba);
+  AnalysisAdaptor *aa  = DBAdaptor_getAnalysisAdaptor(pta->dba);
 
   Vector *pTranscripts = Vector_new();
   IDHash *sliceHash = IDHash_new(IDHASH_SMALL);
@@ -459,7 +462,7 @@ Vector *PredictionTranscriptAdaptor_objectsFromStatementHandle(PredictionTranscr
 =cut
 */
 
-void PredictionTranscriptAdaptor_store(PredictionTranscriptAdaptor *pta, Vector *preTranscript) {
+void PredictionTranscriptAdaptor_store(PredictionTranscriptAdaptor *pta, Vector *preTranscripts) {
   fprintf(stderr,"PredictionTranscript store not implemented yet\n");
   exit(1);
 

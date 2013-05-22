@@ -155,6 +155,7 @@ libensc.a	: \
 	objectfiles/DataModel/Mapper/RangeRegistry.o \
 	objectfiles/DataModel/Object.o \
 	objectfiles/DataModel/PredictionTranscript.o \
+	objectfiles/DataModel/PredictionExon.o \
 	objectfiles/DataModel/ProjectionSegment.o \
 	objectfiles/DataModel/RawContig.o \
 	objectfiles/DataModel/RepeatConsensus.o \

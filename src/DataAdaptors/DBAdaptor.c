@@ -185,6 +185,14 @@ PredictionTranscriptAdaptor *DBAdaptor_getPredictionTranscriptAdaptor(DBAdaptor 
   return (PredictionTranscriptAdaptor *)DBConnection_getAdaptor(dba->dbc,PREDICTIONTRANSCRIPT_ADAPTOR);
 }
 
+PredictionExonAdaptor *DBAdaptor_getPredictionExonAdaptor(DBAdaptor *dba) {
+  if (!DBConnection_getAdaptor(dba->dbc,PREDICTIONTRANSCRIPT_ADAPTOR)) {
+    DBConnection_addAdaptor(dba->dbc,
+                            (BaseAdaptor *)PredictionExonAdaptor_new(dba));
+  }
+  return (PredictionExonAdaptor *)DBConnection_getAdaptor(dba->dbc,PREDICTIONEXON_ADAPTOR);
+}
+
 DBEntryAdaptor *DBAdaptor_getDBEntryAdaptor(DBAdaptor *dba) {
   if (!DBConnection_getAdaptor(dba->dbc,DBENTRY_ADAPTOR)) {
     DBConnection_addAdaptor(dba->dbc,

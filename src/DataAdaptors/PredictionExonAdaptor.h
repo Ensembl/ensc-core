@@ -16,9 +16,9 @@ NameTableType *PredictionExonAdaptor_getTables();
 char **PredictionExonAdaptor_getColumns();
 char *PredictionExonAdaptor_finalClause();
 Vector *PredictionExonAdaptor_fetchAllByPredictionTranscript(PredictionExonAdaptor *pea, PredictionTranscript *transcript);
-IDType PredictionExonAdaptor_store(PredictionExonAdaptor *pea, PredictionExon *exon);
 Vector *PredictionExonAdaptor_listDbIDs(PredictionExonAdaptor *pea, int ordered);
 Vector *PredictionExonAdaptor_objectsFromStatementHandle(PredictionExonAdaptor *pea, StatementHandle *sth, AssemblyMapper *assMapper, Slice *destSlice);
+IDType PredictionExonAdaptor_store(PredictionExonAdaptor *pea, PredictionExon *pExon, IDType ptId, int rank);
 
 
 #define PredictionExonAdaptor_genericFetch(pea, constraint, mapper, slice) \

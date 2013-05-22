@@ -25,6 +25,7 @@ typedef struct IdentityXrefStruct IdentityXref;
 typedef struct IntronStruct Intron;
 typedef struct IntronSupportingEvidenceStruct IntronSupportingEvidence;
 typedef struct MapperStruct Mapper;
+typedef struct PredictionExonStruct PredictionExon;
 typedef struct PredictionTranscriptStruct PredictionTranscript;
 typedef struct ProjectionSegmentStruct ProjectionSegment;
 typedef struct RawContigStruct RawContig;

@@ -4,9 +4,18 @@
 Bio::EnsEMBL::DBSQL::PredictionExonAdaptor - Performs database interaction for
 PredictionExons.
 */
+#include "PredictionExonAdaptor.h"
 
-NameTableType PredictionExonAdaptor_tableNamesStandard = {{"prediction_exon","pe"},
-                                                          {NULL,NULL}};
+#include "PredictionTranscript.h"
+#include "AnalysisAdaptor.h"
+#include "SliceAdaptor.h"
+#include "ChainedAssemblyMapper.h"
+#include "AssemblyMapperAdaptor.h"
+
+
+
+NameTableType PredictionExonAdaptor_tableNames = {{"prediction_exon","pe"},
+                                                  {NULL,NULL}};
 
 PredictionExonAdaptor *PredictionExonAdaptor_new(DBAdaptor *dba) {
   PredictionExonAdaptor *pea;
@@ -121,7 +130,6 @@ Vector *PredictionExonAdaptor_fetchAllByPredictionTranscript(PredictionExonAdapt
   sprintf(constraint, "pe.prediction_transcript_id = "IDFMTSTR, PredictionTranscript_getDbID(transcript));
 
   Vector *exons = PredictionExonAdaptor_fetchAllBySliceConstraint(pea, slice, constraint, NULL);
-  my $exons = $self->fetch_all_by_Slice_constraint($slice, $constraint);
 
   // remap exon coordinates if necessary
   if (EcoString_strcmp(Slice_getName(slice), Slice_getName(tSlice))) {
@@ -323,6 +331,7 @@ Vector *PredictionExonAdaptor_objectsFromStatementHandle(PredictionExonAdaptor *
   }
 
 
+  ResultRow *row;
   while (row = sth->fetchRow(sth)) {
     IDType predictionExonId = row->getLongLongAt(row, 0);
     IDType seqRegionId      = row->getLongLongAt(row, 1);
@@ -425,9 +434,9 @@ Vector *PredictionExonAdaptor_objectsFromStatementHandle(PredictionExonAdaptor *
     PredictionExon_setStart  (exon, seqRegionStart);
     PredictionExon_setEnd    (exon, seqRegionEnd);
     PredictionExon_setStrand (exon, seqRegionStrand);
-    PredictionExon_setAdaptor(exon, (BaseAdaptor *)ea);
+    PredictionExon_setAdaptor(exon, (BaseAdaptor *)pea);
     PredictionExon_setSlice  (exon, exonSlice);
-    PredictionExon_setDbID   (exon, predictionPredictionExonId);
+    PredictionExon_setDbID   (exon, predictionExonId);
     PredictionExon_setPhase  (exon, startPhase);
     PredictionExon_setScore  (exon, score);
     PredictionExon_setpValue (exon, pValue);

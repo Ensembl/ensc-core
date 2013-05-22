@@ -21,6 +21,7 @@ typedef struct GeneAdaptorStruct GeneAdaptor;
 typedef struct IntronSupportingEvidenceAdaptorStruct IntronSupportingEvidenceAdaptor;
 typedef struct MetaContainerStruct MetaContainer;
 typedef struct MetaCoordContainerStruct MetaCoordContainer;
+typedef struct PredictionExonAdaptorStruct PredictionExonAdaptor;
 typedef struct PredictionTranscriptAdaptorStruct PredictionTranscriptAdaptor;
 typedef struct ProteinAlignFeatureAdaptorStruct ProteinAlignFeatureAdaptor;
 typedef struct RawContigAdaptorStruct RawContigAdaptor;
