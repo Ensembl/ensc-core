@@ -1297,7 +1297,7 @@ DBAdaptor *Slice_getSelectedDBAdaptor(Slice *slice, char *dbType) {
   }
   return sa->dba;
 }
-/*
+
 Vector *Slice_getAllPredictionTranscripts(Slice *slice, char *logicName, int loadExons, char *dbType) {
   if (!Slice_getAdaptor(slice)) {
     fprintf(stderr, "Warning: Cannot get PredictionTranscripts without attached adaptor");
@@ -1315,7 +1315,6 @@ Vector *Slice_getAllPredictionTranscripts(Slice *slice, char *logicName, int loa
 
   return PredictionTranscriptAdaptor_fetchAllBySlice(pta, slice, logicName, loadExons);
 }
-*/
 
 
 

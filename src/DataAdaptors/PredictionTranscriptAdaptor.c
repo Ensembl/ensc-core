@@ -9,6 +9,7 @@ Performs database interaction related to PredictionTranscripts
 #include "PredictionExonAdaptor.h"
 
 #include "PredictionTranscript.h"
+#include "PredictionExon.h"
 #include "AnalysisAdaptor.h"
 #include "SliceAdaptor.h"
 #include "ChainedAssemblyMapper.h"
@@ -280,7 +281,7 @@ Vector *PredictionTranscriptAdaptor_fetchAllBySlice(PredictionTranscriptAdaptor 
     int j;
     for (j=0; j<Vector_getNumElement(exVec); j++) {
       PredictionTranscriptRankPair *trp = Vector_getElementAt(exVec, j);
-      PredictionTranscript_addExon(trp->transcript, newEx, trp->rank);
+      PredictionTranscript_addExon(trp->transcript, newEx, &trp->rank);
     }
   }
 

@@ -7,6 +7,7 @@
 #include "PredictionTranscript.h"
 #include "SeqFeature.h"
 #include "Exon.h"
+#include "PredictionExon.h"
 #include "Transcript.h"
 #include "SimpleFeature.h"
 
@@ -40,6 +41,9 @@ SeqFeature *SeqFeatureFactory_newFeature(ClassType type) {
       break;
     case CLASS_TRANSCRIPT:
       feature = Transcript_new(); 
+      break;
+    case CLASS_PREDICTIONEXON:
+      feature = PredictionExon_new(); 
       break;
     default:
       fprintf(stderr,"Error: Unknown feature type %d\n",type);
@@ -79,6 +83,9 @@ SeqFeature *SeqFeatureFactory_newFeatureFromFeature(SeqFeature *sf) {
       break;
     case CLASS_TRANSCRIPT:
       feature = Transcript_shallowCopy(sf); 
+      break;
+    case CLASS_PREDICTIONEXON:
+      feature = PredictionExon_shallowCopy(sf); 
       break;
     default:
       fprintf(stderr,"Error: Unknown feature type %d\n",sf->objectType);

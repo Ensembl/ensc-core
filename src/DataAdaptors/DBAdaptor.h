@@ -36,6 +36,7 @@ GeneAdaptor                 *DBAdaptor_getGeneAdaptor(DBAdaptor *dba);
 IntronSupportingEvidenceAdaptor *DBAdaptor_getIntronSupportingEvidenceAdaptor(DBAdaptor *dba);
 MetaContainer               *DBAdaptor_getMetaContainer(DBAdaptor *dba);
 MetaCoordContainer          *DBAdaptor_getMetaCoordContainer(DBAdaptor *dba);
+PredictionExonAdaptor       *DBAdaptor_getPredictionExonAdaptor(DBAdaptor *dba);
 PredictionTranscriptAdaptor *DBAdaptor_getPredictionTranscriptAdaptor(DBAdaptor *dba);
 ProteinAlignFeatureAdaptor  *DBAdaptor_getProteinAlignFeatureAdaptor(DBAdaptor *dba);
 RawContigAdaptor            *DBAdaptor_getRawContigAdaptor(DBAdaptor *dba);

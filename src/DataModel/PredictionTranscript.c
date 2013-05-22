@@ -3,9 +3,10 @@
 #undef  __PREDICTIONTRANSCRIPT_MAIN__
 
 
-#include "Exon.h"
+#include "PredictionExon.h"
 #include "StrUtil.h"
 #include "SeqUtil.h"
+#include "translate.h"
 
 PredictionTranscript *PredictionTranscript_new() {
   PredictionTranscript *transcript;
@@ -22,6 +23,11 @@ PredictionTranscript *PredictionTranscript_new() {
 
   transcript->exons = Vector_new();
   return transcript;
+}
+
+ECOSTRING PredictionTranscript_setDisplayLabel(PredictionTranscript *pt, char *label) {
+  EcoString_copyStr(ecoSTable, &(pt->displayLabel), label, 0);
+  return pt->displayLabel;
 }
 
 ECOSTRING PredictionTranscript_setType(PredictionTranscript *t, char *type) {
@@ -48,9 +54,8 @@ int PredictionTranscript_getLength(PredictionTranscript *trans) {
     int i;
 
     for (i=0;i<PredictionTranscript_getExonCount(trans); i++) {
-      Exon *ex = PredictionTranscript_getExonAt(trans,i);
- // Check stickies
-      if (ex) length += Exon_getLength(ex);
+      PredictionExon *ex = PredictionTranscript_getExonAt(trans,i);
+      if (ex) length += PredictionExon_getLength(ex);
     }
     return length;
 }
@@ -137,7 +142,7 @@ int PredictionTranscript_getEnd(PredictionTranscript *trans) {
 =cut
 */
 
-void PredictionTranscript_addExon(PredictionTranscript *trans, Exon *exon, int *positionP) {
+void PredictionTranscript_addExon(PredictionTranscript *trans, PredictionExon *exon, int *positionP) {
   if (positionP) {
     Vector_setElementAt(trans->exons, *positionP, exon);
   } else {
@@ -145,12 +150,12 @@ void PredictionTranscript_addExon(PredictionTranscript *trans, Exon *exon, int *
   }
 
   if (exon && (!PredictionTranscript_getStartIsSet(trans) ||
-		Exon_getStart(exon) < PredictionTranscript_getStart(trans))) {
-    PredictionTranscript_setStart(trans, Exon_getStart(exon));
+		PredictionExon_getStart(exon) < PredictionTranscript_getStart(trans))) {
+    PredictionTranscript_setStart(trans, PredictionExon_getStart(exon));
   }
   if (exon && (!PredictionTranscript_getEndIsSet(trans) ||
-		Exon_getEnd(exon) > PredictionTranscript_getEnd(trans))) {
-    PredictionTranscript_setEnd(trans, Exon_getEnd(exon));
+		PredictionExon_getEnd(exon) > PredictionTranscript_getEnd(trans))) {
+    PredictionTranscript_setEnd(trans, PredictionExon_getEnd(exon));
   }
 }
 
@@ -199,7 +204,7 @@ Vector *PredictionTranscript_getAllTranslateableExons(PredictionTranscript *tran
   if (!trans->translateableExons) {
     trans->translateableExons = Vector_new();
     for (i=0; i<PredictionTranscript_getExonCount(trans); i++) {
-      Exon *ex = PredictionTranscript_getExonAt(trans,i);
+      PredictionExon *ex = PredictionTranscript_getExonAt(trans,i);
       if (ex) {
         Vector_addElement(trans->translateableExons, ex);
       }
@@ -223,7 +228,7 @@ Vector *PredictionTranscript_getAllTranslateableExons(PredictionTranscript *tran
 */
 
 void PredictionTranscript_sort(PredictionTranscript *trans) {
-  Exon *firstExon = PredictionTranscript_getExonAt(trans,0);
+  PredictionExon *firstExon = PredictionTranscript_getExonAt(trans,0);
   int strand;
   int i;
 
@@ -233,8 +238,9 @@ void PredictionTranscript_sort(PredictionTranscript *trans) {
     }
   }
 
-  strand = Exon_getStrand(firstExon);
+  strand = PredictionExon_getStrand(firstExon);
 
+// Hack in using Exon function names
   if (strand == 1) {
     Vector_sort(PredictionTranscript_getExons(trans),Exon_forwardStrandCompFunc);
   } else if (strand == -1) {
@@ -324,7 +330,7 @@ char *PredictionTranscript_translate(PredictionTranscript *trans) {
     frm[i] = (char *)malloc(lenDNA/3 + 2);
   }
 
-  translate(dna, frm, lengths);
+  translate(dna, frm, lengths, 1);
 
   free(dna);
 
@@ -356,6 +362,7 @@ char *PredictionTranscript_getcDNA(PredictionTranscript *trans) {
   char *cdna = StrUtil_copyString(&cdna, "", 0);
   int lastPhase = 0;
   int i;
+  int first = 1;
 
   int cdnaStart, cdnaEnd;
   int pepStart, pepEnd;
@@ -365,7 +372,7 @@ char *PredictionTranscript_getcDNA(PredictionTranscript *trans) {
   pepStart = 1;
 
   for (i=0; i<Vector_getNumElement(exons); i++) {
-    Exon *exon = Vector_getElementAt(exons, i);
+    PredictionExon *exon = Vector_getElementAt(exons, i);
     int phase;
     if (!exon) {
       if (cdna[0] == '\0') {
@@ -378,9 +385,18 @@ char *PredictionTranscript_getcDNA(PredictionTranscript *trans) {
     phase = 0;
 
 // NIY    if (defined($exon->phase)) {
-      phase = Exon_getPhase(exon);
+      phase = PredictionExon_getPhase(exon);
 //    }
 
+    //fprintf(stderr, " phase for exon %d is %d\n", i, phase);
+
+    if (first) {
+      cdna = SeqUtil_addNs(cdna,phase);
+      first = 0;
+    }
+
+/*
+// Hack for now - should never happen
     if (phase != lastPhase ) {
 
       if (lastPhase == 1) {
@@ -392,9 +408,11 @@ char *PredictionTranscript_getcDNA(PredictionTranscript *trans) {
       // startpadding for this exon
       cdna = SeqUtil_addNs(cdna,phase);
     }
+*/
     
-    cdna = StrUtil_appendString(cdna, Exon_getSeqString(exon));
-    lastPhase = Exon_getEndPhase(exon);
+    cdna = StrUtil_appendString(cdna, PredictionExon_getSeqString(exon));
+    //lastPhase = PredictionExon_getEndPhase(exon);
+    //lastPhase = phase;
   }
 
 // NIY Freeing exons vector?
@@ -416,7 +434,7 @@ char *PredictionTranscript_getcDNA(PredictionTranscript *trans) {
 */
 
 MapperRangeSet *PredictionTranscript_pep2Genomic(PredictionTranscript *trans, int start, int end) {
-  Exon *firstExon = PredictionTranscript_getExonAt(trans,0);
+  PredictionExon *firstExon = PredictionTranscript_getExonAt(trans,0);
 
   // move start end into translate cDNA coordinates now.
   // much easier!
@@ -427,8 +445,8 @@ MapperRangeSet *PredictionTranscript_pep2Genomic(PredictionTranscript *trans, in
   // Adjust the phase
   //
   if (firstExon) {
-    start -= Exon_getPhase(firstExon);
-    end   -= Exon_getPhase(firstExon);
+    start -= PredictionExon_getPhase(firstExon);
+    end   -= PredictionExon_getPhase(firstExon);
   }
 
   return PredictionTranscript_cDNA2Genomic(trans, start, end);
@@ -449,12 +467,12 @@ MapperRangeSet *PredictionTranscript_genomic2cDNA(PredictionTranscript *trans, i
   // be attached to all of the exons...
   if (!contig) {
     Vector *translateable = PredictionTranscript_getAllTranslateableExons(trans);
-    Exon *firstExon;
+    PredictionExon *firstExon;
     if (!Vector_getNumElement(translateable)) {
       return MapperRangeSet_new();
     }
     firstExon = Vector_getElementAt(translateable, 0);
-    contig = Exon_getContig(firstExon);
+    contig = PredictionExon_getSlice(firstExon);
     Vector_free(translateable);
   }
 
@@ -482,10 +500,10 @@ Mapper *PredictionTranscript_getcDNACoordMapper(PredictionTranscript *trans) {
 
   translateable = PredictionTranscript_getAllTranslateableExons(trans);
   for (i=0; i<Vector_getNumElement(translateable); i++) {
-    Exon *exon = Vector_getElementAt(translateable,i);
+    PredictionExon *exon = Vector_getElementAt(translateable,i);
 
-    Exon_loadGenomicMapper(exon, mapper, (IDType)trans, start);
-    start += Exon_getLength(exon);
+    PredictionExon_loadGenomicMapper(exon, mapper, (IDType)trans, start);
+    start += PredictionExon_getLength(exon);
   }
   trans->exonCoordMapper = mapper;
   Vector_free(translateable);

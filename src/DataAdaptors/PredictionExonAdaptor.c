@@ -86,13 +86,13 @@ char **PredictionExonAdaptor_getColumns() {
 #  Arg [1]    : none
 #  Example    : none
 #  Description: PROTECTED implementation of superclass abstract method
-#               returns a default end for the SQL-query (ORDER BY)
+#               returns a default end for the SQL-query ORDER BY)
 #  Returntype : string
 #  Exceptions : none
 #  Caller     : internal
 */
 char *PredictionExonAdaptor_finalClause() {
-  return "ORDER BY pe.prediction_transcript_id, pe.exon_rank";
+  return " ORDER BY pe.prediction_transcript_id, pe.exon_rank";
 }
 
 

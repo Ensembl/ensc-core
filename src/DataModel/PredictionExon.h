@@ -16,13 +16,17 @@ typedef struct PredictionExonFuncsStruct {
 
 #define PREDICTIONEXON_DATA \
   SEQFEATURE_DATA \
-  char *displayLabel;
+  char *displayLabel; \
+  char *seqCacheString;
 
 #define FUNCSTRUCTTYPE PredictionExonFuncs
 struct PredictionExonStruct {
   PREDICTIONEXON_DATA
 };
 #undef FUNCSTRUCTTYPE
+
+#define PredictionExon_setSeqCacheString(exon,seq) (exon)->seqCacheString = (seq)
+#define PredictionExon_getSeqCacheString(exon) (exon)->seqCacheString
 
 #define PredictionExon_setStart(predictionExon,start) SeqFeature_setStart((predictionExon),start)
 #define PredictionExon_getStart(predictionExon) SeqFeature_getStart((predictionExon))
@@ -53,8 +57,8 @@ struct PredictionExonStruct {
 
 #define PredictionExon_getLength(predictionExon) SeqFeature_getLength((predictionExon))
 
-#define PredictionExon_setContig(predictionExon,c) SeqFeature_setContig((predictionExon),(c))
-#define PredictionExon_getContig(predictionExon) SeqFeature_getContig((predictionExon))
+#define PredictionExon_setSlice(predictionExon,slice) SeqFeature_setSlice((predictionExon),(slice))
+#define PredictionExon_getSlice(predictionExon) SeqFeature_getSlice((predictionExon))
 
 #define PredictionExon_free(predictionExon) SeqFeature_free((predictionExon))
 
@@ -63,13 +67,20 @@ PredictionExon *PredictionExon_new();
 ECOSTRING PredictionExon_setDisplayLabel(PredictionExon *sf, char *label);
 #define PredictionExon_getDisplayLabel(predictionExon) (predictionExon)->displayLabel
 
+#define PredictionExon_shallowCopy(pe) SeqFeature_shallowCopy((pe))
+
+#define PredictionExon_transfer(pe, slice) SeqFeature_transfer((pe), (slice))
+
+char  *PredictionExon_getSeqString(PredictionExon *exon);
+
 void PredictionExon_freeImpl(PredictionExon *sf);
+PredictionExon *PredictionExon_shallowCopyImpl(PredictionExon *exon);
 
 #ifdef __PREDICTIONEXON_MAIN__
  PredictionExonFuncs
    predictionExonFuncs = {
                       PredictionExon_freeImpl,
-                      NULL, // shallowCopy
+                      PredictionExon_shallowCopyImpl, // shallowCopy
                       NULL, // deepCopy
                       NULL, // getStart
                       NULL, // setStart

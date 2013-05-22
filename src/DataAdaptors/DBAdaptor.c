@@ -186,7 +186,7 @@ PredictionTranscriptAdaptor *DBAdaptor_getPredictionTranscriptAdaptor(DBAdaptor 
 }
 
 PredictionExonAdaptor *DBAdaptor_getPredictionExonAdaptor(DBAdaptor *dba) {
-  if (!DBConnection_getAdaptor(dba->dbc,PREDICTIONTRANSCRIPT_ADAPTOR)) {
+  if (!DBConnection_getAdaptor(dba->dbc,PREDICTIONEXON_ADAPTOR)) {
     DBConnection_addAdaptor(dba->dbc,
                             (BaseAdaptor *)PredictionExonAdaptor_new(dba));
   }

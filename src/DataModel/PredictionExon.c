@@ -3,6 +3,8 @@
 #undef __PREDICTIONEXON__MAIN__
 #include "StrUtil.h"
 
+#include <string.h>
+
 PredictionExon *PredictionExon_new() {
   PredictionExon *pe;
 
@@ -24,6 +26,15 @@ ECOSTRING PredictionExon_setDisplayLabel(PredictionExon *pe, char *label) {
   return pe->displayLabel;
 }
 
+PredictionExon *PredictionExon_shallowCopyImpl(PredictionExon *exon) {
+  PredictionExon *newPredictionExon = PredictionExon_new();
+
+  memcpy(newPredictionExon,exon,sizeof(PredictionExon));
+
+  return newPredictionExon;
+}
+
+
 void PredictionExon_freeImpl(PredictionExon *pe) {
   Object_decRefCount(pe);
 
@@ -40,3 +51,36 @@ void PredictionExon_freeImpl(PredictionExon *pe) {
   free(pe);
 }
 
+char  *PredictionExon_getSeqString(PredictionExon *exon) {
+  char *seq;
+
+  if (PredictionExon_getSeqCacheString(exon)) {
+    return PredictionExon_getSeqCacheString(exon);
+  }
+
+  if (!PredictionExon_getSlice(exon)) {
+    fprintf(stderr, "Warning: this exon %s doesn't have a contig you won't get a seq\n", PredictionExon_getDisplayLabel(exon));
+    return NULL;
+  } else {
+
+    seq = BaseContig_getSubSeq(PredictionExon_getSlice(exon),
+                               PredictionExon_getStart(exon),
+                               PredictionExon_getEnd(exon),
+                               1);
+
+    if (PredictionExon_getStrand(exon) == -1){
+      SeqUtil_reverseComplement(seq,strlen(seq));
+    }
+  }
+  PredictionExon_setSeqCacheString(exon, seq);
+
+  return PredictionExon_getSeqCacheString(exon);
+}
+
+void PredictionExon_loadGenomicMapper(Exon *exon, Mapper *mapper, IDType id, int start) {
+
+// NIY Make the Exon_getContig consistent
+  Mapper_addMapCoordinates( mapper, id, start, start+Exon_getLength(exon)-1,
+                            Exon_getStrand(exon), Slice_getSeqRegionId(PredictionExon_getSlice(exon)),
+                            Exon_getStart(exon),  Exon_getEnd(exon) );
+}

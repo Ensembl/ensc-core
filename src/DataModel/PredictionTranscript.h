@@ -3,6 +3,8 @@
 
 #include "DataModelTypes.h"
 
+#include "EcoString.h"
+
 #include "AnnotatedSeqFeature.h"
 #include "FeatureSet.h"
 #include "StableIdInfo.h"
@@ -28,11 +30,15 @@ struct PredictionTranscriptStruct {
   char startIsSet;
   char endIsSet;
   Vector *translateableExons;
+  char *displayLabel;
   ECOSTRING type;
 };
 #undef FUNCSTRUCTTYPE
 
 PredictionTranscript *PredictionTranscript_new(void);
+
+ECOSTRING PredictionTranscript_setDisplayLabel(PredictionTranscript *pt, char *label);
+#define PredictionTranscript_getDisplayLabel(transcript) (transcript)->displayLabel
 
 #define PredictionTranscript_setStableId(transcript,sid)  StableIdInfo_setStableId(&((transcript)->si),(sid))
 #define PredictionTranscript_getStableId(transcript)  StableIdInfo_getStableId(&((transcript)->si))
@@ -58,12 +64,15 @@ int PredictionTranscript_getEnd(PredictionTranscript *transcript);
 #define PredictionTranscript_setStartIsSet(transcript,flag) (transcript)->startIsSet = (flag)
 #define PredictionTranscript_getStartIsSet(transcript) (transcript)->startIsSet
 
-void PredictionTranscript_addExon(PredictionTranscript *transcript,Exon *exon,int *positionP);
+void PredictionTranscript_addExon(PredictionTranscript *transcript,PredictionExon *exon,int *positionP);
 #define PredictionTranscript_getExonAt(transcript,ind) Vector_getElementAt((transcript)->exons,ind)
 #define PredictionTranscript_getExons(transcript) (transcript)->exons
 
 int PredictionTranscript_setExonCount(PredictionTranscript *trans, int count);
 int PredictionTranscript_getExonCount(PredictionTranscript *trans);
+
+#define PredictionTranscript_setSlice(predictionTranscript,slice) SeqFeature_setSlice((predictionTranscript),(slice))
+#define PredictionTranscript_getSlice(predictionTranscript) SeqFeature_getSlice((predictionTranscript))
 
 //#define PredictionTranscript_removeAllExons(transcript) FeatureSet_removeAll(&((transcript)->fs))
 
@@ -75,6 +84,10 @@ int PredictionTranscript_getExonCount(PredictionTranscript *trans);
 
 #define PredictionTranscript_setAnalysis(transcript,an) AnnotatedSeqFeature_setAnalysis((transcript),(an))
 #define PredictionTranscript_getAnalysis(transcript) AnnotatedSeqFeature_getAnalysis((transcript))
+
+#define PredictionTranscript_getSeqRegionStart(t) SeqFeature_getSeqRegionStart((t))
+#define PredictionTranscript_getSeqRegionEnd(t) SeqFeature_getSeqRegionEnd((t))
+#define PredictionTranscript_getSeqRegionStrand(t) SeqFeature_getSeqRegionStrand((t))
 
 void PredictionTranscript_flushExons(PredictionTranscript *transcript);
 
@@ -112,10 +125,10 @@ void PredictionTranscript_free(PredictionTranscript *trans);
                        PredictionTranscript_free,
                        NULL, // shallowCopy
                        NULL, // deepCopy
-                       PredictionTranscript_getStart,
-                       PredictionTranscript_setStart,
-                       PredictionTranscript_getEnd,
-                       PredictionTranscript_setEnd,
+                       NULL, // getStart
+                       NULL, // setStart
+                       NULL, // getEnd
+                       NULL, // setEnd
                        NULL, // getStrand
                        NULL, // setStrand
                        NULL, // getSeq
