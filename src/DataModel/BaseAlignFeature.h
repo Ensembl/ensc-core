@@ -26,7 +26,12 @@ typedef struct BaseAlignFeatureFuncsStruct {
 
 #define BASEALIGNFEATURE_DATA \
   FEATUREPAIR_DATA \
-  ECOSTRING  cigarString;
+  ECOSTRING  cigarString; \
+  double hCoverage; \
+  IDType externalDbID; \
+  ECOSTRING dbName; \
+  ECOSTRING dbDisplayName;
+  
 
 
 #define FUNCSTRUCTTYPE BaseAlignFeatureFuncs
@@ -39,6 +44,18 @@ BaseAlignFeature *BaseAlignFeature_new(void);
 
 ECOSTRING BaseAlignFeature_setCigarString(BaseAlignFeature *fp, char *ciggy);
 #define BaseAlignFeature_getCigarString(fp)  (fp)->cigarString
+
+ECOSTRING BaseAlignFeature_setDbName(BaseAlignFeature *fp, char *dbName);
+#define BaseAlignFeature_getDbName(fp)  (fp)->dbName
+
+ECOSTRING BaseAlignFeature_setDbDisplayName(BaseAlignFeature *fp, char *dbDisplayName);
+#define BaseAlignFeature_getDbDisplayName(fp)  (fp)->dbDisplayName
+
+#define BaseAlignFeature_setExternalDbID(fp, id)  (fp)->externalDbID = (id);
+#define BaseAlignFeature_getExternalDbID(fp)  (fp)->externalDbID;
+
+#define BaseAlignFeature_sethCoverage(fp, cov)  (fp)->hCoverage = (cov);
+#define BaseAlignFeature_gethCoverage(fp)  (fp)->hCoverage;
 
 #define BaseAlignFeature_getHitSeqName(fp)  FeaturePair_getHitSeqName((fp))
 #define BaseAlignFeature_setHitSeqName(fp,hid) FeaturePair_setHitSeqName((FeaturePair *)(fp),(hid))
@@ -94,19 +111,25 @@ ECOSTRING BaseAlignFeature_setCigarString(BaseAlignFeature *fp, char *ciggy);
 #define BaseAlignFeature_setSeqName(fp,str) FeaturePair_setSeqName((fp),(str))
 #define BaseAlignFeature_getSeqName(fp) FeaturePair_getSeqName((fp))
 
+#define BaseAlignFeature_setAdaptor(fp,ad) FeaturePair_setAdaptor((fp),(ad))
+#define BaseAlignFeature_getAdaptor(fp) FeaturePair_getAdaptor((fp))
+
 #define BaseAlignFeature_transformToRawContig(fp) FeaturePair_transformToRawContig((fp))
 #define BaseAlignFeature_transformToSlice(fp,slice) FeaturePair_transformToSlice((fp),(slice))
 
 #define BaseAlignFeature_free(fp) FeaturePair_free((fp))
 
 Vector *BaseAlignFeature_parseCigar(BaseAlignFeature *baf);
-Vector *BaseAlignFeature_transformSliceToRawContigImpl(BaseAlignFeature *baf);
+int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features);
+
 int BaseAlignFeature_getHitUnitImpl(void);
 int BaseAlignFeature_getQueryUnitImpl(void);
+
+Vector *BaseAlignFeature_transformSliceToRawContigImpl(BaseAlignFeature *baf);
 Vector *BaseAlignFeature_transformFeatureSliceToRawContig(BaseAlignFeature *baf, FeaturePair *fp);
 Vector *BaseAlignFeature_getUngappedFeatures(BaseAlignFeature *baf);
+
 void BaseAlignFeature_reverseComplementImpl(BaseAlignFeature *baf);
-int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features);
 
 void BaseAlignFeature_freeImpl(BaseAlignFeature *baf);
 

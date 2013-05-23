@@ -29,6 +29,17 @@ int DNAAlignFeature_getQueryUnit(void) {
   return 1;
 }
 
+ECOSTRING DNAAlignFeature_setExtraData(DNAAlignFeature *daf, char *extraData) {
+  EcoString_copyStr(ecoSTable, &(daf->extraData),extraData,0);
+
+  if (daf->extraData == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for extraData\n");
+    return NULL;
+  }
+
+  return daf->extraData;
+}
+
 void DNAAlignFeature_freeImpl(DNAAlignFeature *daf) {
   Object_decRefCount(daf);
 

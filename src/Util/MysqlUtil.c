@@ -38,7 +38,13 @@ IDType MysqlUtil_getLongLong(MYSQL_ROW row, int col) {
 }
 
 double MysqlUtil_getDouble(MYSQL_ROW row, int col) {
-  return atof(row[col]);
+  double val;
+  if (row[col] == NULL) {
+    val = 0.0;
+  } else {
+    val = atof(row[col]);
+  }
+  return val;
 }
 
 // Doesn't make a copy of string

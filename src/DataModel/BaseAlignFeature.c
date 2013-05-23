@@ -32,11 +32,38 @@ BaseAlignFeature *BaseAlignFeature_new() {
   return baf;
 }
 
-char *BaseAlignFeature_setCigarString(BaseAlignFeature *baf, char *str) {
+ECOSTRING BaseAlignFeature_setCigarString(BaseAlignFeature *baf, char *str) {
 //  baf->cigarString = StrUtil_copyString(&(baf->cigarString),str,0);
   EcoString_copyStr(ecoSTable, &(baf->cigarString),str,0);
 
+  if (baf->cigarString == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for cigarString\n");
+    return NULL;
+  }
+
   return baf->cigarString;
+}
+
+ECOSTRING BaseAlignFeature_setDbName(BaseAlignFeature *baf, char *dbName) {
+  EcoString_copyStr(ecoSTable, &(baf->dbName),dbName,0);
+
+  if (baf->dbName == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for dbName\n");
+    return NULL;
+  }
+
+  return baf->dbName;
+}
+
+ECOSTRING BaseAlignFeature_setDbDisplayName(BaseAlignFeature *baf, char *dbDisplayName) {
+  EcoString_copyStr(ecoSTable, &(baf->dbDisplayName),dbDisplayName,0);
+
+  if (baf->dbDisplayName == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for dbDisplayName\n");
+    return NULL;
+  }
+
+  return baf->dbDisplayName;
 }
 
 Vector *BaseAlignFeature_getUngappedFeatures(BaseAlignFeature *baf) {
@@ -543,7 +570,7 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
 
         if(insertionFlag) {
           fprintf(stderr, "Error: Should not be an deletion and insertion on the "
-                          "same alignment region. prev2 = %d f->hend() = %ld; cigar_line = %s\n",
+                          "same alignment region. prev2 = %d f->hend() = %d; cigar_line = %s\n",
                            prev2, FeaturePair_getHitEnd(f),string); 
           exit(1);
         }

@@ -12,6 +12,7 @@ DNAAlignFeatureAdaptor *DNAAlignFeatureAdaptor_new(DBAdaptor *dba);
 int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features);
 NameTableType *DNAAlignFeatureAdaptor_getTables(void); 
 char **DNAAlignFeatureAdaptor_getColumns(void);
+NameTableType *DNAAlignFeatureAdaptor_leftJoin(void);
 Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
                                                        StatementHandle *sth,
                                                        AssemblyMapper *assMapper,

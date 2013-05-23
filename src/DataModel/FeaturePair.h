@@ -88,6 +88,9 @@ ECOSTRING FeaturePair_setHitSpecies(FeaturePair *fp, char *str);
 #define FeaturePair_setPercId(fp,pid) SeqFeature_setPercId((fp),(pid))
 #define FeaturePair_getPercId(fp) SeqFeature_getPercId((fp))
 
+#define FeaturePair_setAdaptor(fp,ad) SeqFeature_setAdaptor((fp),(ad))
+#define FeaturePair_getAdaptor(fp) SeqFeature_getAdaptor((fp))
+
 #define FeaturePair_transformToRawContig(fp) SeqFeature_transformToRawContig((fp))
 #define FeaturePair_transformToSlice(fp,slice) SeqFeature_transformToSlice((fp),(slice))
 

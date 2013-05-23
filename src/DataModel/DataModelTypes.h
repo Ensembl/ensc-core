@@ -39,7 +39,6 @@ typedef struct SimpleFeatureStruct SimpleFeature;
 typedef struct SliceStruct Slice;
 typedef struct SpeciesStruct Species;
 typedef struct StableIdInfoStruct StableIdInfo;
-typedef struct StickyExonStruct StickyExon;
 typedef struct StorableStruct Storable;
 typedef struct TopLevelAssemblyMapperStruct TopLevelAssemblyMapper;
 typedef struct TranscriptStruct Transcript;

@@ -10,11 +10,14 @@ typedef struct DNAAlignFeatureFuncsStruct {
   BASEALIGNFEATUREFUNCS_DATA(DNAAlignFeature)
 } DNAAlignFeatureFuncs;
   
-
+#define DNAALIGNFEATURE_DATA \
+  BASEALIGNFEATURE_DATA \
+  ECOSTRING extraData; \
+  IDType pairDNAAlignFeatureId;
 
 #define FUNCSTRUCTTYPE DNAAlignFeatureFuncs
 struct DNAAlignFeatureStruct {
-  BASEALIGNFEATURE_DATA
+  DNAALIGNFEATURE_DATA
 };
 #undef FUNCSTRUCTTYPE
 
@@ -22,6 +25,24 @@ DNAAlignFeature *DNAAlignFeature_new(void);
 
 #define DNAAlignFeature_setCigarString(fp, ciggy) BaseAlignFeature_setCigarString((BaseAlignFeature *)(fp), (ciggy))
 #define DNAAlignFeature_getCigarString(fp) BaseAlignFeature_getCigarString((fp))
+
+#define DNAAlignFeature_setDbName(fp, dbName) BaseAlignFeature_setDbName((BaseAlignFeature *)(fp), (dbName))
+#define DNAAlignFeature_getDbName(fp) BaseAlignFeature_getDbName((fp))
+
+#define DNAAlignFeature_setDbDisplayName(fp, dbDisplayName) BaseAlignFeature_setDbDisplayName((BaseAlignFeature *)(fp), (dbDisplayName))
+#define DNAAlignFeature_getDbDisplayName(fp) BaseAlignFeature_getDbDisplayName((fp))
+
+#define DNAAlignFeature_sethCoverage(fp, hCoverage) BaseAlignFeature_sethCoverage((BaseAlignFeature *)(fp), (hCoverage))
+#define DNAAlignFeature_gethCoverage(fp) BaseAlignFeature_gethCoverage((fp))
+
+#define DNAAlignFeature_setExternalDbID(fp, externalDbId) BaseAlignFeature_setExternalDbID((BaseAlignFeature *)(fp), (externalDbId))
+#define DNAAlignFeature_getExternalDbID(fp) BaseAlignFeature_getExternalDbID((fp))
+
+#define DNAAlignFeature_setPairDNAAlignFeatureId(fp, dbId) (fp)->pairDNAAlignFeatureId = (dbId)
+#define DNAAlignFeature_getPairDNAAlignFeatureId(fp) fp->pairDNAAlignFeatureId
+
+ECOSTRING DNAAlignFeature_setExtraData(DNAAlignFeature *fp, char *extraData);
+#define DNAAlignFeature_getExtraData(fp)  (fp)->extraData
 
 #define DNAAlignFeature_getUngappedFeatures(fp) BaseAlignFeature_getUngappedFeatures((fp))
 
@@ -72,6 +93,10 @@ DNAAlignFeature *DNAAlignFeature_new(void);
 
 #define DNAAlignFeature_setHitSpecies(fp,sp) BaseAlignFeature_setHitSpecies((fp),(sp))
 #define DNAAlignFeature_getHitSpecies(fp) BaseAlignFeature_getHitSpecies((fp))
+
+#define DNAAlignFeature_setAdaptor(fp,ad) BaseAlignFeature_setAdaptor((fp),(ad))
+#define DNAAlignFeature_getAdaptor(fp) BaseAlignFeature_getAdaptor((fp))
+
 
 int DNAAlignFeature_getHitUnit(void);
 int DNAAlignFeature_getQueryUnit(void);

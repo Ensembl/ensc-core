@@ -567,78 +567,6 @@ Exon *Exon_transformSliceToRawContigImpl(Exon *exon) {
     }
   }
 
-/* No more stickys
-  if (mapped->nRange > 1 ) {
-    int stickyLength = 0;
-    int i;
-
-    StickyExon *stickyExon = StickyExon_new();
-    StickyExon_setPhase(stickyExon,Exon_getPhase(exon));
-    StickyExon_setEndPhase(stickyExon, Exon_getEndPhase(exon));
-    StickyExon_setAdaptor(stickyExon, Exon_getAdaptor(exon));
-    StickyExon_setStart(stickyExon, 1);
-    if (Exon_getDbID(exon)) {
-      StickyExon_setDbID(stickyExon, Exon_getDbID(exon));
-    }
-
-    // and then all the component exons ...
-    for (i=0; i < mapped->nRange; i++ ) {
-      Exon *componentExon;
-      RawContig *rawContig;
-      MapperRange *mr;
-      MapperCoordinate *mc;
-     
-      mr = MapperRangeSet_getRangeAt(mapped, i);
-
-      if( mr->rangeType == MAPPERRANGE_GAP) {
-        fprintf(stderr,"Error: exon lies on a gap cannot be mapped\n");
-        exit(1);
-      }
-
-      mc = (MapperCoordinate *)mr;
-
-      componentExon = Exon_new();
-
-      Exon_setStart(componentExon, mc->start );
-      Exon_setEnd(componentExon, mc->end );
-      Exon_setStrand(componentExon, mc->strand);
-
-      rawContig = RawContigAdaptor_fetchByDbID(rca, mc->id);
-      Exon_setContig(componentExon, rawContig);
-
-      Exon_setStickyRank(componentExon, i+1 );
-      Exon_setPhase(componentExon, Exon_getPhase(exon));
-      Exon_setEndPhase(componentExon, Exon_getEndPhase(exon));
-      Exon_setDbID(componentExon, Exon_getDbID(exon));
-      Exon_setAdaptor(componentExon, Exon_getAdaptor(exon));
-
-      // add the supporting features on this contig to the component exon
-      if (StringHash_contains(SFHash, RawContig_getName(rawContig))) {
-        Vector *sfVect = StringHash_getValue(SFHash, RawContig_getName(rawContig));
-        Exon_addSupportingFeatures(componentExon, sfVect);
-      }
-
-      StickyExon_addComponentExon(stickyExon, componentExon);
-      stickyLength += ( mc->end - mc->start + 1 );
-    }
-    StickyExon_setEnd(stickyExon, stickyLength);
-    StickyExon_setStrand(stickyExon, 1);
-    if (Exon_getStableId(exon)) {
-      StickyExon_setStableId(stickyExon, Exon_getStableId(exon));
-    }
-    if (Exon_getVersion(exon)) {
-      StickyExon_setVersion(stickyExon, Exon_getVersion(exon));
-    }
-    if (Exon_getModified(exon)) {
-      StickyExon_setModified(stickyExon, Exon_getModified(exon));
-    }
-    if (Exon_getCreated(exon)) {
-      StickyExon_setCreated(stickyExon, Exon_getCreated(exon));
-    }
-    return (Exon *)stickyExon;
-
-  } else {
-*/
     // thats a simple exon
 
     RawContig *rawContig;
@@ -674,9 +602,6 @@ Exon *Exon_transformSliceToRawContigImpl(Exon *exon) {
     }
 
     return newExon;
-/*
-  }
-*/
 // NIY freeing old exons, old supporting features, SFHash Vectors
   if (SFHash) StringHash_free(SFHash, NULL);
 }
