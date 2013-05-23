@@ -51,8 +51,8 @@ DNAPepAlignFeature *DNAPepAlignFeature_new(void);
 #define DNAPepAlignFeature_setAnalysis(fp,anal) BaseAlignFeature_setAnalysis((fp),(anal))
 #define DNAPepAlignFeature_getAnalysis(fp) BaseAlignFeature_getAnalysis((fp))
 
-#define DNAPepAlignFeature_setContig(fp,contig) BaseAlignFeature_setContig((fp),(contig))
-#define DNAPepAlignFeature_getContig(fp) BaseAlignFeature_getContig((fp))
+#define DNAPepAlignFeature_setSlice(fp,contig) BaseAlignFeature_setSlice((fp),(contig))
+#define DNAPepAlignFeature_getSlice(fp) BaseAlignFeature_getSlice((fp))
 
 #define DNAPepAlignFeature_setScore(fp,score) BaseAlignFeature_setScore((fp),(score))
 #define DNAPepAlignFeature_getScore(fp) BaseAlignFeature_getScore((fp))
@@ -66,6 +66,7 @@ DNAPepAlignFeature *DNAPepAlignFeature_new(void);
 int DNAPepAlignFeature_getHitUnit(void);
 int DNAPepAlignFeature_getQueryUnit(void);
 
+
 #define DNAPepAlignFeature_transformToSlice(fp,slice) BaseAlignFeature_transformToSlice((fp),(slice))
 #define DNAPepAlignFeature_transformToRawContig(fp) BaseAlignFeature_transformToRawContig((fp))
 
@@ -75,6 +76,9 @@ int DNAPepAlignFeature_getQueryUnit(void);
 void DNAPepAlignFeature_freeImpl(DNAPepAlignFeature *dpaf);
 DNAPepAlignFeature *DNAPepAlignFeature_shallowCopyImpl(DNAPepAlignFeature *dpaf);
 
+#define DNAPepAlignFeature_getSeqRegionStart(paf) SeqFeature_getSeqRegionStart((paf))
+#define DNAPepAlignFeature_getSeqRegionEnd(paf) SeqFeature_getSeqRegionEnd((paf))
+#define DNAPepAlignFeature_getSeqRegionStrand(paf) SeqFeature_getSeqRegionStrand((paf))
 
 #ifdef __DNAPEPALIGNFEATURE_MAIN__
   DNAPepAlignFeatureFuncs

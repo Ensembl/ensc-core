@@ -556,7 +556,7 @@ Exon *Exon_transformSliceToRawContigImpl(Exon *exon) {
 */
       for (j=0; j<Vector_getNumElement(mappedFeats); j++) {
         BaseAlignFeature *rcbaf = Vector_getElementAt(mappedFeats,j);
-        char *contigName = BaseContig_getName(BaseAlignFeature_getContig(rcbaf));
+        char *contigName = BaseContig_getName(BaseAlignFeature_getSlice(rcbaf));
         Vector *rcVect;
         if (!StringHash_contains(SFHash, contigName)) {
           StringHash_add(SFHash, contigName, Vector_new());

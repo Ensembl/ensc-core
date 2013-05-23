@@ -48,7 +48,8 @@ int main(int argc, char *argv[]) {
   for (i=0;i<Vector_getNumElement(features) && !failed;i++) {
     DNAAlignFeature *daf = Vector_getElementAt(features,i);
     Vector *ungapped;
-    //fprintf(stderr, "slice start %ld end %ld\n", DNAAlignFeature_getStart(daf), DNAAlignFeature_getEnd(daf));
+    fprintf(stderr, "slice start %ld end %ld analysis %s\n", DNAAlignFeature_getStart(daf), DNAAlignFeature_getEnd(daf), Analysis_getLogicName(DNAAlignFeature_getAnalysis(daf)));
+/*
     char *oldCigar = DNAAlignFeature_getCigarString(daf);
 
     //printf(" cigar = %s pre ungapped\n",DNAAlignFeature_getCigarString(daf));
@@ -65,8 +66,11 @@ int main(int argc, char *argv[]) {
       printf(" cigars different %s %s\n",oldCigar, DNAAlignFeature_getCigarString(daf));
       failed = 1;
     }
+*/
   }
   ok(5, !failed);
+
+exit(1);
 
 //  fprintf(stderr,"Clearing dafa cache\n");
 //  DNAAlignFeatureAdaptor_clearCache(dafa);

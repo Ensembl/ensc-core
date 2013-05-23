@@ -197,7 +197,7 @@ Vector *BaseAlignFeature_parseCigar(BaseAlignFeature *baf) {
   // NIY memory
         FeaturePair_setHitSeqName(fp, BaseAlignFeature_getHitSeqName(baf));
   
-        FeaturePair_setContig(fp,BaseAlignFeature_getContig(baf));
+        FeaturePair_setSlice(fp,BaseAlignFeature_getSlice(baf));
         FeaturePair_setAnalysis(fp,BaseAlignFeature_getAnalysis(baf));
   
         Vector_addElement(features,fp);
@@ -294,7 +294,7 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
 
 
   hstrand = FeaturePair_getHitStrand(fp);
-  contig  = FeaturePair_getContig(fp);
+  contig  = FeaturePair_getSlice(fp);
   name    = FeaturePair_getSeqName(fp);
   hname   = FeaturePair_getHitSeqName(fp);
   score   = FeaturePair_getScore(fp);
@@ -574,7 +574,7 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
   BaseAlignFeature_setpValue(baf, pvalue);
 
   if (contig) {
-    BaseAlignFeature_setContig(baf, contig);
+    BaseAlignFeature_setSlice(baf, contig);
   } else {
     BaseAlignFeature_setSeqName(baf, name);
   }
@@ -594,7 +594,7 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
 
 
 Vector *BaseAlignFeature_transformSliceToRawContigImpl(BaseAlignFeature *baf) {
-  Slice *slice = (Slice *)BaseAlignFeature_getContig(baf);
+  Slice *slice = (Slice *)BaseAlignFeature_getSlice(baf);
   SliceAdaptor *sa;
   RawContigAdaptor *rca;
   Vector *out;
@@ -638,7 +638,7 @@ Vector *BaseAlignFeature_transformSliceToRawContigImpl(BaseAlignFeature *baf) {
   // sort the transformed ungapped features into contig buckets
   for (i=0;i<Vector_getNumElement(mappedFeatures); i++) {
     FeaturePair *mf = Vector_getElementAt(mappedFeatures,i);
-    IDType contigId = BaseContig_getDbID(FeaturePair_getContig(mf));
+    IDType contigId = BaseContig_getDbID(FeaturePair_getSlice(mf));
     Vector *contigFeatures;
 
     if (!IDHash_contains(rcFeatures, contigId)) {
@@ -665,7 +665,7 @@ Vector *BaseAlignFeature_transformSliceToRawContigImpl(BaseAlignFeature *baf) {
     BaseAlignFeature_setpValue(outputf, BaseAlignFeature_getpValue(baf));
 
     contig = RawContigAdaptor_fetchByDbID(rca, keys[i]);
-    BaseAlignFeature_setContig(outputf, contig);
+    BaseAlignFeature_setSlice(outputf, contig);
     Vector_addElement(out, outputf);
   }
   free(keys);
@@ -692,8 +692,8 @@ int BaseAlignFeature_getQueryUnitImpl(void) {
 Vector *BaseAlignFeature_transformFeatureSliceToRawContig(BaseAlignFeature *baf, FeaturePair *fp) {
   int queryUnit = BaseAlignFeature_getQueryUnit();
   int hitUnit   = BaseAlignFeature_getHitUnit();
-  Slice *slice = (Slice *)FeaturePair_getContig(fp);
-  Slice *bafSlice = (Slice *)BaseAlignFeature_getContig(baf);
+  Slice *slice = (Slice *)FeaturePair_getSlice(fp);
+  Slice *bafSlice = (Slice *)BaseAlignFeature_getSlice(baf);
   SliceAdaptor *sa;
   RawContigAdaptor *rca;
   AssemblyMapperAdaptor *ama;
@@ -877,7 +877,7 @@ Vector *BaseAlignFeature_transformFeatureSliceToRawContig(BaseAlignFeature *baf,
       FeaturePair_setHitStrand(newFeature,FeaturePair_getHitStrand(fp));
       FeaturePair_setHitSeqName(newFeature,FeaturePair_getHitSeqName(fp));
       FeaturePair_setAnalysis(newFeature,FeaturePair_getAnalysis(fp));
-      FeaturePair_setContig(newFeature,rawContig);
+      FeaturePair_setSlice(newFeature,rawContig);
 
       Vector_addElement(out, newFeature);
 
@@ -919,7 +919,7 @@ Vector *BaseAlignFeature_transformFeatureSliceToRawContig(BaseAlignFeature *baf,
     FeaturePair_setHitStrand(newFeature,FeaturePair_getHitStrand(fp));
     FeaturePair_setHitSeqName(newFeature,FeaturePair_getHitSeqName(fp));
     FeaturePair_setAnalysis(newFeature,FeaturePair_getAnalysis(fp));
-    FeaturePair_setContig(newFeature,rawContig);
+    FeaturePair_setSlice(newFeature,rawContig);
 
     Vector_addElement(out, newFeature);
   }

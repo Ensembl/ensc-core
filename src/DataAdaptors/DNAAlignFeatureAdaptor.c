@@ -1,6 +1,5 @@
 #include "DNAAlignFeatureAdaptor.h"
 
-#include "RawContigAdaptor.h"
 #include "AnalysisAdaptor.h"
 #include "DNAAlignFeature.h"
 #include "SliceAdaptor.h"
@@ -31,13 +30,13 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
   int i;
   
   if (!Vector_getNumElement(features)) {
-    fprintf(stderr, "Warning: ProteinAlignFeatureAdaptor_store called with no features\n");
+    fprintf(stderr, "Warning: DNAAlignFeatureAdaptor_store called with no features\n");
     return 0;
   }
   
-  sprintf(qStr,"INSERT INTO dna_align_feature(contig_id, contig_start, contig_end,"
-                       "contig_strand, hit_start, hit_end, hit_strand, hit_name," 
-                       "cigar_line, analysis_id,score, evalue, perc_ident) "
+  sprintf(qStr,"INSERT INTO dna_align_feature(seq_region_id, seq_region_start, seq_region_end,"
+                       "seq_region_strand, hit_start, hit_end, hit_strand, hit_name," 
+                       "cigar_line, analysis_id, score, evalue, perc_ident) "
                        "VALUES (%" IDFMTSTR ",%%d,%%d,%%d,%%d,%%d,%%d,'%%s','%%s',%" 
                                 IDFMTSTR ",%%f,%%f,%%f)");
 
@@ -48,7 +47,7 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
     DNAAlignFeature *sf = Vector_getElementAt(features, i);
     Analysis *analysis = DNAAlignFeature_getAnalysis(sf);
     AnalysisAdaptor *aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
-    RawContig *contig;
+    Slice *slice = DNAAlignFeature_getSlice(sf);
 
 /* NIY
     if( !ref $sf || !$sf->isa("Bio::EnsEMBL::DNADnaAlignFeature") ) {
@@ -65,17 +64,10 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
     // will only store if object is not already stored in this database
     AnalysisAdaptor_store(aa,analysis);
 
-    contig = (RawContig *)DNAAlignFeature_getContig(sf);
-
-    if (!contig || contig->objectType != CLASS_RAWCONTIG) {
-      fprintf(stderr,"Error: contig isn't raw contig when trying to store\n");
-      exit(1);
-    }
-
-    sth->execute(sth, (IDType)RawContig_getDbID(contig), 
-                      DNAAlignFeature_getStart(sf), 
-                      DNAAlignFeature_getEnd(sf), 
-                      DNAAlignFeature_getStrand(sf), 
+    sth->execute(sth, (IDType)Slice_getSeqRegionId(slice),
+                      DNAAlignFeature_getSeqRegionStart(sf), 
+                      DNAAlignFeature_getSeqRegionEnd(sf), 
+                      DNAAlignFeature_getSeqRegionStrand(sf), 
                       DNAAlignFeature_getHitStart(sf), 
                       DNAAlignFeature_getHitEnd(sf),
                       DNAAlignFeature_getHitStrand(sf),
@@ -127,12 +119,13 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
   Vector *features;
   ResultRow *row;
 
-  aa  = DBAdaptor_getAnalysisAdaptor(bfa->dba);
+  aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
   sa = DBAdaptor_getSliceAdaptor(bfa->dba);
 
   features = Vector_new();
 
   Vector_setFreeFunc(features,Object_freeImpl);
+  Vector_setBatchSize(features, 10000);
   IDHash *sliceHash = IDHash_new(IDHASH_SMALL);
 
   if (destSlice) {
@@ -151,16 +144,17 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
     // Does this really need to be set ??? my $slice_name   = $slice->name();
 
 
-    while ((row = sth->fetchRow(sth))) {
+    while (row = sth->fetchRow(sth)) {
       DNAAlignFeature *daf;
-      int contigId    = row->getLongLongAt(row,1);
-      int contigStart = row->getIntAt(row,3);
-      int contigEnd   = row->getIntAt(row,4);
-      int contigStrand= row->getIntAt(row,5);
-
+      IDType contigId  = row->getLongLongAt(row,1);
+      int contigStart  = row->getIntAt(row,3);
+      int contigEnd    = row->getIntAt(row,4);
+      int contigStrand = row->getIntAt(row,5);
 
 // Perl has a cache for analysis types but the analysis adaptor should have one
       Analysis  *analysis = AnalysisAdaptor_fetchByDbID(aa, row->getLongLongAt(row,2));
+//      fprintf(stderr,"In fetch analysis = %s "IDFMTSTR" pointer %p\n", Analysis_getLogicName(analysis), row->getLongLongAt(row,2), analysis);
+      
 /*
       MapperCoordinate fRange;
 
@@ -208,7 +202,7 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
       daf = DNAAlignFeature_new();
 
       DNAAlignFeature_setDbID(daf,row->getLongLongAt(row,0));
-      DNAAlignFeature_setContig(daf,slice); 
+      DNAAlignFeature_setSlice(daf,slice); 
       DNAAlignFeature_setAnalysis(daf,analysis);
 
       DNAAlignFeature_setStart(daf,featStart);
@@ -229,6 +223,7 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
       Vector_addElement(features,daf);
     }
   } else { // No slice
+
 
     while ((row = sth->fetchRow(sth))) {
       DNAAlignFeature *daf;
@@ -251,7 +246,7 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
 
       DNAAlignFeature_setDbID(daf,row->getLongLongAt(row,0));
       //DNAAlignFeature_setContig(daf,contig); 
-      DNAAlignFeature_setContig(daf,slice); 
+      DNAAlignFeature_setSlice(daf,slice); 
       DNAAlignFeature_setAnalysis(daf,analysis);
 
       DNAAlignFeature_setStart(daf,row->getIntAt(row,3));

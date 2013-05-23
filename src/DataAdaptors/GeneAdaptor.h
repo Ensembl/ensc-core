@@ -17,7 +17,7 @@ struct GeneAdaptorStruct {
 GeneAdaptor *GeneAdaptor_new(DBAdaptor *dba);
 NameTableType *GeneAdaptor_getTables();
 char **GeneAdaptor_getColumns();
-void GeneAdaptor_store(GeneAdaptor *ga, Vector *genes);
+IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease);
 NameTableType *GeneAdaptor_leftJoin();
 Vector *GeneAdaptor_listDbIDs(GeneAdaptor *ga, int ordered);
 Vector *GeneAdaptor_listStableIDs(GeneAdaptor *ga);

@@ -79,8 +79,8 @@ ECOSTRING BaseAlignFeature_setCigarString(BaseAlignFeature *fp, char *ciggy);
 #define BaseAlignFeature_setAnalysis(fp,anal) FeaturePair_setAnalysis((fp),(anal))
 #define BaseAlignFeature_getAnalysis(fp) FeaturePair_getAnalysis((fp))
 
-#define BaseAlignFeature_setContig(fp,contig) FeaturePair_setContig((fp),(contig))
-#define BaseAlignFeature_getContig(fp) FeaturePair_getContig((fp))
+#define BaseAlignFeature_setSlice(fp,contig) FeaturePair_setSlice((fp),(contig))
+#define BaseAlignFeature_getSlice(fp) FeaturePair_getSlice((fp))
 
 #define BaseAlignFeature_setScore(fp,score) FeaturePair_setScore((fp),(score))
 #define BaseAlignFeature_getScore(fp) FeaturePair_getScore((fp))

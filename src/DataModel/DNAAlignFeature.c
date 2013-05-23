@@ -1,7 +1,7 @@
 #define __DNAALIGNFEATURE_MAIN__
 #include "DNAAlignFeature.h"
 #undef __DNAALIGNFEATURE_MAIN__
-#include "ProcUtil.h"
+//#include "ProcUtil.h"
 
 #include <string.h>
 
@@ -32,6 +32,7 @@ int DNAAlignFeature_getQueryUnit(void) {
 void DNAAlignFeature_freeImpl(DNAAlignFeature *daf) {
   Object_decRefCount(daf);
 
+  fprintf(stderr,"DAF_freeImpl called\n");
   if (Object_getRefCount(daf) > 0) {
 //    ProcUtil_showBacktrace(EnsC_progName);
 //    printf("return\n");

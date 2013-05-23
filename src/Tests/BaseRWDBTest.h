@@ -11,11 +11,13 @@ DBAdaptor *Test_initRWEnsDB() {
 //  dba = DBAdaptor_new("kaka.sanger.ac.uk","anonymous",NULL,"homo_sapiens_core_14_31",3306,NULL);
 //  dba = DBAdaptor_new("ecs2b.internal.sanger.ac.uk","ensro",NULL,"human_NCBI33_raw",3306,NULL);
 //  dba = DBAdaptor_new("127.0.0.1","ensro",NULL,"human_NCBI33_raw",13302,NULL);
-  dba = DBAdaptor_new("127.0.0.1","root",NULL,"test_core",3306,NULL);
+//  dba = DBAdaptor_new("127.0.0.1","root",NULL,"test_core",3306,NULL);
+  dba = DBAdaptor_new("genebuild1.internal.sanger.ac.uk","ensadmin","ensembl","steve_hs_71_37_testwrite",3306,NULL);
 
   return dba;
 }
 
+/*
 Slice *Test_getStandardSlice(DBAdaptor *dba) {
   Slice *slice;
   SliceAdaptor *sa;
@@ -26,4 +28,5 @@ Slice *Test_getStandardSlice(DBAdaptor *dba) {
 
   return slice;
 }
+*/
 #endif 

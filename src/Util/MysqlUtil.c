@@ -43,7 +43,6 @@ double MysqlUtil_getDouble(MYSQL_ROW row, int col) {
 
 // Doesn't make a copy of string
 char *MysqlUtil_getString(MYSQL_ROW row, int col) {
-  char *copy;
   if (row[col] == NULL) {
     return "";
   } else {

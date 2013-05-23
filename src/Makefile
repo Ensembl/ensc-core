@@ -35,6 +35,7 @@ all	: directories \
           Tests/CoordSystemTest \
           Tests/DBAdaptorTest \
           Tests/DNAAlignFeatureTest \
+          Tests/DNAAlignFeatureWriteTest \
           Tests/DNAPepAlignFeatureTest \
           Tests/EcoStringTest \
           Tests/FreeTest \
@@ -284,6 +285,13 @@ Tests/DNAAlignFeatureTest: \
 	Tests/BaseRODBTest.h \
 	Tests/DNAAlignFeatureTest.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) -o Tests/DNAAlignFeatureTest Tests/DNAAlignFeatureTest.c -L. -lensc $(LDFLAGS)
+
+Tests/DNAAlignFeatureWriteTest: \
+	libensc.a \
+	Tests/BaseRODBTest.h \
+	Tests/BaseRWDBTest.h \
+	Tests/DNAAlignFeatureWriteTest.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o Tests/DNAAlignFeatureWriteTest Tests/DNAAlignFeatureWriteTest.c -L. -lensc $(LDFLAGS)
 
 Tests/DNAPepAlignFeatureTest: \
 	libensc.a \

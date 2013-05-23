@@ -139,19 +139,19 @@ Analysis *AnalysisAdaptor_analysisFromRow(AnalysisAdaptor *aa, ResultRow *row) {
 
   Analysis_setAdaptor(anal,(BaseAdaptor *)aa);
   Analysis_setDbID(anal,row->getLongLongAt(row,0));
-  if (row->col(row,1))       Analysis_setLogicName (anal, row->getStringAt(row,1));
-  if (row->col(row,2))         Analysis_setProgram (anal, row->getStringAt(row,2));
+  if (row->col(row,1))       Analysis_setLogicName (anal, row->getStringCopyAt(row,1));
+  if (row->col(row,2))         Analysis_setProgram (anal, row->getStringCopyAt(row,2));
   if (row->col(row,3))  Analysis_setProgramVersion (anal, row->getIntAt(row,3));
-  if (row->col(row,4))     Analysis_setProgramFile (anal, row->getStringAt(row,4));
-  if (row->col(row,5))              Analysis_setDb (anal, row->getStringAt(row,5));
+  if (row->col(row,4))     Analysis_setProgramFile (anal, row->getStringCopyAt(row,4));
+  if (row->col(row,5))              Analysis_setDb (anal, row->getStringCopyAt(row,5));
   if (row->col(row,6))       Analysis_setDbVersion (anal, row->getIntAt(row,6));
-  if (row->col(row,7))          Analysis_setDbFile (anal, row->getStringAt(row,7));
-  if (row->col(row,8))          Analysis_setModule (anal, row->getStringAt(row,8));
+  if (row->col(row,7))          Analysis_setDbFile (anal, row->getStringCopyAt(row,7));
+  if (row->col(row,8))          Analysis_setModule (anal, row->getStringCopyAt(row,8));
   if (row->col(row,9))   Analysis_setModuleVersion (anal, row->getIntAt(row,9));
-  if (row->col(row,10))      Analysis_setGFFSource (anal, row->getStringAt(row,10));
-  if (row->col(row,11))     Analysis_setGFFFeature (anal, row->getStringAt(row,11));
-  if (row->col(row,12))        Analysis_setCreated (anal, row->getStringAt(row,12));
-  if (row->col(row,13))     Analysis_setParameters (anal, row->getStringAt(row,13));
+  if (row->col(row,10))      Analysis_setGFFSource (anal, row->getStringCopyAt(row,10));
+  if (row->col(row,11))     Analysis_setGFFFeature (anal, row->getStringCopyAt(row,11));
+  if (row->col(row,12))        Analysis_setCreated (anal, row->getStringCopyAt(row,12));
+  if (row->col(row,13))     Analysis_setParameters (anal, row->getStringCopyAt(row,13));
 
   return anal;
 }
@@ -173,7 +173,7 @@ IDType AnalysisAdaptor_store(AnalysisAdaptor *aa, Analysis *analysis) {
     return dbID;
   }
  
-  if (Analysis_getLogicName(analysis)) {
+  if (Analysis_getLogicName(analysis) == NULL) {
     fprintf(stderr,"Must have a logic name on the analysis object");
     exit(1);
   }

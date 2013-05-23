@@ -104,7 +104,6 @@ void ProcUtil_mallInfo() {
 #endif
 }
 
-
 // Adapted from code from http://blog.bigpixel.ro/2010/09/stack-unwinding-stack-trace-with-gcc/
 // Needs libunwind
 void ProcUtil_showBacktrace(char *prog) {

@@ -23,11 +23,13 @@ struct VectorStruct {
   void **elements;
   int nElement;
   int nAlloced;
+  int batchSize;
   int isSpecial;
   Vector_ElementFreeFunc freeElement;  
 };
 #undef FUNCSTRUCTTYPE
 
+#define VECTOR_DEFAULTBATCHSIZE 10
 
 Vector *Vector_new();
 void *Vector_addElement(Vector *vector, void *elem);
@@ -35,6 +37,7 @@ void *Vector_addElement(Vector *vector, void *elem);
 void *Vector_getElementAt(Vector *v, int ind);
 void Vector_free(Vector *vector);
 void Vector_setFreeFunc(Vector *vector, void freeFunc());
+void Vector_setBatchSize(Vector *vector, int batchSize);
 Vector *Vector_newFromArray(void **array, int nInArray);
 
 void Vector_append(Vector *dest, Vector *src);
@@ -60,10 +63,10 @@ void **Vector_toArray(Vector *v);
 #endif
 
 #ifdef __VECTOR_MAIN__
-  Vector  emptyVectorData = {CLASS_VECTOR,-1, &vectorFuncs, NULL,0,0,1,NULL};
+  Vector  emptyVectorData = {CLASS_VECTOR,-1, &vectorFuncs, NULL,0,0,0,1,NULL};
   Vector *emptyVector = &emptyVectorData;
   void   *singleEntryVectorArray[1] = { NULL };
-  Vector  singleEntryVectorData = {CLASS_VECTOR,-1, &vectorFuncs, singleEntryVectorArray,1,1,1,NULL};
+  Vector  singleEntryVectorData = {CLASS_VECTOR,-1, &vectorFuncs, singleEntryVectorArray,1,1,0,1,NULL};
   Vector *singleEntryVector = &singleEntryVectorData;
 #else
   extern Vector *emptyVector;

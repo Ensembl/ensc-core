@@ -47,7 +47,7 @@ int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) 
     DNAPepAlignFeature *sf = Vector_getElementAt(features, i);
     Analysis *analysis = DNAPepAlignFeature_getAnalysis(sf);
     AnalysisAdaptor *aa = DBAdaptor_getAnalysisAdaptor(bfa->dba);
-    RawContig *contig;
+    Slice *slice = DNAPepAlignFeature_getSlice(sf);
 
 /* NIY
     if( !ref $sf || !$sf->isa("Bio::EnsEMBL::DNAPepAlignFeature") ) {
@@ -64,12 +64,6 @@ int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) 
     // will only store if object is not already stored in this database
     AnalysisAdaptor_store(aa,analysis);
 
-   if (DNAPepAlignFeature_getContig(sf)->objectType != CLASS_RAWCONTIG) {
-      fprintf(stderr,"Error: contig isn't raw contig when trying to store\n");
-      exit(1);
-    }
-
-    contig = (RawContig *)DNAPepAlignFeature_getContig(sf);
 
 /* NIY
      unless(defined $contig && $contig->isa("Bio::EnsEMBL::RawContig")) { 
@@ -78,10 +72,10 @@ int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) 
      }   
 */
      
-    sth->execute(sth, (IDType)RawContig_getDbID(contig), 
-                      DNAPepAlignFeature_getStart(sf), 
-                      DNAPepAlignFeature_getEnd(sf), 
-                      DNAPepAlignFeature_getStrand(sf), 
+    sth->execute(sth, (IDType)Slice_getSeqRegionId(slice), 
+                      DNAPepAlignFeature_getSeqRegionStart(sf), 
+                      DNAPepAlignFeature_getSeqRegionEnd(sf), 
+                      DNAPepAlignFeature_getSeqRegionStrand(sf), 
                       DNAPepAlignFeature_getHitStart(sf), 
                       DNAPepAlignFeature_getHitEnd(sf),
                       DNAPepAlignFeature_getHitSeqName(sf), 
@@ -210,7 +204,7 @@ Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor
         slice = IDHash_getValue(sliceHash, srId);
       }
       //Slice *slice = SliceAdaptor_fetchBySeqRegionId(sa, row->getLongLongAt(row,1), POS_UNDEF, POS_UNDEF, 1);
-      DNAPepAlignFeature_setContig(dpaf,slice); 
+      DNAPepAlignFeature_setSlice(dpaf,slice); 
       DNAPepAlignFeature_setAnalysis(dpaf,analysis);
 
       DNAPepAlignFeature_setStart(dpaf,featStart);
@@ -251,7 +245,7 @@ Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor
       dpaf = DNAPepAlignFeature_new();
 
       DNAPepAlignFeature_setDbID(dpaf,row->getLongLongAt(row,0));
-      DNAPepAlignFeature_setContig(dpaf,slice); 
+      DNAPepAlignFeature_setSlice(dpaf,slice); 
       DNAPepAlignFeature_setAnalysis(dpaf,analysis);
 
       DNAPepAlignFeature_setStart(dpaf,row->getIntAt(row,3));

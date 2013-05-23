@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 
   for (i=0; i<Vector_getNumElement(dnaAligns); i++) {
     DNAAlignFeature *daf = Vector_getElementAt(dnaAligns,i);
-    Slice *slice = (Slice *)DNAAlignFeature_getContig(daf);
+    Slice *slice = (Slice *)DNAAlignFeature_getSlice(daf);
     printf(" %s %ld %ld and %s %d %d\n", DNAAlignFeature_getSeqName(daf),
                                        DNAAlignFeature_getStart(daf),
                                        DNAAlignFeature_getEnd(daf),

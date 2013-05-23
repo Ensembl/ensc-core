@@ -1303,12 +1303,12 @@ sub store_alt_alleles {
 */
 
 
-void GeneAdaptor_store(GeneAdaptor *ga, Vector *genes)  {
+IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
   fprintf(stderr,"Gene store not implemented yet\n");
   exit(1);
 
+/*
   
-/* NIY
   my ($self, $gene, $ignore_release) = @_;
 
   if (!ref $gene || !$gene->isa('Bio::EnsEMBL::Gene')) {
@@ -1323,7 +1323,7 @@ void GeneAdaptor_store(GeneAdaptor *ga, Vector *genes)  {
     return $gene->dbID();
   }
 
-  # ensure coords are correct before storing
+  // ensure coords are correct before storing
   $gene->recalculate_coordinates();
 
   my $analysis = $gene->analysis();
@@ -1338,7 +1338,7 @@ void GeneAdaptor_store(GeneAdaptor *ga, Vector *genes)  {
 
   my $type = $gene->biotype || "";
 
-  # default to is_current = 1 if this attribute is not set
+  // default to is_current = 1 if this attribute is not set
   my $is_current = $gene->is_current;
   $is_current = 1 unless (defined($is_current));
 
@@ -1372,8 +1372,8 @@ void GeneAdaptor_store(GeneAdaptor *ga, Vector *genes)  {
 
   }
 
-  # column status is used from schema version 34 onwards (before it was
-  # confidence)
+  // column status is used from schema version 34 onwards (before it was
+  // confidence)
 
   my $sth = $self->prepare($store_gene_sql);
   $sth->bind_param(1,  $type,                SQL_VARCHAR);
@@ -1387,8 +1387,8 @@ void GeneAdaptor_store(GeneAdaptor *ga, Vector *genes)  {
   $sth->bind_param(9,  $gene->status(),      SQL_VARCHAR);
   $sth->bind_param(10, $is_current,          SQL_TINYINT);
 
-  # Canonical transcript ID will be updated later.
-  # Set it to zero for now.
+  // Canonical transcript ID will be updated later.
+  // Set it to zero for now.
   $sth->bind_param(11, 0, SQL_TINYINT);
 
   $sth->bind_param(12, $gene->canonical_annotation(), SQL_VARCHAR);
@@ -1412,10 +1412,10 @@ void GeneAdaptor_store(GeneAdaptor *ga, Vector *genes)  {
     $dbEntryAdaptor->store($dbe, $gene_dbID, "Gene", $ignore_release);
   }
 
-  # We allow transcripts not to share equal exons and instead have
-  # copies.  For the database we still want sharing though, to have
-  # easier time with stable ids. So we need to have a step to merge
-  # exons together before store.
+  // We allow transcripts not to share equal exons and instead have
+  // copies.  For the database we still want sharing though, to have
+  // easier time with stable ids. So we need to have a step to merge
+  // exons together before store.
   my %exons;
 
   foreach my $trans (@{$gene->get_all_Transcripts}) {
@@ -1446,8 +1446,8 @@ void GeneAdaptor_store(GeneAdaptor *ga, Vector *genes)  {
       $new_canonical_transcript_id = $new->dbID();
     }
 
-    # update the original transcripts since we may have made copies of
-    # them by transforming the gene
+    // update the original transcripts since we may have made copies of
+    // them by transforming the gene
     $old->dbID($new->dbID());
     $old->adaptor($new->adaptor());
 
@@ -1458,8 +1458,8 @@ void GeneAdaptor_store(GeneAdaptor *ga, Vector *genes)  {
   }
 
   if (defined($new_canonical_transcript_id)) {
-    # Now the canonical transcript has been stored, so update the
-    # canonical_transcript_id of this gene with the new dbID.
+    // Now the canonical transcript has been stored, so update the
+    // canonical_transcript_id of this gene with the new dbID.
     my $sth = $self->prepare(
       q(
       UPDATE gene
@@ -1474,7 +1474,7 @@ void GeneAdaptor_store(GeneAdaptor *ga, Vector *genes)  {
     $sth->finish();
   }
 
-  # update gene to point to display xref if it is set
+  // update gene to point to display xref if it is set
   if (my $display_xref = $gene->display_xref) {
     my $dxref_id;
     if ($display_xref->is_stored($db)) {
@@ -1500,18 +1500,18 @@ void GeneAdaptor_store(GeneAdaptor *ga, Vector *genes)  {
     }
   }
 
-  # store gene attributes if there are any
+  // store gene attributes if there are any
   my $attr_adaptor = $db->get_AttributeAdaptor();
   $attr_adaptor->store_on_Gene($gene_dbID, $gene->get_all_Attributes);
 
-  # store unconventional transcript associations if there are any
+  // store unconventional transcript associations if there are any
   my $utaa = $db->get_UnconventionalTranscriptAssociationAdaptor();
   foreach my $uta (@{$gene->get_all_unconventional_transcript_associations()}) {
     $utaa->store($uta);
   }
 
-  # set the adaptor and dbID on the original passed in gene not the
-  # transfered copy
+  // set the adaptor and dbID on the original passed in gene not the
+  // transfered copy
   $original->adaptor($self);
   $original->dbID($gene_dbID);
 

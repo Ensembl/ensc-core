@@ -20,6 +20,8 @@ Vector *Vector_new() {
 
   vector->funcs = &vectorFuncs;
 
+  vector->batchSize = VECTOR_DEFAULTBATCHSIZE;
+
   return vector;
 }
 
@@ -36,6 +38,10 @@ Vector *Vector_newFromArray(void **array, int nInArray) {
 
 void Vector_setFreeFunc(Vector *v, void freeElement()) {
   v->freeElement = freeElement;
+}
+
+void Vector_setBatchSize(Vector *v, int batchSize) {
+  v->batchSize = batchSize;
 }
 
 void *Vector_getElementAt(Vector *v, int ind) {
@@ -145,7 +151,7 @@ void Vector_sort(Vector *v, SortCompFunc sortFunc) {
 void *Vector_addElement(Vector *v, void *elem) {
   if (elem == NULL) {
     fprintf(stderr, "WARNING: Element null in Vector_addElement call\n");
-    ProcUtil_showBacktrace(EnsC_progName);
+    //ProcUtil_showBacktrace(EnsC_progName);
   }
 
   if (!v->nElement) v->elements = NULL;
@@ -161,11 +167,11 @@ void Vector_setNumElement(Vector *v, int nElem) {
   int i;
   int nToAlloc;
 
-  int batchSize = 10;
+  int batchSize = v->batchSize;
 
-  if (v->nAlloced < nElem) {
-    v->nAlloced = nElem-(nElem%batchSize)+batchSize;
- //     fprintf(stderr, "v->nAlloced = %d nElem = %d\n", v->nAlloced, nElem);
+  if (v->nAlloced <= nElem) {
+    v->nAlloced = nElem-(nElem % batchSize)+batchSize;
+    //fprintf(stderr, "v->nAlloced = %d nElem = %d\n", v->nAlloced, nElem);
     if ((v->elements = (void **)realloc(v->elements,v->nAlloced*sizeof(void *))) == NULL) {
       fprintf(stderr,"ERROR: Failed allocating space for elem array\n");
       return;

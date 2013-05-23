@@ -76,8 +76,8 @@ ECOSTRING FeaturePair_setHitSpecies(FeaturePair *fp, char *str);
 #define FeaturePair_setAnalysis(fp,anal) SeqFeature_setAnalysis((fp),(anal))
 #define FeaturePair_getAnalysis(fp) SeqFeature_getAnalysis((fp))
 
-#define FeaturePair_setContig(fp,contig) SeqFeature_setContig((fp),(contig))
-#define FeaturePair_getContig(fp) SeqFeature_getContig((fp))
+#define FeaturePair_setSlice(fp,contig) SeqFeature_setSlice((fp),(contig))
+#define FeaturePair_getSlice(fp) SeqFeature_getSlice((fp))
 
 #define FeaturePair_setScore(fp,score) SeqFeature_setScore((fp),(score))
 #define FeaturePair_getScore(fp) SeqFeature_getScore((fp))
