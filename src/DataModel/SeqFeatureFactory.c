@@ -73,7 +73,7 @@ SeqFeature *SeqFeatureFactory_newFeatureFromFeature(SeqFeature *sf) {
       feature = PredictionTranscript_new(); 
       break;
     case CLASS_SIMPLEFEATURE:
-      feature = SimpleFeature_new(); 
+      feature = SimpleFeature_shallowCopy((SimpleFeature *)sf); 
       break;
     case CLASS_SEQFEATURE:
       feature = SeqFeature_new(); 

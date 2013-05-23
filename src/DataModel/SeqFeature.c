@@ -570,6 +570,7 @@ SeqFeature *SeqFeature_transform(SeqFeature *sf, char *csName, char *csVersion, 
       Slice_getStrand(slice) == 1) {
     // Temporary Hack - really need a clone method
     SeqFeature *newFeature = SeqFeatureFactory_newFeatureFromFeature(sf);
+
     SeqFeature_setStart(newFeature, SeqFeature_getStart(sf));
     SeqFeature_setEnd(newFeature, SeqFeature_getEnd(sf));
     SeqFeature_setStrand(newFeature, SeqFeature_getStrand(sf));
@@ -595,13 +596,14 @@ SeqFeature *SeqFeature_transform(SeqFeature *sf, char *csName, char *csVersion, 
   int nProjection = Vector_getNumElement(projection);
 
   if (nProjection == 0) {
+    fprintf(stderr, "nProjection = 0 no transform\n" );
     return NULL;
   }
 
   if (nProjection != 1 && toSlice == NULL) {
 // Warns were commented out - I've reinstated them for now for C just in case they catch something
-    //fprintf(stderr, "MORE than one projection and NO slice specified from %s to %s, %s\n", 
-    //        Slice_getName(SeqFeature_getSlice(sf)), csName, csVersion);
+    fprintf(stderr, "MORE than one projection and NO slice specified from %s to %s, %s\n", 
+            Slice_getName(SeqFeature_getSlice(sf)), csName, csVersion);
     return NULL;
   }
 
@@ -727,6 +729,7 @@ SeqFeature *SeqFeature_transfer(SeqFeature *sf, Slice *slice) {
 // NIY: How to do the copy, that is the question???
 // Temporary hack
   feature = SeqFeatureFactory_newFeatureFromFeature(sf);
+
   SeqFeature_setStart(feature, SeqFeature_getStart(sf));
   SeqFeature_setEnd(feature, SeqFeature_getEnd(sf));
   SeqFeature_setStrand(feature, SeqFeature_getStrand(sf));
@@ -752,6 +755,7 @@ SeqFeature *SeqFeature_transfer(SeqFeature *sf, Slice *slice) {
     SeqFeature *transformedFeature = SeqFeature_transform(feature, CoordSystem_getName(destCs), CoordSystem_getVersion(destCs), slice);
     if (transformedFeature == NULL) {
 // NIY: Free feature???
+      fprintf(stderr, "Warning: Feature could be transformed.\n");
       return NULL;
     }
 // NIY: Free feature???
@@ -877,6 +881,9 @@ Vector *SeqFeature_projectToSlice(SeqFeature *sf, Slice *toSlice) {
 //    Slice_free(featSlice);
     featSlice = invFeatSlice;
   }
+
+  fprintf(stderr, "feat slice %s\n", Slice_getName(featSlice));
+  fprintf(stderr, "to slice %s\n", Slice_getName(toSlice));
 
   Vector *out = Slice_projectToSlice(featSlice, toSlice);
 

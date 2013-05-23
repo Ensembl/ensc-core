@@ -33,6 +33,8 @@ int main(int argc, char *argv[]) {
   ok(3, features!=NULL);
   ok(4, Vector_getNumElement(features)!=0);
 
+  fprintf(stderr,"Number of features is %d\n", Vector_getNumElement(features));
+
   failed = 0;
   for (i=0;i<Vector_getNumElement(features) && !failed;i++) {
     SimpleFeature *sf = Vector_getElementAt(features,i);
@@ -45,9 +47,9 @@ int main(int argc, char *argv[]) {
     rsf = SeqFeature_transform(sf,"contig",NULL,NULL);
 
     if (rsf) {
-//      printf("rc start = %ld end = %ld\n",SimpleFeature_getStart(rsf),SimpleFeature_getEnd(rsf));
+      printf("rc start = %ld end = %ld\n",SimpleFeature_getStart(rsf),SimpleFeature_getEnd(rsf));
     } else {
-//      printf("no mapped feature\n");
+      printf("no mapped feature\n");
     }
 
     if (rsf) {

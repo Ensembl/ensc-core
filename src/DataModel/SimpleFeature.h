@@ -53,18 +53,21 @@ struct SimpleFeatureStruct {
 
 #define SimpleFeature_getLength(simpleFeature) SeqFeature_getLength((simpleFeature))
 
-#define SimpleFeature_setContig(simpleFeature,c) SeqFeature_setContig((simpleFeature),(c))
-#define SimpleFeature_getContig(simpleFeature) SeqFeature_getContig((simpleFeature))
+#define SimpleFeature_setSlice(simpleFeature,s) SeqFeature_setSlice((simpleFeature),(s))
+#define SimpleFeature_getSlice(simpleFeature) SeqFeature_getSlice((simpleFeature))
 
 #define SimpleFeature_transformToSlice(simpleFeature,slice) SeqFeature_transformToSlice((simpleFeature),(slice))
 #define SimpleFeature_transformToRawContig(simpleFeature) SeqFeature_transformToRawContig((simpleFeature))
 
 #define SimpleFeature_free(simpleFeature) SeqFeature_free((simpleFeature))
+#define SimpleFeature_shallowCopy(simpleFeature) SeqFeature_shallowCopy((simpleFeature))
 
 SimpleFeature *SimpleFeature_new();
 
 ECOSTRING SimpleFeature_setDisplayLabel(SimpleFeature *sf, char *label);
 #define SimpleFeature_getDisplayLabel(simpleFeature) (simpleFeature)->displayLabel
+
+SimpleFeature *SimpleFeature_shallowCopyImpl(SimpleFeature *sf);
 
 void SimpleFeature_freeImpl(SimpleFeature *sf);
 
@@ -72,7 +75,7 @@ void SimpleFeature_freeImpl(SimpleFeature *sf);
  SimpleFeatureFuncs
    simpleFeatureFuncs = {
                       SimpleFeature_freeImpl,
-                      NULL, // shallowCopy
+                      SimpleFeature_shallowCopyImpl, // shallowCopy
                       NULL, // deepCopy
                       NULL, // getStart
                       NULL, // setStart

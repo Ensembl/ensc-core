@@ -24,6 +24,14 @@ ECOSTRING SimpleFeature_setDisplayLabel(SimpleFeature *sf, char *label) {
   return sf->displayLabel;
 }
 
+SimpleFeature *SimpleFeature_shallowCopyImpl(SimpleFeature *sf) {
+  SimpleFeature *newSimpleFeature = SimpleFeature_new();
+
+  memcpy(newSimpleFeature,sf,sizeof(SimpleFeature));
+
+  return newSimpleFeature;
+}
+
 void SimpleFeature_freeImpl(SimpleFeature *sf) {
   Object_decRefCount(sf);
 

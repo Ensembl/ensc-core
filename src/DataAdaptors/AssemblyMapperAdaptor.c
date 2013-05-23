@@ -120,6 +120,7 @@ char *makeMappingPathKey(Vector *path, char *key) {
       key[pos++] = ':';
     }
   }
+  key[pos] = '\0';
   //fprintf(stderr, "Made mapping path key %s\n", key);
   
   return key;
