@@ -21,6 +21,21 @@ DNAPepAlignFeature *DNAPepAlignFeature_new(void);
 #define DNAPepAlignFeature_setCigarString(fp, ciggy) BaseAlignFeature_setCigarString((BaseAlignFeature *)(fp), (ciggy))
 #define DNAPepAlignFeature_getCigarString(fp) BaseAlignFeature_getCigarString((fp))
 
+#define DNAPepAlignFeature_setDbName(fp, dbName) BaseAlignFeature_setDbName((BaseAlignFeature *)(fp), (dbName))
+#define DNAPepAlignFeature_getDbName(fp) BaseAlignFeature_getDbName((fp))
+
+#define DNAPepAlignFeature_setDbDisplayName(fp, dbDisplayName) BaseAlignFeature_setDbDisplayName((BaseAlignFeature *)(fp), (dbDisplayName))
+#define DNAPepAlignFeature_getDbDisplayName(fp) BaseAlignFeature_getDbDisplayName((fp))
+
+#define DNAPepAlignFeature_sethCoverage(fp, hCoverage) BaseAlignFeature_sethCoverage((BaseAlignFeature *)(fp), (hCoverage))
+#define DNAPepAlignFeature_gethCoverage(fp) BaseAlignFeature_gethCoverage((fp))
+
+#define DNAPepAlignFeature_setExternalDbID(fp, externalDbId) BaseAlignFeature_setExternalDbID((BaseAlignFeature *)(fp), (externalDbId))
+#define DNAPepAlignFeature_getExternalDbID(fp) BaseAlignFeature_getExternalDbID((fp))
+
+#define DNAPepAlignFeature_setAdaptor(fp,ad) BaseAlignFeature_setAdaptor((fp),(ad))
+#define DNAPepAlignFeature_getAdaptor(fp) BaseAlignFeature_getAdaptor((fp))
+
 #define DNAPepAlignFeature_getUngappedFeatures(fp) BaseAlignFeature_getUngappedFeatures((fp))
 
 

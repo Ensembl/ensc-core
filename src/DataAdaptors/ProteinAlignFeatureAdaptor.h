@@ -13,6 +13,7 @@ Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor
                                                            StatementHandle *sth,
                                                            AssemblyMapper *assMapper,
                                                            Slice *slice);
+NameTableType *ProteinAlignFeatureAdaptor_leftJoin(void); 
 NameTableType *ProteinAlignFeatureAdaptor_getTables(void); 
 char **ProteinAlignFeatureAdaptor_getColumns(void);
 int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *baf, Vector *features);

@@ -561,3 +561,4 @@ Vector *DNAAlignFeatureAdaptor_listDbIDs(DNAAlignFeatureAdaptor *dafa, int order
 // NIY: Shouldn't really do this direct BaseAdaptor call but ...
   return BaseAdaptor_listDbIDs((BaseAdaptor *)dafa, "dna_align_feature", NULL, ordered);
 }
+
