@@ -841,7 +841,7 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
 
   Vector *featureCoordSystems;
 
-  char tmpStr[1024];
+  char tmpStr[655500];
   sprintf(tmpStr, "%sbuild.level", tableName);  
   Vector *metaValues = MetaContainer_listValueByKey(metaContainer, tmpStr);
 

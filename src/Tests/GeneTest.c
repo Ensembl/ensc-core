@@ -52,19 +52,18 @@ int main(int argc, char *argv[]) {
   failed = dumpGenes(genes);
   ok(5, !failed);
 
-  exit(1);
-  Vector *toplevelSlices = SliceAdaptor_fetchAll(sa, "toplevel", NULL, 0);
+  //Vector *toplevelSlices = SliceAdaptor_fetchAll(sa, "toplevel", NULL, 0);
+  Vector *toplevelSlices = SliceAdaptor_fetchAll(sa, "chromosome", NULL, 0);
 
   for (i=0;i<Vector_getNumElement(toplevelSlices) && !failed;i++) {
     Slice *tlSlice = Vector_getElementAt(toplevelSlices, i);
+    fprintf(stderr, "Slice %s\n", Slice_getName(tlSlice));
     genes =  Slice_getAllGenes(tlSlice, NULL, NULL, 1, NULL, NULL);
     fprintf(stderr, "Got %d genes on %s\n", Vector_getNumElement(genes), Slice_getName(tlSlice));
     failed = dumpGenes(genes);
   }
 
-
   tc_malloc_stats();
-
 
   fprintf(stderr,"\nEcostring table stats:\n");
   EcoString_getInfo(ecoSTable);

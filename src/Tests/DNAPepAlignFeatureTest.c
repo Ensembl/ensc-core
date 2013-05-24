@@ -62,19 +62,27 @@ int main(int argc, char *argv[]) {
     DNAPepAlignFeature *rdaf;
 
     // printf("slice start = %d end = %d\n",start,end);
-    rdafVector = DNAPepAlignFeature_transformToRawContig(daf);
+    // Temporary:
+    rdaf = SeqFeature_transform(daf, "contig", NULL, NULL);
+/*
     if (Vector_getNumElement(rdafVector) > 1) {
       printf("Feature mapped to more than one rawcontig\n");
       failed=1;
     }
     rdaf = Vector_getElementAt(rdafVector,0);
+*/
+    if (rdaf == NULL) {
+      printf("Feature didn't map\n");
+    } else {
 
     // printf("rc start = %d end = %d\n",DNAPepAlignFeature_getStart(rdaf),DNAPepAlignFeature_getEnd(rdaf));
-    daf = DNAPepAlignFeature_transformToSlice(rdaf, slice);
-    if (DNAPepAlignFeature_getStart(daf) != start ||
-        DNAPepAlignFeature_getEnd(daf) != end) {
-      printf("Remapping to slice produced different coords\n");
-      failed =1;
+      // Temporary:
+      daf = SeqFeature_transfer(rdaf, slice);
+      if (DNAPepAlignFeature_getStart(daf) != start ||
+          DNAPepAlignFeature_getEnd(daf) != end) {
+        printf("Remapping to slice produced different coords\n");
+        failed =1;
+      }
     }
   }
   ok(6, !failed);

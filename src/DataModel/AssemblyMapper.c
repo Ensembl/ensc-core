@@ -187,14 +187,36 @@ MapperRangeSet *AssemblyMapper_mapImpl(AssemblyMapper *am, char *frmSeqRegionNam
 
 =cut
 */
+// HACK HACK HACK
+void freeRegisterIDHash(IDHash *idHash) {
+  int i;
+  int j;
+
+  for (i=0; i<idHash->size; i++) {
+    if (idHash->bucketCounts[i]) {
+      // No need to free values because they weren't allocated 
+      free(idHash->buckets[i]);
+    }
+  }
+
+  free(idHash->bucketCounts);
+  free(idHash);
+}
 
 void AssemblyMapper_flushImpl(AssemblyMapper *am) {
-
   Mapper_flush( AssemblyMapper_getMapper(am) );
 
-  // IDHash_free may not be correct function type
-  IDHash_free( AssemblyMapper_getComponentRegister(am), IDHash_free);
-  IDHash_free( AssemblyMapper_getAssembledRegister(am), IDHash_free);
+// IDHash_free may not be correct function type
+// 
+//  IDHash_free( AssemblyMapper_getComponentRegister(am), IDHash_free);
+//  IDHash_free( AssemblyMapper_getAssembledRegister(am), IDHash_free);
+  IDHash_free( AssemblyMapper_getComponentRegister(am), NULL);
+// Note: HACK here to handle an IDHash within an IDHash - IDHash freeFunc only passes one arg on so need to HACK - will think about how to do this properly, I promise!
+  IDHash_free( AssemblyMapper_getAssembledRegister(am), freeRegisterIDHash);
+
+// Create new hashes
+  AssemblyMapper_setAssembledRegister(am, IDHash_new(IDHASH_MEDIUM));
+  AssemblyMapper_setComponentRegister(am, IDHash_new(IDHASH_MEDIUM));
 }
 
 /*

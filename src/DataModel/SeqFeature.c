@@ -602,8 +602,15 @@ SeqFeature *SeqFeature_transform(SeqFeature *sf, char *csName, char *csVersion, 
 
   if (nProjection != 1 && toSlice == NULL) {
 // Warns were commented out - I've reinstated them for now for C just in case they catch something
-    fprintf(stderr, "MORE than one projection and NO slice specified from %s to %s, %s\n", 
+    fprintf(stderr, "MORE than one projection and NO slice specified from %s to coordsystem %s, version %s\n", 
             Slice_getName(SeqFeature_getSlice(sf)), csName, csVersion);
+    int i;
+    for (i=0; i<nProjection; i++) {
+      ProjectionSegment *proj = Vector_getElementAt(projection, i);
+      fprintf(stderr, "  projection %d fromStart = %ld fromEnd = %ld toSlice = %s\n", i, ProjectionSegment_getFromStart(proj),
+              ProjectionSegment_getFromEnd(proj), Slice_getName(ProjectionSegment_getToSlice(proj)));
+    }
+    
     return NULL;
   }
 
@@ -881,9 +888,6 @@ Vector *SeqFeature_projectToSlice(SeqFeature *sf, Slice *toSlice) {
 //    Slice_free(featSlice);
     featSlice = invFeatSlice;
   }
-
-  fprintf(stderr, "feat slice %s\n", Slice_getName(featSlice));
-  fprintf(stderr, "to slice %s\n", Slice_getName(toSlice));
 
   Vector *out = Slice_projectToSlice(featSlice, toSlice);
 

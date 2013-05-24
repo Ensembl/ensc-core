@@ -1851,7 +1851,7 @@ Slice *SliceAdaptor_fetchByGeneStableId(SliceAdaptor *sa, char *geneId, int size
 // In perl if size not specified its 0, so use that when you call this function and don't want anything special for size
 Slice *SliceAdaptor_fetchByFeature(SliceAdaptor *sa, SeqFeature *feature, int size, int isPercent) {
 
-  Slice *slice = (Slice *)SeqFeature_getContig(feature);
+  Slice *slice = (Slice *)SeqFeature_getSlice(feature);
   if (slice == NULL) { // NIY: Do we need to do this check in C? || !($slice->isa('Bio::EnsEMBL::Slice') or $slice->isa('Bio::EnsEMBL::LRGSlice') )) {
     fprintf(stderr,"Feature must be attached to a valid slice.\n");
     exit(1);

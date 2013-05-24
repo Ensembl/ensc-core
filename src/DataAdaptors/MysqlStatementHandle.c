@@ -9,6 +9,7 @@
 #include "Error.h"
 #include "Class.h"
 
+#include "ProcUtil.h"
 
 StatementHandle *MysqlStatementHandle_new(DBConnection *dbc, char *query) {
   MysqlStatementHandle *sth;
@@ -84,11 +85,13 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
     exit(1);
   }
 
-  //printf("Statement after formatting = %s\n",statement);
+  // printf("Statement after formatting = %s\n",statement);
 
   if (mysql_real_query (m_sth->dbc->mysql, statement, qlen) != 0) {    /* the query failed */
-    fprintf(stderr, "Could not execute query %s\n", statement);
-    //free(statement);
+    fprintf(stderr, "Could not execute query %s\n\n", statement);
+    fprintf(stderr, "Stack trace:\n");
+    ProcUtil_showBacktrace(EnsC_progName);
+    
     return;
   }
 
