@@ -47,8 +47,8 @@ struct RepeatFeatureStruct {
 #define RepeatFeature_setAnalysis(repeat,ana) SeqFeature_setAnalysis((repeat),(ana))
 #define RepeatFeature_getAnalysis(repeat) SeqFeature_getAnalysis((repeat))
 
-#define RepeatFeature_setContig(repeat,c) SeqFeature_setContig((repeat),(c))
-#define RepeatFeature_getContig(repeat) SeqFeature_getContig((repeat))
+#define RepeatFeature_setSlice(repeat,s) SeqFeature_setSlice((repeat),(s))
+#define RepeatFeature_getSlice(repeat) SeqFeature_getSlice((repeat))
 
 #define RepeatFeature_setScore(repeat,score) SeqFeature_setScore((repeat),(score))
 #define RepeatFeature_getScore(repeat) SeqFeature_getScore((repeat))

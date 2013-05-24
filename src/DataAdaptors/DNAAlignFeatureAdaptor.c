@@ -538,6 +538,7 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
     Vector_addElement(features, daf); 
   } 
 
+  IDHash_free(sliceHash, NULL);
   return features;
 }
 

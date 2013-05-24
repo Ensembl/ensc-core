@@ -299,6 +299,7 @@ Vector *SimpleFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
     Vector_addElement(features, sf);
   }
 
+  IDHash_free(sliceHash, NULL);
   return features;
 }
 

@@ -444,6 +444,7 @@ Vector *PredictionExonAdaptor_objectsFromStatementHandle(PredictionExonAdaptor *
     Vector_addElement(exons, exon);
   }
 
+  IDHash_free(sliceHash, NULL);
   return exons;
 }
 

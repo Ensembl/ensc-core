@@ -444,6 +444,7 @@ Vector *PredictionTranscriptAdaptor_objectsFromStatementHandle(PredictionTranscr
     Vector_addElement(pTranscripts, pt);
   }
 
+  IDHash_free(sliceHash, NULL);
   return pTranscripts;
 }
 

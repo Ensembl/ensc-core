@@ -358,6 +358,7 @@ Vector *ProteinAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor
     Vector_addElement(features, paf);
   }
 
+  IDHash_free(sliceHash, NULL);
   return features;
 }
 

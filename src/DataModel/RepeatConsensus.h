@@ -19,6 +19,8 @@ struct RepeatConsensusStruct {
   ECOSTRING repeatClass;
   ECOSTRING consensus;
   ECOSTRING name;
+  ECOSTRING repeatType;
+  int length;
 };
 #undef FUNCSTRUCTTYPE
 
@@ -31,11 +33,17 @@ struct RepeatConsensusStruct {
 ECOSTRING RepeatConsensus_setRepeatClass(RepeatConsensus *rc, char *class);
 #define RepeatConsensus_getRepeatClass(rcs) (rcs)->repeatClass
 
+ECOSTRING RepeatConsensus_setRepeatType(RepeatConsensus *rc, char *type);
+#define RepeatConsensus_getRepeatType(rcs) (rcs)->repeatType
+
 ECOSTRING RepeatConsensus_setConsensus(RepeatConsensus *rc, char *cons);
 #define RepeatConsensus_getConsensus(rcs) (rcs)->consensus
 
 ECOSTRING RepeatConsensus_setName(RepeatConsensus *rc, char *name);
 #define RepeatConsensus_getName(rcs) (rcs)->name
+
+#define RepeatConsensus_setLength(rcs,len) (rcs)->length = (len)
+#define RepeatConsensus_getLength(rcs) (rcs)->length
 
 RepeatConsensus *RepeatConsensus_new();
 

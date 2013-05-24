@@ -29,6 +29,11 @@ ECOSTRING RepeatConsensus_setRepeatClass(RepeatConsensus *rc, char *class) {
   return rc->repeatClass;
 }
 
+ECOSTRING RepeatConsensus_setRepeatType(RepeatConsensus *rc, char *type) {
+  EcoString_copyStr(ecoSTable,&(rc->repeatType), type, 0);
+  return rc->repeatType;
+}
+
 ECOSTRING RepeatConsensus_setName(RepeatConsensus *rc, char *name) {
   EcoString_copyStr(ecoSTable,&(rc->name), name, 0);
   return rc->name;
