@@ -3,6 +3,7 @@
 #include "Error.h"
 #include "MysqlStatementHandle.h"
 #include "BaseAdaptor.h"
+#include "EcoString.h"
 
 DBConnection *DBConnection_new(char *host, char *user, char *pass, 
                                char *dbname, unsigned int port) {
@@ -27,10 +28,12 @@ DBConnection *DBConnection_new(char *host, char *user, char *pass,
     return NULL;
   }
 
-  StrUtil_copyString(&(dbc->host), host, 0);
-  StrUtil_copyString(&(dbc->user), user, 0);
-  if (pass) StrUtil_copyString(&(dbc->pass), pass, 0);
-  StrUtil_copyString(&(dbc->dbname), dbname, 0);
+  EcoString_copyStr(ecoSTable, &(dbc->host), host, 0);
+  EcoString_copyStr(ecoSTable, &(dbc->user), user, 0);
+  if (pass) EcoString_copyStr(ecoSTable, &(dbc->pass), pass, 0);
+  EcoString_copyStr(ecoSTable, &(dbc->dbname), dbname, 0);
+
+  dbc->port = port;
 
   dbc->mysql   = mysql;
   dbc->prepare = DBConnection_prepare;

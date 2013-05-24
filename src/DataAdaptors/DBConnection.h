@@ -4,6 +4,7 @@
 //#include "BaseAdaptor.h"
 #include "AdaptorTypes.h"
 #include "StatementHandle.h"
+#include "EcoString.h"
 
 #include <mysql.h>
 
@@ -11,11 +12,11 @@
 typedef StatementHandle *(*DBConnection_PrepareFunc)(DBConnection *dbc, char *queryStr, int queryLen);
 
 struct DBConnectionStruct {
-  char *host;
-  char *user;
-  char *pass;
+  ECOSTRING host;
+  ECOSTRING user;
+  ECOSTRING pass;
   unsigned int   port;
-  char *dbname;
+  ECOSTRING dbname;
   MYSQL *mysql;
   DBConnection_PrepareFunc prepare;
   BaseAdaptor **adaptors;

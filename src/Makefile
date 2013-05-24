@@ -170,6 +170,7 @@ libensc.a	: \
 	objectfiles/DataModel/Slice.o \
 	objectfiles/DataModel/Species.o \
 	objectfiles/DataModel/StableIdInfo.o \
+	objectfiles/DataModel/Storable.o \
 	objectfiles/DataModel/TopLevelAssemblyMapper.o \
 	objectfiles/DataModel/Transcript.o \
 	objectfiles/DataModel/Translation.o \
