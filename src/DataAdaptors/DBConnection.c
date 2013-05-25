@@ -31,7 +31,7 @@ DBConnection *DBConnection_new(char *host, char *user, char *pass,
   EcoString_copyStr(ecoSTable, &(dbc->host), host, 0);
   EcoString_copyStr(ecoSTable, &(dbc->user), user, 0);
   if (pass) EcoString_copyStr(ecoSTable, &(dbc->pass), pass, 0);
-  EcoString_copyStr(ecoSTable, &(dbc->dbname), dbname, 0);
+  EcoString_copyStr(ecoSTable, &(dbc->dbName), dbname, 0);
 
   dbc->port = port;
 
@@ -40,7 +40,7 @@ DBConnection *DBConnection_new(char *host, char *user, char *pass,
 
   if (!dbc->host   || 
       !dbc->user   || 
-      !dbc->dbname ||
+      !dbc->dbName ||
       (pass && !dbc->pass)) {
     Error_trace("DBConnnection_new",NULL);
     return NULL;

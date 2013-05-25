@@ -34,6 +34,8 @@ struct AnalysisStruct {
 
 Analysis *Analysis_new(void);
 
+#define Analysis_isStored(a, db) Storable_isStored(&((a)->st), (db))
+
 #define Analysis_setDbID(a,dbID) Storable_setDbID(&((a)->st),dbID)
 #define Analysis_getDbID(a) Storable_getDbID(&((a)->st))
 

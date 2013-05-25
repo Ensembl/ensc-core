@@ -130,102 +130,112 @@ char **DNAAlignFeatureAdaptor_getColumns(void) {
 =cut
 */
 int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
-  fprintf(stderr,"DNAAlignFeatureAdaptor_store not implemented\n");
-  exit(1);
 
-/* NIY
-  throw("Must call store with features") if ( scalar(@feats) == 0 );
+  if (features == NULL || Vector_getNumElement(features) == 0) {
+    fprintf(stderr,"Must call store with features\n");
+    exit(1);
+  }
 
-  my @tabs = $self->_tables;
-  my ($tablename) = @{ $tabs[0] };
+  NameTableType *tables = bfa->getTables();
+  char *tableName = (*tables)[0][NAME];
 
-  my $db               = $self->db();
-  my $analysis_adaptor = $db->get_AnalysisAdaptor();
+  DBAdaptor *db                    = bfa->dba;
+  AnalysisAdaptor *analysisAdaptor = DBAdaptor_getAnalysisAdaptor(db);
 
-  my $sth = $self->prepare(
-    "INSERT INTO $tablename (seq_region_id, seq_region_start,
-                             seq_region_end, seq_region_strand,
-                             hit_start, hit_end, hit_strand, hit_name,
-                             cigar_line, analysis_id, score, evalue,
-                             perc_ident, external_db_id, hcoverage,
-                             pair_dna_align_feature_id)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"    # 16 arguments
-  );
+  char qStr[1024];
+  sprintf(qStr,
+    "INSERT INTO %s (seq_region_id, seq_region_start,"
+                    "seq_region_end, seq_region_strand,"
+                    "hit_start, hit_end, hit_strand, hit_name,"
+                    "cigar_line, analysis_id, score, evalue,"
+                    "perc_ident, external_db_id, hcoverage,"
+                    "pair_dna_align_feature_id) "
+                    "VALUES (%" IDFMTSTR ",%%d,%%d,%%d,%%d,%%d,%%d,'%%s','%%s',%"
+                                IDFMTSTR ",%%f,%%f,%%f,%" IDFMTSTR ",%%f,%" IDFMTSTR ")", tableName);
 
-FEATURE:
-  foreach my $feat (@feats) {
-    if ( !ref $feat || !$feat->isa("Bio::EnsEMBL::DnaDnaAlignFeature") )
-    {
-      throw("feature must be a Bio::EnsEMBL::DnaDnaAlignFeature,"
-          . " not a ["
-          . ref($feat)
-          . "]." );
+  StatementHandle *sth = bfa->prepare((BaseAdaptor *)bfa, qStr,strlen(qStr));
+
+  int i;
+  for (i=0; i<Vector_getNumElement(features); i++) {
+    char fixedCigar[1024];
+
+    DNAAlignFeature *feat = Vector_getElementAt(features, i);
+
+    if (feat == NULL) {
+      fprintf(stderr, "feature is NULL in DNAAlignFeature_store\n");
+      exit(1);
     }
 
-    if ( $feat->is_stored($db) ) {
-      warning( "DnaDnaAlignFeature ["
-          . $feat->dbID()
-          . "] is already stored in this database." );
-      next FEATURE;
+    Class_assertType(CLASS_DNADNAALIGNFEATURE, feat->objectType);
+
+    if (DNAAlignFeature_isStored(feat, db)) {
+      fprintf(stderr, "DNAAlignFeature ["IDFMTSTR"] is already stored in this database.\n", DNAAlignFeature_getDbID(feat) );
+      continue;
     }
 
-    my $hstart  = $feat->hstart();
-    my $hend    = $feat->hend();
-    my $hstrand = $feat->hstrand();
-    $self->_check_start_end_strand( $hstart, $hend, $hstrand );
+    BaseFeatureAdaptor_checkStartEndStrand(bfa,
+                                           DNAAlignFeature_getHitStart(feat),
+                                           DNAAlignFeature_getHitEnd(feat),
+                                           DNAAlignFeature_getHitStrand(feat),
+                                           NULL);
 
-    my $cigar_string = $feat->cigar_string();
-    if ( !$cigar_string ) {
-      $cigar_string = $feat->length() . 'M';
-      warning( "DnaDnaAlignFeature does not define a cigar_string.\n"
-          . "Assuming ungapped block with cigar_line=$cigar_string ." );
+    char *cigarString = DNAAlignFeature_getCigarString(feat);
+
+    if (cigarString == NULL) {
+      sprintf(fixedCigar, "%ldM", DNAAlignFeature_getLength(feat));
+      cigarString = fixedCigar;
+      fprintf(stderr, "DNAAlignFeature does not define a cigar_string.\n"
+                      "Assuming ungapped block with cigar_line = %s.\n", cigarString);
     }
 
-    my $hseqname = $feat->hseqname();
-    if ( !$hseqname ) {
-      throw("DnaDnaAlignFeature must define an hseqname.");
+    if (DNAAlignFeature_getHitSeqName(feat) == NULL) {
+      fprintf(stderr, "DNAAlignFeature must define an hseqname.\n");
+      exit(1);
     }
 
-    if ( !defined( $feat->analysis ) ) {
-      throw(
-        "An analysis must be attached to the features to be stored.");
+    Analysis *analysis = DNAAlignFeature_getAnalysis(feat);
+    if (analysis == NULL) {
+      fprintf(stderr,"An analysis must be attached to the features to be stored.\n");
+      exit(1);
     }
 
-    #store the analysis if it has not been stored yet
-    if ( !$feat->analysis->is_stored($db) ) {
-      $analysis_adaptor->store( $feat->analysis() );
+    // store the analysis if it has not been stored yet
+    if (Analysis_isStored(analysis, db)) {
+      AnalysisAdaptor_store(analysisAdaptor, analysis);
     }
 
-    my $original = $feat;
-    my $seq_region_id;
-    ( $feat, $seq_region_id ) = $self->_pre_store($feat);
+// Note no feature transfer in preStore currently so no new feature
+// I can't see an obvious absolute requirement for the transfer to
+// happen, so I'd really really really prefer NOT to do it, as it
+// will cause all sorts of pain freeing up the temporary stuff
+    //my $original = $feat;
+    // ( $feat, $seq_region_id ) = $self->_pre_store($feat);
+    IDType seqRegionId = BaseFeatureAdaptor_preStore(bfa, feat);
 
-    $sth->bind_param( 1,  $seq_region_id,        SQL_INTEGER );
-    $sth->bind_param( 2,  $feat->start,          SQL_INTEGER );
-    $sth->bind_param( 3,  $feat->end,            SQL_INTEGER );
-    $sth->bind_param( 4,  $feat->strand,         SQL_TINYINT );
-    $sth->bind_param( 5,  $hstart,               SQL_INTEGER );
-    $sth->bind_param( 6,  $hend,                 SQL_INTEGER );
-    $sth->bind_param( 7,  $hstrand,              SQL_TINYINT );
-    $sth->bind_param( 8,  $hseqname,             SQL_VARCHAR );
-    $sth->bind_param( 9,  $cigar_string,         SQL_LONGVARCHAR );
-    $sth->bind_param( 10, $feat->analysis->dbID, SQL_INTEGER );
-    $sth->bind_param( 11, $feat->score,          SQL_DOUBLE );
-    $sth->bind_param( 12, $feat->p_value,        SQL_DOUBLE );
-    $sth->bind_param( 13, $feat->percent_id,     SQL_FLOAT );
-    $sth->bind_param( 14, $feat->external_db_id, SQL_INTEGER );
-    $sth->bind_param( 15, $feat->hcoverage,      SQL_DOUBLE );
-    $sth->bind_param( 16, $feat->pair_dna_align_feature_id,
-      SQL_INTEGER );
+// Note using SeqRegionStart etc here rather than Start - should have same effect as perl's transfer
+    sth->execute(sth, (IDType)seqRegionId,
+                      DNAAlignFeature_getSeqRegionStart(feat),
+                      DNAAlignFeature_getSeqRegionEnd(feat),
+                      DNAAlignFeature_getSeqRegionStrand(feat),
+                      DNAAlignFeature_getHitStart(feat),
+                      DNAAlignFeature_getHitEnd(feat),
+                      DNAAlignFeature_getHitStrand(feat),
+                      DNAAlignFeature_getHitSeqName(feat),
+                      cigarString,
+                      (IDType)Analysis_getDbID(analysis),
+                      DNAAlignFeature_getScore(feat),
+                      DNAAlignFeature_getpValue(feat),
+                      DNAAlignFeature_getPercId(feat),
+                      (IDType)DNAAlignFeature_getExternalDbID(feat),
+                      DNAAlignFeature_gethCoverage(feat),
+                      (IDType)DNAAlignFeature_getPairDNAAlignFeatureId(feat));
 
-    $sth->execute();
 
-    $original->dbID( $sth->{'mysql_insertid'} );
-    $original->adaptor($self);
-  } ## end foreach my $feat (@feats)
+    DNAAlignFeature_setDbID(feat,sth->getInsertId(sth));
+    DNAAlignFeature_setAdaptor(feat, (BaseAdaptor *)bfa);
+  }
 
-  $sth->finish();
-*/
+  sth->finish(sth);
 }
 
 

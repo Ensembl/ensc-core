@@ -11,6 +11,7 @@
 #include "CoordSystemAdaptor.h"
 #include "SimpleFeature.h"
 #include "ProjectionSegment.h"
+#include "EcoString.h"
 
 SeqFeature *SeqFeature_new(void) {
   SeqFeature *sf;
@@ -1084,8 +1085,10 @@ sub feature_Slice {
        -adaptor           => $slice->adaptor());
   }
 }
+*/
 
 
+/*
 =head2 seq_region_name
 
   Arg [1]    : none
@@ -1098,15 +1101,20 @@ sub feature_Slice {
   Status     : Stable
 
 =cut
+*/
+ECOSTRING SeqFeature_getSeqRegionName(SeqFeature *sf) {
+  Slice *slice = SeqFeature_getSlice(sf);
 
-sub seq_region_name {
-  my $self = shift;
-  my $slice = $self->{'slice'};
+  if (slice != NULL) {
+    return Slice_getSeqRegionName(slice);
+  }
 
-  return ($slice) ? $slice->seq_region_name() : undef;
+  // No slice - return NULL
+  return NULL;
 }
 
 
+/*
 =head2 seq_region_length
 
   Arg [1]    : none
@@ -1119,16 +1127,18 @@ sub seq_region_name {
   Status     : Stable
 
 =cut
+*/
+long SeqFeature_getSeqRegionLength(SeqFeature *sf) {
+  Slice *slice = SeqFeature_getSlice(sf);
 
+  if (slice != NULL) {
+    return Slice_getSeqRegionLength(slice);
+  }
 
-sub seq_region_length {
-  my $self = shift;
-  my $slice = $self->{'slice'};
-
-  return ($slice) ? $slice->seq_region_length() : undef;
+  // No slice - return LENGTH_UNDEF
+  return LENGTH_UNDEF;
 }
 
-*/
 
 /*
 =head2 seq_region_strand
@@ -1219,8 +1229,6 @@ int SeqFeature_getSeqRegionStart(SeqFeature *sf) {
   Example    : print $feature->seq_region_end();
   Description: Convenience method which returns the absolute end of this
                feature on the seq_region, as opposed to the relative (slice)
-               position.
-
                Returns undef if this feature is not on a slice.
   Returntype : int or undef
   Exceptions : none
@@ -1457,8 +1465,10 @@ sub get_all_alt_locations {
 
   return \@features;
 }
+*/
 
 
+/*
 =head2 overlaps
 
   Arg [1]    : Bio::EnsEMBL::Feature $f
@@ -1474,23 +1484,21 @@ sub get_all_alt_locations {
   Status     : Stable
 
 =cut
+*/
+int SeqFeature_overlaps(SeqFeature *sf, SeqFeature *f) {
+  ECOSTRING sr1Name = SeqFeature_getSeqRegionName(sf);
+  ECOSTRING sr2Name = SeqFeature_getSeqRegionName(f);
 
-sub overlaps {
-  my $self = shift;
-  my $f = shift;
-
-  my $sr1_name = $self->seq_region_name;
-  my $sr2_name = $f->seq_region_name;
-
-  if ($sr1_name and $sr2_name and ($sr1_name ne $sr2_name)) {
-    warning("Bio::EnsEMBL::Feature->overlaps(): features are on different seq regions.");
-    return undef;
+  if (sr1Name!=NULL && sr2Name!=NULL && EcoString_strcmp(sr1Name,  sr2Name)) {
+    fprintf(stderr, "SeqFeature_overlaps(): features are on different seq regions.\n");
+    return 0;
   }
   
-  return ($self->seq_region_end >= $f->seq_region_start and $self->seq_region_start <= $f->seq_region_end);
+  return (SeqFeature_getSeqRegionEnd(sf) >= SeqFeature_getSeqRegionStart(f) && SeqFeature_getSeqRegionStart(sf) <= SeqFeature_getSeqRegionEnd(f));
 }
 
 
+/*
 =head2 get_overlapping_Genes
 
   Description: Get all the genes that overlap this feature.
@@ -1689,6 +1697,7 @@ sub id {
 END OF Perl Feature.pm code
 */
 
+// These will go once I've completed the move to 20+
 
 Vector *SeqFeature_transformToRawContigImpl(SeqFeature *sf) {
   BaseContig *featContig = SeqFeature_getContig(sf);

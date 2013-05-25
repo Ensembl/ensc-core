@@ -21,6 +21,8 @@ struct DNAAlignFeatureStruct {
 };
 #undef FUNCSTRUCTTYPE
 
+#define DNAAlignFeature_isStored(daf, db) Storable_isStored(&((daf)->st), (db))
+
 DNAAlignFeature *DNAAlignFeature_new(void);
 
 #define DNAAlignFeature_setCigarString(fp, ciggy) BaseAlignFeature_setCigarString((BaseAlignFeature *)(fp), (ciggy))
@@ -111,6 +113,8 @@ int DNAAlignFeature_getQueryUnit(void);
 #define DNAAlignFeature_free(fp) BaseAlignFeature_free((fp))
 // Why go down the inheritance tree here??
 #define DNAAlignFeature_shallowCopy(fp) DNAAlignFeature_shallowCopyImpl((fp))
+
+#define DNAAlignFeature_getLength(fp) BaseAlignFeature_getLength(fp)
 
 void DNAAlignFeature_freeImpl(DNAAlignFeature *daf);
 DNAAlignFeature *DNAAlignFeature_shallowCopyImpl(DNAAlignFeature *daf);

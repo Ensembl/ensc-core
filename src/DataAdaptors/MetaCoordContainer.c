@@ -212,56 +212,125 @@ long MetaCoordContainer_fetchMaxLengthByCoordSystemFeatureType(MetaCoordContaine
 =cut
 
 */
-/*
+void MetaCoordContainer_addFeatureType(MetaCoordContainer *mcc, CoordSystem *cs, char *table, long length) {
 
-sub add_feature_type {
-  my $self = shift;
-  my $cs   = shift;
-  my $table = lc(shift);
-  my $length = shift;
-  if(!ref($cs) || !$cs->isa('Bio::EnsEMBL::CoordSystem')) {
-    throw('CoordSystem argument is required.');
+  if (cs == NULL) {
+    fprintf(stderr, "CoordSystem argument is required.\n");
+    exit(1);
   }
 
-  if(!$table) {
-    throw('Table argument is required.');
+  if (table == NULL) {
+    fprintf(stderr, "Table argument is required.\n");
+    exit(1);
   }
 
-  my $cs_ids = $self->{'_feature_cache'}->{$table} || [];
+  // I really don't like having to do this lc here - it should be done before calling this routine
+  // This routine is called for every feature stored so should be efficient
+  char lcTable[1024];
+  strcpy(lcTable, table);
+  StrUtil_strlwr(lcTable);
+  
+  // Slightly different logic so I don't need to track if I've created a temporary Vector which would need freeing
+  // If featureCache doesn't exist then add entry to cache and fetch
+  if (!StringHash_contains(mcc->featureCache, lcTable)) {
+    StringHash_add(mcc->featureCache, lcTable, Vector_new());
+  }
+  Vector *csIds = StringHash_getValue(mcc->featureCache, lcTable);
 
-  my ($exists) = grep {$cs->dbID() == $_} @$cs_ids;
-  if( $exists ) {
-    if( !$self->{'_max_len_cache'}->{$cs->dbID()}->{$table} ||
-        $self->{'_max_len_cache'}->{$cs->dbID()}->{$table} < $length ) {
-      my $sth = $self->prepare('UPDATE meta_coord ' .
-                               "SET max_length = $length " .
-                               'WHERE coord_system_id = ? ' .
-                               'AND table_name = ? '.
-                               "AND (max_length<$length ".
-                               "OR max_length is null)");
-      $sth->execute( $cs->dbID(), $table );
-      $self->{'_max_len_cache'}->{$cs->dbID()}->{$table} = $length;
+  //my $cs_ids = $self->{'_feature_cache'}->{$table} || [];
+
+  int i;
+  int exists = 0;
+  for (i=0; i<Vector_getNumElement(csIds)  && !exists; i++) {
+    IDType csId = *(IDType *)(Vector_getElementAt(csIds, i));
+    if (csId == CoordSystem_getDbID(cs)) {
+      exists = 1;
+    }
+  }
+
+  if (!IDHash_contains(mcc->maxLenCache, CoordSystem_getDbID(cs))) {
+    IDHash_add(mcc->maxLenCache, CoordSystem_getDbID(cs), StringHash_new(STRINGHASH_SMALL));
+  }
+  StringHash *tabMaxLenHash = IDHash_getValue(mcc->maxLenCache, CoordSystem_getDbID(cs));
+  int inHash = StringHash_contains(tabMaxLenHash, lcTable);
+  char qStr[1024];
+ 
+  if (exists) {
+   
+    if ( ! inHash || *((long *)StringHash_getValue(tabMaxLenHash, lcTable)) < length ) {
+
+      sprintf(qStr, "UPDATE meta_coord "
+                    "SET max_length = %ld "
+                    "WHERE coord_system_id = " IDFMTSTR " " 
+                    "AND table_name = '%s' "
+                    "AND (max_length < %ld OR max_length is null)", 
+                    length, CoordSystem_getDbID(cs), lcTable, length);
+
+      StatementHandle *sth = mcc->prepare((BaseAdaptor *)mcc,qStr,strlen(qStr)); 
+      //$sth->execute( $cs->dbID(), $table );
+      sth->execute(sth);
+
+      long *maxLenP;
+      if ((maxLenP = calloc(1,sizeof(long))) == NULL) {
+        fprintf(stderr,"Failed allocating space for maxLen\n");
+        exit(1);
+      }
+      *maxLenP = length;
+
+      if (inHash) {
+        StringHash_remove(tabMaxLenHash, lcTable, free);
+      }
+      StringHash_add(tabMaxLenHash, lcTable, maxLenP);
+
+      //$self->{'_max_len_cache'}->{$cs->dbID()}->{$table} = $length;
+
+      sth->finish(sth);
     }
     return;
   }
 
-  #store the new tablename -> coord system relationship in the db
-  #ignore failures b/c during the pipeline multiple processes may try
-  #to update this table and only the first will be successful
-  my $sth = $self->prepare('INSERT IGNORE INTO meta_coord ' .
-                              'SET coord_system_id = ?, ' .
-                                  'table_name = ?, ' .
-			   'max_length = ? ' 
-			  );
+  // store the new tablename -> coord system relationship in the db
+  // ignore failures b/c during the pipeline multiple processes may try
+  // to update this table and only the first will be successful
+  sprintf(qStr, "INSERT IGNORE INTO meta_coord "
+                "SET coord_system_id = "IDFMTSTR", table_name = '%s', max_length = %ld",
+			  CoordSystem_getDbID(cs), lcTable, length);
 
-  $sth->execute($cs->dbID, $table, $length );
+  StatementHandle *sth = mcc->prepare((BaseAdaptor *)mcc,qStr,strlen(qStr)); 
 
-  #update the internal cache
-  $self->{'_feature_cache'}->{$table} ||= [];
-  push @{$self->{'_feature_cache'}->{$table}}, $cs->dbID();
-  $self->{'_max_len_cache'}->{$cs->dbID()}->{$table} = $length;
+  sth->execute(sth);
+
+  //$sth->execute($cs->dbID, $table, $length );
+
+  //update the internal cache
+  // First the featureCache
+  IDType *csIdP;
+  if ((csIdP = calloc(1,sizeof(IDType))) == NULL) {
+    fprintf(stderr,"Failed allocating space for id\n");
+    exit(1);
+  }
+  *csIdP = CoordSystem_getDbID(cs);
+  Vector_addElement(csIds, csIdP);
+
+
+  // Next the maxLenCache
+  long *maxLenP;
+  if ((maxLenP = calloc(1,sizeof(long))) == NULL) {
+    fprintf(stderr,"Failed allocating space for maxLen\n");
+    exit(1);
+  }
+  *maxLenP = length;
+// Note - would be good to have a 'replace' function but I need to refactor IDHash slightly to do that - add a setFreeFunc method to it, so can free the old hash value
+// For now just remove and then add
+  if (inHash) {
+    StringHash_remove(tabMaxLenHash, lcTable, free);
+  }
+  StringHash_add(tabMaxLenHash, lcTable, maxLenP);
+
+  //$self->{'_max_len_cache'}->{$cs->dbID()}->{$table} = $length;
+
+  sth->finish(sth);
 
   return;
 }
 
-*/

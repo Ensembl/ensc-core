@@ -16,7 +16,7 @@ struct DBConnectionStruct {
   ECOSTRING user;
   ECOSTRING pass;
   unsigned int   port;
-  ECOSTRING dbname;
+  ECOSTRING dbName;
   MYSQL *mysql;
   DBConnection_PrepareFunc prepare;
   BaseAdaptor **adaptors;
@@ -30,6 +30,10 @@ int DBConnection_addAdaptor(DBConnection *dbc, BaseAdaptor *ba);
 char *DBConnection_getDriverName(DBConnection *dbc);
 void DBConnection_fromDateToSeconds(DBConnection *dbc, char *column, char *wrappedColumn);
 
+
+#define DBConnection_getHost(dbc) (dbc)->host
+#define DBConnection_getPort(dbc) (dbc)->port
+#define DBConnection_getDbName(dbc) (dbc)->dbName
 
 
 #endif

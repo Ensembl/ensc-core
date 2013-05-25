@@ -1130,32 +1130,42 @@ sub get_seq_region_id_internal{
 # This method will also ensure that the database knows which coordinate
 # systems that this feature is stored in.
 #
+*/
+static int warnedNotImplementedTransfer = 0;
+IDType BaseFeatureAdaptor_preStore(BaseFeatureAdaptor *bfa, SeqFeature *feature) {
 
-sub _pre_store {
-  my $self    = shift;
-  my $feature = shift;
-
-  if(!ref($feature) || !$feature->isa('Bio::EnsEMBL::Feature')) {
-    throw('Expected Feature argument.');
-  }
-  my $slice = $feature->slice();
-
-  $self->_check_start_end_strand($feature->start(),$feature->end(),
-                                 $feature->strand(), $slice);
-
-
-  my $db = $self->db();
-
-  my $slice_adaptor = $db->get_SliceAdaptor();
-
-  if(!ref($slice) || !($slice->isa('Bio::EnsEMBL::Slice') or $slice->isa('Bio::EnsEMBL::LRGSlice'))  ) {
-    throw('Feature must be attached to Slice to be stored.');
+  if(feature == NULL) {
+    fprintf(stderr,"Expected Feature argument.\n");
+    exit(1);
   }
 
-  # make sure feature coords are relative to start of entire seq_region
+  Slice *slice = SeqFeature_getSlice(feature);
 
-  if($slice->start != 1 || $slice->strand != 1) {
-    #move feature onto a slice of the entire seq_region
+  if (slice == NULL) {
+    fprintf(stderr, "Feature must be attached to Slice to be stored.\n");
+    exit(1);
+  }
+
+  BaseFeatureAdaptor_checkStartEndStrand(bfa, 
+                                         SeqFeature_getStart(feature),
+                                         SeqFeature_getEnd(feature),
+                                         SeqFeature_getStrand(feature),
+                                         slice);
+
+  DBAdaptor *db = bfa->dba;
+
+  SliceAdaptor *sliceAdaptor = DBAdaptor_getSliceAdaptor(db);
+
+  // make sure feature coords are relative to start of entire seq_region
+
+  if (Slice_getStart(slice) != 1 || Slice_getStrand(slice) != 1) {
+    if (!warnedNotImplementedTransfer) {
+      fprintf(stderr,"WARNING: In BaseFeatureAdaptor_preStore temporary feature transfer has not been implemented - I'm not sure it is necessary\n");
+      warnedNotImplementedTransfer = 1;
+    }
+
+/*
+    // move feature onto a slice of the entire seq_region
     $slice = $slice_adaptor->fetch_by_region($slice->coord_system->name(),
                                              $slice->seq_region_name(),
                                              undef, #start
@@ -1169,27 +1179,32 @@ sub _pre_store {
       throw('Could not transfer Feature to slice of ' .
             'entire seq_region prior to storing');
     }
+*/
   }
 
-  # Ensure this type of feature is known to be stored in this coord system.
-  my $cs = $slice->coord_system;
+  // Ensure this type of feature is known to be stored in this coord system.
+  
+  CoordSystem *cs = Slice_getCoordSystem(slice);
 
-  my ($tab) = $self->_tables();
-  my $tabname = $tab->[0];
+  NameTableType *tables = bfa->getTables();
+  char *tabName = (*tables)[0][NAME];
 
-  my $mcc = $db->get_MetaCoordContainer();
+  MetaCoordContainer *mcc = DBAdaptor_getMetaCoordContainer(db);
 
-  $mcc->add_feature_type($cs, $tabname, $feature->length);
+  MetaCoordContainer_addFeatureType(mcc, cs, tabName, SeqFeature_getLength(feature));
 
-  my $seq_region_id = $slice_adaptor->get_seq_region_id($slice);
+  IDType seqRegionId = SliceAdaptor_getSeqRegionId(sliceAdaptor, slice);
 
-  if(!$seq_region_id) {
-    throw('Feature is associated with seq_region which is not in this DB.');
+  if (!seqRegionId) {
+    fprintf(stderr, "Feature is associated with seq_region which is not in this DB.\n");
+    exit(1);
   }
 
-  return ($feature, $seq_region_id);
+//  return ($feature, $seq_region_id);
+  return seqRegionId;
 }
 
+/*
 
 # The same function as _pre_store
 # This one is used to store user uploaded features in XXX_userdata db
@@ -1260,34 +1275,36 @@ sub _pre_store_userdata {
 # hstart/hend/hstrand etc.
 #
 */
-/*
-sub _check_start_end_strand {
-  my $self = shift;
-  my $start = shift;
-  my $end   = shift;
-  my $strand = shift;
-  my $slice = shift;
+// In C the perl implementation has little value as longs are longs, not floats or chars
+// It can check strand, and I've left the call in, in case I want to check other things
+// eg. whether any coords are set to POS_UNDEF
+int BaseFeatureAdaptor_checkStartEndStrand(BaseFeatureAdaptor *bfa, long start, long end, int strand, Slice *slice) {
 
   // 
   // Make sure that the start, end, strand are valid
   //
+/* Unnecessary in C
   if(int($start) != $start) {
     throw("Invalid Feature start [$start].  Must be integer.");
   }
   if(int($end) != $end) {
     throw("Invalid Feature end [$end]. Must be integer.");
   }
-  if(int($strand) != $strand || $strand < -1 || $strand > 1) {
-    throw("Invalid Feature strand [$strand]. Must be -1, 0 or 1.");
+*/
+  if(strand < -1 || strand > 1) {
+    fprintf(stderr, "Invalid Feature strand [%d]. Must be -1, 0 or 1.", strand);
+    exit(1);
   }
+
+/* circular shite
   if($end < $start && !$slice->is_circular()) {
     throw("Invalid Feature start/end [$start/$end]. Start must be less " .
           "than or equal to end.");
   }
+*/
 
   return 1;
 }
-*/
 
 
 /*
@@ -1297,6 +1314,8 @@ sub _check_start_end_strand {
 # converted and placed on the slice.
 #
 */
+// This function is very rarely actually used for mapping because most of the adaptors do the mapping themselves
+// in their objs_from_sth methods
 Vector *BaseFeatureAdaptor_remap(BaseFeatureAdaptor *bfa, Vector *features, AssemblyMapper *mapper, Slice *slice) {
   //check if any remapping is actually needed
   if (Vector_getNumElement(features) > 0) {

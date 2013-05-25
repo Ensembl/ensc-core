@@ -2500,7 +2500,7 @@ sub store_assembly{
 */
 
 StatementHandle *SliceAdaptor_prepare(BaseAdaptor *ba, char *qStr, size_t len) {
-  printf("Query = %s len = %ld\n",qStr,len);
+  //printf("Query = %s len = %ld\n",qStr,len);
   return DBAdaptor_prepare(ba->dba->dnadb,qStr,len);
 }
 

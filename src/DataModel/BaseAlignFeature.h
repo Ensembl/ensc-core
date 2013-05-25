@@ -52,10 +52,10 @@ ECOSTRING BaseAlignFeature_setDbDisplayName(BaseAlignFeature *fp, char *dbDispla
 #define BaseAlignFeature_getDbDisplayName(fp)  (fp)->dbDisplayName
 
 #define BaseAlignFeature_setExternalDbID(fp, id)  (fp)->externalDbID = (id);
-#define BaseAlignFeature_getExternalDbID(fp)  (fp)->externalDbID;
+#define BaseAlignFeature_getExternalDbID(fp)  (fp)->externalDbID
 
 #define BaseAlignFeature_sethCoverage(fp, cov)  (fp)->hCoverage = (cov);
-#define BaseAlignFeature_gethCoverage(fp)  (fp)->hCoverage;
+#define BaseAlignFeature_gethCoverage(fp)  (fp)->hCoverage
 
 #define BaseAlignFeature_getHitSeqName(fp)  FeaturePair_getHitSeqName((fp))
 #define BaseAlignFeature_setHitSeqName(fp,hid) FeaturePair_setHitSeqName((FeaturePair *)(fp),(hid))
@@ -116,6 +116,8 @@ ECOSTRING BaseAlignFeature_setDbDisplayName(BaseAlignFeature *fp, char *dbDispla
 
 #define BaseAlignFeature_transformToRawContig(fp) FeaturePair_transformToRawContig((fp))
 #define BaseAlignFeature_transformToSlice(fp,slice) FeaturePair_transformToSlice((fp),(slice))
+
+#define BaseAlignFeature_getLength(fp) FeaturePair_getLength(fp)
 
 #define BaseAlignFeature_free(fp) FeaturePair_free((fp))
 

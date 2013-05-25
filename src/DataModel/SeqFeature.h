@@ -150,6 +150,9 @@ SeqFeature *SeqFeature_transformRawContigToSliceImpl(SeqFeature *sf, Slice *slic
 ECOSTRING SeqFeature_setSeqName(SeqFeature *sf, char *seqName);
 ECOSTRING SeqFeature_getSeqName(SeqFeature *sf);
 
+ECOSTRING SeqFeature_getSeqRegionName(SeqFeature *sf);
+int SeqFeature_overlaps(SeqFeature *sf, SeqFeature *f);
+
 
 #define SeqFeature_transformToSlice(sf,slice) \
       ((sf)->funcs->transformToSlice == NULL ? \
