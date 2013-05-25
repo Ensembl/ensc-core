@@ -39,9 +39,9 @@ int main(int argc, char *argv[]) {
 
   ok(2, ga!=NULL);
 
-//  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","17",1000000,5000000,1,NULL,0);
+  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","17",1000000,5000000,1,NULL,0);
 // Has a seleno
-  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","1",1000000,27000000,1,NULL,0);
+//  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","1",1000000,27000000,1,NULL,0);
 //  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","MT",1,17000,1,NULL,0);
   genes =  Slice_getAllGenes(slice, NULL, NULL, 1, NULL, NULL);
 
@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
   ok(3, genes!=NULL);
   ok(4, Vector_getNumElement(genes)!=0);
 
-  failed = dumpGenes(genes);
+  failed = dumpGenes(genes, 0);
   ok(5, !failed);
 
   //Vector *toplevelSlices = SliceAdaptor_fetchAll(sa, "toplevel", NULL, 0);
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Slice %s\n", Slice_getName(tlSlice));
     genes =  Slice_getAllGenes(tlSlice, NULL, NULL, 1, NULL, NULL);
     fprintf(stderr, "Got %d genes on %s\n", Vector_getNumElement(genes), Slice_getName(tlSlice));
-    failed = dumpGenes(genes);
+    failed = dumpGenes(genes, 0);
   }
 
   tc_malloc_stats();
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-int dumpGenes(Vector *genes) {
+int dumpGenes(Vector *genes, int withSupport) {
   FILE *fp = stderr;
   int i;
   int failed = 0;
@@ -85,28 +85,32 @@ int dumpGenes(Vector *genes) {
     int j;
     for (j=0;j<Gene_getTranscriptCount(g);j++) {
       Transcript *t = Gene_getTranscriptAt(g,j);
+      int k;
      
       fprintf(fp," Trans %s coords: %ld %ld %d biotype: %s\n",Transcript_getStableId(t), Transcript_getStart(t),Transcript_getEnd(t),Transcript_getStrand(t),Transcript_getBiotype(t));
-      Vector *support = Transcript_getAllSupportingFeatures(t);
-      int k;
-      for (k=0; k<Vector_getNumElement(support); k++) {
-        BaseAlignFeature *baf = Vector_getElementAt(support, k);
-        fprintf(fp,"   support %s coords: %ld %ld %d\n", BaseAlignFeature_getHitSeqName(baf), BaseAlignFeature_getStart(baf), BaseAlignFeature_getEnd(baf), BaseAlignFeature_getStrand(baf));
-      }
-      Vector *intronSupport = Transcript_getAllIntronSupportingEvidence(t);
-      for (k=0; k<Vector_getNumElement(intronSupport); k++) {
-        IntronSupportingEvidence *ise = Vector_getElementAt(intronSupport, k);
-        fprintf(fp,"   intron support %s coords: %ld %ld %d\n", IntronSupportingEvidence_getHitName(ise), IntronSupportingEvidence_getStart(ise), IntronSupportingEvidence_getEnd(ise), IntronSupportingEvidence_getStrand(ise));
+      if (withSupport) {
+        Vector *support = Transcript_getAllSupportingFeatures(t);
+        for (k=0; k<Vector_getNumElement(support); k++) {
+          BaseAlignFeature *baf = Vector_getElementAt(support, k);
+          fprintf(fp,"   support %s coords: %ld %ld %d\n", BaseAlignFeature_getHitSeqName(baf), BaseAlignFeature_getStart(baf), BaseAlignFeature_getEnd(baf), BaseAlignFeature_getStrand(baf));
+        }
+        Vector *intronSupport = Transcript_getAllIntronSupportingEvidence(t);
+        for (k=0; k<Vector_getNumElement(intronSupport); k++) {
+          IntronSupportingEvidence *ise = Vector_getElementAt(intronSupport, k);
+          fprintf(fp,"   intron support %s coords: %ld %ld %d\n", IntronSupportingEvidence_getHitName(ise), IntronSupportingEvidence_getStart(ise), IntronSupportingEvidence_getEnd(ise), IntronSupportingEvidence_getStrand(ise));
+        }
       }
 
       for (k=0;k<Transcript_getExonCount(t);k++) {
         Exon *e = Transcript_getExonAt(t,k);
         fprintf(fp,"  exon %s coords: %ld %ld %d\n",Exon_getStableId(e), Exon_getStart(e),Exon_getEnd(e),Exon_getStrand(e));
-        Vector *support = Exon_getAllSupportingFeatures(e);
-        int m;
-        for (m=0; m<Vector_getNumElement(support); m++) {
-          BaseAlignFeature *baf = Vector_getElementAt(support, m);
-          fprintf(fp,"   support %s coords: %ld %ld %d\n", BaseAlignFeature_getHitSeqName(baf), BaseAlignFeature_getStart(baf), BaseAlignFeature_getEnd(baf), BaseAlignFeature_getStrand(baf));
+        if (withSupport) {
+          Vector *support = Exon_getAllSupportingFeatures(e);
+          int m;
+          for (m=0; m<Vector_getNumElement(support); m++) {
+            BaseAlignFeature *baf = Vector_getElementAt(support, m);
+            fprintf(fp,"   support %s coords: %ld %ld %d\n", BaseAlignFeature_getHitSeqName(baf), BaseAlignFeature_getStart(baf), BaseAlignFeature_getEnd(baf), BaseAlignFeature_getStrand(baf));
+          }
         }
       }
       Translation *tln = Transcript_getTranslation(t);

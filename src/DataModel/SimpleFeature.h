@@ -24,6 +24,12 @@ struct SimpleFeatureStruct {
 };
 #undef FUNCSTRUCTTYPE
 
+#define SimpleFeature_isStored(simpleFeature, db) Storable_isStored(&((simpleFeature)->st), (db))
+
+#define SimpleFeature_getSeqRegionStart(simpleFeature) SeqFeature_getSeqRegionStart((simpleFeature))
+#define SimpleFeature_getSeqRegionEnd(simpleFeature) SeqFeature_getSeqRegionEnd((simpleFeature))
+#define SimpleFeature_getSeqRegionStrand(simpleFeature) SeqFeature_getSeqRegionStrand((simpleFeature))
+
 #define SimpleFeature_setStart(simpleFeature,start) SeqFeature_setStart((simpleFeature),start)
 #define SimpleFeature_getStart(simpleFeature) SeqFeature_getStart((simpleFeature))
 

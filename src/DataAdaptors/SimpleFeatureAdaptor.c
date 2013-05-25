@@ -96,68 +96,74 @@ char **SimpleFeatureAdaptor_getColumns(void) {
 
 =cut
 */
-
 int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
-  fprintf(stderr,"SimpleFeatureAdaptor_store not implemented\n");
-  exit(1);
+  char qStr[512];
+  StatementHandle *sth;
+  int i;
 
-/*
-  my ($self,@sf) = @_;
-
-  if( scalar(@sf) == 0 ) {
-    throw("Must call store with list of SimpleFeatures");
+  if (features == NULL || Vector_getNumElement(features) == 0) {
+    fprintf(stderr,"Must call store with features\n");
+    exit(1);
   }
 
-  my $sth = $self->prepare
-    ("INSERT INTO simple_feature (seq_region_id, seq_region_start, " .
-                                 "seq_region_end, seq_region_strand, " .
-                                 "display_label, analysis_id, score) " .
-     "VALUES (?,?,?,?,?,?,?)");
+  sprintf(qStr,"INSERT INTO simple_feature (seq_region_id, seq_region_start, "
+                           "seq_region_end, seq_region_strand, "
+                           "display_label, analysis_id, score) " 
+                    "VALUES (%"IDFMTSTR",%%d,%%d,%%d,\'%%s\',%"IDFMTSTR",%%f)");
 
-  my $db = $self->db();
-  my $analysis_adaptor = $db->get_AnalysisAdaptor();
+  sth = bfa->prepare((BaseAdaptor *)bfa, qStr,strlen(qStr));
 
- FEATURE: foreach my $sf ( @sf ) {
+  DBAdaptor *db                    = bfa->dba;
+  AnalysisAdaptor *analysisAdaptor = DBAdaptor_getAnalysisAdaptor(db);
 
-    if( !ref $sf || !$sf->isa("Bio::EnsEMBL::SimpleFeature") ) {
-      throw("SimpleFeature must be an Ensembl SimpleFeature, " .
-            "not a [".ref($sf)."]");
+  printf("%s\n",qStr);
+
+  for (i=0; i<Vector_getNumElement(features); i++) {
+    SimpleFeature *feat = Vector_getElementAt(features, i);
+
+    if (feat == NULL) {
+      fprintf(stderr, "feature is NULL in SimpleFeature_store\n");
+      exit(1);
     }
 
-    if($sf->is_stored($db)) {
-      warning("SimpleFeature [".$sf->dbID."] is already stored" .
-              " in this database.");
-      next FEATURE;
+    Class_assertType(CLASS_SIMPLEFEATURE, feat->objectType);
+
+    if (SimpleFeature_isStored(feat, db)) {
+      fprintf(stderr, "SimpleFeature ["IDFMTSTR"] is already stored in this database.\n", SimpleFeature_getDbID(feat) );
+      continue;
     }
 
-    if(!defined($sf->analysis)) {
-      throw("An analysis must be attached to the features to be stored.");
+    Analysis *analysis = SimpleFeature_getAnalysis(feat);
+    if (analysis == NULL) {
+      fprintf(stderr,"An analysis must be attached to the features to be stored.\n");
+      exit(1);
     }
 
-    #store the analysis if it has not been stored yet
-    if(!$sf->analysis->is_stored($db)) {
-      $analysis_adaptor->store($sf->analysis());
+    // store the analysis if it has not been stored yet
+    if (Analysis_isStored(analysis, db)) {
+      AnalysisAdaptor_store(analysisAdaptor, analysis);
     }
 
+/*
     my $original = $sf;
     my $seq_region_id;
     ($sf, $seq_region_id) = $self->_pre_store($sf);
-
-    $sth->bind_param(1,$seq_region_id,SQL_INTEGER);
-    $sth->bind_param(2,$sf->start,SQL_INTEGER);
-    $sth->bind_param(3,$sf->end,SQL_INTEGER);
-    $sth->bind_param(4,$sf->strand,SQL_TINYINT);
-    $sth->bind_param(5,$sf->display_label,SQL_VARCHAR);
-    $sth->bind_param(6,$sf->analysis->dbID,SQL_INTEGER);
-    $sth->bind_param(7,$sf->score,SQL_DOUBLE);
-
-    $sth->execute();
-
-    $original->dbID($sth->{'mysql_insertid'});
-    $original->adaptor($self);
-  }
 */
+    IDType seqRegionId = BaseFeatureAdaptor_preStore(bfa, feat);
+
+    sth->execute(sth, (IDType)(seqRegionId), 
+                      SimpleFeature_getSeqRegionStart(feat), 
+                      SimpleFeature_getSeqRegionEnd(feat),
+                      SimpleFeature_getSeqRegionStrand(feat),
+                      SimpleFeature_getDisplayLabel(feat),
+                      (IDType)(Analysis_getDbID(analysis)), 
+                      SimpleFeature_getScore(feat));
+    
+    SimpleFeature_setDbID(feat,sth->getInsertId(sth));
+    SimpleFeature_setAdaptor(feat, (BaseAdaptor *)bfa);
+  }
 }
+
 
 
 /*

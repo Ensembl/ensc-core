@@ -10,7 +10,7 @@ SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools_parallel
 #SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools-0.1.18
 ZLIBDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/include
 
-CFLAGS =  -g -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
+CFLAGS =  -Ofast -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS) -lunwind
 
 BINDIR=../bin
@@ -47,6 +47,7 @@ all	: directories \
           Tests/SequenceAdaptorTest \
           Tests/SeqUtilTest \
           Tests/SimpleFeatureTest \
+          Tests/SimpleFeatureWriteTest \
           Tests/SliceAdaptorTest \
           Tests/StreamTest \
           Tests/StrUtilTest \
@@ -359,6 +360,13 @@ Tests/SimpleFeatureTest: \
 	Tests/BaseRODBTest.h \
 	Tests/SimpleFeatureTest.c
 	$(CC) $(CFLAGS) -o Tests/SimpleFeatureTest Tests/SimpleFeatureTest.c -L. -lensc $(LDFLAGS)
+
+Tests/SimpleFeatureWriteTest: \
+	libensc.a \
+	Tests/BaseRODBTest.h \
+	Tests/BaseRWDBTest.h \
+	Tests/SimpleFeatureWriteTest.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o Tests/SimpleFeatureWriteTest Tests/SimpleFeatureWriteTest.c -L. -lensc $(LDFLAGS)
 
 Tests/SliceAdaptorTest: \
 	libensc.a \
