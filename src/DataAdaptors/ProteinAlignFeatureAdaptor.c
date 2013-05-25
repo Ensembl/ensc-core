@@ -97,96 +97,106 @@ NameTableType *ProteinAlignFeatureAdaptor_leftJoin(void) {
 */
 
 int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
-  fprintf(stderr,"ProteinAlignFeatureAdaptor_store not implemented\n");
-  exit(1);
-/* NIY
- my ($self, @feats) = @_;
+  if (features == NULL || Vector_getNumElement(features) == 0) {
+    fprintf(stderr,"Must call store with features\n");
+    exit(1);
+  }
 
-  throw("Must call store with features") if( scalar(@feats) == 0 );
+  NameTableType *tables = bfa->getTables();
+  char *tableName = (*tables)[0][NAME];
 
-  my @tabs = $self->_tables;
-  my ($tablename) = @{$tabs[0]};
+  DBAdaptor *db                    = bfa->dba;
+  AnalysisAdaptor *analysisAdaptor = DBAdaptor_getAnalysisAdaptor(db);
+  SliceAdaptor *sliceAdaptor = DBAdaptor_getSliceAdaptor(db);
 
-  my $db = $self->db();
-  my $slice_adaptor = $db->get_SliceAdaptor();
-  my $analysis_adaptor = $db->get_AnalysisAdaptor();
+  char qStr[1024];
+  sprintf(qStr, "INSERT INTO %s (seq_region_id, seq_region_start, seq_region_end,"
+                                "seq_region_strand, hit_start, hit_end,"
+                                "hit_name, cigar_line,"
+                                "analysis_id, score, evalue, perc_ident, external_db_id, hcoverage) "
+                       "VALUES (%" IDFMTSTR ",%%d,%%d,%%d,%%d,%%d,\'%%s\',\'%%s\',%"IDFMTSTR ",%%f,%%f,%%f,%" IDFMTSTR ",%%f)", tableName);
 
-  my $sth = $self->prepare(
-     "INSERT INTO $tablename (seq_region_id, seq_region_start, seq_region_end,
-                             seq_region_strand, hit_start, hit_end,
-                             hit_name, cigar_line,
-                             analysis_id, score, evalue, perc_ident, external_db_id, hcoverage)
-     VALUES (?,?,?,?,?,?,?,?,?,?, ?, ?, ?, ?)");
+  StatementHandle *sth = bfa->prepare((BaseAdaptor *)bfa, qStr,strlen(qStr));
 
- FEATURE: foreach my $feat ( @feats ) {
-   if( !ref $feat || !$feat->isa("Bio::EnsEMBL::DnaPepAlignFeature") ) {
-     throw("feature must be a Bio::EnsEMBL::DnaPepAlignFeature,"
-           . " not a [".ref($feat)."].");
-   }
+  int i;
+  for (i=0; i<Vector_getNumElement(features); i++) {
+    char fixedCigar[1024];
 
-   if($feat->is_stored($db)) {
-     warning("PepDnaAlignFeature [".$feat->dbID."] is already stored" .
-             " in this database.");
-     next FEATURE;
-   }
+    DNAPepAlignFeature *feat = Vector_getElementAt(features, i);
 
-   #sanity check the hstart and hend
-   my $hstart  = $feat->hstart();
-   my $hend    = $feat->hend();
-   $self->_check_start_end_strand($hstart,$hend,1);
+    if (feat == NULL) {
+      fprintf(stderr, "feature is NULL in ProteinAlignFeature_store\n");
+      exit(1);
+    }
 
-   my $cigar_string = $feat->cigar_string();
-   if(!$cigar_string) {
-     $cigar_string = $feat->length() . 'M';
-     warning("DnaPepAlignFeature does not define a cigar_string.\n" .
-             "Assuming ungapped block with cigar_string=$cigar_string\n");
-   }
+    Class_assertType(CLASS_DNAPEPALIGNFEATURE, feat->objectType);
 
-   my $hseqname = $feat->hseqname();
-   if(!$hseqname) {
-     throw("DnaPepAlignFeature must define an hseqname.");
-   }
+    if (DNAPepAlignFeature_isStored(feat, db)) {
+      fprintf(stderr, "DNAPepAlignFeature ["IDFMTSTR"] is already stored in this database.\n", DNAPepAlignFeature_getDbID(feat) );
+      continue;
+    }
 
-   if(!defined($feat->analysis)) {
-     throw("An analysis must be attached to the features to be stored.");
-   }
+    BaseFeatureAdaptor_checkStartEndStrand(bfa,
+                                           DNAPepAlignFeature_getHitStart(feat),
+                                           DNAPepAlignFeature_getHitEnd(feat),
+                                           1,
+                                           NULL);
 
-   #store the analysis if it has not been stored yet
-   if(!$feat->analysis->is_stored($db)) {
-     $analysis_adaptor->store($feat->analysis());
-   }
 
-   my $slice = $feat->slice();
-   if(!defined($slice) || !($slice->isa("Bio::EnsEMBL::Slice") or $slice->isa('Bio::EnsEMBL::LRGSlice')) ) {
-     throw("A slice must be attached to the features to be stored.");
-   }
 
+    char *cigarString = DNAPepAlignFeature_getCigarString(feat);
+
+    if (cigarString == NULL) {
+      sprintf(fixedCigar, "%ldM", DNAPepAlignFeature_getLength(feat));
+      cigarString = fixedCigar;
+      fprintf(stderr, "DNAPepAlignFeature does not define a cigar_string.\n"
+                      "Assuming ungapped block with cigar_line = %s.\n", cigarString);
+    }
+
+    if (DNAPepAlignFeature_getHitSeqName(feat) == NULL) {
+      fprintf(stderr, "DNAPepAlignFeature must define an hseqname.\n");
+      exit(1);
+    }
+
+    Analysis *analysis = DNAPepAlignFeature_getAnalysis(feat);
+    if (analysis == NULL) {
+      fprintf(stderr,"An analysis must be attached to the features to be stored.\n");
+      exit(1);
+    }
+
+    // store the analysis if it has not been stored yet
+    if (Analysis_isStored(analysis, db)) {
+      AnalysisAdaptor_store(analysisAdaptor, analysis);
+    }
+
+/*
    my $original = $feat;
    my $seq_region_id;
    ($feat, $seq_region_id) = $self->_pre_store($feat);
-
-   $sth->bind_param(1,$seq_region_id,SQL_INTEGER);
-   $sth->bind_param(2,$feat->start,SQL_INTEGER);
-   $sth->bind_param(3,$feat->end,SQL_INTEGER);
-   $sth->bind_param(4,$feat->strand,SQL_TINYINT);
-   $sth->bind_param(5,$feat->hstart,SQL_INTEGER);
-   $sth->bind_param(6,$feat->hend,SQL_INTEGER);
-   $sth->bind_param(7,$feat->hseqname,SQL_VARCHAR);
-   $sth->bind_param(8,$feat->cigar_string,SQL_LONGVARCHAR);
-   $sth->bind_param(9,$feat->analysis->dbID,SQL_INTEGER);
-   $sth->bind_param(10,$feat->score,SQL_DOUBLE);
-   $sth->bind_param(11,$feat->p_value,SQL_DOUBLE);
-   $sth->bind_param(12,$feat->percent_id,SQL_REAL);
-   $sth->bind_param(13,$feat->external_db_id,SQL_INTEGER);
-   $sth->bind_param(14,$feat->hcoverage,SQL_DOUBLE);
-
-   $sth->execute();
-   $original->dbID($sth->{'mysql_insertid'});
-   $original->adaptor($self);
- }
-
- $sth->finish();
 */
+    IDType seqRegionId = BaseFeatureAdaptor_preStore(bfa, feat);
+// Note using SeqRegionStart etc here rather than Start - should have same effect as perl's transfer
+    sth->execute(sth, (IDType)seqRegionId,
+                      DNAPepAlignFeature_getSeqRegionStart(feat),
+                      DNAPepAlignFeature_getSeqRegionEnd(feat),
+                      DNAPepAlignFeature_getSeqRegionStrand(feat),
+                      DNAPepAlignFeature_getHitStart(feat),
+                      DNAPepAlignFeature_getHitEnd(feat),
+                      DNAPepAlignFeature_getHitSeqName(feat),
+                      cigarString,
+                      (IDType)Analysis_getDbID(analysis),
+                      DNAPepAlignFeature_getScore(feat),
+                      DNAPepAlignFeature_getpValue(feat),
+                      DNAPepAlignFeature_getPercId(feat),
+                      (IDType)DNAPepAlignFeature_getExternalDbID(feat),
+                      DNAPepAlignFeature_gethCoverage(feat));
+
+
+    DNAPepAlignFeature_setDbID(feat,sth->getInsertId(sth));
+    DNAPepAlignFeature_setAdaptor(feat, (BaseAdaptor *)bfa);
+  }
+
+  sth->finish(sth);
 }
 
 

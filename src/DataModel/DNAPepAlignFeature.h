@@ -18,6 +18,8 @@ struct DNAPepAlignFeatureStruct {
 
 DNAPepAlignFeature *DNAPepAlignFeature_new(void);
 
+#define DNAPepAlignFeature_isStored(paf, db) Storable_isStored(&((paf)->st), (db))
+
 #define DNAPepAlignFeature_setCigarString(fp, ciggy) BaseAlignFeature_setCigarString((BaseAlignFeature *)(fp), (ciggy))
 #define DNAPepAlignFeature_getCigarString(fp) BaseAlignFeature_getCigarString((fp))
 
@@ -94,6 +96,8 @@ DNAPepAlignFeature *DNAPepAlignFeature_shallowCopyImpl(DNAPepAlignFeature *dpaf)
 #define DNAPepAlignFeature_getSeqRegionStart(paf) SeqFeature_getSeqRegionStart((paf))
 #define DNAPepAlignFeature_getSeqRegionEnd(paf) SeqFeature_getSeqRegionEnd((paf))
 #define DNAPepAlignFeature_getSeqRegionStrand(paf) SeqFeature_getSeqRegionStrand((paf))
+
+#define DNAPepAlignFeature_getLength(fp) BaseAlignFeature_getLength(fp)
 
 #ifdef __DNAPEPALIGNFEATURE_MAIN__
   DNAPepAlignFeatureFuncs

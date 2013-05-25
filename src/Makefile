@@ -301,6 +301,13 @@ Tests/DNAPepAlignFeatureTest: \
 	Tests/DNAPepAlignFeatureTest.c
 	$(CC) $(CFLAGS) -o Tests/DNAPepAlignFeatureTest Tests/DNAPepAlignFeatureTest.c -L. -lensc $(LDFLAGS)
 
+Tests/DNAPepAlignFeatureWriteTest: \
+	libensc.a \
+	Tests/BaseRODBTest.h \
+	Tests/BaseRWDBTest.h \
+	Tests/DNAPepAlignFeatureWriteTest.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o Tests/DNAPepAlignFeatureWriteTest Tests/DNAPepAlignFeatureWriteTest.c -L. -lensc $(LDFLAGS)
+
 Tests/EcoStringTest: \
 	libensc.a \
 	Tests/EcoStringTest.c

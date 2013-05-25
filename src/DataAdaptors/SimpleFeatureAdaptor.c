@@ -162,6 +162,8 @@ int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
     SimpleFeature_setDbID(feat,sth->getInsertId(sth));
     SimpleFeature_setAdaptor(feat, (BaseAdaptor *)bfa);
   }
+
+  sth->finish(sth);
 }
 
 
