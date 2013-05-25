@@ -23,6 +23,12 @@ struct RepeatFeatureStruct {
 };
 #undef FUNCSTRUCTTYPE
 
+#define RepeatFeature_isStored(repeat, db) Storable_isStored(&((repeat)->st), (db))
+
+#define RepeatFeature_getSeqRegionStart(repeat) SeqFeature_getSeqRegionStart((repeat))
+#define RepeatFeature_getSeqRegionEnd(repeat) SeqFeature_getSeqRegionEnd((repeat))
+#define RepeatFeature_getSeqRegionStrand(repeat) SeqFeature_getSeqRegionStrand((repeat))
+
 #define RepeatFeature_setStart(repeat,start) SeqFeature_setStart((repeat),start)
 #define RepeatFeature_getStart(repeat) SeqFeature_getStart((repeat))
 

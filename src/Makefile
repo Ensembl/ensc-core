@@ -37,6 +37,7 @@ all	: directories \
           Tests/DNAAlignFeatureTest \
           Tests/DNAAlignFeatureWriteTest \
           Tests/DNAPepAlignFeatureTest \
+          Tests/DNAPepAlignFeatureWriteTest \
           Tests/EcoStringTest \
           Tests/FreeTest \
           Tests/GeneTest \
@@ -44,6 +45,7 @@ all	: directories \
           Tests/MapperTest \
           Tests/PredictionTranscriptTest \
           Tests/RepeatFeatureTest \
+          Tests/RepeatFeatureWriteTest \
           Tests/SequenceAdaptorTest \
           Tests/SeqUtilTest \
           Tests/SimpleFeatureTest \
@@ -350,6 +352,13 @@ Tests/RepeatFeatureTest: \
 	Tests/BaseRODBTest.h \
 	Tests/RepeatFeatureTest.c
 	$(CC) $(CFLAGS) -o Tests/RepeatFeatureTest Tests/RepeatFeatureTest.c -L. -lensc $(LDFLAGS)
+
+Tests/RepeatFeatureWriteTest: \
+	libensc.a \
+	Tests/BaseRODBTest.h \
+	Tests/BaseRWDBTest.h \
+	Tests/RepeatFeatureWriteTest.c
+	$(CC) $(CFLAGS) -o Tests/RepeatFeatureWriteTest Tests/RepeatFeatureWriteTest.c -L. -lensc $(LDFLAGS)
 
 Tests/SequenceAdaptorTest: \
 	libensc.a \

@@ -64,7 +64,7 @@ RepeatConsensus *RepeatConsensusAdaptor_fetchByNameAndClass(RepeatConsensusAdapt
 
 
 Vector *RepeatConsensusAdaptor_fetchByClassAndSeq(RepeatConsensusAdaptor *rca, char *class, char *seq) {
-  char constraintStr[256];
+  char constraintStr[655500];
   
   sprintf(constraintStr,"repeat_class = \'%s\' AND repeat_consensus = \'%s\'", class, seq);
   return RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
@@ -73,7 +73,7 @@ Vector *RepeatConsensusAdaptor_fetchByClassAndSeq(RepeatConsensusAdaptor *rca, c
 Vector *RepeatConsensusAdaptor_genericFetch(RepeatConsensusAdaptor *rca, char *whereClause) {
   StatementHandle *sth;
   ResultRow *row;
-  char qStr[1024];
+  char qStr[655500];
   Vector *consensi;
     
   sprintf(qStr,"SELECT repeat_consensus_id, repeat_name,"
@@ -105,13 +105,13 @@ int RepeatConsensusAdaptor_store(RepeatConsensusAdaptor *rca, Vector *consensi) 
   char qStr[1024];
   int i;
 
-  
   sprintf(qStr,
     "INSERT into repeat_consensus( repeat_consensus_id"
           ", repeat_name"
           ", repeat_class"
+          ", repeat_type"
           ", repeat_consensus )"
-      "VALUES (NULL, %%s,%%s,%%s)");
+      "VALUES (NULL, '%%s','%%s','%%s','%%s')");
 
   sth = rca->prepare((BaseAdaptor *)rca,qStr,strlen(qStr));
     
@@ -120,6 +120,7 @@ int RepeatConsensusAdaptor_store(RepeatConsensusAdaptor *rca, Vector *consensi) 
     IDType dbID; 
     char *name;
     char *class;
+    char *type;
     char *seq;
 
     if (!(name  = RepeatConsensus_getName(rc))) {
@@ -130,12 +131,15 @@ int RepeatConsensusAdaptor_store(RepeatConsensusAdaptor *rca, Vector *consensi) 
       fprintf(stderr,"Error: Class not set for repeat consensus\n");
       exit(1);
     }
+    if (!(type  = RepeatConsensus_getRepeatType(rc))) {
+      type = "";
+    }
     if (!(seq  = RepeatConsensus_getConsensus(rc))) {
       fprintf(stderr,"Error: Consensus seq not set for repeat consensus\n");
       exit(1);
     }
   
-    sth->execute(sth, name, class, seq);
+    sth->execute(sth, name, class, type, seq);
     
     dbID = sth->getInsertId(sth);
     
