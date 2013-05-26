@@ -103,11 +103,6 @@ sub AUTOLOAD {
 
 // Here I explicitly implement the various store functions
 Vector *AttributeAdaptor_storeOnGeneId(AttributeAdaptor *ata, IDType id, Vector *attributes) {
-  if (gene == NULL) {
-    fprintf(stderr,"Error: NULL Gene in AttributeAdaptor_storeOnGeneId\n");
-    exit(1);
-  }
-
   char *type  = "gene";
   char *table = "gene";
 
@@ -115,11 +110,6 @@ Vector *AttributeAdaptor_storeOnGeneId(AttributeAdaptor *ata, IDType id, Vector 
 }
 
 Vector *AttributeAdaptor_storeOnTranscriptId(AttributeAdaptor *ata, IDType id, Vector *attributes) {
-  if (transcript == NULL) {
-    fprintf(stderr,"Error: NULL Transcript in AttributeAdaptor_storeOnTranscriptId\n");
-    exit(1);
-  }
-
   char *type  = "transcript";
   char *table = "transcript";
 
@@ -127,14 +117,8 @@ Vector *AttributeAdaptor_storeOnTranscriptId(AttributeAdaptor *ata, IDType id, V
 }
 
 Vector *AttributeAdaptor_storeOnTranslationId(AttributeAdaptor *ata, IDType id, Vector *attributes) {
-  if (translation == NULL) {
-    fprintf(stderr,"Error: NULL Translation in AttributeAdaptor_storeOnTranslationId\n");
-    exit(1);
-  }
-
   char *type  = "translation";
   char *table = "translation";
-  IDType id   = Translation_getDbID(translation);
 
   return AttributeAdaptor_doStoreAllByTypeAndTableAndID(ata, type, table, id, attributes);
 }
@@ -145,7 +129,7 @@ Vector *AttributeAdaptor_storeOnSlice(AttributeAdaptor *ata, Slice *slice, Vecto
     exit(1);
   }
 
-  my $db = $self->db();
+  DBAdaptor *db = ata->dba;
       
   char *type  = "seq_region";
   char *table = "seq_region";
@@ -176,13 +160,13 @@ Vector *AttributeAdaptor_storeOnMiscFeature(AttributeAdaptor *ata, MiscFeature *
 // Removed the circular stuff 
 void AttributeAdaptor_doStoreAllByTypeAndTableAndID(AttributeAdaptor *ata, char *type, char *table, IDType objectId, Vector *attributes) {
   char qStr[1024];
-  fprintf(qStr, "INSERT into ".$table."_attrib SET %s_id = %"IDFMTSTR", attrib_type_id = %"IDFMTSTR", value = '%%s'", table, type);
+  sprintf(qStr, "INSERT into %s_attrib SET %s_id = %"IDFMTSTR", attrib_type_id = %"IDFMTSTR", value = '%%s'", table, type);
 
   StatementHandle *sth = ata->prepare((BaseAdaptor *)ata,qStr,strlen(qStr));
 
   int i;
   for (i=0; i<Vector_getNumElement(attributes); i++) {
-    Attribute attrib = Vector_getElementAt(attributes, i);
+    Attribute *attrib = Vector_getElementAt(attributes, i);
 
     if (attrib == NULL ) {
       fprintf(stderr, "Reference to list of Bio::EnsEMBL::Attribute objects argument expected.\n");
@@ -444,8 +428,8 @@ IDType AttributeAdaptor_storeType(AttributeAdaptor *ata, Attribute *attrib) {
       atId = row->getLongLongAt(row, 0);
     }
 
-    if (!atid) {
-      fprintf(stderr, "Could not store or fetch attrib_type code [%s]\n" .
+    if (!atId) {
+      fprintf(stderr, "Could not store or fetch attrib_type code [%s]\n"
 	              "Wrong database user/permissions?\n", Attribute_getCode(attrib));
       exit(1);
     }

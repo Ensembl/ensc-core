@@ -1452,7 +1452,6 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
   TranscriptAdaptor *transcriptAdaptor = DBAdaptor_getTranscriptAdaptor(db);
 
 //  Vector *transcripts = Gene_getAllTranscripts(gene);
-
 //  my $transcripts = $gene->get_all_Transcripts();
 
   IDType newCanonicalTranscriptId = 0; // Assume 0 is not a valid dbID - NIY May not be a good assumption

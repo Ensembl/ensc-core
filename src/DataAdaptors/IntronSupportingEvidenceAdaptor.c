@@ -549,6 +549,8 @@ void IntronSupportingEvidenceAdaptor_storeTranscriptLinkage(IntronSupportingEvid
   
   sth->execute(sth);
   sth->finish(sth);
+
+  Intron_free(intron);
   
   return;
 }
