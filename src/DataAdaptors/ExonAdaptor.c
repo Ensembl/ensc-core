@@ -366,7 +366,6 @@ IDType ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
 
   // Now the supporting evidence
   SupportingFeatureAdaptor *esfAdaptor = DBAdaptor_getSupportingFeatureAdaptor(db);
-
   SupportingFeatureAdaptor_store(esfAdaptor, exonId, Exon_getAllSupportingFeatures(exon));
 
   // HISTORIC NOTE: This comment (the component exon bit) must be the last remnant of StickyExon code in
@@ -376,7 +375,6 @@ IDType ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
   // Finally, update the dbID and adaptor of the exon (and any component exons)
   // to point to the new database
   //
-
   Exon_setAdaptor(exon, ea);
   Exon_setDbID(exon, exonId);
 

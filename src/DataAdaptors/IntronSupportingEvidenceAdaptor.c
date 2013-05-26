@@ -27,7 +27,6 @@ Bio::EnsEMBL::DBSQL::IntronSupportingEvidenceAdaptor
 
 #include <string.h>
 
-
 NameTableType IntronSupportingEvidenceAdaptor_tableNames = {{"intron_supporting_evidence","ise"},
                                                             {NULL,NULL}};
 
@@ -87,7 +86,7 @@ Vector *IntronSupportingEvidenceAdaptor_listLinkedTranscriptIds(IntronSupporting
   char qStr[1024];
 
   sprintf(qStr,"SELECT transcript_id from transcript_intron_supporting_evidence "
-                "WHERE intron_supporting_evidence_id = "IDFMTSTR, IntronSupportingEvidence_getDbID(ise));
+               "WHERE intron_supporting_evidence_id = "IDFMTSTR, IntronSupportingEvidence_getDbID(ise));
 
   StatementHandle *sth = isea->prepare((BaseAdaptor *)isea,qStr,strlen(qStr));
   sth->execute(sth);
@@ -125,7 +124,6 @@ Vector *IntronSupportingEvidenceAdaptor_listLinkedTranscriptIds(IntronSupporting
 
 =cut
 */
-
 Vector *IntronSupportingEvidenceAdaptor_fetchAllByTranscript(IntronSupportingEvidenceAdaptor *isea, Transcript *transcript) {
   char qStr[1024];
 
@@ -205,7 +203,6 @@ IDType *IntronSupportingEvidenceAdaptor_fetchFlankingExonIds(IntronSupportingEvi
 
   return flanks;
 }
-
 
 Vector *IntronSupportingEvidenceAdaptor_objectsFromStatementHandle(IntronSupportingEvidenceAdaptor *isea, 
                                                                    StatementHandle *sth,
@@ -416,71 +413,87 @@ Vector *IntronSupportingEvidenceAdaptor_objectsFromStatementHandle(IntronSupport
 
 =cut
 */
-IDType IntronSupportingEvidenceAdaptor_store(IntronSupportingEvidenceAdaptor *isea, IntronSupportingEvidence *ise)  {
-  fprintf(stderr,"IntronSupportingEvidence store not implemented yet\n");
-  exit(1);
-/*
-  my ($self, $sf) = @_;
-  assert_ref($sf, 'Bio::EnsEMBL::IntronSupportingEvidence', 'intron_supporting_feature');
+// This method was a mess - tidied and rearranged
+IDType IntronSupportingEvidenceAdaptor_store(IntronSupportingEvidenceAdaptor *isea, IntronSupportingEvidence *sf)  {
+  if (sf == NULL) {
+    fprintf(stderr,"sf is NULL in IntronSupportingEvidenceAdaptor_store\n");
+    exit(1);
+  }
+
+  Class_assertType(CLASS_INTRONSUPPORTINGEVIDENCE, sf->objectType);
   
-  my $db = $self->db();
+  DBAdaptor *db = isea->dba;
   
-  if($sf->is_stored($db)) {
-    return $sf->dbID();
+  if (! IntronSupportingEvidence_isStored(sf, db)) {
+    fprintf(stderr,"ISE already stored\n");
+    return IntronSupportingEvidence_getDbID(sf);
   }
   
-  my $analysis = $sf->analysis();
-  my $analysis_id = $analysis->is_stored($db) ? $analysis->dbID() : $db->get_AnalysisAdaptor()->store($analysis);
+  Analysis *analysis = IntronSupportingEvidence_getAnalysis(sf);
+
+  if (!Analysis_isStored(analysis, db)) {
+    AnalysisAdaptor_store(analysisAdaptor, analysis);
+  }
+  IDType analysisId = Analysis_getDbID(analysis);
+
+  // Think the above is equivalent to this horror
+  //my $analysis_id = $analysis->is_stored($db) ? $analysis->dbID() : $db->get_AnalysisAdaptor()->store($analysis);
   
+/* No transfer (see GeneAdaptor for why)
   my $seq_region_id;
   ($sf, $seq_region_id) = $self->_pre_store($sf);
+*/
 
-  my $sql = <<SQL;
-insert ignore into intron_supporting_evidence 
-(analysis_id, seq_region_id, seq_region_start, seq_region_end, seq_region_strand, hit_name, score, score_type, is_splice_canonical)
-values (?,?,?,?,?,?,?,?,?) 
-SQL
+  IDType seqRegionId = BaseFeatureAdaptor_preStore((BaseFeatureAdaptor *)isea, sf);
 
-  #Used later on for duplicate entry retrieval
-  my $query_params = [
-    [$analysis_id, SQL_INTEGER],
-    [$seq_region_id, SQL_INTEGER],
-    [$sf->start(), SQL_INTEGER],
-    [$sf->end(), SQL_INTEGER],
-    [$sf->strand(), SQL_INTEGER],
-    [$sf->hit_name(), SQL_VARCHAR],
-  ];
+  char qStr[1024];
+  sprintf(qStr, "INSERT IGNORE INTO intron_supporting_evidence "
+                "(analysis_id, seq_region_id, seq_region_start, seq_region_end, seq_region_strand, hit_name, score, score_type, is_splice_canonical) "
+                "VALUES ("IDFMTSTR","IDFMTSTR",%ld,%ld,%d,'%s',%f,'%s',%d)", 
+                analysisId,
+                seqRegionId,
+                IntronSupportingEvidence_getSeqRegionStart(sf),
+                IntronSupportingEvidence_getSeqRegionEnd(sf),
+                IntronSupportingEvidence_getSeqRegionStrand(sf),
+                IntronSupportingEvidence_getHitName(sf),
+                IntronSupportingEvidence_getScore(sf),
+                IntronSupportingEvidence_getScoreType(sf),
+                IntronSupportingEvidence_getIsSpliceCanonical(sf));
 
-  my $params = [
-    @{$query_params},
-    [$sf->score(), SQL_FLOAT],
-    [$sf->score_type(), SQL_VARCHAR],
-    [$sf->is_splice_canonical(), SQL_INTEGER],
-  ];
-    
-  $self->dbc()->sql_helper()->execute_update(-SQL => $sql, -PARAMS => $params, -CALLBACK => sub {
-    my ( $sth, $dbh, $rv ) = @_;
-    if ($rv > 0) {
-      $sf->dbID($self->last_insert_id('intron_supporting_evidence_id', undef, 'intron_supporting_evidence'));
-    }
-    return;
-  });
-  $sf->adaptor($self);
+  StatementHandle *sth = isea->prepare((BaseAdaptor *)isea,qStr,strlen(qStr));
   
-  if(!$sf->dbID()) {
-    my $query = <<'SQL';
-select intron_supporting_evidence_id 
-from intron_supporting_evidence
-where analysis_id =? 
-and seq_region_id =? and seq_region_start =? and seq_region_end =?  and seq_region_strand =?
-and hit_name =? 
-SQL
-    my $id = $self->dbc()->sql_helper()->execute_single_result(-SQL => $query, -PARAMS => $query_params);
-    $sf->dbID($id);
+  sth->execute(sth);
+  IDType sfId = sth->getInsertId(sth);
+  sth->finish(sth);
+
+  if (!sfId) {
+    sprintf(qStr,"SELECT intron_supporting_evidence_id "
+                   "FROM intron_supporting_evidence "
+                  "WHERE analysis_id = "IDFMTSTR
+                   " AND seq_region_id = "IDFMTSTR
+                   " AND seq_region_start = %ld"
+                   " AND seq_region_end = %ld" 
+                   " AND seq_region_strand = %d"
+                   " AND hit_name = '%s'",
+                analysisId,
+                seqRegionId,
+                IntronSupportingEvidence_getSeqRegionStart(sf),
+                IntronSupportingEvidence_getSeqRegionEnd(sf),
+                IntronSupportingEvidence_getSeqRegionStrand(sf),
+                IntronSupportingEvidence_getHitName(sf));
+
+    sth = isea->prepare((BaseAdaptor *)isea,qStr,strlen(qStr));
+    sth->execute(sth);
+    if (sth->numRows(sth) > 0) {
+      ResultRow *row = sth->fetchRow(sth);
+      sfId = row->getLongLongAt(row, 0);
+    }
   }
   
-  return $sf->dbID();
-*/
+  IntronSupportingFeature_setAdaptor(sf, isea);
+  IntronSupportingFeature_setDbID(sf, sfId);
+
+  return IntronSupportingFeature_getDbID(sf);
 }
 
 /* NIY
@@ -499,35 +512,46 @@ SQL
 
 =cut
 */
-/*
-sub store_transcript_linkage {
-  my ($self, $sf, $transcript, $transcript_id) = @_;
-  assert_ref($sf, 'Bio::EnsEMBL::IntronSupportingEvidence', 'intron_supporting_evidence');
-  assert_ref($transcript, 'Bio::EnsEMBL::Transcript', 'transcript');
-  
-  throw "Cannot perform the link. The IntronSupportingEvidence must be persisted first" unless $sf->is_stored($self->db());
-  
-  my $sql = <<SQL;
-insert ignore into transcript_intron_supporting_evidence 
-(transcript_id, intron_supporting_evidence_id, previous_exon_id, next_exon_id)
-values (?,?,?,?) 
-SQL
+void IntronSupportingEvidenceAdaptor_storeTranscriptLinkage(IntronSupportingEvidenceAdaptor *isea, 
+                                                            IntronSupportingEvidence *sf,
+                                                            Transcript *transcript,
+                                                            IDType transcriptId) {
+ 
+  if (sf == NULL || transcript == NULL) {
+    fprintf(stderr,"sf or transcript is NULL in IntronSupportingEvidenceAdaptor_storeTranscriptLinkage\n");
+    exit(1);
+  }
 
-  my $intron = $sf->get_Intron($transcript);
-  my ($previous_exon, $next_exon) = ($intron->prev_Exon(), $intron->next_Exon());
-  $transcript_id ||= $transcript->dbID();
+  Class_assertType(CLASS_INTRONSUPPORTINGEVIDENCE, sf->objectType);
+  Class_assertType(CLASS_TRANSCRIPT, transcript->objectType);
   
-  my $params = [
-    [$transcript_id, SQL_INTEGER],
-    [$sf->dbID(), SQL_INTEGER],
-    [$previous_exon->dbID(), SQL_INTEGER],
-    [$next_exon->dbID(), SQL_INTEGER],
-  ];
-  $self->dbc()->sql_helper()->execute_update(-SQL => $sql, -PARAMS => $params);
+  if (! IntronSupportingEvidence_isStored(sf, isea->dba)) {
+    fprintf(stderr,"Cannot perform the link. The IntronSupportingEvidence must be persisted first\n");
+    exit(1);
+  }
+
+// Moved up so can use in sprintf
+  Intron *intron = IntronSupportingEvidence_getIntron(sf, transcript);
+  Exon *prevExon = Intron_getPrevExon(intron);
+  Exon *nextExon = Intron_getNextExon(intron);
+
+  if (!transcriptId) {
+    transcriptId = Transcript_getDbID(transcript);
+  }
+
+  char qStr[1024];
+  sprintf(qStr, "INSERT IGNORE INTO transcript_intron_supporting_evidence "
+          "(transcript_id, intron_supporting_evidence_id, previous_exon_id, next_exon_id) "
+          "VALUES ("IDFMTSTR","IDFMTSTR","IDFMTSTR","IDFMTSTR")", 
+          transcriptId, IntronSupportingEvidence_getDbID(sf), Exon_getDbID(prevExon), Exon_getDbID(nextExon));
+
+  StatementHandle *sth = isea->prepare((BaseAdaptor *)isea,qStr,strlen(qStr));
+  
+  sth->execute(sth);
+  sth->finish(sth);
   
   return;
 }
-*/
 
 
 /* NIY
