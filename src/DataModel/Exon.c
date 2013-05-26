@@ -25,6 +25,7 @@ Exon *Exon_new() {
   Exon_setModified(exon,0);
   Exon_setCreated(exon,0);
   Exon_setVersion(exon,-1);
+  Exon_setIsCurrent(exon,1);
 
   exon->objectType = CLASS_EXON;
   Object_incRefCount(exon);

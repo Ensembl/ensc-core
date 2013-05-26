@@ -5,7 +5,7 @@
 #include "ResultRow.h"
 #include "DBConnection.h"
 
-typedef void (*StatementHandle_ExecuteFunc)(StatementHandle *sth, ...);
+typedef unsigned long long (*StatementHandle_ExecuteFunc)(StatementHandle *sth, ...);
 typedef ResultRow *(*StatementHandle_FetchRowFunc)(StatementHandle *sth);
 typedef void (*StatementHandle_FinishFunc)(StatementHandle *sth);
 typedef unsigned long long (*StatementHandle_NumRowsFunc)(StatementHandle *sth);

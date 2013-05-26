@@ -12,10 +12,10 @@ typedef struct MysqlStatementHandleStruct MysqlStatementHandle;
 
 #ifdef __hpux
  #include <varargs.h>
- void MysqlStatementHandle_execute(va_alist);
+ unsigned long long MysqlStatementHandle_execute(va_alist);
 #else
  #include <stdarg.h>
- void MysqlStatementHandle_execute(StatementHandle *sth, ...);
+ unsigned long long MysqlStatementHandle_execute(StatementHandle *sth, ...);
 #endif
 
 StatementHandle *MysqlStatementHandle_new(DBConnection *dbc, char *query);

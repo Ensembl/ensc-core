@@ -101,93 +101,107 @@ sub AUTOLOAD {
 */
 
 
-/* Truely horrible code
-   Will implement stores later (NIY)
-sub store_on_ {
-  my $self = shift;
-  my $type = shift;
-  my $object = shift;
-  my $attributes = shift;
-  my $table;
-
-
-  my $object_id;
-  if($type =~ /[GT][er][na][en]/){
-    if (!ref($object)){
-      $object_id = $object;
-    }
-    else {
-      $object_id = $object->dbID;
-    }
-    $table = lc($type);
-#    $type = lc($type);
+// Here I explicitly implement the various store functions
+Vector *AttributeAdaptor_storeOnGeneId(AttributeAdaptor *ata, IDType id, Vector *attributes) {
+  if (gene == NULL) {
+    fprintf(stderr,"Error: NULL Gene in AttributeAdaptor_storeOnGeneId\n");
+    exit(1);
   }
-  else{
-    if(!ref($object) || !$object->isa('Bio::EnsEMBL::'.$type)) {
-      throw("$type argument is required. but you passed $object");
-    }
-    if($type eq "Slice"){
-      $object_id = $object->get_seq_region_id();
-      $table = "seq_region"; 
-      $type = "seq_region";
-    }
-    else{
-      if($type eq "MiscFeature"){
-	$type = "misc_feature";
-	$table = "misc"; 
-      }
-      else{
-	$table = lc($type);
-      }
+
+  char *type  = "gene";
+  char *table = "gene";
+
+  return AttributeAdaptor_doStoreAllByTypeAndTableAndID(ata, type, table, id, attributes);
+}
+
+Vector *AttributeAdaptor_storeOnTranscriptId(AttributeAdaptor *ata, IDType id, Vector *attributes) {
+  if (transcript == NULL) {
+    fprintf(stderr,"Error: NULL Transcript in AttributeAdaptor_storeOnTranscriptId\n");
+    exit(1);
+  }
+
+  char *type  = "transcript";
+  char *table = "transcript";
+
+  return AttributeAdaptor_doStoreAllByTypeAndTableAndID(ata, type, table, id, attributes);
+}
+
+Vector *AttributeAdaptor_storeOnTranslationId(AttributeAdaptor *ata, IDType id, Vector *attributes) {
+  if (translation == NULL) {
+    fprintf(stderr,"Error: NULL Translation in AttributeAdaptor_storeOnTranslationId\n");
+    exit(1);
+  }
+
+  char *type  = "translation";
+  char *table = "translation";
+  IDType id   = Translation_getDbID(translation);
+
+  return AttributeAdaptor_doStoreAllByTypeAndTableAndID(ata, type, table, id, attributes);
+}
+
+Vector *AttributeAdaptor_storeOnSlice(AttributeAdaptor *ata, Slice *slice, Vector *attributes) {
+  if (slice == NULL) {
+    fprintf(stderr,"Error: NULL Slice in AttributeAdaptor_storeOnSlice\n");
+    exit(1);
+  }
+
+  my $db = $self->db();
       
-      $object_id = $object->dbID();
-      my $db = $self->db();
-      
-      if(!$object->is_stored($db)) {
-	throw("$type is not stored in this database.");
-      }
-      
-    }
-  }
-  my $sth = $self->prepare( "INSERT into ".$table."_attrib ".
-			    "SET ".$type."_id = ?, attrib_type_id = ?, ".
-			    "value = ? " );
+  char *type  = "seq_region";
+  char *table = "seq_region";
+  IDType id   = Slice_getSeqRegionId(slice);
 
-  my $undef_circular_cache = 0;
-  for my $attrib ( @$attributes ) {
-    if(!ref($attrib) && $attrib->isa('Bio::EnsEMBL::Attribute')) {
-      throw("Reference to list of Bio::EnsEMBL::Attribute objects " .
-            "argument expected.");
-    }
-
-#    next if ! $attrib->value;
-
-    my $atid = $self->_store_type( $attrib );
-    if ((defined $attrib->code) and ($attrib->code eq 'circular_seq')) {
-	$undef_circular_cache = 1;
-    }
-    $sth->bind_param(1,$object_id,SQL_INTEGER);
-    $sth->bind_param(2,$atid,SQL_INTEGER);
-    $sth->bind_param(3,$attrib->value,SQL_VARCHAR);
-    $sth->execute();
+  if (!Storable_isStored(&(slice->st), ata->dba)) {
+    fprintf(stderr, "%s is not stored in this database.", type);
+    exit(1);
   }
 
-  if($table eq "seq_region") {        
-    if ($undef_circular_cache) {
-	#the slice is circular
-	$object->{'circular'} = 1;
-	my $slice_adaptor = $object->adaptor();
-        #undefine slice adaptor->is_circular and the circular slice cache
-	if (defined $slice_adaptor) {
-	    $slice_adaptor->{'is_circular'} = undef;
-	    $slice_adaptor->{'circular_sr_id_cache'} = {};
-	}
-    }
+  return AttributeAdaptor_doStoreAllByTypeAndTableAndID(ata, type, table, id, attributes);
+}
+
+/* MiscFeature NIY
+Vector *AttributeAdaptor_storeOnMiscFeature(AttributeAdaptor *ata, MiscFeature *miscFeature, char *code) {
+  if (miscFeature == NULL) {
+    fprintf(stderr,"Error: NULL MiscFeature in AttributeAdaptor_storeOnMiscFeature\n");
+    exit(1);
   }
+
+  char *type  = "misc_feature";
+  char *table = "misc";
+  IDType id   = MiscFeature_getDbID(miscFeature);
+
+  return AttributeAdaptor_doFetchAllByTypeAndTableAndID(ata, type, table, id, code);
+}
+*/
+// Removed the circular stuff 
+void AttributeAdaptor_doStoreAllByTypeAndTableAndID(AttributeAdaptor *ata, char *type, char *table, IDType objectId, Vector *attributes) {
+  char qStr[1024];
+  fprintf(qStr, "INSERT into ".$table."_attrib SET %s_id = %"IDFMTSTR", attrib_type_id = %"IDFMTSTR", value = '%%s'", table, type);
+
+  StatementHandle *sth = ata->prepare((BaseAdaptor *)ata,qStr,strlen(qStr));
+
+  int i;
+  for (i=0; i<Vector_getNumElement(attributes); i++) {
+    Attribute attrib = Vector_getElementAt(attributes, i);
+
+    if (attrib == NULL ) {
+      fprintf(stderr, "Reference to list of Bio::EnsEMBL::Attribute objects argument expected.\n");
+      exit(1);
+    }
+
+    Class_assertType(CLASS_ATTRIBUTE, attrib->objectType);
+
+    IDType atId = AttributeAdaptor_storeType(ata, attrib);
+
+    sth->execute(sth, objectId, atId, Attribute_getValue(attrib));
+  }
+
+  sth->finish(sth);
 
   return;
 }
 
+/*
 sub remove_from_{
   my $self   = shift;
   my $type   = shift;
@@ -401,46 +415,47 @@ sub _id_check {
 /*
 # _store_type
 */
-/* NIY
-sub _store_type {
-  my $self = shift;
-  my $attrib = shift;
+IDType AttributeAdaptor_storeType(AttributeAdaptor *ata, Attribute *attrib) {
+  char qStr[1024];
+  sprintf(qStr,"INSERT IGNORE INTO attrib_type set code = '%s', name = '%s', description = '%s'", 
+          Attribute_getCode(attrib), 
+          Attribute_getName(attrib), 
+          Attribute_getDescription(attrib));
 
-  my $sth1 = $self->prepare
-    ("INSERT IGNORE INTO attrib_type set code = ?, name = ?, ".
-     "description = ?" );
+  StatementHandle *sth1 = ata->prepare((BaseAdaptor *)ata,qStr,strlen(qStr));
 
+// Not sure if this returns the num rows!
+  int rowsInserted = sth1->execute(sth1);
 
-  $sth1->bind_param(1,$attrib->code,SQL_VARCHAR);
-  $sth1->bind_param(2,$attrib->name,SQL_VARCHAR);
-  $sth1->bind_param(3,$attrib->description,SQL_LONGVARCHAR);
+  IDType atId = sth1->getInsertId(sth1);
 
-  my $rows_inserted =  $sth1->execute();
+  if (rowsInserted == 0) {
+    // the insert failed because the code is already stored
+    sprintf(qStr,"SELECT attrib_type_id FROM attrib_type WHERE code = '%s'", Attribute_getCode(attrib));
 
-  my $atid = $sth1->{'mysql_insertid'};
-
-  if($rows_inserted == 0) {
-    # the insert failed because the code is already stored
-    my $sth2 = $self->prepare
-      ("SELECT attrib_type_id FROM attrib_type " .
-       "WHERE code = ?");
-    $sth2->bind_param(1,$attrib->code,SQL_VARCHAR);
-    $sth2->execute();
-    ($atid) = $sth2->fetchrow_array();
-
-    $sth2->finish();
-
-    if(!$atid) {
-      throw("Could not store or fetch attrib_type code [".$attrib->code."]\n" .
-	    "Wrong database user/permissions?");
+    StatementHandle *sth2 = ata->prepare((BaseAdaptor *)ata,qStr,strlen(qStr));
+    
+    sth2->execute(sth2);
+ 
+    if (sth2->numRows(sth2) == 0) {
+      atId = 0;
+    } else {
+      ResultRow *row = sth2->fetchRow(sth2);
+      atId = row->getLongLongAt(row, 0);
     }
+
+    if (!atid) {
+      fprintf(stderr, "Could not store or fetch attrib_type code [%s]\n" .
+	              "Wrong database user/permissions?\n", Attribute_getCode(attrib));
+      exit(1);
+    }
+    sth2->finish(sth2);
   }
 
-  $sth1->finish();
+  sth1->finish(sth1);
 
-  return $atid;
+  return atId;
 }
-*/
 
 
 /* 

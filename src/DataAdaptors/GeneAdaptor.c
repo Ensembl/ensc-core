@@ -1301,115 +1301,135 @@ sub store_alt_alleles {
 
 =cut
 */
-
-
+// Default should be ignoreRelease = 1 so if you don't care about ignoreRelease
+// use that
 IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
-  fprintf(stderr,"Gene store not implemented yet\n");
-  exit(1);
 
-/*
-  
-  my ($self, $gene, $ignore_release) = @_;
-
-  if (!ref $gene || !$gene->isa('Bio::EnsEMBL::Gene')) {
-    throw("Must store a gene object, not a $gene");
+  if (gene == NULL) {
+    fprintf(stderr, "feature is NULL in Gene_store\n");
+    exit(1);
   }
+
+  Class_assertType(CLASS_GENE, gene->objectType);
+
+/* Should always be defined - its an arg to method
   if (!defined($ignore_release)) {
     $ignore_release = 1;
   }
-  my $db = $self->db();
+*/
+  DBAdaptor *db = ga->dba;
+  AnalysisAdaptor *analysisAdaptor = DBAdaptor_getAnalysisAdaptor(db);
 
-  if ($gene->is_stored($db)) {
-    return $gene->dbID();
+  if (Gene_isStored(gene, db)) {
+    fprintf(stderr, "Gene ["IDFMTSTR"] is already stored in this database.\n", Gene_getDbID(gene) );
+    return Gene_getDbID(gene);
   }
 
+
   // ensure coords are correct before storing
+/* NIY!!!!!!!!!!!!!
   $gene->recalculate_coordinates();
+*/
 
-  my $analysis = $gene->analysis();
-  throw("Genes must have an analysis object.") if (!defined($analysis));
+  Analysis *analysis = Gene_getAnalysis(gene);
+  if (analysis == NULL) {
+    fprintf(stderr,"An analysis must be attached to the features to be stored.\n");
+    exit(1);
+  }
 
-  my $analysis_id;
+  // store the analysis if it has not been stored yet
+  if (!Analysis_isStored(analysis, db)) {
+    AnalysisAdaptor_store(analysisAdaptor, analysis);
+  }
+  IDType analysisId = Analysis_getDbID(analysis);
+
+/* Think above is equivalent to this
   if ($analysis->is_stored($db)) {
     $analysis_id = $analysis->dbID();
   } else {
     $analysis_id = $db->get_AnalysisAdaptor->store($analysis);
   }
+*/
 
-  my $type = $gene->biotype || "";
+  if (Gene_getBiotype(gene)) {
+    type = Gene_getBiotype(gene);
+  } else {
+    type = emptyString; /* static "" */
+  }
 
   // default to is_current = 1 if this attribute is not set
+// In C I initialise this to 1 in Gene_new
+/*
   my $is_current = $gene->is_current;
   $is_current = 1 unless (defined($is_current));
+*/
 
+/* Note not doing transfer currently. If this is necessary?? then I'll have to rework this
   my $original             = $gene;
   my $original_transcripts = $gene->get_all_Transcripts();
-
   my $seq_region_id;
 
   ($gene, $seq_region_id) = $self->_pre_store($gene);
+*/
 
-  my $store_gene_sql = qq(
-        INSERT INTO gene
-           SET biotype = ?,
-               analysis_id = ?,
-               seq_region_id = ?,
-               seq_region_start = ?,
-               seq_region_end = ?,
-               seq_region_strand = ?,
-               description = ?,
-               source = ?,
-               status = ?,
-               is_current = ?,
-               canonical_transcript_id = ?,
-               canonical_annotation = ?
-  );
+  IDType seqRegionId = BaseFeatureAdaptor_preStore((BaseFeatureAdaptor *)ga, gene); 
 
-  if (defined($gene->stable_id)) {
-    my $created  = $self->db->dbc->from_seconds_to_date($gene->created_date());
-    my $modified = $self->db->dbc->from_seconds_to_date($gene->modified_date());
-    $store_gene_sql .= ", stable_id = ?, version = ?, created_date = " . $created . " , modified_date = " . $modified;
-
-  }
-
-  // column status is used from schema version 34 onwards (before it was
-  // confidence)
-
-  my $sth = $self->prepare($store_gene_sql);
-  $sth->bind_param(1,  $type,                SQL_VARCHAR);
-  $sth->bind_param(2,  $analysis_id,         SQL_INTEGER);
-  $sth->bind_param(3,  $seq_region_id,       SQL_INTEGER);
-  $sth->bind_param(4,  $gene->start(),       SQL_INTEGER);
-  $sth->bind_param(5,  $gene->end(),         SQL_INTEGER);
-  $sth->bind_param(6,  $gene->strand(),      SQL_TINYINT);
-  $sth->bind_param(7,  $gene->description(), SQL_LONGVARCHAR);
-  $sth->bind_param(8,  $gene->source(),      SQL_VARCHAR);
-  $sth->bind_param(9,  $gene->status(),      SQL_VARCHAR);
-  $sth->bind_param(10, $is_current,          SQL_TINYINT);
-
+  char qStr[1024];
   // Canonical transcript ID will be updated later.
   // Set it to zero for now.
-  $sth->bind_param(11, 0, SQL_TINYINT);
+  sprintf(qStr, 
+        "INSERT INTO gene "
+           "SET biotype = '%s',"
+               "analysis_id = "IDFMTSTR","
+               "seq_region_id = "IDFMTSTR","
+               "seq_region_start = %ld,"
+               "seq_region_end = %ld,"
+               "seq_region_strand = %d,"
+               "description = '%s',"
+               "source = '%s',"
+               "status = '%s',"
+               "is_current = %d,"
+               "canonical_transcript_id = 0," 
+               "canonical_annotation = '%s'", 
+           type, 
+           analysisId, 
+           seqRegionId, 
+           Gene_getSeqRegionStart(gene),
+           Gene_getSeqRegionEnd(gene),
+           Gene_getSeqRegionStrand(gene),
+           Gene_getDescription(gene),
+           Gene_getSource(gene),
+           Gene_getStatus(gene),
+           isCurrent,
+           Gene_getCanonicalAnnotation(gene));
 
-  $sth->bind_param(12, $gene->canonical_annotation(), SQL_VARCHAR);
-
-  if (defined($gene->stable_id)) {
-
-    $sth->bind_param(13, $gene->stable_id, SQL_VARCHAR);
-    my $version = ($gene->version()) ? $gene->version() : 1;
-    $sth->bind_param(14, $version, SQL_INTEGER);
+  if (Gene_getStableId(gene)) {
+/* Use FROM_UNIXTIME for now
+    my $created  = $self->db->dbc->from_seconds_to_date($gene->created_date());
+    my $modified = $self->db->dbc->from_seconds_to_date($gene->modified_date());
+*/
+  
+    int version = Gene_getVersion(gene) <= 0 ? Gene_getVersion(gene) : 1; // Assume version will be positive, Gene sets it to -1 when initialised
+    sprintf(qStr,"%s, stable_id = '%s', version = %d, created_date = FROM_UNIXTIME(%ld), modified_date = FROM_UNIXTIME(%ld)",
+            qStr, Gene_getStableId(gene), version, Gene_getCreated(gene), Gene_getModified(gene));
   }
 
-  $sth->execute();
-  $sth->finish();
+  sth = ga->prepare((BaseAdaptor *)ga,qStr,strlen(qStr));
 
-  my $gene_dbID = $sth->{'mysql_insertid'};
+  sth->execute(sth);
+// NIY??? Finish was before insert id call?? Moved before
+  geneId = sth->getInsertId(sth);
 
-  # store the dbentries associated with this gene
-  my $dbEntryAdaptor = $db->get_DBEntryAdaptor();
+  sth->finish(sth);
 
-  foreach my $dbe (@{$gene->get_all_DBEntries}) {
-    $dbEntryAdaptor->store($dbe, $gene_dbID, "Gene", $ignore_release);
+
+  // store the dbentries associated with this gene
+  DBEntryAdaptor *dbEntryAdaptor = DBAdaptor_getDBEntryAdaptor(db);
+
+  Vector *dbEntries = Gene_getAllDBEntries(gene);
+  for (i=0; i<Vector_getNumElement(dbEntries); i++) {
+    DBEntry *dbe = Vector_getElementAt(dbEntries, i);
+    DBEntryAdaptor_store(dbEntryAdaptor, dbe, geneId, "Gene", ignoreRelease);
   }
 
   // We allow transcripts not to share equal exons and instead have
@@ -1429,25 +1449,30 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
     }
   }
 
-  my $transcript_adaptor = $db->get_TranscriptAdaptor();
+  TranscriptAdaptor *transcriptAdaptor = DBAdaptor_getTranscriptAdaptor(db);
 
-  my $transcripts = $gene->get_all_Transcripts();
+//  Vector *transcripts = Gene_getAllTranscripts(gene);
 
-  my $new_canonical_transcript_id;
-  for (my $i = 0; $i < @$transcripts; $i++) {
-    my $new = $transcripts->[$i];
-    my $old = $original_transcripts->[$i];
+//  my $transcripts = $gene->get_all_Transcripts();
 
-    $transcript_adaptor->store($new, $gene_dbID, $analysis_id);
+  IDType newCanonicalTranscriptId = 0; // Assume 0 is not a valid dbID - NIY May not be a good assumption
 
-    if (!defined($new_canonical_transcript_id)
-        && $new->is_canonical())
-    {
-      $new_canonical_transcript_id = $new->dbID();
+// Note I'm not doing the transfer so no new/old separation for now.
+// Just call it new
+  int i;
+  for (i = 0; i < Gene_getTranscriptCount(gene); i++) {
+    Transcript *new = Gene_getTranscriptAt(gene, i);
+//    my $old = $original_transcripts->[$i];
+
+    TranscriptAdaptor_store(transcriptAdaptor, new, geneId, analysisId);
+
+    if (!newCanonicalTranscriptId && Transcript_isCanonical(new)) {
+      newCanonicalTranscriptId = Transcript_getDbID(new);
     }
 
     // update the original transcripts since we may have made copies of
     // them by transforming the gene
+/*
     $old->dbID($new->dbID());
     $old->adaptor($new->adaptor());
 
@@ -1455,68 +1480,73 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
       $old->translation->dbID($new->translation()->dbID);
       $old->translation->adaptor($new->translation()->adaptor);
     }
+*/
   }
 
-  if (defined($new_canonical_transcript_id)) {
+//  if (defined($new_canonical_transcript_id)) {
+  if (newCanonicalTranscriptId) {
     // Now the canonical transcript has been stored, so update the
     // canonical_transcript_id of this gene with the new dbID.
-    my $sth = $self->prepare(
-      q(
-      UPDATE gene
-      SET canonical_transcript_id = ?
-      WHERE gene_id = ?)
-    );
+    sprintf(qStr,"UPDATE gene SET canonical_transcript_id = "IDFMTSTR" WHERE gene_id = "IDFMTSTR,new_canonical_transcript_id, geneId)
 
-    $sth->bind_param(1, $new_canonical_transcript_id, SQL_INTEGER);
-    $sth->bind_param(2, $gene_dbID, SQL_INTEGER);
+    sth = ga->prepare((BaseAdaptor *)ga,qStr,strlen(qStr));
 
-    $sth->execute();
-    $sth->finish();
+    sth->execute(sth);
+    sth->finish(sth);
   }
 
   // update gene to point to display xref if it is set
-  if (my $display_xref = $gene->display_xref) {
-    my $dxref_id;
-    if ($display_xref->is_stored($db)) {
-      $dxref_id = $display_xref->dbID();
+  DBEntry *displayXref = Gene_getDisplayXref(gene);
+  if (displayXref != NULL) {
+
+    IDType dxrefId = 0;
+    if (DBEntry_isStored(displayXref, db)) {
+      dxrefId = DBEntry_getDbID(displayXref);
     } else {
-      $dxref_id = $dbEntryAdaptor->exists($display_xref);
+      dxrefId = DBEntryAdaptor_exists(dbEntryAdaptor, displayXref);
     }
 
-    if (defined($dxref_id)) {
-      my $sth = $self->prepare("UPDATE gene SET display_xref_id = ? WHERE gene_id = ?");
-      $sth->bind_param(1, $dxref_id,  SQL_INTEGER);
-      $sth->bind_param(2, $gene_dbID, SQL_INTEGER);
-      $sth->execute();
-      $sth->finish();
-      $display_xref->dbID($dxref_id);
-      $display_xref->adaptor($dbEntryAdaptor);
-      $display_xref->dbID($dxref_id);
-      $display_xref->adaptor($dbEntryAdaptor);
+//    if (defined($dxref_id)) {
+    if (dxrefId) {
+      sprintf(qStr, "UPDATE gene SET display_xref_id = "IDFMTSTR" WHERE gene_id = "IDFMTSTR, dxrefId, geneId);
+
+      sth = ga->prepare((BaseAdaptor *)ga,qStr,strlen(qStr));
+
+      sth->execute(sth);
+      sth->finish(sth);
+
+      DBEntry_setDbID(displayXref, dxrefId);
+      DBEntry_setAdaptor(displayXref, (BaseAdaptor *)dbEntryAdaptor);
+// Duplicate code in perl
+//      $display_xref->dbID($dxref_id);
+//      $display_xref->adaptor($dbEntryAdaptor);
     } else {
-      warning("Display_xref " . $display_xref->dbname() . ":" . $display_xref->display_id() . " is not stored in database.\n" . "Not storing relationship to this gene.");
-      $display_xref->dbID(undef);
-      $display_xref->adaptor(undef);
+      fprintf(stderr, "Display_xref %s:%s is not stored in database.\n"
+                      "Not storing relationship to this gene.\n", 
+              DBEntry_getDbName(displayXref), DBEntry_getDisplayId(displayXref));
+      DBEntry_setDbID(displayXref, 0);
+      DBEntry_setAdaptor(displayXref, NULL);
     }
   }
 
   // store gene attributes if there are any
-  my $attr_adaptor = $db->get_AttributeAdaptor();
-  $attr_adaptor->store_on_Gene($gene_dbID, $gene->get_all_Attributes);
+  AttributeAdaptor *attrAdaptor = DBAdaptor_getAttributeAdaptor(db);
+  AttributeAdaptor_storeOnGene(attrAdaptor, geneId, Gene_getAllAttributes(gene));
 
   // store unconventional transcript associations if there are any
+/* NIY - and probably never will be implemented, not used anywhere that I know of
   my $utaa = $db->get_UnconventionalTranscriptAssociationAdaptor();
   foreach my $uta (@{$gene->get_all_unconventional_transcript_associations()}) {
     $utaa->store($uta);
   }
+*/
 
   // set the adaptor and dbID on the original passed in gene not the
-  // transfered copy
-  $original->adaptor($self);
-  $original->dbID($gene_dbID);
+  // transfered copy - I don't make the transferred copy in C (hopefully I don't need to)
+  Gene_setAdaptor(gene, (BaseAdaptor *)ga);
+  Gene_setDbID(gene,geneId);
 
-  return $gene_dbID;
-*/
+  return Gene_getDbID(gene);
 }
 
 /* Don't bother

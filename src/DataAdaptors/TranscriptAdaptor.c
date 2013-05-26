@@ -892,205 +892,219 @@ void TranscriptAdaptor_biotypeConstraint(TranscriptAdaptor *ta, Vector *biotypes
 
 IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, IDType geneId, IDType analysisId) {
 
-/*
-  if (    !ref($transcript)
-       || !$transcript->isa('Bio::EnsEMBL::Transcript') )
-  {
-    throw("$transcript is not a EnsEMBL transcript - not storing");
+  if (transcript == NULL) {
+    fprintf(stderr, "feature is NULL in Transcript_store\n");
+    exit(1);
   }
 
-  my $db = $self->db();
+  Class_assertType(CLASS_TRANSCRIPT, transcript->objectType);
 
-  if ( $transcript->is_stored($db) ) {
-    return $transcript->dbID();
+  DBAdaptor *db = ta->dba;
+  AnalysisAdaptor *analysisAdaptor = DBAdaptor_getAnalysisAdaptor(db);
+
+  if (Transcript_isStored(transcript, db)) {
+    fprintf(stderr, "Transcript ["IDFMTSTR"] is already stored in this database.\n", Transcript_getDbID(transcript) );
+    return Transcript_getDbID(transcript);
   }
 
-  # Force lazy-loading of exons and ensure coords are correct.
+  // Force lazy-loading of exons and ensure coords are correct.
+/* NIY!!!!!!!!!!!!!!
   $transcript->recalculate_coordinates();
+*/
 
+/* Default set to 1 in Transcript_new so no need for this check
   my $is_current = ( defined( $transcript->is_current() )
                      ? $transcript->is_current()
                      : 1 );
+*/
+  int isCurrent = Transcript_getIsCurrent(transcript);
 
-  # store analysis
-  my $analysis = $transcript->analysis();
-  my $new_analysis_id;
+  // store analysis
+  Analysis *analysis = Transcript_getAnalysis(transcript);
+  IDType newAnalysisId;
 
-  if ($analysis) {
+  if (analysis != NULL) {
+    if (!Analysis_isStored(analysis, db)) {
+      AnalysisAdaptor_store(analysisAdaptor, analysis);
+    }
+    newAnalysisId = Analysis_getDbID(analysis);
+
+/* Think above is equivalent to this
     if ( $analysis->is_stored($db) ) {
       $new_analysis_id = $analysis->dbID;
     } else {
       $new_analysis_id = $db->get_AnalysisAdaptor->store($analysis);
     }
-  } elsif ($analysis_id) {
-    # Fall back to analysis passed in (usually from gene) if analysis
-    # wasn't set explicitely for the transcript. This is deprectated
-    # though.
-    warning(   "You should explicitely attach "
-             . "an analysis object to the Transcript. "
-             . "Will fall back to Gene analysis, "
-             . "but this behaviour is deprecated." );
-    $new_analysis_id = $analysis_id;
+*/
+  } else if (analysisId) {
+    // Fall back to analysis passed in (usually from gene) if analysis
+    // wasn't set explicitely for the transcript. This is deprectated
+    // though.
+    fprintf(stderr,"You should explicitly attach an analysis object to the Transcript.\n"
+                   "Will fall back to Gene analysis, but this behaviour is deprecated.\n" );
+    newAnalysisId = analysisId;
   } else {
-    throw("Need an analysis_id to store the Transcript.");
+    fprintf(stderr,"Need an analysis_id to store the Transcript.\n");
+    exit(1);
   }
 
-  #
-  # Store exons - this needs to be done before the possible transfer
-  # of the transcript to another slice (in _prestore()).  Transfering
-  # results in copies being made of the exons and we need to preserve
-  # the object identity of the exons so that they are not stored twice
-  # by different transcripts.
-  #
-  my $exons       = $transcript->get_all_Exons();
-  my $exonAdaptor = $db->get_ExonAdaptor();
-  foreach my $exon ( @{$exons} ) {
-    $exonAdaptor->store($exon);
+  //
+  // Store exons - this needs to be done before the possible transfer
+  // of the transcript to another slice (in _prestore()).  Transfering
+  // results in copies being made of the exons and we need to preserve
+  // the object identity of the exons so that they are not stored twice
+  // by different transcripts.
+  // 
+  ExonAdaptor *exonAdaptor = DBAdaptor_getExonAdaptor(db);
+  int i;
+  for (i=0; i<Transcript_getNumExons(transcript); i++) {
+    Exon *exon = Transcript_getExonAt(transcript, i);
+    ExonAdaptor_store(exonAdaptor, exon);
   }
 
+/* Not doing transfers - don't think they should be necessary (hopefully)
   my $original_translation = $transcript->translation();
   my $original             = $transcript;
   my $seq_region_id;
   ( $transcript, $seq_region_id ) = $self->_pre_store($transcript);
+*/
+  IDType seqRegionId = BaseFeatureAdaptor_preStore((BaseFeatureAdaptor *)ta, transcript);
 
-  # First store the transcript without a display xref.  The display xref
-  # needs to be set after xrefs are stored which needs to happen after
-  # transcript is stored.
+  // First store the transcript without a display xref.  The display xref
+  // needs to be set after xrefs are stored which needs to happen after
+  // transcript is stored.
 
-  #
-  # Store transcript
-  #
-  my $store_transcript_sql = qq(
-      INSERT INTO transcript 
-        SET gene_id = ?, 
-            analysis_id = ?, 
-            seq_region_id = ?, 
-            seq_region_start = ?,
-            seq_region_end = ?, 
-            seq_region_strand = ?, 
-            biotype = ?, 
-            status = ?, 
-            description = ?,
-            is_current = ?, 
-            canonical_translation_id = ? 
-  );
+  //
+  // Store transcript
+  // 
+  char qStr[1024];
+  sprintf(qStr, "INSERT INTO transcript "
+                "SET gene_id = "IDFMTSTR", "
+                    "analysis_id = "IDFMTSTR", "
+                    "seq_region_id = "IDFMTSTR", " 
+                    "seq_region_start = %ld, "
+                    "seq_region_end = %ld, "
+                    "seq_region_strand = %d, " 
+                    "biotype = '%s', "
+                    "status = '%s', "
+                    "description = '%s', "
+                    "is_current = %d, "
+                    "canonical_translation_id = NULL",
+         geneDbID,
+         newAnalysisId,
+         seqRegionId,
+         Transcript_getSeqRegionStart(transcript),
+         Transcript_getSeqRegionEnd(transcript),
+         Transcript_getSeqRegionStrand(transcript),
+         Transcript_getBiotype(transcript),
+         Transcript_getStatus(transcript),
+         Transcript_getDescription(transcript),
+         isCurrent); 
 
-  if ( defined( $transcript->stable_id() ) ) {
+  if (Transcript_getStableId(transcript)) {
+/* Use FROM_UNIXTIME for now
+    my $created  = $self->db->dbc->from_seconds_to_date($transcript->created_date());
+    my $modified = $self->db->dbc->from_seconds_to_date($transcript->modified_date());
+*/
 
-      my $created = $self->db->dbc->from_seconds_to_date($transcript->created_date());
-      my $modified = $self->db->dbc->from_seconds_to_date($transcript->modified_date());
-      $store_transcript_sql .= ", stable_id = ?, version = ?, created_date = " . $created . " , modified_date = " . $modified;
-
+    // Assume version will be positive, Transcript sets it to -1 when initialised
+    int version = Transcript_getVersion(transcript) <= 0 ? Transcript_getVersion(transcript) : 1; 
+    sprintf(qStr,"%s, stable_id = '%s', version = %d, created_date = FROM_UNIXTIME(%ld), modified_date = FROM_UNIXTIME(%ld)",
+            qStr, Transcript_getStableId(transcript), version, Transcript_getCreated(transcript), Transcript_getModified(transcript));
   }
 
-  my $tst = $self->prepare($store_transcript_sql);
-  $tst->bind_param( 1,  $gene_dbID,                 SQL_INTEGER );
-  $tst->bind_param( 2,  $new_analysis_id,           SQL_INTEGER );
-  $tst->bind_param( 3,  $seq_region_id,             SQL_INTEGER );
-  $tst->bind_param( 4,  $transcript->start(),       SQL_INTEGER );
-  $tst->bind_param( 5,  $transcript->end(),         SQL_INTEGER );
-  $tst->bind_param( 6,  $transcript->strand(),      SQL_TINYINT );
-  $tst->bind_param( 7,  $transcript->biotype(),     SQL_VARCHAR );
-  $tst->bind_param( 8,  $transcript->status(),      SQL_VARCHAR );
-  $tst->bind_param( 9,  $transcript->description(), SQL_LONGVARCHAR );
-  $tst->bind_param( 10, $is_current,                SQL_TINYINT );
+  StatementHandle *tst = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
 
-  # If the transcript has a translation, this is updated later:
-  $tst->bind_param( 11, undef, SQL_INTEGER );
+  tst->execute(tst);
 
-  if ( defined( $transcript->stable_id() ) ) {
+// Swapped id fetch and finish statements
+  IDType transcDbID = tst->getInsertId(sts);
 
-    $tst->bind_param( 12, $transcript->stable_id(), SQL_VARCHAR );
-    my $version = ($transcript->version()) ? $transcript->version() : 1;
-    $tst->bind_param( 13, $version,                 SQL_INTEGER );
-  }
+  tst->finish(tst);
+  // 
+  // Store translation
+  //
 
+  Vector *altTranslations = Transcript_getAllAlternativeTranslations(transcript);
 
-  $tst->execute();
-  $tst->finish();
+  Translation *translation = Transcript_getTranslation(transcript);
 
-  my $transc_dbID = $tst->{'mysql_insertid'};
+  if ( translation != NULL ) {
+    // Make sure that the start and end exon are set correctly.
+    Exon *startExon = Translation_getStartExon(translation);
+    Exon *endExon   = Translation_getEndExon(translation);
 
-  #
-  # Store translation
-  #
-
-  my $alt_translations =
-    $transcript->get_all_alternative_translations();
-  my $translation = $transcript->translation();
-
-  if ( defined($translation) ) {
-    # Make sure that the start and end exon are set correctly.
-    my $start_exon = $translation->start_Exon();
-    my $end_exon   = $translation->end_Exon();
-
-    if ( !defined($start_exon) ) {
-      throw("Translation does not define a start exon.");
+    if ( startExon == NULL) {
+      fprintf(stderr, "Translation does not define a start exon.\n");
+      exit(1);
     }
 
-    if ( !defined($end_exon) ) {
-      throw("Translation does not defined an end exon.");
+    if ( endExon == NULL ) {
+      fprintf(stderr, "Translation does not define an end exon.\n");
+      exit(1);
     }
 
-    # If the dbID is not set, this means the exon must have been a
-    # different object in memory than the the exons of the transcript.
-    # Try to find the matching exon in all of the exons we just stored.
-    if ( !defined( $start_exon->dbID() ) ) {
+    // If the dbID is not set, this means the exon must have been a
+    // different object in memory than the the exons of the transcript.
+    // Try to find the matching exon in all of the exons we just stored.
+// Use isStored instead
+    if ( ! Exon_isStored(startExon, db) ) {
       my $key = $start_exon->hashkey();
       ($start_exon) = grep { $_->hashkey() eq $key } @$exons;
 
       if ( defined($start_exon) ) {
         $translation->start_Exon($start_exon);
       } else {
-        throw(   "Translation's start_Exon does not appear "
-               . "to be one of the exons in "
-               . "its associated Transcript" );
+        fprintf(stderr, "Translation's start_Exon does not appear "
+                        "to be one of the exons in its associated Transcript.\n" );
+        exit(1);
       }
     }
 
-    if ( !defined( $end_exon->dbID() ) ) {
+    if ( ! Exon_isStored(endExon, db) ) {
       my $key = $end_exon->hashkey();
       ($end_exon) = grep { $_->hashkey() eq $key } @$exons;
 
       if ( defined($end_exon) ) {
         $translation->end_Exon($end_exon);
       } else {
-        throw(   "Translation's end_Exon does not appear "
-               . "to be one of the exons in "
-               . "its associated Transcript." );
+        fprintf(stderr, "Translation's end_Exon does not appear "
+                        "to be one of the exons in its associated Transcript.\n");
+        exit(1);
       }
     }
 
-    my $old_dbid = $translation->dbID();
-    $db->get_TranslationAdaptor()->store( $translation, $transc_dbID );
+// Doesn't seem to be used    my $old_dbid = $translation->dbID();
 
-    # Need to update the canonical_translation_id for this transcript.
+    TranslationAdaptor *tlna = DBAdaptor_getTranslationAdaptor(db);
+    TranslationAdaptor_store(tlna,  translation, transcDbID );
 
-    my $sth = $self->prepare(
-      q(
-      UPDATE transcript
-      SET canonical_translation_id = ?
-      WHERE transcript_id = ?)
-    );
+    // Need to update the canonical_translation_id for this transcript.
 
-    $sth->bind_param( 1, $translation->dbID(), SQL_INTEGER );
-    $sth->bind_param( 2, $transc_dbID,         SQL_INTEGER );
+    sprintf(qStr, "UPDATE transcript SET canonical_translation_id = "IDFMTSTR" WHERE transcript_id = "IDFMTSTR,
+            Translation_getDbID(translation), transcDbID);
 
-    $sth->execute();
+    StatementHandle *sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
+    sth->execute(sth);
+    sth->finish(sth);
 
-    # Set values of the original translation, we may have copied it when
-    # we transformed the transcript.
+    // Set values of the original translation, we may have copied it when
+    // we transformed the transcript.
+/* Shouldn't need because no transfer being done
     $original_translation->dbID( $translation->dbID() );
     $original_translation->adaptor( $translation->adaptor() );
-  } ## end if ( defined($translation...))
+*/
+  }
 
-  #
-  # Store the alternative translations, if there are any.
-  #
+  //
+  // Store the alternative translations, if there are any.
+  //
 
-  if ( defined($alt_translations)
-       && scalar( @{$alt_translations} ) > 0 )
-  {
+  if ( altTranslations != NULL &&
+       Vector_getNumElement(altTranslations) > 0) {
+    fprintf(stderr, "Alt translation storing not implemented\n");
+    exit(1);
+/* NIY
     foreach my $alt_translation ( @{$alt_translations} ) {
       my $start_exon = $alt_translation->start_Exon();
       my $end_exon   = $alt_translation->end_Exon();
@@ -1128,94 +1142,97 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
 
       $db->get_TranslationAdaptor()
         ->store( $alt_translation, $transc_dbID );
-    } ## end foreach my $alt_translation...
-  } ## end if ( defined($alt_translations...))
-
-  #
-  # Store the xrefs/object xref mapping.
-  #
-  my $dbEntryAdaptor = $db->get_DBEntryAdaptor();
-
-  foreach my $dbe ( @{ $transcript->get_all_DBEntries() } ) {
-    $dbEntryAdaptor->store( $dbe, $transc_dbID, "Transcript", 1 );
-  }
-
-  #
-  # Update transcript to point to display xref if it is set.
-  #
-  if ( my $dxref = $transcript->display_xref() ) {
-    my $dxref_id;
-
-    if ( $dxref->is_stored($db) ) {
-      $dxref_id = $dxref->dbID();
-    } else {
-      $dxref_id = $dbEntryAdaptor->exists($dxref);
     }
-
-    if ( defined($dxref_id) ) {
-      my $sth =
-        $self->prepare(   "UPDATE transcript "
-                        . "SET display_xref_id = ? "
-                        . "WHERE transcript_id = ?" );
-      $sth->bind_param( 1, $dxref_id,    SQL_INTEGER );
-      $sth->bind_param( 2, $transc_dbID, SQL_INTEGER );
-      $sth->execute();
-      $dxref->dbID($dxref_id);
-      $dxref->adaptor($dbEntryAdaptor);
-      $sth->finish();
-    } else {
-      warning(sprintf(
-                     "Display_xref %s:%s is not stored in database.\n"
-                       . "Not storing relationship to this transcript.",
-                     $dxref->dbname(), $dxref->display_id() ) );
-      $dxref->dbID(undef);
-      $dxref->adaptor(undef);
-    }
-  } ## end if ( my $dxref = $transcript...)
-
-  #
-  # Link transcript to exons in exon_transcript table
-  #
-  my $etst = $self->prepare(
-             "INSERT INTO exon_transcript (exon_id,transcript_id,rank) "
-               . "VALUES (?,?,?)" );
-  my $rank = 1;
-  foreach my $exon ( @{ $transcript->get_all_Exons } ) {
-    $etst->bind_param( 1, $exon->dbID,  SQL_INTEGER );
-    $etst->bind_param( 2, $transc_dbID, SQL_INTEGER );
-    $etst->bind_param( 3, $rank,        SQL_INTEGER );
-    $etst->execute();
-    $rank++;
-  }
-
-  $etst->finish();
-
-  # Now the supporting evidence
-  my $tsf_adaptor = $db->get_TranscriptSupportingFeatureAdaptor();
-  $tsf_adaptor->store( $transc_dbID,
-                       $transcript->get_all_supporting_features() );
-
-  # store transcript attributes if there are any
-  my $attr_adaptor = $db->get_AttributeAdaptor();
-
-  $attr_adaptor->store_on_Transcript( $transc_dbID,
-                                    $transcript->get_all_Attributes() );
-
-  # store the IntronSupportingEvidence features
-  my $ise_adaptor = $db->get_IntronSupportingEvidenceAdaptor();
-  my $intron_supporting_evidence = $transcript->get_all_IntronSupportingEvidence();
-  foreach my $ise (@{$intron_supporting_evidence}) {
-    $ise_adaptor->store($ise);
-    $ise_adaptor->store_transcript_linkage($ise, $transcript, $transc_dbID);
-  }
-
-  # Update the original transcript object - not the transfered copy that
-  # we might have created.
-  $original->dbID($transc_dbID);
-  $original->adaptor($self);
-
-  return $transc_dbID;
 */
+  }
+
+  //
+  // Store the xrefs/object xref mapping.
+  // 
+  DBEntryAdaptor *dbEntryAdaptor = DBAdaptor_getDBEntryAdaptor(db);
+
+  Vector *dbEntries = Transcript_getAllDBEntries(transcript);
+  for (i=0; i<Vector_getNumElement(dbEntries); i++) {
+    DBEntry *dbe = Vector_getElementAt(dbEntries, i);
+    DBEntryAdaptor_store(dbEntryAdaptor, dbe, transcDbID, "Transcript", 1);
+  }
+
+
+  //
+  // Update transcript to point to display xref if it is set.
+  //
+  DBEntry *displayXref = Transcript_getDisplayXref(transcript);
+  if (displayXref != NULL) {
+
+    IDType dxrefId = 0;
+    if (DBEntry_isStored(displayXref, db)) {
+      dxrefId = DBEntry_getDbID(displayXref);
+    } else {
+      dxrefId = DBEntryAdaptor_exists(dbEntryAdaptor, displayXref);
+    }
+
+//    if (defined($dxref_id)) {
+    if (dxrefId) {
+      sprintf(qStr, "UPDATE transcript SET display_xref_id = "IDFMTSTR" WHERE transcript_id = "IDFMTSTR, dxrefId, transcDbID);
+
+      sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
+
+      sth->execute(sth);
+      sth->finish(sth);
+
+      DBEntry_setDbID(displayXref, dxrefId);
+      DBEntry_setAdaptor(displayXref, (BaseAdaptor *)dbEntryAdaptor);
+    } else {
+      fprintf(stderr, "Display_xref %s:%s is not stored in database.\n"
+                      "Not storing relationship to this transcript.\n",
+              DBEntry_getDbName(displayXref), DBEntry_getDisplayId(displayXref));
+      DBEntry_setDbID(displayXref, 0);
+      DBEntry_setAdaptor(displayXref, NULL);
+    }
+  }
+
+  //
+  // Link transcript to exons in exon_transcript table
+  //
+  sprintf(qStr, "INSERT INTO exon_transcript (exon_id,transcript_id,rank) " 
+                "VALUES (%"IDFMTSTR",%"IDFMTSTR",%%d)" );
+
+  StatementHandle *etst = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
+
+  int rank = 1;
+  for (i=0; i<Transcript_getNumExons(transcript); i++) {
+    Exon *exon = Transcript_getExonAt(transcript, i);
+
+    etst->execute(etst, Exon_getDbID(exon), transcDbID, rank);
+    rank++;
+  }
+
+  etst->finish(etst);
+
+  // Now the supporting evidence
+  TranscriptSupportingFeatureAdaptor *tsfAdaptor = DBAdaptor_getTranscriptSupportingFeatureAdaptor(db);
+  TranscriptSupportingFeatureAdaptor_store(tsfAdaptor, transcDbID, Transcript_getAllSupportingFeatures(transcript));
+
+  // store transcript attributes if there are any
+  AttributeAdaptor *attrAdaptor = DBAdaptor_getAttributeAdaptor(db);
+  AttributeAdaptor_storeOnTranscriptId(attrAdaptor, transcDbID, Transcript_getAllAttributes(transcript) );
+
+  // store the IntronSupportingEvidence features
+  IntronSupportingEvidenceAdaptor *iseAdaptor = DBAdaptor_getIntronSupportingEvidenceAdaptor(db);
+  Vector *intronSupportingEvidence = Transcript_getAllIntronSupportingEvidence(transcript);
+
+  for (i=0; i<Vector_getNumElement(intronSupportingEvidence); i++) {
+    IntronSupportingEvidence *ise = Vector_getElementAt(intronSupportingEvidence, i);
+    IntronSupportingEvidenceAdaptor_store(iseAdaptor, ise);
+    IntronSupportingEvidenceAdaptor_storeTranscriptLinkage(iseAdaptor, ise, transcript, transcDbID);
+  }
+
+  // Update the original transcript object - not the transfered copy that
+  // we might have created.
+  Transcript_setDbID(transcript, transcDbID);
+  Transcript_setAdaptor(transcript, ta);
+
+  return transcDbID;
 }
 
 

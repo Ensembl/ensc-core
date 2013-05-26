@@ -338,93 +338,93 @@ sub fetch_all_by_GOTerm_accession {
   Status     : Stable
 
 =cut
+*/
 
-sub store {
-  my ( $self, $translation, $transcript_id )  = @_;
+IDType TranslationAdaptor_store(TranslationAdaptor *tlna, Translation *translation, IDType transcriptId) {
   
-  my $start_exon = $translation->start_Exon();
-  my $end_exon   = $translation->end_Exon();
+  Exon *startExon = Translation_getStartExon(translation);
+  Exon *endExon   = Translation_getEndExon(translation);
  
-  if(!$start_exon) {
-    throw("Translation must define a start_Exon to be stored.");
-  }
- 
-  if(!$end_exon) {
-    throw("Translation must define an end_Exon to be stored.");
+  if (startExon) {
+    fprintf(stderr, "Translation must define a start_Exon to be stored.\n");
   }
  
-  if(!$start_exon->dbID) {
-    throw("start_Exon must have a dbID for Translation to be stored.");
+  if (endExon) {
+    fprintf(stderr, "Translation must define an end_Exon to be stored.\n");
+  }
+ 
+  if (!Exon_getDbID(startExon)) {
+    fprintf(stderr, "start_Exon must have a dbID for Translation to be stored.\n");
   }
 
-  if(!$end_exon->dbID) {
-    throw("end_Exon must have a dbID for Translation to be stored.");
+  if (!Exon_getDbID(endExon)) {
+    fprintf(stderr, "end_Exon must have a dbID for Translation to be stored.\n");
   }
 
-  my $store_translation_sql = qq(
-         INSERT INTO translation 
-             SET seq_start = ?, 
-                 start_exon_id = ?,
-                 seq_end = ?, 
-                 end_exon_id = ?, 
-                 transcript_id = ?
-  );
+  char qStr[1024];
+  sprintf(qStr,
+         "INSERT INTO translation " 
+             "SET seq_start = %d,"
+                " start_exon_id = "IDFMTSTR","
+                " seq_end = %d," 
+                " end_exon_id = "IDFMTSTR","
+                " transcript_id = "IDFMTSTR,
+          Translation_getStart(translation),
+          Exon_getDbID(startExon),
+          Translation_getEnd(translation),
+          Exon_getDbID(endExon),
+          transcriptId);
 
-  if (defined($translation->stable_id)) {
+  if (Translation_getStableId(translation) != NULL) {
+/*
       my $created = $self->db->dbc->from_seconds_to_date($translation->created_date());
       my $modified = $self->db->dbc->from_seconds_to_date($translation->modified_date());
-      $store_translation_sql .= ", stable_id = ?, version = ?, created_date = " . $created . " , modified_date = " . $modified;
-
+*/
+    // Assume version will be positive, Translation sets it to -1 when initialised
+    int version = Translation_getVersion(translation) <= 0 ? Translation_getVersion(translation) : 1; 
+    sprintf(qStr,"%s, stable_id = '%s', version = %d, created_date = FROM_UNIXTIME(%ld), modified_date = FROM_UNIXTIME(%ld)",
+            qStr, Translation_getStableId(translation), version, Translation_getCreated(translation), Translation_getModified(translation));
   }
 
-  my $sth = $self->prepare($store_translation_sql);
-  $sth->bind_param(1,$translation->start,SQL_INTEGER);
-  $sth->bind_param(2,$translation->start_Exon->dbID,SQL_INTEGER);
-  $sth->bind_param(3,$translation->end,SQL_INTEGER);
-  $sth->bind_param(4,$translation->end_Exon->dbID,SQL_INTEGER);
-  $sth->bind_param(5,$transcript_id,SQL_INTEGER);
+  sth = tlna->prepare((BaseAdaptor *)tlna,qStr,strlen(qStr));
 
-
-  if (defined($translation->stable_id)) {
+  sth->execute(sth);
  
-    $sth->bind_param(6, $translation->stable_id,SQL_VARCHAR);
-    my $version = ($translation->version()) ? $translation->version() : 1;
-    $sth->bind_param(7, $version,SQL_VARCHAR);
+  IDType translDbID = sth->getInsertId(sth);
+
+  //
+  // store object xref mappings to translations
+  //
+ 
+  DBEntryAdaptor *dbEntryAdaptor = DBAdaptor_getDBEntryAdaptor(tlna->dba);
+
+  Vector *dbEntries = Translation_getAllDBEntries(translation);
+  int i;
+  for (i=0; i<Vector_getNumElement(dbEntries); i++) {
+    DBEntry *dbe = Vector_getElementAt(dbEntries, i);
+    DBEntryAdaptor_store(dbEntryAdaptor, dbe, translDbID, "Translation", 1);
   }
 
-  $sth->execute();
- 
-  my $transl_dbID = $sth->{'mysql_insertid'};
-
-  #
-  # store object xref mappings to translations
-  #
- 
-  my $dbEntryAdaptor = $self->db()->get_DBEntryAdaptor();
-  # store each of the xrefs for this translation
-  foreach my $dbl ( @{$translation->get_all_DBEntries} ) {
-     $dbEntryAdaptor->store( $dbl, $transl_dbID, "Translation", 1 );
-  }
-
-  #storing the protein features associated with the translation
+  // storing the protein features associated with the translation
+/* NIY
   my $pfadaptor = $self->db->get_ProteinFeatureAdaptor();
   foreach my $pf(@{$translation->get_all_ProteinFeatures}){
     $pfadaptor->store($pf, $transl_dbID);
   }
-
-  $translation->get_all_Attributes();
-
-  # store any translation attributes that are defined
-  my $attr_adaptor = $self->db->get_AttributeAdaptor();
-  $attr_adaptor->store_on_Translation($transl_dbID,
-                                      $translation->get_all_Attributes());
-
-  $translation->dbID($transl_dbID);
-  $translation->adaptor($self);
-
-  return $transl_dbID;
-}
 */
+
+// Slightly odd call in perl to get_all_Attributes when same call done in store call  $translation->get_all_Attributes();
+
+  // store any translation attributes that are defined
+  AttributeAdaptor *attrAdaptor = DBAdaptor_getAttributeAdaptor(tlna->dba);
+  AttributeAdaptor_storeOnTranslationId(attrAdaptor, translDbID,
+                                        Translation_getAllAttributes(translation));
+
+  Translation_setDbID(translation, translDbID);
+  Translation_setAdaptor(translation, (BaseAdaptor *)tlna);
+
+  return translDbID;
+}
 
 
 

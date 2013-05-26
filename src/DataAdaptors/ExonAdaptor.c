@@ -275,91 +275,111 @@ Vector *ExonAdaptor_fetchAllByTranscript(ExonAdaptor *ea, Transcript *transcript
 
 
 IDType ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
-  IDType exonId;
-/*
-  my ($self, $exon) = @_;
-
-  if( ! $exon->isa('Bio::EnsEMBL::Exon') ) {
-    throw("$exon is not a EnsEMBL exon - not storing.");
+  if (exon == NULL) {
+    fprintf(stderr, "feature is NULL in Exon_store\n");
+    exit(1);
   }
 
-  my $db = $self->db();
+  Class_assertType(CLASS_EXON, exon->objectType);
 
-  if($exon->is_stored($db)) {
-    return $exon->dbID();
+  DBAdaptor *db = ea->dba;
+
+  if (Exon_isStored(exon, db)) {
+    fprintf(stderr, "Exon ["IDFMTSTR"] is already stored in this database.\n", Exon_getDbID(exon) );
+    return Exon_getDbID(exon);
   }
 
+/* This check is odd - 0 would be OK for start or end if its on a slice which doesn't start at 1 in the seq region
+   so this method is relying on being called after a transfer has been done in GeneAdaptor or TranscriptAdaptor.
+   Doesn't seem correct. I'll do a cut down check
   if( ! $exon->start || ! $exon->end ||
       ! $exon->strand || ! defined $exon->phase ) {
     throw("Exon does not have all attributes to store");
   }
-
-  # Default to is_current = 1 if this attribute is not set
-  my $is_current = $exon->is_current();
-  if ( !defined($is_current) ) { $is_current = 1 }
-
-  # Default to is_constitutive = 0 if this attribute is not set
-  my $is_constitutive = $exon->is_constitutive();
-  if ( !defined($is_constitutive) ) { $is_constitutive = 0 }
-
-  my $exon_sql = q{
-    INSERT into exon ( seq_region_id, seq_region_start,
-		       seq_region_end, seq_region_strand, phase,
-		       end_phase, is_current, is_constitutive                      
-  };
-  if ( defined($exon->stable_id) ) {
-      my $created = $self->db->dbc->from_seconds_to_date($exon->created_date());
-      my $modified = $self->db->dbc->from_seconds_to_date($exon->modified_date());
-      $exon_sql .= ", stable_id, version, created_date, modified_date) VALUES ( ?,?,?,?,?,?,?,?,?,?,". $created . ",". $modified ." )";
-     
-  } else {
-      $exon_sql .= q{
-         ) VALUES ( ?,?,?,?,?,?,?,?)
-      };
+*/
+  if (!Exon_getStrand(exon) || Exon_getPhase(exon) < -1 || Exon_getPhase(exon) > 2) {
+    fprintf(stderr,"Exon does not have all attributes to store\n");
+    exit(1);
   }
 
+  // Default to is_current = 1 if this attribute is not set
+  int isCurrent = Exon_getIsCurrent(exon);
+/* Note in C isCurrent is initialised to 1 in Exon_new, so this check should be unnecessary 
+  if ( !defined($is_current) ) { $is_current = 1 }
+*/
 
-  my $exonst = $self->prepare($exon_sql);
+  // Default to is_constitutive = 0 if this attribute is not set
+  int isConstitutive = Exon_getIsConstitutive(exon);
+/* Note in C isConstitutive will be 0 by default because Exon_new uses calloc to allocate the Exon
+  if ( !defined($is_constitutive) ) { $is_constitutive = 0 }
+*/
 
-  my $exonId = undef;
-
+/* Moved up so have seqRegionId before making query string
+   Not doing transfer in preStore so no new exon to worry about
   my $original = $exon;
   my $seq_region_id;
   ($exon, $seq_region_id) = $self->_pre_store($exon);
+*/
+  IDType seqRegionId = BaseFeatureAdaptor_preStore((BaseFeatureAdaptor *)ea, exon);
 
-  #store the exon
-  $exonst->bind_param( 1, $seq_region_id,   SQL_INTEGER );
-  $exonst->bind_param( 2, $exon->start,     SQL_INTEGER );
-  $exonst->bind_param( 3, $exon->end,       SQL_INTEGER );
-  $exonst->bind_param( 4, $exon->strand,    SQL_TINYINT );
-  $exonst->bind_param( 5, $exon->phase,     SQL_TINYINT );
-  $exonst->bind_param( 6, $exon->end_phase, SQL_TINYINT );
-  $exonst->bind_param( 7, $is_current,      SQL_TINYINT );
-  $exonst->bind_param( 8, $is_constitutive, SQL_TINYINT );
+  char qStr[2048];
+  strcpy(qStr,"INSERT into exon ( seq_region_id, seq_region_start, "
+		       "seq_region_end, seq_region_strand, phase, "
+		       "end_phase, is_current, is_constitutive");
 
-  if ( defined($exon->stable_id) ) {
-
-     $exonst->bind_param( 9, $exon->stable_id, SQL_VARCHAR );
-     my $version = ($exon->version()) ? $exon->version() : 1;
-     $exonst->bind_param( 10, $version, SQL_INTEGER ); 
+  if (Exon_getStableId(exon) != NULL) {
+/*
+    my $created = $self->db->dbc->from_seconds_to_date($exon->created_date());
+    my $modified = $self->db->dbc->from_seconds_to_date($exon->modified_date());
+*/
+    strcat(qStr,", stable_id, version, created_date, modified_date"
+     
+  }
+  sprintf(qStr, "%s) VALUES ("IDFMTSTR", %ld, %ld, %d, %d, %d, %d, %d",
+          (IDType)seqRegionId,
+          Exon_getSeqRegionStart(exon),
+          Exon_getSeqRegionEnd(exon),
+          Exon_getSeqRegionStrand(exon),
+          Exon_getPhase(exon),
+          Exon_getEndPhase(exon),
+          isCurrent,
+          isConstitutive);
+          
+  if (Exon_getStableId(exon) != NULL) {
+    sprintf(qStr, ", '%s', %d, FROM_UNIXTIME(%ld), FROM_UNIXTIME(%ld))",
+            Exon_getStableId(exon),
+            version,
+            Exon_getCreated(exon),
+            Exon_getModified(exon));
+  } else {
+    strcat(qStr,")");
   }
 
-  $exonst->execute();
-  $exonId = $exonst->{'mysql_insertid'};
+  sth = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
 
-  # Now the supporting evidence
-  my $esf_adaptor = $db->get_SupportingFeatureAdaptor;
-  $esf_adaptor->store($exonId, $exon->get_all_supporting_features);
+  IDType exonId = 0;
 
-  #
-  # Finally, update the dbID and adaptor of the exon (and any component exons)
-  # to point to the new database
-  #
+  // store the exon
+  sth->execute(sth);
 
-  $original->adaptor($self);
-  $original->dbID($exonId);
+  exonId = sth->getInsertId(sth);
 
-*/
+  // Now the supporting evidence
+  SupportingFeatureAdaptor *esfAdaptor = DBAdaptor_getSupportingFeatureAdaptor(db);
+
+  SupportingFeatureAdaptor_store(esfAdaptor, exonId, Exon_getAllSupportingFeatures(exon));
+
+  // HISTORIC NOTE: This comment (the component exon bit) must be the last remnant of StickyExon code in
+  // the API - aaahhhh. Thank goodness the little b***ers are gone.
+
+  //
+  // Finally, update the dbID and adaptor of the exon (and any component exons)
+  // to point to the new database
+  //
+
+  Exon_setAdaptor(exon, ea);
+  Exon_setDbID(exon, exonId);
+
   return exonId;
 }
 

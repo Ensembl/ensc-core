@@ -105,7 +105,7 @@ Vector *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, E
 }
 
 
-/* NIY
+/*
 =head2 store
 
   Arg [1]    : Int $exonsID
@@ -122,59 +122,68 @@ Vector *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, E
   Status     : Stable
 
 =cut
+*/
+void SupportingFeatureAdaptor_store(SupportingFeatureAdaptor *sfa, IDType exonDbID, Vector *alnObjs) {
+  char pepCheckSql[1024];
+  char dnaCheckSql[1024];
+  char assocCheckSql[1024];
+  char assocWriteSql[1024];
 
-sub store {
-  my ( $self, $exon_dbID, $aln_objs ) = @_;
+// Note added in hcoverage so transcript_supporting_feature and supporting_feature code match
+  sprintf(pepCheckSql,
+      "SELECT protein_align_feature_id "
+      "FROM protein_align_feature "
+      "WHERE seq_region_id = %"IDFMTSTR
+      " AND   seq_region_start = %%ld"
+      " AND   seq_region_end   = %%ld"
+      " AND   seq_region_strand = %%d"
+      " AND   hit_name = '%%s'"
+      " AND   hit_start = %%d"
+      " AND   hit_end   = %%d"
+      " AND   analysis_id = %"IDFMTSTR
+      " AND   hcoverage = %%f"
+      " AND   cigar_line = '%%s'");
 
-  my $pep_check_sql = 
-      "SELECT protein_align_feature_id " . 
-      "FROM protein_align_feature " . 
-      "WHERE seq_region_id = ? " . 
-      "AND   seq_region_start = ? " . 
-      "AND   seq_region_end   = ? " .
-      "AND   seq_region_strand = ? " . 
-      "AND   hit_name = ? " . 
-      "AND   hit_start = ? " . 
-      "AND   hit_end   = ? " . 
-      "AND   analysis_id = ? " . 
-      "AND   cigar_line = ? ";
+  sprintf(dnaCheckSql,
+      "SELECT dna_align_feature_id "
+      "FROM dna_align_feature "
+      "WHERE seq_region_id = %"IDFMTSTR
+      " AND   seq_region_start = %%ld"
+      " AND   seq_region_end   = %%ld"
+      " AND   seq_region_strand = %%d"
+      " AND   hit_name = '%%s'"
+      " AND   hit_start = %%d"
+      " AND   hit_end   = %%d"
+      " AND   analysis_id = %"IDFMTSTR
+      " AND   cigar_line = '%%s'"
+      " AND   hcoverage = %%f"
+      " AND   hit_strand = %%d");
 
-  my $dna_check_sql = 
-      "SELECT dna_align_feature_id " . 
-      "FROM dna_align_feature " . 
-      "WHERE seq_region_id = ? " . 
-      "AND   seq_region_start = ? " . 
-      "AND   seq_region_end   = ? " .
-      "AND   seq_region_strand = ? " . 
-      "AND   hit_name = ? " . 
-      "AND   hit_start = ? " . 
-      "AND   hit_end   = ? " . 
-      "AND   analysis_id = ? " . 
-      "AND   cigar_line = ? " . 
-      "AND   hit_strand = ? ";
+  sprintf(assocCheckSql, 
+      "SELECT * "
+      "FROM  supporting_feature "
+      "WHERE  exon_id = "IDFMTSTR
+      " AND   feature_type = '%%s'"
+      " AND   feature_id   = %"IDFMTSTR, exonDbID);
 
-  my $assoc_check_sql = 
-      "SELECT * " .  
-      "FROM  supporting_feature " . 
-      "WHERE exon_id = $exon_dbID " . 
-      "AND   feature_type = ? " . 
-      "AND   feature_id   = ? ";
+  sprintf(assocWriteSql, 
+          "INSERT into supporting_feature (exon_id, feature_id, feature_type) values(%"IDFMTSTR", %"IDFMTSTR", '%%s')");
 
-  my $assoc_write_sql = "INSERT into supporting_feature " . 
-      "(exon_id, feature_id, feature_type) " . 
-      "values(?, ?, ?)";
+  StatementHandle *pepCheckSth   = sfa->prepare((BaseAdaptor *)sfa, pepCheckSql, strlen(pepCheckSql));
+  StatementHandle *dnaCheckSth   = sfa->prepare((BaseAdaptor *)sfa, dnaCheckSql, strlen(dnaCheckSql));
+  StatementHandle *assocCheckSth = sfa->prepare((BaseAdaptor *)sfa, assocCheckSql, strlen(assocCheckSql));
+  StatementHandle *sfSth         = sfa->prepare((BaseAdaptor *)sfa, assocWriteSql, strlen(assocWriteSql));
 
-  my $pep_check_sth = $self->prepare($pep_check_sql);
-  my $dna_check_sth = $self->prepare($dna_check_sql);
-  my $assoc_check_sth = $self->prepare($assoc_check_sql);
-  my $sf_sth = $self->prepare($assoc_write_sql);
+  DNAAlignFeatureAdaptor *dnaAdaptor     = DBAdaptor_getDNAAlignFeatureAdaptor(sfa->dba);
+  ProteinAlignFeatureAdaptor *pepAdaptor = DBAdaptor_getProteinAlignFeatureAdaptor(sfa->dba);
+  SliceAdaptor *sliceAdaptor             = DBAdaptor_getSliceAdaptor(sfa->dba);
 
-  my $dna_adaptor = $self->db->get_DnaAlignFeatureAdaptor();
-  my $pep_adaptor = $self->db->get_ProteinAlignFeatureAdaptor();
+  int i;
+  for (i=0; Vector_getNumElement(alnObjs); i++) {
+    BaseAlignFeature *f = Vector_getElementAt(alnObjs, i);
 
-  foreach my $f (@$aln_objs) {
-    # check that the feature is in toplevel coords
-
+/* I really wish I understood why this is necessary - until I do, I'm not doing these transfers
+    // check that the feature is in toplevel coords
     if($f->slice->start != 1 || $f->slice->strand != 1) {
     #move feature onto a slice of the entire seq_region
       my $tls = $self->db->get_sliceAdaptor->fetch_by_region($f->slice->coord_system->name(),
@@ -190,62 +199,91 @@ sub store {
               'entire seq_region prior to storing');
       }
     }
+*/
 
+    Class_assertType(CLASS_BASEALIGNFEATURE, f->objectType);
+
+/*
     if(!$f->isa("Bio::EnsEMBL::BaseAlignFeature")){
       throw("$f must be an align feature otherwise" .
             "it can't be stored");
     }
+*/
     
-    my ($sf_dbID, $type, $adap, $check_sth);
-    
-    my @check_args = ($self->db->get_SliceAdaptor->get_seq_region_id($f->slice),
-                      $f->start,
-                      $f->end,
-                      $f->strand,
-                      $f->hseqname,
-                      $f->hstart,
-                      $f->hend,
-                      $f->analysis->dbID,
-                      $f->cigar_string);
+    IDType sfDbID;
+    char *type;
+    BaseFeatureAdaptor *adap;
+    StatementHandle *checkSth;
 
-    if($f->isa("Bio::EnsEMBL::DnaDnaAlignFeature")){
-      $adap = $dna_adaptor;      
-      $check_sth = $dna_check_sth;
-      $type = 'dna_align_feature';
-      push @check_args, $f->hstrand;
-    } elsif($f->isa("Bio::EnsEMBL::DnaPepAlignFeature")){
-      $adap = $pep_adaptor;
-      $check_sth = $pep_check_sth;
-      $type = 'protein_align_feature';
+    IDType seqRegionId = SliceAdaptor_getSeqRegionId(sliceAdaptor, BaseAlignFeature_getSlice(f));
+    
+// Note - moved the checkSth execute into the condition because I can't do the variable args
+    if (f->objectType == CLASS_DNADNAALIGNFEATURE) {
+      adap     = dnaAdaptor;      
+      type     = "dna_align_feature";
+
+      checkSth = dnaCheckSth;
+      checkSth->execute(checkSth, seqRegionId, 
+                                  BaseAlignFeature_getSeqRegionStart(f), 
+                                  BaseAlignFeature_getSeqRegionEnd(f), 
+                                  BaseAlignFeature_getSeqRegionStrand(f), 
+                                  BaseAlignFeature_getHitSeqName(f), 
+                                  BaseAlignFeature_getHitStart(f), 
+                                  BaseAlignFeature_getHitEnd(f), 
+                                  Analysis_getDbID(BaseAlignFeature_getAnalysis(f)), 
+                                  BaseAlignFeature_getCigarString(f), 
+                                  BaseAlignFeature_gethCoverage(f), 
+                                  DNAAlignFeature_getHitStrand((DNAAlignFeature *)f));
+
+    } else if (f->objectType == CLASS_DNAPEPALIGNFEATURE) {
+      adap     = pepAdaptor;
+      type     = "protein_align_feature";
+
+      checkSth = pepCheckSth;
+      checkSth->execute(checkSth, seqRegionId, 
+                                  BaseAlignFeature_getSeqRegionStart(f), 
+                                  BaseAlignFeature_getSeqRegionEnd(f), 
+                                  BaseAlignFeature_getSeqRegionStrand(f), 
+                                  BaseAlignFeature_getHitSeqName(f), 
+                                  BaseAlignFeature_getHitStart(f), 
+                                  BaseAlignFeature_getHitEnd(f), 
+                                  Analysis_getDbID(BaseAlignFeature_getAnalysis(f)), 
+                                  BaseAlignFeature_getCigarString(f),
+                                  BaseAlignFeature_gethCoverage(f));
+
     } else {
-      warning("Supporting feature of unknown type. Skipping : [$f]\n");
-      next;
+      fprintf(stderr, "Warning: Supporting feature of unknown type. Skipping\n");
+      continue;
     }
 
-    $check_sth->execute(@check_args);
-    $sf_dbID = $check_sth->fetchrow_array;
-    if (not $sf_dbID) {
-      $adap->store($f);
-      $sf_dbID = $f->dbID;
+/// HOW?? - moved into conditions above
+//    checkSth->execute(@check_args);
+
+    if (checkSth->numRows(checkSth) > 0) {
+      ResultRow *row = checkSth->fetchRow(checkSth);
+      sfDbID = row->getLongLongAt(row, 0);
+
+    } else {
+      Vector *vec = Vector_new();
+      Vector_addElement(vec, f);
+      BaseFeatureAdaptor_store(adap, vec);
+      Vector_free(vec);
+     
+      sfDbID = BaseAlignFeature_getDbID(f);
     }
 
-    # now check association
-    $assoc_check_sth->execute($type,
-                              $sf_dbID);
-    if (not $assoc_check_sth->fetchrow_array) {    
-      $sf_sth->bind_param(1, $exon_dbID, SQL_INTEGER);
-      $sf_sth->bind_param(2, $sf_dbID, SQL_INTEGER);
-      $sf_sth->bind_param(3, $type, SQL_VARCHAR);
-      $sf_sth->execute();
+    // now check association
+    assocCheckSth->execute(assocCheckSth, type, sfDbID);
+
+    if (checkSth->numRows(assocCheckSth) == 0) {
+      sfSth->execute(sfSth, exonDbID, sfDbID, type);
     }
   }
 
-  $dna_check_sth->finish;
-  $pep_check_sth->finish;
-  $assoc_check_sth->finish;
-  $sf_sth->finish;
+  dnaCheckSth->finish(dnaCheckSth);
+  pepCheckSth->finish(pepCheckSth);
+  assocCheckSth->finish(assocCheckSth);
+  sfSth->finish(sfSth);
   
+  return;
 }
-
-*/
-

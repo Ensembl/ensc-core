@@ -56,7 +56,7 @@ void MysqlStatementHandle_execute(va_alist) {
 /* bits of this came from the process_query routine in the MYSQL
  * book.
  */
-void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
+int MysqlStatementHandle_execute(StatementHandle *sth, ...) {
   va_list args;
   char statement[655500];
   int qlen;
@@ -92,7 +92,7 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
     fprintf(stderr, "Stack trace:\n");
     ProcUtil_showBacktrace(EnsC_progName);
     
-    return;
+    return 0;
   }
 
   /* the query succeeded; determine whether or not it returns data */
@@ -118,9 +118,11 @@ void MysqlStatementHandle_execute(StatementHandle *sth, ...) {
        */
     } else {   /* an error occurred */
       fprintf (stderr, "Could not retrieve result set");
+      return 0;
     }
   }
   //free(statement);
+  return mysql_affected_rows(m_sth->dbc->mysql);
 }
 
 #endif
