@@ -138,16 +138,16 @@ void ProcUtil_showBacktrace(char *prog) {
     unw_get_reg(&cursor, UNW_REG_IP, &ip);
     unw_get_reg(&cursor, UNW_REG_SP, &sp);
 
-//#if defined(linux)
+#if defined(linux)
     if (prog == NULL) {
       fprintf(stderr, "%s ip = %lx, sp = %lx\n", name, (long)ip, (long)sp);
     } else {
       ProcUtil_getFileAndLine(prog, ip, file, 2048, &line);
       fprintf(stderr, "%s in file %s line %d\n", name, file, line);
     }
-//# else
-//    fprintf(stderr, "%s ip = %lx, sp = %lx\n", name, (long)ip, (long)sp);
-//#endif
+# else
+    fprintf(stderr, "%s ip = %lx, sp = %lx\n", name, (long)ip, (long)sp);
+#endif
   }
 #else
   fprintf(stderr, "backtrace not supported on this platform\n");
@@ -223,7 +223,7 @@ int ProcUtil_getFileAndLine(char *prog, unw_word_t addr, char *file, size_t flen
 */
 
   while (fgets(buf,2048, f)) {
-    //fprintf(stderr,"%s\n",buf);
+//    fprintf(stderr,"%s\n",buf);
     int nTok;
     char **tokens;
     StrUtil_tokenize(&tokens, &nTok, buf);

@@ -84,7 +84,7 @@ void AssemblyMapperAdaptor_cacheSeqIdsWithMultAssemblies(AssemblyMapperAdaptor *
   sth->execute(sth);
 
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType dbID    = row->getLongLongAt(row,0);
 
     IDHash_add(ama->multSeqIdCache, dbID, &trueVal);
@@ -430,7 +430,7 @@ void AssemblyMapperAdaptor_registerAssembled(AssemblyMapperAdaptor *ama, Assembl
     // Load the unregistered regions of the mapper
     // 
     ResultRow *row;
-    while (row = sth->fetchRow(sth)) {
+    while ((row = sth->fetchRow(sth))) {
       long   cmpStart           = row->getLongAt(row,0);
       long   cmpEnd             = row->getLongAt(row,1);
       IDType cmpSeqRegionId     = row->getLongLongAt(row,2);
@@ -891,7 +891,7 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
     long startStart, startEnd;
 
     ResultRow *row;
-    while (row = sth->fetchRow(sth)) {
+    while ((row = sth->fetchRow(sth))) {
       midStart       = row->getLongAt(row,0);
       midEnd         = row->getLongAt(row,1);
       midSeqRegionId = row->getLongLongAt(row,2);
@@ -1027,7 +1027,7 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
     long midStart, midEnd;
 
     ResultRow *row;
-    while (row = sth->fetchRow(sth)) {
+    while ((row = sth->fetchRow(sth))) {
       endStart       = row->getLongAt(row,0);
       endEnd         = row->getLongAt(row,1);
       endSeqRegionId = row->getLongLongAt(row,2);
@@ -1251,7 +1251,7 @@ void AssemblyMapperAdaptor_registerChainedSpecial(AssemblyMapperAdaptor *ama, Ch
       long startStart, startEnd;
 
       ResultRow *row;
-      while (row = sth->fetchRow(sth)) {
+      while ((row = sth->fetchRow(sth))) {
         midStart       = row->getLongAt(row,0);
         midEnd         = row->getLongAt(row,1);
         midSeqRegionId = row->getLongLongAt(row,2);
@@ -1403,7 +1403,7 @@ void AssemblyMapperAdaptor_registerAll(AssemblyMapperAdaptor *ama, AssemblyMappe
   IDHash *asmRegistered = IDHash_new(IDHASH_MEDIUM);
 
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     long cmpStart         = row->getLongAt(row,0);
     long cmpEnd           = row->getLongAt(row,1);
     IDType cmpSeqRegionId = row->getLongLongAt(row,2);
@@ -1582,7 +1582,7 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
   reg = ChainedAssemblyMapper_getFirstRegistry(casmMapper);
 
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     if (!CoordSystem_compare(asmCs,firstCs)) {
       long midStart           = row->getLongAt(row,0);
       long midEnd             = row->getLongAt(row,1);
@@ -1670,7 +1670,7 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
   IDType endCsId = CoordSystem_getDbID(lastCs);
   reg = ChainedAssemblyMapper_getLastRegistry(casmMapper);
 
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     if (!CoordSystem_compare(asmCs,midCs)) {
       long endStart         = row->getLongAt(row,0);
       long endEnd           = row->getLongAt(row,1);

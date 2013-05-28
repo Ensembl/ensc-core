@@ -74,7 +74,7 @@ Vector *BaseAdaptor_listDbIDs(BaseAdaptor *ba, char *table, char *pk, int ordere
 
   if (strcmp(pk, "stable_id")) {
     ResultRow *row;
-    while (row = sth->fetchRow(sth)) {
+    while ((row = sth->fetchRow(sth))) {
       char *stableId = row->getStringCopyAt(row, 0);
   
       Vector_addElement(out, stableId);
@@ -82,7 +82,7 @@ Vector *BaseAdaptor_listDbIDs(BaseAdaptor *ba, char *table, char *pk, int ordere
   } else  {
     IDType *idP;
     ResultRow *row;
-    while (row = sth->fetchRow(sth)) {
+    while ((row = sth->fetchRow(sth))) {
       IDType id = row->getLongLongAt(row, 0);
   
       if ((idP = calloc(1,sizeof(IDType))) == NULL) {

@@ -708,6 +708,9 @@ int StrUtil_tokenize(char ***tokens, int *ntok, char *string) {
   char *ChP = string;
   int count = 0;
 
+  *tokens = NULL;
+
+
   while (StrUtil_gettok(token,&ChP,ChP,MAXSTRLEN)) {
     if (!strlen(token)) break;
     if (!count || !((count+1)%10)) {

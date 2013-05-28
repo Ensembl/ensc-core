@@ -10,7 +10,7 @@ SAMDIR=/Users/searle/progs/ensc-dependencies/bin/samtools_parallel
 #SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools-0.1.18
 ZLIBDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/include
 
-CFLAGS =  -g -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
+CFLAGS =  -O3 -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
 LDFLAGS = $(MYSQLLIBS) -L/usr/lib/system -lSystem -L/Users/searle/progs/ensc-dependencies/lib -ltcmalloc
 CPPFLAGS = -I/Users/searle/progs/ensc-dependencies/include
 

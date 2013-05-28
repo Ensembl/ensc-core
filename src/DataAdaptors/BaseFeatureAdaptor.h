@@ -60,6 +60,7 @@ int BaseFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features);
 */
 
 void BaseFeatureAdaptor_init(BaseFeatureAdaptor *bfa, DBAdaptor *dba, int adaptorType);
+int BaseFeatureAdaptor_checkStartEndStrand(BaseFeatureAdaptor *bfa, long start, long end, int strand, Slice *slice);
 void BaseFeatureAdaptor_clearSliceFeatureCache(BaseFeatureAdaptor *bfa);
 
 Vector *BaseFeatureAdaptor_fetchAllBySlice(BaseFeatureAdaptor *bfa, Slice *slice, char *logicName);

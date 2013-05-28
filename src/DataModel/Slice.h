@@ -110,6 +110,8 @@ IDType Slice_getSeqRegionId(Slice *slice);
 
 DBAdaptor *Slice_getSelectedDBAdaptor(Slice *slice, char *dbType);
 
+int Slice_isTopLevel(Slice *slice);
+
 
 
 

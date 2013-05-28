@@ -1657,7 +1657,7 @@ Vector *BaseFeatureAdaptor_listSeqRegionIds(BaseFeatureAdaptor *bfa, char *table
   sth->execute(sth);
 
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType id = row->getLongLongAt(row, 0);
     IDType *idP;
 

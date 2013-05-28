@@ -201,7 +201,7 @@ Vector *RepeatFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bfa,
   }
 
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType repeatFeatureId   = row->getLongLongAt(row,0);
     IDType seqRegionId       = row->getLongLongAt(row,1);
     long seqRegionStart      = row->getLongAt(row,2);

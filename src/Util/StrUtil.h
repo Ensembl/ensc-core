@@ -29,6 +29,8 @@ char *StrUtil_appendNString(char *to, char *from, int len);
 int StrUtil_tokenizeByDelim(char ***tokens, int *ntok, char *string, char *delim);
 int StrUtil_isLongInteger(long *retVal, char *str);
 int StrUtil_tokenize(char ***tokens, int *ntok, char *string);
+int StrUtil_rmspace(char *string);
+int StrUtil_rmChar(char *string,char ch);
 
 
 #ifdef __STRUTIL_MAIN__

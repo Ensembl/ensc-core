@@ -4,6 +4,8 @@
 #include "DBAdaptor.h"
 #include "MetaContainer.h"
 
+#include "StrUtil.h"
+
 #include "StatementHandle.h"
 #include "ResultRow.h"
 
@@ -48,7 +50,7 @@ CoordSystemAdaptor *CoordSystemAdaptor_new(DBAdaptor *dba) {
   sth = csa->prepare((BaseAdaptor *)csa,qStr,strlen(qStr));
   sth->execute(sth);
 
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     int seqLvl = 0;
     int defaultVer = 0;
 

@@ -237,7 +237,7 @@ Vector *PredictionTranscriptAdaptor_fetchAllBySlice(PredictionTranscriptAdaptor 
 
   IDHash *exTrHash = IDHash_new(IDHASH_MEDIUM);
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType trId = row->getLongLongAt(row,0);
     IDType exId = row->getLongLongAt(row,1);
     int    rank = row->getIntAt(row,2);
@@ -343,7 +343,7 @@ Vector *PredictionTranscriptAdaptor_objectsFromStatementHandle(PredictionTranscr
   }
 
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType predictionTranscriptId = row->getLongLongAt(row,0);
     IDType seqRegionId            = row->getLongLongAt(row,1);
     long seqRegionStart           = row->getLongAt(row,2);

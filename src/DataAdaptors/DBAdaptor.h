@@ -24,6 +24,8 @@ DBAdaptor *DBAdaptor_new(char *host, char *user, char *pass, char *dbname,
 char *DBAdaptor_setAssemblyType(DBAdaptor *dba, char *type);
 char *DBAdaptor_getAssemblyType(DBAdaptor *dba);
 
+void DBAdaptor_addToSrCaches(DBAdaptor *dba, IDType regionId, char *regionName, IDType csId, long regionLength);
+
 AnalysisAdaptor             *DBAdaptor_getAnalysisAdaptor(DBAdaptor *dba);
 AssemblyMapperAdaptor       *DBAdaptor_getAssemblyMapperAdaptor(DBAdaptor *dba);
 AttributeAdaptor            *DBAdaptor_getAttributeAdaptor(DBAdaptor *dba);
@@ -64,6 +66,7 @@ TranslationAdaptor          *DBAdaptor_getTranslationAdaptor(DBAdaptor *dba);
 #define DBAdaptor_getSpeciesId(dba) (dba)->speciesId
 
 #define DBAdaptor_prepare(dba,qStr,qLen) BaseDBAdaptor_prepare((dba),(qStr),(qLen))
+
 
 
 #endif

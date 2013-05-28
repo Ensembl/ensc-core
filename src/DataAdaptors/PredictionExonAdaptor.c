@@ -332,7 +332,7 @@ Vector *PredictionExonAdaptor_objectsFromStatementHandle(PredictionExonAdaptor *
 
 
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType predictionExonId = row->getLongLongAt(row, 0);
     IDType seqRegionId      = row->getLongLongAt(row, 1);
     long seqRegionStart     = row->getLongAt(row, 2);

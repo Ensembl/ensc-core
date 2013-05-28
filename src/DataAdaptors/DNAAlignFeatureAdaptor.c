@@ -408,7 +408,7 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
   }
 
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType dnaAlignFeatureId     = row->getLongLongAt(row,0);
     IDType seqRegionId           = row->getLongLongAt(row,1);
     IDType analysisId            = row->getLongLongAt(row,2);

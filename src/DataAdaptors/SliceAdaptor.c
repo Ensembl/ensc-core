@@ -15,6 +15,8 @@
 #include "ExonAdaptor.h"
 #include "GeneAdaptor.h"
 #include "TranscriptAdaptor.h"
+
+
 /*
 =head1 DESCRIPTION
 
@@ -272,7 +274,7 @@ Slice *SliceAdaptor_fetchByRegion(SliceAdaptor *sa, char *coordSystemName, char 
       char *newVersion;
 
       ResultRow *row;
-      if (row = synSqlSth->fetchRow(synSqlSth)) {
+      if ((row = synSqlSth->fetchRow(synSqlSth))) {
         char *newName        = row->getStringAt(row, 0);
         char *newCoordSystem = row->getStringAt(row, 1);
         char *newVersion     = row->getStringAt(row, 2);
@@ -324,7 +326,7 @@ Slice *SliceAdaptor_fetchByRegion(SliceAdaptor *sa, char *coordSystemName, char 
       int i = 0;
       int hadVer = 0;
 
-      while (row = sth->fetchRow(sth)) {
+      while ((row = sth->fetchRow(sth))) {
         char *tmpName  = row->getStringAt(row,0);
         IDType id      = row->getLongLongAt(row,1);
         long tmpLength = row->getLongAt(row,2);
@@ -1225,7 +1227,7 @@ Vector *SliceAdaptor_fetchAll(SliceAdaptor *sa, char *csName, char *csVersion, i
     sth->execute(sth);
 
     ResultRow *row;
-    while (row = sth->fetchRow(sth)) {
+    while ((row = sth->fetchRow(sth))) {
       IDType seqRegionId = row->getLongLongAt(row,0);
       
       IDHash_add(badVals, seqRegionId, &trueVal);
@@ -1254,7 +1256,7 @@ Vector *SliceAdaptor_fetchAll(SliceAdaptor *sa, char *csName, char *csVersion, i
     sth->execute(sth);
 
     ResultRow *row;
-    while (row = sth->fetchRow(sth)) {
+    while ((row = sth->fetchRow(sth))) {
       IDType seqRegionId = row->getLongLongAt(row,0);
       
       if (!IDHash_contains(badVals, seqRegionId)) {
@@ -1298,7 +1300,7 @@ Vector *SliceAdaptor_fetchAll(SliceAdaptor *sa, char *csName, char *csVersion, i
   int cacheCount = 0;
 
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType seqRegionId = row->getLongLongAt(row,0);
     char * name        = row->getStringAt(row,1);
     long   length      = row->getLongAt(row,2);
@@ -1400,7 +1402,7 @@ Vector *SliceAdaptor_fetchAllKaryotype(SliceAdaptor *sa) {
   Vector *out = Vector_new();
 
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType seqRegionId = row->getLongLongAt(row,0);
     char * name        = row->getStringAt(row,1);
     long   length      = row->getLongAt(row,2);
@@ -2526,7 +2528,7 @@ void SliceAdaptor_buildExceptionCache(SliceAdaptor *sa) {
   sa->asmExcCache = IDHash_new(IDHASH_SMALL);
 
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType seqRegionId       = row->getLongLongAt(row,0);
     long   seqRegionStart    = row->getLongAt(row,1);
     long   seqRegionEnd      = row->getLongAt(row,2);
@@ -2604,7 +2606,7 @@ void SliceAdaptor_cacheTopLevelSeqMappings(SliceAdaptor *sa) {
 
 // csn in perl is now csName
   char *csName;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     char *csName = row->getStringAt(row,0);
 
     if (strcmp(csName,sequenceLevel)) { // if not sequence level

@@ -1015,7 +1015,7 @@ int mapMateLocation(Mapping *mapping, bam1_t *b, int end, samfile_t *in, samfile
 //               Use mate to calculate new isize etc
 //           
   bam1_t *fb;
-  if (fb = mateFoundInVectors(b, failedVectors)) {
+  if ((fb = mateFoundInVectors(b, failedVectors))) {
     clearPairing(b, end);
     // Eliminate from search of failed array by setting one of the unused BAM flag bits
     // Reason for doing this is that in complex mapping cases there can be multiple mappings at same
@@ -1415,7 +1415,7 @@ Vector *getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAs
     CoordSystemAdaptor *csa = DBAdaptor_getCoordSystemAdaptor(dba);
     SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
   
-    while (row = sth->fetchRow(sth)) {
+    while ((row = sth->fetchRow(sth))) {
       char *destName;
       int   destStart;
       int   destEnd;
@@ -1544,7 +1544,7 @@ Vector *getDestinationSlices(DBAdaptor *dba, char *assName) {
 
   CoordSystemAdaptor *csa = DBAdaptor_getCoordSystemAdaptor(dba);
   SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     char *name;
     int   length;
     IDType csId;
