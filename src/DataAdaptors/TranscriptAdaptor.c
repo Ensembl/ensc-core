@@ -1056,13 +1056,24 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
     // Try to find the matching exon in all of the exons we just stored.
 // Use isStored instead
     if ( ! Exon_isStored(startExon, db) ) {
-      fprintf(stderr, "Translation exon juggling code not implemented yet\n");
-/*
-      my $key = $start_exon->hashkey();
-      ($start_exon) = grep { $_->hashkey() eq $key } @$exons;
+// NIY: Probably want to do comparisons rather than making string keys
+      char key[2048];
+      key[0] = '\0';
+      Exon_getHashKey(startExon, key);
 
-      if ( defined($start_exon) ) {
-        $translation->start_Exon($start_exon);
+      Exon *newStartExon = NULL;
+      for (i=0; i<Transcript_getExonCount(transcript) && !newStartExon; i++) {
+        Exon *transExon = Transcript_getExonAt(transcript, i);
+        char transExonKey[2048];
+        Exon_getHashKey(transExon, transExonKey);
+   
+        if (!strcmp(transExonKey, key)) {
+          newStartExon = transExon;
+        }
+      }
+        
+      if ( newStartExon ) {
+        Translation_setStartExon(translation, newStartExon);
       } else {
         fprintf(stderr, "Translation's start_Exon does not appear "
                         "to be one of the exons in its associated Transcript.\n" );
@@ -1071,17 +1082,28 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
     }
 
     if ( ! Exon_isStored(endExon, db) ) {
-      my $key = $end_exon->hashkey();
-      ($end_exon) = grep { $_->hashkey() eq $key } @$exons;
+      char key[2048];
+      key[0] = '\0';
+      Exon_getHashKey(startExon, key);
 
-      if ( defined($end_exon) ) {
-        $translation->end_Exon($end_exon);
+      Exon *newEndExon = NULL;
+      for (i=0; i<Transcript_getExonCount(transcript) && !newEndExon; i++) {
+        Exon *transExon = Transcript_getExonAt(transcript, i);
+        char transExonKey[2048];
+        Exon_getHashKey(transExon, transExonKey);
+   
+        if (!strcmp(transExonKey, key)) {
+          newEndExon = transExon;
+        }
+      }
+        
+      if ( newEndExon ) {
+        Translation_setEndExon(translation, newEndExon);
       } else {
         fprintf(stderr, "Translation's end_Exon does not appear "
                         "to be one of the exons in its associated Transcript.\n");
         exit(1);
       }
-*/
     }
 
 // Doesn't seem to be used    my $old_dbid = $translation->dbID();
@@ -1114,7 +1136,6 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
   if ( altTranslations != NULL &&
        Vector_getNumElement(altTranslations) > 0) {
     fprintf(stderr, "Alt translation storing not implemented\n");
-    exit(1);
 /* NIY
     foreach my $alt_translation ( @{$alt_translations} ) {
       my $start_exon = $alt_translation->start_Exon();
@@ -1160,6 +1181,7 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
   //
   // Store the xrefs/object xref mapping.
   // 
+/* NIY
   DBEntryAdaptor *dbEntryAdaptor = DBAdaptor_getDBEntryAdaptor(db);
 
   Vector *dbEntries = Transcript_getAllDBEntries(transcript);
@@ -1201,6 +1223,7 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
       DBEntry_setAdaptor(displayXref, NULL);
     }
   }
+*/
 
   //
   // Link transcript to exons in exon_transcript table

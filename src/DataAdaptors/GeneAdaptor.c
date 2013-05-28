@@ -27,6 +27,7 @@ objects.
 #include "ExonAdaptor.h"
 #include "TranscriptAdaptor.h"
 #include "SliceAdaptor.h"
+#include "AttributeAdaptor.h"
 
 #include "StatementHandle.h"
 #include "ResultRow.h"
@@ -1306,6 +1307,7 @@ sub store_alt_alleles {
 // Default should be ignoreRelease = 1 so if you don't care about ignoreRelease
 // use that
 IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
+  int i;
 
   if (gene == NULL) {
     fprintf(stderr, "feature is NULL in Gene_store\n");
@@ -1428,6 +1430,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
 
 
   // store the dbentries associated with this gene
+/* NIY
   DBEntryAdaptor *dbEntryAdaptor = DBAdaptor_getDBEntryAdaptor(db);
 
   Vector *dbEntries = Gene_getAllDBEntries(gene);
@@ -1436,25 +1439,30 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
     DBEntry *dbe = Vector_getElementAt(dbEntries, i);
     DBEntryAdaptor_store(dbEntryAdaptor, dbe, geneId, "Gene", ignoreRelease);
   }
+*/
 
   // We allow transcripts not to share equal exons and instead have
   // copies.  For the database we still want sharing though, to have
   // easier time with stable ids. So we need to have a step to merge
   // exons together before store.
-/* TODOOOOOOOOOO
-  my %exons;
+  StringHash *exonHash = StringHash_new(STRINGHASH_SMALL);
 
-  foreach my $trans (@{$gene->get_all_Transcripts}) {
-    foreach my $e (@{$trans->get_all_Exons}) {
-      my $key = $e->hashkey();
-      if (exists $exons{$key}) {
-        $trans->swap_exons($e, $exons{$key});
+  for (i=0; i<Gene_getTranscriptCount(gene); i++) {
+    Transcript *trans = Gene_getTranscriptAt(gene, i);
+    int j;
+    for (j=0; j<Transcript_getExonCount(trans); j++) {
+      Exon *exon = Transcript_getExonAt(trans, j);
+      char exonKey[2048];
+      Exon_getHashKey(exon, exonKey);
+
+      if (StringHash_contains(exonHash, exonKey)) {
+        Transcript_swapExons(trans, exon, (Exon *)StringHash_getValue(exonHash, exonKey));
       } else {
-        $exons{$key} = $e;
+        StringHash_add(exonHash, exonKey, exon);
       }
     }
   }
-*/
+  StringHash_free(exonHash, NULL);
 
   TranscriptAdaptor *transcriptAdaptor = DBAdaptor_getTranscriptAdaptor(db);
 
@@ -1501,6 +1509,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
   }
 
   // update gene to point to display xref if it is set
+/* NIY
   DBEntry *displayXref = Gene_getDisplayXref(gene);
   if (displayXref != NULL) {
 
@@ -1533,6 +1542,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
       DBEntry_setAdaptor(displayXref, NULL);
     }
   }
+*/
 
   // store gene attributes if there are any
   AttributeAdaptor *attrAdaptor = DBAdaptor_getAttributeAdaptor(db);

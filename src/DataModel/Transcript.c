@@ -51,6 +51,48 @@ Transcript *Transcript_shallowCopy(Transcript *transcript) {
 }
 
 /*
+=head2 swap_exons
+
+  Arg [1]    : Bio::EnsEMBL::Exon $old_Exon
+               An exon that should be replaced
+  Arg [2]    : Bio::EnsEMBL::Exon $new_Exon
+               The replacement Exon
+  Example    : none
+  Description: exchange an exon in the current Exon list with a given one.
+               Usually done before storing of Gene, so the Exons can
+               be shared between Transcripts.
+  Returntype : none
+  Exceptions : none
+  Caller     : GeneAdaptor->store()
+  Status     : Stable
+
+=cut
+*/
+// New
+// I tried to match the internal v external access to variables
+void Transcript_swapExons(Transcript *transcript, Exon *oldExon, Exon *newExon) {
+
+  int i;
+  for (i=0; i<Vector_getNumElement(transcript->exons); i++) {
+    Exon *transExon = Vector_getElementAt(transcript->exons, i);
+    if (transExon == oldExon) {
+      Vector_setElementAt(transcript->exons, i, newExon);
+      break;
+    }
+  }
+
+  if (transcript->translation) {
+    if (Translation_getStartExon(transcript->translation) == oldExon) {
+      Translation_setStartExon(transcript->translation, newExon);
+    }
+    if (Translation_getEndExon(transcript->translation) == oldExon) {
+      Translation_setEndExon(transcript->translation, newExon);
+    }
+  }
+}
+
+
+/*
 =head2 is_canonical
 
   Args [1]      : (optional) Boolean is_canonical

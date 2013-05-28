@@ -26,11 +26,11 @@ int main(int argc, char *argv[]) {
 
 //  ProcUtil_showBacktrace(EnsC_progName);
 
-//  dba = Test_initROEnsDB();
-//  slice = Test_getStandardSlice(dba);
+  dba = Test_initROEnsDB();
+  slice = Test_getStandardSlice(dba);
 
-  DBAdaptor *seqdba = DBAdaptor_new("genebuild6.internal.sanger.ac.uk","ensadmin","ensembl","steve_chicken_rnaseq_missing_reference",3306,NULL);
-  dba = DBAdaptor_new("genebuild1.internal.sanger.ac.uk","ensadmin","ensembl","steve_chicken_rnaseq_missing_refined",3306,seqdba);
+//  DBAdaptor *seqdba = DBAdaptor_new("genebuild6.internal.sanger.ac.uk","ensadmin","ensembl","steve_chicken_rnaseq_missing_reference",3306,NULL);
+//  dba = DBAdaptor_new("genebuild1.internal.sanger.ac.uk","ensadmin","ensembl","steve_chicken_rnaseq_missing_refined",3306,seqdba);
 
   ok(1, slice!=NULL);
 
@@ -39,7 +39,8 @@ int main(int argc, char *argv[]) {
 
   ok(2, ga!=NULL);
 
-  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","17",1000000,5000000,1,NULL,0);
+  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","20",10000000,50000000,1,NULL,0);
+//  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","17",1000000,5000000,1,NULL,0);
 // Has a seleno
 //  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","1",1000000,27000000,1,NULL,0);
 //  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","MT",1,17000,1,NULL,0);
@@ -49,7 +50,7 @@ int main(int argc, char *argv[]) {
   ok(3, genes!=NULL);
   ok(4, Vector_getNumElement(genes)!=0);
 
-  failed = dumpGenes(genes, 0);
+  failed = dumpGenes(genes, 1);
   ok(5, !failed);
 
   //Vector *toplevelSlices = SliceAdaptor_fetchAll(sa, "toplevel", NULL, 0);

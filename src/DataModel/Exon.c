@@ -22,19 +22,88 @@ Exon *Exon_new() {
     return NULL;
   }
 
+  exon->objectType = CLASS_EXON;
+  Object_incRefCount(exon);
+
+  exon->funcs = &exonFuncs;
+
 /* Set to empty values */
   Exon_setModified(exon,0);
   Exon_setCreated(exon,0);
   Exon_setVersion(exon,-1);
   Exon_setIsCurrent(exon,1);
 
-  exon->objectType = CLASS_EXON;
-  Object_incRefCount(exon);
+  Exon_setStart(exon, POS_UNDEF);
+  Exon_setEnd(exon, POS_UNDEF);
+  Exon_setStrand(exon, STRAND_UNDEF);
+  Exon_setPhase(exon, PHASE_UNDEF);
+  Exon_setEndPhase(exon, PHASE_UNDEF);
 
-  exon->funcs = &exonFuncs;
 
   return exon;
 }
+
+/*
+=head2 hashkey
+
+  Arg [1]    : none
+  Example    : if(exists $hash{$exon->hashkey}) { do_something(); }
+  Description: Returns a unique hashkey that can be used to uniquely identify
+               this exon.  Exons are considered to be identical if they share
+               the same seq_region, start, end, strand, phase, end_phase.
+               Note that this will consider two exons on different slices
+               to be different, even if they actually are not.
+  Returntype : string formatted as slice_name-start-end-strand-phase-end_phase
+  Exceptions : thrown if not all the necessary attributes needed to generate
+               a unique hash value are set
+               set
+  Caller     : general
+  Status     : Stable
+
+=cut
+*/
+// New
+// Adapted to take empty hashKey string as arg so don't have to allocate
+void Exon_getHashKey(Exon *exon, char *hashKey) {
+  Slice *slice    = Exon_getSlice(exon);
+  char *sliceName = slice != NULL ? Slice_getName(slice) : NULL;
+  long start      = Exon_getStart(exon);
+  long end        = Exon_getEnd(exon);
+  int strand      = Exon_getStrand(exon);
+  int phase       = Exon_getPhase(exon);
+  int endPhase    = Exon_getEndPhase(exon);
+
+
+  if (sliceName == NULL) {
+    fprintf(stderr, "Slice must be set to generate correct exon hashkey.\n");
+    exit(1);
+  }
+
+  if (start == POS_UNDEF) {
+    fprintf(stderr, "start attribute must be defined to generate correct hashkey.");
+  }
+
+  if (end == POS_UNDEF) {
+    fprintf(stderr, "end attribute must be defined to generate correct hashkey.");
+  }
+
+  if (strand == STRAND_UNDEF) {
+    fprintf(stderr, "strand attribute must be defined to generate correct hashkey.");
+  }
+
+  if (phase == PHASE_UNDEF) {
+    fprintf(stderr, "phase attribute must be defined to generate correct hashkey.");
+  }
+
+  if (endPhase == PHASE_UNDEF) {
+    fprintf(stderr, "endPhase attribute must be defined to generate correct hashkey.");
+  }
+
+  sprintf(hashKey, "%s-%ld-%ld-%d-%d-%d", sliceName, start, end, strand, phase, endPhase);
+
+  return;
+}
+
 
 Exon *Exon_shallowCopyImpl(Exon *exon) {
   Exon *newExon = Exon_new();

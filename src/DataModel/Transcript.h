@@ -196,6 +196,8 @@ MapperRangeSet *Transcript_cDNA2Genomic(Transcript *trans, int start, int end);
 MapperRangeSet *Transcript_genomic2cDNA(Transcript *trans, int start, int end, int strand, BaseContig *contig);
 MapperRangeSet *Transcript_genomic2Pep(Transcript *trans, int start, int end, int strand, BaseContig *contig);
 
+void Transcript_swapExons(Transcript *transcript, Exon *oldExon, Exon *newExon);
+
 
 Mapper *Transcript_getcDNACoordMapper(Transcript *trans);
 

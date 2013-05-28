@@ -34,6 +34,9 @@ int selectPrefix(const struct dirent *DirEnt);
 char *currentPrefix;  
 #define MAXSTRLEN 1024
 
+
+int areintquiet(const char *string);
+
 /* ---------------------------------------------------------------- */
 
 static void getFullFName(char *full, char *path, char *fname) {
@@ -764,7 +767,7 @@ static void BioIndex_add_file(BioIndex *bi, char *fname,
           char *id;
           char *pos = NULL;
           char *current = line;
-          while (id = sbid->multiParser(current,&pos)) {
+          while ((id = sbid->multiParser(current,&pos))) {
             Vector_addElement(bid->ids,id);
             current = pos;
           }
@@ -956,7 +959,7 @@ void BioIndex_close(BioIndex *bi){
   return;
 }
 
-int areintquiet(char *str) {
+int areintquiet(const char *str) {
   int length = 0;
   int i;
  

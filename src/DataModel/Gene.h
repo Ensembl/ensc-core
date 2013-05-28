@@ -124,8 +124,10 @@ Vector *Gene_getAllExons(Gene *gene);
 
 Gene *Gene_transformToRawContig(Gene *gene);
 
+Vector *Gene_getAllAttributes(Gene *gene, char *attribCode);
 
 Vector *Gene_getAllDBLinks(Gene *g);
+Vector *Gene_getAllDBEntries(Gene *g);
 int Gene_addDBLink(Gene *gene, DBEntry *dbe);
 
 void Gene_free(Gene *gene);

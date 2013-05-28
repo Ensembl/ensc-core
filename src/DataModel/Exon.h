@@ -136,6 +136,8 @@ Exon *Exon_copy(Exon *copy, Exon *orig, CopyDepth depth);
 char *Exon_getSeqStringImpl(Exon *exon);
 char *Exon_getPeptideImpl(Exon *exon, Transcript *trans);
 
+void Exon_getHashKey(Exon *exon, char *hashKey);
+
 int Exon_reverseStrandCompFunc(const void *a, const void *b);
 int Exon_forwardStrandCompFunc(const void *a, const void *b);
 

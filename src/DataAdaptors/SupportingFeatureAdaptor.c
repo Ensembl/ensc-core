@@ -182,7 +182,7 @@ void SupportingFeatureAdaptor_store(SupportingFeatureAdaptor *sfa, IDType exonDb
   SliceAdaptor *sliceAdaptor             = DBAdaptor_getSliceAdaptor(sfa->dba);
 
   int i;
-  for (i=0; Vector_getNumElement(alnObjs); i++) {
+  for (i=0; i < Vector_getNumElement(alnObjs); i++) {
     BaseAlignFeature *f = Vector_getElementAt(alnObjs, i);
 
 /* I really wish I understood why this is necessary - until I do, I'm not doing these transfers

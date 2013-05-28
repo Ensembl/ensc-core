@@ -349,7 +349,8 @@ IDType ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
           isConstitutive);
           
   if (Exon_getStableId(exon) != NULL) {
-    sprintf(qStr, ", '%s', %d, FROM_UNIXTIME(%ld), FROM_UNIXTIME(%ld))",
+    sprintf(qStr, "%s, '%s', %d, FROM_UNIXTIME(%ld), FROM_UNIXTIME(%ld))",
+            qStr,
             Exon_getStableId(exon),
             version,
             Exon_getCreated(exon),

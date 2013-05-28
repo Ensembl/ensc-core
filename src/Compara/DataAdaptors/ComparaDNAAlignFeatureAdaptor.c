@@ -169,7 +169,8 @@ Vector *ComparaDNAAlignFeatureAdaptor_fetchAllBySlice(ComparaDNAAlignFeatureAdap
 
       DNAAlignFeature_setStart(f, start);
       DNAAlignFeature_setEnd(f, end);
-      DNAAlignFeature_setContig(f, slice);
+// Was setContig
+      DNAAlignFeature_setSlice(f, slice);
     }
   } else {
     int i;
@@ -182,7 +183,8 @@ Vector *ComparaDNAAlignFeatureAdaptor_fetchAllBySlice(ComparaDNAAlignFeatureAdap
       DNAAlignFeature_setStart(f, start);
       DNAAlignFeature_setEnd(f, end);
       DNAAlignFeature_setStrand(f, strand);
-      DNAAlignFeature_setContig(f, slice);
+// Was setContig
+      DNAAlignFeature_setSlice(f, slice);
     }
   }
 

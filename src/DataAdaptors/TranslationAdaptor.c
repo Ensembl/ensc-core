@@ -347,11 +347,11 @@ IDType TranslationAdaptor_store(TranslationAdaptor *tlna, Translation *translati
   Exon *startExon = Translation_getStartExon(translation);
   Exon *endExon   = Translation_getEndExon(translation);
  
-  if (startExon) {
+  if (!startExon) {
     fprintf(stderr, "Translation must define a start_Exon to be stored.\n");
   }
  
-  if (endExon) {
+  if (!endExon) {
     fprintf(stderr, "Translation must define an end_Exon to be stored.\n");
   }
  
@@ -398,6 +398,7 @@ IDType TranslationAdaptor_store(TranslationAdaptor *tlna, Translation *translati
   // store object xref mappings to translations
   //
  
+/* NIY
   DBEntryAdaptor *dbEntryAdaptor = DBAdaptor_getDBEntryAdaptor(tlna->dba);
 
   Vector *dbEntries = Translation_getAllDBEntries(translation);
@@ -406,6 +407,7 @@ IDType TranslationAdaptor_store(TranslationAdaptor *tlna, Translation *translati
     DBEntry *dbe = Vector_getElementAt(dbEntries, i);
     DBEntryAdaptor_store(dbEntryAdaptor, dbe, translDbID, "Translation", 1);
   }
+*/
 
   // storing the protein features associated with the translation
 /* NIY

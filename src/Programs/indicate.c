@@ -24,6 +24,7 @@
 #include "BioIndex.h"
 #include "parsers.h"
 #include "Error.h"
+#include "StrUtil.h"
 
 void Indicate_usage();
 
