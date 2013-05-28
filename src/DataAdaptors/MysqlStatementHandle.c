@@ -185,6 +185,7 @@ IDType MysqlStatementHandle_getInsertId(StatementHandle *sth) {
 
   if (insertId == 0) {
     fprintf(stderr, "Warning: Insert id was 0\n");
+    ProcUtil_showBacktrace(EnsC_progName);
   }
 
   return insertId;

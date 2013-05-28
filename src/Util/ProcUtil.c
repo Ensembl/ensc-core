@@ -114,7 +114,7 @@ void ProcUtil_mallInfo() {
 // Adapted from code from http://blog.bigpixel.ro/2010/09/stack-unwinding-stack-trace-with-gcc/
 // Needs libunwind
 void ProcUtil_showBacktrace(char *prog) {
-#ifdef linux
+#if defined(linux) || defined(__APPLE__)
   char name[2048];
   unw_cursor_t cursor; unw_context_t uc;
   unw_word_t ip, sp, offp;
@@ -131,12 +131,16 @@ void ProcUtil_showBacktrace(char *prog) {
     unw_get_reg(&cursor, UNW_REG_IP, &ip);
     unw_get_reg(&cursor, UNW_REG_SP, &sp);
 
+#if defined(linux)
     if (prog == NULL) {
       fprintf(stderr, "%s ip = %lx, sp = %lx\n", name, (long)ip, (long)sp);
     } else {
       ProcUtil_getFileAndLine(prog, (long)ip, file, 2048, &line);
       fprintf(stderr, "%s in file %s line %d\n", name, file, line);
     }
+# else
+    fprintf(stderr, "%s ip = %lx, sp = %lx\n", name, (long)ip, (long)sp);
+#endif
   }
 #else
   fprintf(stderr, "backtrace not supported on this platform\n");
@@ -145,12 +149,12 @@ void ProcUtil_showBacktrace(char *prog) {
 
 
 int ProcUtil_getFileAndLine(char *prog, unw_word_t addr, char *file, size_t flen, int *line) {
-#ifdef linux
   static char buf[2048];
   char *p;
 
   // prepare command to be executed
   // our program need to be passed after the -e parameter
+#if defined(linux)
   sprintf (buf, "/usr/bin/addr2line -C -e %s -f -i %lx", prog, addr);
   FILE* f = popen (buf, "r");
 
@@ -183,7 +187,49 @@ int ProcUtil_getFileAndLine(char *prog, unw_word_t addr, char *file, size_t flen
     *line = 0;
   }
 
-  pclose(f);
+  pclose(f); 
+#elif defined(__APPLE__)
+/// NOT WORKING YET. Need extra magic to get all the addresses I need
+  //sprintf (buf, "/usr/bin/atos -p %s", prog, addr);
+  sprintf (buf, "/usr/bin/atos -p GeneWriteTest -l %lx", prog,addr);
+  fprintf(stderr,"Command: %s\n",buf);
+  FILE* f = popen (buf, "r");
+
+  if (f == NULL) {
+    perror (buf);
+    return 0;
+  }
+
+/*
+  // get function name
+  fgets (buf, 2048, f);
+
+  // get file and line
+  fgets (buf, 2048, f);
+
+  if (buf[0] != '?') {
+    int l;
+    char *p = buf;
+
+    // file name is until ':'
+    while (*p != ':') {
+      p++;
+    }
+
+    *p++ = 0;
+    // after file name follows line number
+    strcpy (file , buf);
+    sscanf (p,"%d", line);
+  } else {
+    strcpy (file,"unknown");
+    *line = 0;
+  }
+*/
+  while (fgets(buf,2048, f)) {
+    fprintf(stderr,"%s\n",buf);
+  }
+
+  pclose(f); 
 #else
   fprintf(stderr, "getFileAndLine not supported on this platform\n");
 #endif

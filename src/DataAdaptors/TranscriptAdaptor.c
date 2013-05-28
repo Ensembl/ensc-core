@@ -1029,7 +1029,7 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
   // Store translation
   //
 
-  Vector *altTranslations;
+  Vector *altTranslations = NULL;
 /* NIY
   Vector *altTranslations = Transcript_getAllAlternativeTranslations(transcript);
 */

@@ -441,6 +441,7 @@ IDType AttributeAdaptor_storeType(AttributeAdaptor *ata, Attribute *attrib) {
 
   sth1->finish(sth1);
 
+  // fprintf(stderr, "atId in end is "IDFMTSTR"\n", atId);
   return atId;
 }
 

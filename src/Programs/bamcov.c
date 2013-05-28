@@ -26,6 +26,7 @@
 #include "BaseAdaptor.h"
 #include "Basic/Vector.h"
 #include "Slice.h"
+#include "SliceAdaptor.h"
 #include "StrUtil.h"
 #include "IDHash.h"
 
@@ -452,5 +453,8 @@ int calcCoverage(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int
 
   bam_iter_destroy(iter);
   bam_destroy1(b);
+
+
+  return 1;
 }
 
