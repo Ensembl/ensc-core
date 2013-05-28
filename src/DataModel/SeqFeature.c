@@ -1188,7 +1188,7 @@ int SeqFeature_getSeqRegionStrand(SeqFeature *sf) {
 =cut
 */
 
-int SeqFeature_getSeqRegionStart(SeqFeature *sf) {
+long SeqFeature_getSeqRegionStart(SeqFeature *sf) {
   Slice *slice = SeqFeature_getSlice(sf);
 
   if (slice != NULL) {
@@ -1237,8 +1237,7 @@ int SeqFeature_getSeqRegionStart(SeqFeature *sf) {
 
 =cut
 */
-
-int SeqFeature_getSeqRegionEnd(SeqFeature *sf) {
+long SeqFeature_getSeqRegionEnd(SeqFeature *sf) {
   Slice *slice = SeqFeature_getSlice(sf);
 
   if (slice != NULL) {

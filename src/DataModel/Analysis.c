@@ -2,6 +2,8 @@
 #include "Analysis.h"
 #undef __ANALYSIS_MAIN__
 
+#include <string.h>
+
 Analysis *Analysis_new() {
   Analysis *anal;
 

@@ -72,5 +72,7 @@ void Mapper_sort(Mapper *m);
 
 void Mapper_mergePairs(Mapper *m);
 
+void Mapper_free(Mapper *mapper);
+
 
 #endif

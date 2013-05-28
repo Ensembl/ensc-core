@@ -27,7 +27,7 @@ RangeRegistry *RangeRegistry_new() {
   return registry;
 }
 
-void *RangeRegistry_flush(RangeRegistry *registry) {
+void RangeRegistry_flush(RangeRegistry *registry) {
   IDHash_free(registry->registry, Vector_free);
 
   registry->registry = IDHash_new(IDHASH_MEDIUM);

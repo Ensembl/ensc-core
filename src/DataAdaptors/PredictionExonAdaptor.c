@@ -370,9 +370,9 @@ Vector *PredictionExonAdaptor_objectsFromStatementHandle(PredictionExonAdaptor *
       // Slightly suspicious about need for this if statement so left in perl statements for now
       if (destSlice != NULL &&
           assMapper->objectType == CLASS_CHAINEDASSEMBLYMAPPER) {
-        MapperRangeSet *mrs = ChainedAssemblyMapper_map(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, 1, destSlice);
+        mrs = ChainedAssemblyMapper_map(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, 1, destSlice);
       } else {
-        MapperRangeSet *mrs = AssemblyMapper_fastMap(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, NULL);
+        mrs = AssemblyMapper_fastMap(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, NULL);
       }
 
       // skip features that map to gaps or coord system boundaries

@@ -26,6 +26,23 @@ Translation *Translation_new() {
   return t;
 }
 
+// NIY:
+// Quick hack implementation of this because I got bored getting the gene storing working - revisit
+Vector *Translation_getAllDBEntries(Translation *t) {
+  if (!t->dbLinks) {
+    TranslationAdaptor *tlna = (TranslationAdaptor *)Translation_getAdaptor(t);
+
+    if (tlna) {
+      DBEntryAdaptor *dbea = DBAdaptor_getDBEntryAdaptor(tlna->dba);
+      DBEntryAdaptor_fetchAllByTranslation(dbea,t);
+    } else {
+      t->dbLinks = emptyVector;
+    }
+  }
+
+  return t->dbLinks;
+}
+
 char *Translation_getStableId(Translation *translation) {
   TranslationAdaptor *ta = (TranslationAdaptor *)Translation_getAdaptor(translation);
 

@@ -714,7 +714,8 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
 
   IDHash *trGHash = IDHash_new(IDHASH_MEDIUM);
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+// Extra parentheses to please mac compiler
+  while ((row = sth->fetchRow(sth))) {
     IDType gId  = row->getLongLongAt(row,0);
     IDType trId = row->getLongLongAt(row,1);
 
@@ -1122,7 +1123,8 @@ Vector *GeneAdaptor_fetchAllAltAlleles(GeneAdaptor *ga, Gene *gene) {
 
   Vector *altIds = Vector_new();
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+// Extra parentheses to please mac compiler
+  while ((row = sth->fetchRow(sth))) {
     IDType id = row->getLongLongAt(row, 0);
     IDType *idP;
 
@@ -1351,6 +1353,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
   }
 */
 
+  char *type;
   if (Gene_getBiotype(gene)) {
     type = Gene_getBiotype(gene);
   } else {
@@ -1359,6 +1362,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
 
   // default to is_current = 1 if this attribute is not set
 // In C I initialise this to 1 in Gene_new
+  int isCurrent = Gene_getIsCurrent(gene);
 /*
   my $is_current = $gene->is_current;
   $is_current = 1 unless (defined($is_current));
@@ -1414,11 +1418,11 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
             qStr, Gene_getStableId(gene), version, Gene_getCreated(gene), Gene_getModified(gene));
   }
 
-  sth = ga->prepare((BaseAdaptor *)ga,qStr,strlen(qStr));
+  StatementHandle *sth = ga->prepare((BaseAdaptor *)ga,qStr,strlen(qStr));
 
   sth->execute(sth);
 // NIY??? Finish was before insert id call?? Moved before
-  geneId = sth->getInsertId(sth);
+  IDType geneId = sth->getInsertId(sth);
 
   sth->finish(sth);
 
@@ -1427,6 +1431,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
   DBEntryAdaptor *dbEntryAdaptor = DBAdaptor_getDBEntryAdaptor(db);
 
   Vector *dbEntries = Gene_getAllDBEntries(gene);
+  int i;
   for (i=0; i<Vector_getNumElement(dbEntries); i++) {
     DBEntry *dbe = Vector_getElementAt(dbEntries, i);
     DBEntryAdaptor_store(dbEntryAdaptor, dbe, geneId, "Gene", ignoreRelease);
@@ -1436,6 +1441,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
   // copies.  For the database we still want sharing though, to have
   // easier time with stable ids. So we need to have a step to merge
   // exons together before store.
+/* TODOOOOOOOOOO
   my %exons;
 
   foreach my $trans (@{$gene->get_all_Transcripts}) {
@@ -1448,6 +1454,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
       }
     }
   }
+*/
 
   TranscriptAdaptor *transcriptAdaptor = DBAdaptor_getTranscriptAdaptor(db);
 
@@ -1458,14 +1465,13 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
 
 // Note I'm not doing the transfer so no new/old separation for now.
 // Just call it new
-  int i;
   for (i = 0; i < Gene_getTranscriptCount(gene); i++) {
     Transcript *new = Gene_getTranscriptAt(gene, i);
 //    my $old = $original_transcripts->[$i];
 
     TranscriptAdaptor_store(transcriptAdaptor, new, geneId, analysisId);
 
-    if (!newCanonicalTranscriptId && Transcript_isCanonical(new)) {
+    if (!newCanonicalTranscriptId && Transcript_getIsCanonical(new)) {
       newCanonicalTranscriptId = Transcript_getDbID(new);
     }
 
@@ -1486,7 +1492,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
   if (newCanonicalTranscriptId) {
     // Now the canonical transcript has been stored, so update the
     // canonical_transcript_id of this gene with the new dbID.
-    sprintf(qStr,"UPDATE gene SET canonical_transcript_id = "IDFMTSTR" WHERE gene_id = "IDFMTSTR,new_canonical_transcript_id, geneId)
+    sprintf(qStr,"UPDATE gene SET canonical_transcript_id = "IDFMTSTR" WHERE gene_id = "IDFMTSTR,newCanonicalTranscriptId, geneId);
 
     sth = ga->prepare((BaseAdaptor *)ga,qStr,strlen(qStr));
 
@@ -1509,7 +1515,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
     if (dxrefId) {
       sprintf(qStr, "UPDATE gene SET display_xref_id = "IDFMTSTR" WHERE gene_id = "IDFMTSTR, dxrefId, geneId);
 
-      sth = ga->prepare((BaseAdaptor *)ga,qStr,strlen(qStr));
+      StatementHandle *sth = ga->prepare((BaseAdaptor *)ga,qStr,strlen(qStr));
 
       sth->execute(sth);
       sth->finish(sth);
@@ -1530,7 +1536,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
 
   // store gene attributes if there are any
   AttributeAdaptor *attrAdaptor = DBAdaptor_getAttributeAdaptor(db);
-  AttributeAdaptor_storeOnGene(attrAdaptor, geneId, Gene_getAllAttributes(gene));
+  AttributeAdaptor_storeOnGeneId(attrAdaptor, geneId, Gene_getAllAttributes(gene, NULL));
 
   // store unconventional transcript associations if there are any
 /* NIY - and probably never will be implemented, not used anywhere that I know of
@@ -1822,7 +1828,7 @@ Vector *GeneAdaptor_objectsFromStatementHandle(GeneAdaptor *ga,
 // Note FEATURE label is here
 //FEATURE: while ($sth->fetch()) 
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType geneId =                row->getLongLongAt(row,0);
     IDType seqRegionId =           row->getLongLongAt(row,1);
     long seqRegionStart =          row->getLongAt(row,2);
@@ -1888,12 +1894,12 @@ Vector *GeneAdaptor_objectsFromStatementHandle(GeneAdaptor *ga,
       // Slightly suspicious about need for this if statement so left in perl statements for now
       if (destSlice != NULL &&
           assMapper->objectType == CLASS_CHAINEDASSEMBLYMAPPER) {
-        MapperRangeSet *mrs = ChainedAssemblyMapper_map(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, 1, destSlice);
+        mrs = ChainedAssemblyMapper_map(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, 1, destSlice);
 
         //($seq_region_id, $seq_region_start, $seq_region_end, $seq_region_strand) = $mapper->map($sr_name, $seq_region_start, $seq_region_end, $seq_region_strand, $sr_cs, 1, $dest_slice);
 
       } else {
-        MapperRangeSet *mrs = AssemblyMapper_fastMap(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, NULL);
+        mrs = AssemblyMapper_fastMap(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, NULL);
         //($seq_region_id, $seq_region_start, $seq_region_end, $seq_region_strand) = $mapper->fastmap($sr_name, $seq_region_start, $seq_region_end, $seq_region_strand, $sr_cs);
       }
 

@@ -42,6 +42,10 @@ struct BaseAlignFeatureStruct {
 
 BaseAlignFeature *BaseAlignFeature_new(void);
 
+#define BaseAlignFeature_getSeqRegionStart(baf) SeqFeature_getSeqRegionStart((baf))
+#define BaseAlignFeature_getSeqRegionEnd(baf) SeqFeature_getSeqRegionEnd((baf))
+#define BaseAlignFeature_getSeqRegionStrand(baf) SeqFeature_getSeqRegionStrand((baf))
+
 ECOSTRING BaseAlignFeature_setCigarString(BaseAlignFeature *fp, char *ciggy);
 #define BaseAlignFeature_getCigarString(fp)  (fp)->cigarString
 

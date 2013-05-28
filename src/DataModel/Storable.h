@@ -16,4 +16,6 @@ struct StorableStruct {
 #define Storable_getAdaptor(st) (st)->adaptor
 #define Storable_setAdaptor(st,ad) (st)->adaptor = ad
 
+int Storable_isStored(Storable *storable, DBAdaptor *db);
+
 #endif

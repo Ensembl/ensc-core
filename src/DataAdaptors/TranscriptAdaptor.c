@@ -14,9 +14,13 @@
 #include "ChainedAssemblyMapper.h"
 #include "CoordSystemAdaptor.h"
 #include "MetaCoordContainer.h"
+#include "BaseFeatureAdaptor.h"
+#include "AttributeAdaptor.h"
+#include "IntronSupportingEvidenceAdaptor.h"
+#include "TranscriptSupportingFeatureAdaptor.h"
+#include "TranslationAdaptor.h"
 
 #include "ExonAdaptor.h"
-#include "TranscriptAdaptor.h"
 #include "SliceAdaptor.h"
 
 #include "StatementHandle.h"
@@ -492,7 +496,7 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
 
   IDHash *exTrHash = IDHash_new(IDHASH_MEDIUM);
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType trId = row->getLongLongAt(row,0);
     IDType exId = row->getLongLongAt(row,1);
     int    rank = row->getIntAt(row,2);
@@ -794,7 +798,7 @@ Vector *TranscriptAdaptor_fetchByExonStableId(TranscriptAdaptor *ta, char *stabl
   Vector *transVec = Vector_new();
 
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType dbID = row->getLongLongAt(row, 0);
     Transcript *transcript = (Transcript *)TranscriptAdaptor_fetchByDbID(ta, dbID);
     if (transcript != NULL) Vector_addElement(transVec, transcript);
@@ -890,7 +894,7 @@ void TranscriptAdaptor_biotypeConstraint(TranscriptAdaptor *ta, Vector *biotypes
 =cut
 */
 
-IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, IDType geneId, IDType analysisId) {
+IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, IDType geneDbID, IDType analysisId) {
 
   if (transcript == NULL) {
     fprintf(stderr, "feature is NULL in Transcript_store\n");
@@ -957,7 +961,7 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
   // 
   ExonAdaptor *exonAdaptor = DBAdaptor_getExonAdaptor(db);
   int i;
-  for (i=0; i<Transcript_getNumExons(transcript); i++) {
+  for (i=0; i<Transcript_getExonCount(transcript); i++) {
     Exon *exon = Transcript_getExonAt(transcript, i);
     ExonAdaptor_store(exonAdaptor, exon);
   }
@@ -1018,14 +1022,17 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
   tst->execute(tst);
 
 // Swapped id fetch and finish statements
-  IDType transcDbID = tst->getInsertId(sts);
+  IDType transcDbID = tst->getInsertId(tst);
 
   tst->finish(tst);
   // 
   // Store translation
   //
 
+  Vector *altTranslations;
+/* NIY
   Vector *altTranslations = Transcript_getAllAlternativeTranslations(transcript);
+*/
 
   Translation *translation = Transcript_getTranslation(transcript);
 
@@ -1049,6 +1056,8 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
     // Try to find the matching exon in all of the exons we just stored.
 // Use isStored instead
     if ( ! Exon_isStored(startExon, db) ) {
+      fprintf(stderr, "Translation exon juggling code not implemented yet\n");
+/*
       my $key = $start_exon->hashkey();
       ($start_exon) = grep { $_->hashkey() eq $key } @$exons;
 
@@ -1072,6 +1081,7 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
                         "to be one of the exons in its associated Transcript.\n");
         exit(1);
       }
+*/
     }
 
 // Doesn't seem to be used    my $old_dbid = $translation->dbID();
@@ -1100,6 +1110,7 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
   // Store the alternative translations, if there are any.
   //
 
+  fprintf(stderr, "Alt translation storing not implemented\n");
   if ( altTranslations != NULL &&
        Vector_getNumElement(altTranslations) > 0) {
     fprintf(stderr, "Alt translation storing not implemented\n");
@@ -1175,7 +1186,7 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
     if (dxrefId) {
       sprintf(qStr, "UPDATE transcript SET display_xref_id = "IDFMTSTR" WHERE transcript_id = "IDFMTSTR, dxrefId, transcDbID);
 
-      sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
+      StatementHandle *sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
 
       sth->execute(sth);
       sth->finish(sth);
@@ -1200,7 +1211,7 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
   StatementHandle *etst = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
 
   int rank = 1;
-  for (i=0; i<Transcript_getNumExons(transcript); i++) {
+  for (i=0; i<Transcript_getExonCount(transcript); i++) {
     Exon *exon = Transcript_getExonAt(transcript, i);
 
     etst->execute(etst, Exon_getDbID(exon), transcDbID, rank);
@@ -1215,7 +1226,7 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
 
   // store transcript attributes if there are any
   AttributeAdaptor *attrAdaptor = DBAdaptor_getAttributeAdaptor(db);
-  AttributeAdaptor_storeOnTranscriptId(attrAdaptor, transcDbID, Transcript_getAllAttributes(transcript) );
+  AttributeAdaptor_storeOnTranscriptId(attrAdaptor, transcDbID, Transcript_getAllAttributes(transcript, NULL) );
 
   // store the IntronSupportingEvidence features
   IntronSupportingEvidenceAdaptor *iseAdaptor = DBAdaptor_getIntronSupportingEvidenceAdaptor(db);
@@ -1230,7 +1241,7 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
   // Update the original transcript object - not the transfered copy that
   // we might have created.
   Transcript_setDbID(transcript, transcDbID);
-  Transcript_setAdaptor(transcript, ta);
+  Transcript_setAdaptor(transcript, (BaseAdaptor *)ta);
 
   return transcDbID;
 }
@@ -1678,7 +1689,7 @@ Vector *TranscriptAdaptor_objectsFromStatementHandle(TranscriptAdaptor *ta,
 // Note FEATURE label is here
 //FEATURE: while ($sth->fetch())
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType transcriptId =    row->getLongLongAt(row,0);
     IDType seqRegionId =     row->getLongLongAt(row,1);
     long seqRegionStart =    row->getLongAt(row,2);
@@ -1759,9 +1770,9 @@ Vector *TranscriptAdaptor_objectsFromStatementHandle(TranscriptAdaptor *ta,
       // Slightly suspicious about need for this if statement so left in perl statements for now
       if (destSlice != NULL &&
           assMapper->objectType == CLASS_CHAINEDASSEMBLYMAPPER) {
-        MapperRangeSet *mrs = ChainedAssemblyMapper_map(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, 1, destSlice);
+        mrs = ChainedAssemblyMapper_map(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, 1, destSlice);
       } else {
-        MapperRangeSet *mrs = AssemblyMapper_fastMap(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, NULL);
+        mrs = AssemblyMapper_fastMap(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, NULL);
       }
 
       // skip features that map to gaps or coord system boundaries

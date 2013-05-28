@@ -3,6 +3,8 @@
 #undef __SIMPLEFEATURE__MAIN__
 #include "StrUtil.h"
 
+#include <string.h>
+
 SimpleFeature *SimpleFeature_new() {
   SimpleFeature *sf;
 

@@ -5,6 +5,7 @@
 #include "BaseAdaptor.h"
 #include "AdaptorTypes.h"
 #include "IntronSupportingEvidence.h"
+#include "Intron.h"
 
 struct IntronSupportingEvidenceAdaptorStruct {
   BASEFEATUREADAPTOR_DATA
@@ -18,6 +19,8 @@ Vector *IntronSupportingEvidenceAdaptor_fetchAllByTranscript(IntronSupportingEvi
 IDType *IntronSupportingEvidenceAdaptor_fetchFlankingExonIds(IntronSupportingEvidenceAdaptor *isea, IntronSupportingEvidence *ise, Transcript *transcript, IDType *flanks);
 IDType IntronSupportingEvidenceAdaptor_store(IntronSupportingEvidenceAdaptor *isea, IntronSupportingEvidence *ise);
 Vector *IntronSupportingEvidenceAdaptor_objectsFromStatementHandle(IntronSupportingEvidenceAdaptor *isea, StatementHandle *sth, AssemblyMapper *assMapper, Slice *destSlice);
+
+void IntronSupportingEvidenceAdaptor_storeTranscriptLinkage(IntronSupportingEvidenceAdaptor *isea, IntronSupportingEvidence *sf, Transcript *transcript, IDType transcriptId); 
 
 #define IntronSupportingEvidenceAdaptor_fetchAllByDbIDList(isea,id,slice)  \
    BaseAdaptor_fetchAllByDbIDList((BaseAdaptor *)(isea), (id), (slice))

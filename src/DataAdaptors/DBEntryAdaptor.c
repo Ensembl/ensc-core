@@ -77,7 +77,9 @@ DBEntry *DBEntryAdaptor_fetchByDbID(DBEntryAdaptor *dbea, IDType dbID) {
 
 
 IDType DBEntryAdaptor_store(DBEntryAdaptor *dbea, DBEntry *exObj, 
-                         IDType ensObject, char *ensType) {
+                            IDType ensObject, char *ensType, int ignoreRelease) {
+  fprintf(stderr,"DBEntryAdaptor_store does not implement ignoreRelease functionality yet\n");
+
   char qStr[512];
   StatementHandle *sth;
   ResultRow *row;

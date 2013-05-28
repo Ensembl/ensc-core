@@ -93,7 +93,7 @@ Vector *IntronSupportingEvidenceAdaptor_listLinkedTranscriptIds(IntronSupporting
 
   Vector *idVec = Vector_new();
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType id = row->getLongLongAt(row, 0);
     IDType *idP;
 
@@ -136,7 +136,7 @@ Vector *IntronSupportingEvidenceAdaptor_fetchAllByTranscript(IntronSupportingEvi
 
   Vector *idVec = Vector_new();
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType id = row->getLongLongAt(row, 0);
     IDType *idP;
 
@@ -260,7 +260,7 @@ Vector *IntronSupportingEvidenceAdaptor_objectsFromStatementHandle(IntronSupport
   }
 
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     IDType id =           row->getLongLongAt(row,0);
     IDType analysisId =   row->getLongLongAt(row,1);
     IDType seqRegionId =  row->getLongLongAt(row,2);
@@ -310,9 +310,9 @@ Vector *IntronSupportingEvidenceAdaptor_objectsFromStatementHandle(IntronSupport
       // Slightly suspicious about need for this if statement so left in perl statements for now
       if (destSlice != NULL &&
           assMapper->objectType == CLASS_CHAINEDASSEMBLYMAPPER) {
-        MapperRangeSet *mrs = ChainedAssemblyMapper_map(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, 1, destSlice);
+        mrs = ChainedAssemblyMapper_map(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, 1, destSlice);
       } else {
-        MapperRangeSet *mrs = AssemblyMapper_fastMap(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, NULL);
+        mrs = AssemblyMapper_fastMap(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, NULL);
       }
 
       // skip features that map to gaps or coord system boundaries
@@ -423,6 +423,7 @@ IDType IntronSupportingEvidenceAdaptor_store(IntronSupportingEvidenceAdaptor *is
   Class_assertType(CLASS_INTRONSUPPORTINGEVIDENCE, sf->objectType);
   
   DBAdaptor *db = isea->dba;
+  AnalysisAdaptor *analysisAdaptor = DBAdaptor_getAnalysisAdaptor(db);
   
   if (! IntronSupportingEvidence_isStored(sf, db)) {
     fprintf(stderr,"ISE already stored\n");
@@ -490,10 +491,10 @@ IDType IntronSupportingEvidenceAdaptor_store(IntronSupportingEvidenceAdaptor *is
     }
   }
   
-  IntronSupportingFeature_setAdaptor(sf, isea);
-  IntronSupportingFeature_setDbID(sf, sfId);
+  IntronSupportingEvidence_setAdaptor(sf, isea);
+  IntronSupportingEvidence_setDbID(sf, sfId);
 
-  return IntronSupportingFeature_getDbID(sf);
+  return IntronSupportingEvidence_getDbID(sf);
 }
 
 /* NIY

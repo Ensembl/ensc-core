@@ -27,8 +27,10 @@ struct TranscriptStruct {
   char        *externalName;
   char        *description;
   char         editsEnabled;
+  char         isCanonical;
   Vector      *exons;
   Vector      *dbLinks;
+  Vector      *attributes;
   Translation *translation;
   IDType       translationId;
   char         codingRegionStartIsSet;
@@ -45,6 +47,7 @@ struct TranscriptStruct {
 };
 #undef FUNCSTRUCTTYPE
 
+#define Transcript_isStored(transcript, db) Storable_isStored(&((transcript)->st), (db))
 
 ECOSTRING Transcript_setBiotype(Transcript *transcript, char *biotype);
 #define Transcript_getBiotype(transcript)  (transcript)->biotype
@@ -52,8 +55,14 @@ ECOSTRING Transcript_setBiotype(Transcript *transcript, char *biotype);
 Vector *Transcript_getAllSupportingFeatures(Transcript *transcript);
 Vector *Transcript_getAllIntronSupportingEvidence(Transcript *transcript);
 
+Vector *Transcript_getAllAttributes(Transcript *transcript, char *attribCode);
+
 #define Transcript_setIsCurrent(trans,isC)  StableIdInfo_setIsCurrent(&((trans)->si),(isC))
 #define Transcript_getIsCurrent(trans)  StableIdInfo_getIsCurrent(&((trans)->si))
+
+
+#define Transcript_setIsCanonical(transcript, flag)  (transcript)->isCanonical = (flag)
+int Transcript_getIsCanonical(Transcript *transcript);
 
 #define Transcript_setAnalysis(trans,ana) AnnotatedSeqFeature_setAnalysis((trans),(ana))
 #define Transcript_getAnalysis(trans) AnnotatedSeqFeature_getAnalysis((trans))
@@ -122,6 +131,35 @@ Translation *Transcript_getTranslation(Transcript *trans);
 #define Transcript_setDisplayXref(trans,xref) AnnotatedSeqFeature_setDisplayXref((trans),xref)
 #define Transcript_getDisplayXref(trans) AnnotatedSeqFeature_getDisplayXref((trans))
 
+char *Transcript_setDescription(Transcript *t, char *description);
+#define Transcript_getDescription(transcript)  (transcript)->description
+
+ECOSTRING Transcript_setStatus(Transcript *t, char *status);
+#define Transcript_getStatus(transcript)  (transcript)->status
+
+ECOSTRING Transcript_setExternalDb(Transcript *t, char *externalDb);
+ECOSTRING Transcript_setExternalStatus(Transcript *t, char *externalStatus);
+char *Transcript_setExternalName(Transcript *t, char *externalName);
+
+
+#define Transcript_getSeqRegionStart(t) SeqFeature_getSeqRegionStart((t))
+#define Transcript_getSeqRegionEnd(t) SeqFeature_getSeqRegionEnd((t))
+#define Transcript_getSeqRegionStrand(t) SeqFeature_getSeqRegionStrand((t))
+
+
+Exon *Transcript_getStartExon(Transcript *trans);
+Exon *Transcript_getEndExon(Transcript *trans);
+
+void Transcript_flushExons(Transcript *transcript);
+
+int Transcript_addDBLink(Transcript *transcript, DBEntry *dbe);
+
+Transcript *Transcript_transform(Transcript *transcript, IDHash *exonTransforms);
+Transcript *Transcript_transfer(Transcript *transcript, Slice *slice);
+
+void Transcript_sort(Transcript *trans);
+
+int Transcript_getCodingRegionEnd(Transcript *trans);
 
 #define Transcript_getSeqRegionStart(t) SeqFeature_getSeqRegionStart((t))
 #define Transcript_getSeqRegionEnd(t) SeqFeature_getSeqRegionEnd((t))

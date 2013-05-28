@@ -20,6 +20,7 @@
 
 #include "Vector.h"
 #include "StrUtil.h"
+#include "SeqUtil.h"
 #include "ProjectionSegment.h"
 
 #include <strings.h>

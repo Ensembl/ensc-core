@@ -3,6 +3,8 @@
 #include "StrUtil.h"
 #undef __COORDSYSTEM_MAIN__
 
+#include <string.h>
+
 
 /*
 =head2 new

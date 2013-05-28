@@ -10,8 +10,11 @@ supporting features from the database.
 #include "DNAAlignFeatureAdaptor.h"
 #include "ProteinAlignFeatureAdaptor.h"
 #include "BaseAlignFeature.h"
+#include "DNAAlignFeature.h"
+#include "DNAPepAlignFeature.h"
 #include "DBAdaptor.h"
 #include "BaseFeatureAdaptor.h"
+#include "SliceAdaptor.h"
 
 #include <string.h>
 
@@ -260,7 +263,8 @@ void TranscriptSupportingFeatureAdaptor_store(TranscriptSupportingFeatureAdaptor
     } else {
       Vector *vec = Vector_new();
       Vector_addElement(vec, f);
-      BaseFeatureAdaptor_store(adap, vec);
+      //BaseFeatureAdaptor_store(adap, vec);
+      adap->store(adap, vec);
       Vector_free(vec);
      
       sfDbID = BaseAlignFeature_getDbID(f);

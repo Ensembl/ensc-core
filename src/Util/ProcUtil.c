@@ -11,6 +11,11 @@
 #include "libunwind.h"
 #endif
 
+#ifdef __APPLE__
+#define UNW_LOCAL_ONLY
+#include <libunwind.h>
+#endif
+
 #ifndef dos
 #include <unistd.h>
 #include <sys/times.h>
@@ -70,6 +75,7 @@ int ProcUtil_timeInfo(char *routine) {
 void ProcUtil_mallInfo() {
 #if !defined(os2) && !defined(__ppc__) && !defined(__osf__)
 #ifndef linux
+#ifndef __APPLE__
   struct mallinfo mall;
 
   mall=mallinfo();
@@ -86,6 +92,7 @@ void ProcUtil_mallInfo() {
   Stream_fprintf(OutStream,"Space in free ordinary blocks  : %d\n", mall.fordblks);
   Stream_fprintf(OutStream,"Cost of enabling keep option   : %d\n", mall.keepcost);
   Stream_fprintf(OutStream,"---------------------------------------------------\n\n");
+#endif
 #endif
 
 #ifdef linux_old

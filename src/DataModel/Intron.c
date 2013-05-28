@@ -8,6 +8,8 @@
 
 #include "EnsC.h"
 
+#include <string.h>
+
 /*
 =head2 new
 

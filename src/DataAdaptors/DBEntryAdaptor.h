@@ -13,9 +13,10 @@ IDType DBEntryAdaptor_exists(DBEntryAdaptor *dbea, DBEntry *dbe);
 DBEntryAdaptor *DBEntryAdaptor_new(DBAdaptor *dba);
 DBEntry *DBEntryAdaptor_fetchByDbID(DBEntryAdaptor *dbea, IDType dbID);
 IDType DBEntryAdaptor_store(DBEntryAdaptor *dbea, DBEntry *exObj,
-                         IDType ensObject, char *ensType);
+                         IDType ensObject, char *ensType, int ignoreRelease);
 int DBEntryAdaptor_fetchAllByTranscript(DBEntryAdaptor *dbea, Transcript *trans);
 int DBEntryAdaptor_fetchAllByGene(DBEntryAdaptor *dbea, Gene *gene);
+Vector *DBEntryAdaptor_fetchAllByTranslation(DBEntryAdaptor *dbea, Translation *trans);
 
 
 

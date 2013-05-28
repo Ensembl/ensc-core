@@ -3,6 +3,7 @@
 #include "IndelCoordinate.h"
 #include "StrUtil.h"
 #include <stdio.h>
+#include <string.h>
 
 /*
 =head2 new

@@ -4,6 +4,7 @@
 
 #include "DBAdaptor.h"
 #include "GeneAdaptor.h"
+#include "AttributeAdaptor.h"
 #include "IDHash.h"
 
 #include "DBEntryAdaptor.h"
@@ -39,7 +40,60 @@ Gene *Gene_shallowCopy(Gene *gene) {
   return newGene;
 }
 
-Vector *Gene_getAllDBLinks(Gene *g) {
+/*
+=head2 get_all_Attributes
+
+  Arg [1]    : (optional) String $attrib_code
+               The code of the attribute type to retrieve values for
+  Example    : my ($author) = @{ $gene->get_all_Attributes('author') };
+               my @gene_attributes = @{ $gene->get_all_Attributes };
+  Description: Gets a list of Attributes of this gene.
+               Optionally just get Attributes for given code.
+  Returntype : Listref of Bio::EnsEMBL::Attribute
+  Exceptions : warning if gene does not have attached adaptor and attempts lazy
+               load.
+  Caller     : general
+  Status     : Stable
+
+=cut
+*/
+// New
+
+// NIY:
+// Because this can filter the results the vector that gets returned must be freeable - so for now
+// make a copy of the translation->attributes vector if returning unfiltered so behaviour is
+// consistent. Long term probably want reference count incremented
+Vector *Gene_getAllAttributes(Gene *gene, char *attribCode) {
+  if (gene->attributes == NULL) {
+    GeneAdaptor *ga = (GeneAdaptor *)Gene_getAdaptor(gene);
+    if (ga == NULL) { // No adaptor
+// Perl comments out the warning, I'll put it back for now, just in case
+      fprintf(stderr,"Warning: Cannot get attributes without an adaptor.\n");
+      return Vector_new();
+    }
+
+    AttributeAdaptor *ata = DBAdaptor_getAttributeAdaptor(ga->dba);
+    gene->attributes = AttributeAdaptor_fetchAllByGene(ata, gene, NULL);
+  }
+
+  if (attribCode != NULL) {
+    Vector *results = Vector_new();
+    int i;
+    for (i=0; i<Vector_getNumElement(gene->attributes); i++) {
+      Attribute *attrib = Vector_getElementAt(gene->attributes, i);
+      if (!strcasecmp(attrib->code, attribCode)) {
+        Vector_addElement(results, attrib);
+      }
+    }
+    return results;
+  } else {
+// See NIY note above for why I'm making a copy
+    return Vector_copy(gene->attributes);
+  }
+}
+
+// Note this used to be called getAllDBLinks but it looks more like the current getAllDBEntries so call it that
+Vector *Gene_getAllDBEntries(Gene *g) {
   if (!g->dbLinks) {
     GeneAdaptor *ga = (GeneAdaptor *)Gene_getAdaptor(g);
 

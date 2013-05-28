@@ -12,7 +12,7 @@ struct RangeRegistryStruct {
 };
 
 RangeRegistry *RangeRegistry_new();
-void *RangeRegistry_flush(RangeRegistry *registry);
+void RangeRegistry_flush(RangeRegistry *registry);
 Vector *RangeRegistry_checkAndRegister(RangeRegistry *reg, IDType id, long start, long end, long rStart, long rEnd, int wantGaps);
 long RangeRegistry_overlapSize(RangeRegistry *registry, IDType id, long start, long end);
 Vector *RangeRegistry_getRanges(RangeRegistry *registry, IDType id);

@@ -8,6 +8,7 @@
 #include "AnnotatedSeqFeature.h"
 #include "StableIdInfo.h"
 #include "Slice.h"
+#include "SeqFeature.h"
 
 #define EXONFUNC_TYPES(CLASSTYPE) \
   ANNOTATEDSEQFEATUREFUNC_TYPES(CLASSTYPE) \
@@ -36,7 +37,7 @@ typedef struct ExonFuncsStruct {
 #define EXON_DATA \
   ANNOTATEDSEQFEATURE_DATA \
   Vector *supportingFeatures; \
-  char isConstituitive; \
+  char isConstitutive; \
   char *seqCacheString;
 
 #define FUNCSTRUCTTYPE ExonFuncs
@@ -45,11 +46,17 @@ struct ExonStruct {
 };
 #undef FUNCSTRUCTTYPE
 
+#define Exon_isStored(exon, db) Storable_isStored(&((exon)->st), (db))
+
+#define Exon_getSeqRegionStart(exon) SeqFeature_getSeqRegionStart((exon))
+#define Exon_getSeqRegionEnd(exon) SeqFeature_getSeqRegionEnd((exon))
+#define Exon_getSeqRegionStrand(exon) SeqFeature_getSeqRegionStrand((exon))
+
 #define Exon_setIsCurrent(exon,isC)  StableIdInfo_setIsCurrent(&((exon)->si),(isC))
 #define Exon_getIsCurrent(exon)  StableIdInfo_getIsCurrent(&((exon)->si))
 
-#define Exon_setIsConstituitive(exon,isC) (exon)->isConstituitive = (isC)
-#define Exon_getIsConstituitive(exon) (exon)->isConstituitive
+#define Exon_setIsConstitutive(exon,isC) (exon)->isConstitutive = (isC)
+#define Exon_getIsConstitutive(exon) (exon)->isConstitutive
 
 #define Exon_setStart(exon,start) AnnotatedSeqFeature_setStart((exon),(start))
 #define Exon_getStart(exon) AnnotatedSeqFeature_getStart((exon))

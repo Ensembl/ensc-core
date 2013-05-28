@@ -11,6 +11,8 @@ Translation.
 */
 #include "TranslationAdaptor.h"
 #include "TranscriptAdaptor.h"
+#include "AttributeAdaptor.h"
+#include "DBEntryAdaptor.h"
 #include "BaseAdaptor.h"
 #include "MysqlUtil.h"
 #include "Exon.h"
@@ -91,7 +93,7 @@ Vector *TranslationAdaptor_fetchAllAlternativeByTranscript(TranslationAdaptor *t
   Vector *translations = Vector_new();
 
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+  while ((row = sth->fetchRow(sth))) {
     Translation *translation = TranslationAdaptor_translationFromResultRow(tlna, row, transcript);
 
 // Huh, ???
@@ -386,7 +388,7 @@ IDType TranslationAdaptor_store(TranslationAdaptor *tlna, Translation *translati
             qStr, Translation_getStableId(translation), version, Translation_getCreated(translation), Translation_getModified(translation));
   }
 
-  sth = tlna->prepare((BaseAdaptor *)tlna,qStr,strlen(qStr));
+  StatementHandle *sth = tlna->prepare((BaseAdaptor *)tlna,qStr,strlen(qStr));
 
   sth->execute(sth);
  
@@ -418,7 +420,7 @@ IDType TranslationAdaptor_store(TranslationAdaptor *tlna, Translation *translati
   // store any translation attributes that are defined
   AttributeAdaptor *attrAdaptor = DBAdaptor_getAttributeAdaptor(tlna->dba);
   AttributeAdaptor_storeOnTranslationId(attrAdaptor, translDbID,
-                                        Translation_getAllAttributes(translation));
+                                        Translation_getAllAttributes(translation, NULL));
 
   Translation_setDbID(translation, translDbID);
   Translation_setAdaptor(translation, (BaseAdaptor *)tlna);
@@ -738,7 +740,7 @@ Vector *TranslationAdaptor_fetchAllByTranscriptList(TranslationAdaptor *tlna, Ve
     StatementHandle *sth = tlna->prepare((BaseAdaptor *)tlna,qStr,strlen(qStr));
     sth->execute(sth);
     ResultRow *row;
-    while (row = sth->fetchRow(sth)) {
+    while ((row = sth->fetchRow(sth))) {
       IDType transcriptId           = row->getLongLongAt(row,0);
       IDType *idP; 
       IDType canonicalTranslationId = row->getLongLongAt(row,1);
@@ -769,7 +771,7 @@ Vector *TranslationAdaptor_fetchAllByTranscriptList(TranslationAdaptor *tlna, Ve
     sth = tlna->prepare((BaseAdaptor *)tlna,qStr,strlen(qStr));
     sth->execute(sth);
 
-    while (row = sth->fetchRow(sth)) {
+    while ((row = sth->fetchRow(sth))) {
       // Need transcriptId so fetch it here as well as in translationFromResultRow
       IDType transcriptId  = row->getLongLongAt(row,0); 
       Transcript *tr = IDHash_getValue(transHash, transcriptId);

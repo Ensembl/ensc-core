@@ -151,6 +151,10 @@ ECOSTRING SeqFeature_setSeqName(SeqFeature *sf, char *seqName);
 ECOSTRING SeqFeature_getSeqName(SeqFeature *sf);
 
 ECOSTRING SeqFeature_getSeqRegionName(SeqFeature *sf);
+long SeqFeature_getSeqRegionStart(SeqFeature *sf);
+long SeqFeature_getSeqRegionEnd(SeqFeature *sf);
+int SeqFeature_getSeqRegionStrand(SeqFeature *sf);
+
 int SeqFeature_overlaps(SeqFeature *sf, SeqFeature *f);
 
 

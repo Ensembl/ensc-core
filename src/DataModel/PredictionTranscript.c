@@ -7,6 +7,7 @@
 #include "StrUtil.h"
 #include "SeqUtil.h"
 #include "translate.h"
+#include "Mapper.h"
 
 PredictionTranscript *PredictionTranscript_new() {
   PredictionTranscript *transcript;

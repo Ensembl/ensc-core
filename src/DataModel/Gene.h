@@ -31,10 +31,13 @@ struct GeneStruct {
   IDType canonicalTranscriptId;
   char *canonicalAnnotation;
   Vector *dbLinks;
+  Vector *attributes;
 };
 #undef FUNCSTRUCTTYPE
 
 Gene *Gene_new(void);
+
+#define Gene_isStored(gene, db) Storable_isStored(&((gene)->st), (db))
 
 #define Gene_setDbID(gene,dbID) AnnotatedSeqFeature_setDbID((gene),dbID)
 #define Gene_getDbID(gene) AnnotatedSeqFeature_getDbID((gene))
@@ -57,9 +60,9 @@ Gene *Gene_new(void);
 #define Gene_setDisplayXref(gene,xref) AnnotatedSeqFeature_setDisplayXref((gene),xref)
 #define Gene_getDisplayXref(gene) AnnotatedSeqFeature_getDisplayXref((gene))
 
-#define Gene_getSeqRegionStart(t) SeqFeature_getSeqRegionStart((t))
-#define Gene_getSeqRegionEnd(t) SeqFeature_getSeqRegionEnd((t))
-#define Gene_getSeqRegionStrand(t) SeqFeature_getSeqRegionStrand((t))
+#define Gene_getSeqRegionStart(g) SeqFeature_getSeqRegionStart((g))
+#define Gene_getSeqRegionEnd(g) SeqFeature_getSeqRegionEnd((g))
+#define Gene_getSeqRegionStrand(g) SeqFeature_getSeqRegionStrand((g))
 
 #define Gene_setStableId(gene,stableId)  StableIdInfo_setStableId(&((gene)->si),stableId)
 char *Gene_getStableId(Gene *gene);
@@ -88,6 +91,9 @@ char *Gene_setExternalName(Gene *gene, char *externalName);
 
 #define Gene_setCanonicalTranscriptId(gene, id)  (gene)->canonicalTranscriptId = (id)
 #define Gene_getCanonicalTranscriptId(gene)  (gene)->canonicalTranscriptId
+
+char *Gene_setCanonicalAnnotation(Gene *g, char *canonicalAnnotation);
+#define Gene_getCanonicalAnnotation(gene)  (gene)->canonicalAnnotation
 
 #define Gene_setCreated(gene,cd)  StableIdInfo_setCreated(&((gene)->si),cd)
 #define Gene_getCreated(gene)  StableIdInfo_getCreated(&((gene)->si))

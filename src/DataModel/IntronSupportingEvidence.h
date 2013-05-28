@@ -33,6 +33,8 @@ int IntronSupportingEvidence_hasLinkedTranscripts(IntronSupportingEvidence *ise)
 Exon *IntronSupportingEvidence_findPreviousExon(IntronSupportingEvidence *ise, Transcript *transcript);
 Exon *IntronSupportingEvidence_findNextExon(IntronSupportingEvidence *ise, Transcript *transcript);
 
+#define IntronSupportingEvidence_isStored(ise, db) Storable_isStored(&((ise)->st), (db))
+
 ECOSTRING IntronSupportingEvidence_setScoreType(IntronSupportingEvidence *ise, char *scoreType);
 #define IntronSupportingEvidence_getScoreType(ise)  (ise)->scoreType
 
@@ -69,6 +71,10 @@ char *IntronSupportingEvidence_setHitName(IntronSupportingEvidence *ise, char *s
 #define IntronSupportingEvidence_free(ise) SeqFeature_free((ise))
 
 void IntronSupportingEvidence_freeImpl(IntronSupportingEvidence *ise);
+
+#define IntronSupportingEvidence_getSeqRegionStart(ise) SeqFeature_getSeqRegionStart((ise))
+#define IntronSupportingEvidence_getSeqRegionEnd(ise) SeqFeature_getSeqRegionEnd((ise))
+#define IntronSupportingEvidence_getSeqRegionStrand(ise) SeqFeature_getSeqRegionStrand((ise))
 
 #ifdef __INTRONSUPPORTINGEVIDENCE_MAIN__
   IntronSupportingEvidenceFuncs 

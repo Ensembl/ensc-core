@@ -2,6 +2,8 @@
 #include "PredictionExon.h"
 #undef __PREDICTIONEXON__MAIN__
 #include "StrUtil.h"
+#include "Mapper.h"
+#include "SeqUtil.h"
 
 #include <string.h>
 

@@ -40,6 +40,10 @@ Slice *SliceAdaptor_fetchByName(SliceAdaptor *sa, char *name);
 Vector *SliceAdaptor_fetchAll(SliceAdaptor *sa, char *csName, char *csVersion, int flags);
 Slice *SliceAdaptor_fetchByTopLevelLocation(SliceAdaptor *sa, char *location, int noWarnings, int noFuzz);
 
+int SliceAdaptor_isReference(SliceAdaptor *sa, IDType id);
+int SliceAdaptor_isTopLevel(SliceAdaptor *sa, IDType id);
+int SliceAdaptor_hasKaryotype(SliceAdaptor *sa, IDType id);
+
 
 
 

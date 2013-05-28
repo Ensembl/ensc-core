@@ -7,6 +7,7 @@
 #include "TranslationAdaptor.h"
 #include "IntronSupportingEvidenceAdaptor.h"
 #include "TranscriptSupportingFeatureAdaptor.h"
+#include "AttributeAdaptor.h"
 #include "DBEntryAdaptor.h"
 #include "StrUtil.h"
 #include "SeqUtil.h"
@@ -28,6 +29,8 @@ Transcript *Transcript_new() {
   Transcript_setCreated(transcript,0);
   Transcript_setVersion(transcript,-1);
   Transcript_setIsCurrent(transcript,1);
+// -1 is invalid is canonical value, when call getIsCanonical value will be retrieved from db
+  Transcript_setIsCanonical(transcript,-1);
 
   transcript->exons = Vector_new();
 
@@ -47,7 +50,100 @@ Transcript *Transcript_shallowCopy(Transcript *transcript) {
   return newTranscript;
 }
 
-Vector *Transcript_getAllDBLinks(Transcript *t) {
+/*
+=head2 is_canonical
+
+  Args [1]      : (optional) Boolean is_canonical
+
+  Example       : if ($transcript->is_canonical()) { ... }
+
+  Description : Returns true (non-zero) if the transcript is the
+                canonical transcript of its gene, false (0) if not. If the code
+                returns an undefined it is because its state is not currently
+                known. Internally the code will consult the database for this
+                value if it is unknown and the transcript has a dbID and an
+                attached adaptor
+
+  Return type   : Boolean
+
+  Status        : Stable
+
+=cut
+*/
+// New
+int Transcript_getIsCanonical(Transcript *transcript) {
+  //Shortcut call
+  if (transcript->isCanonical >= 0) {
+    return transcript->isCanonical;
+  }
+
+  if (Transcript_getDbID(transcript) && Transcript_getAdaptor(transcript) != NULL) {
+    
+    TranscriptAdaptor *ta = (TranscriptAdaptor *)Transcript_getAdaptor(transcript);
+    transcript->isCanonical = TranscriptAdaptor_isTranscriptCanonical(ta, transcript);
+  } else {
+    fprintf(stderr, "Called getIsCanonical when isCanonical is undefined and don't have an adaptor. Can't determine whether this is canonical - bye!\n");
+    exit(1);
+  }
+
+  return transcript->isCanonical;
+}
+
+/*
+=head2 get_all_Attributes
+
+  Arg [1]    : optional string $attrib_code
+               The code of the attribute type to retrieve values for.
+  Example    : ($rna_edits) = @{$transcript->get_all_Attributes('_rna_edit')};
+               @transc_attributes    = @{$transcript->get_all_Attributes()};
+  Description: Gets a list of Attributes of this transcript.
+               Optionally just get Attrubutes for given code.
+  Returntype : listref Bio::EnsEMBL::Attribute
+  Exceptions : warning if transcript does not have attached adaptor and
+               attempts lazy load.
+  Caller     : general
+  Status     : Stable
+
+=cut
+*/
+// New
+
+// NIY:
+// Because this can filter the results the vector that gets returned must be freeable - so for now
+// make a copy of the translation->attributes vector if returning unfiltered so behaviour is
+// consistent. Long term probably want reference count incremented
+Vector *Transcript_getAllAttributes(Transcript *transcript, char *attribCode) {
+  if (transcript->attributes == NULL) {
+    TranscriptAdaptor *ta = (TranscriptAdaptor *)Transcript_getAdaptor(transcript);
+    if (ta == NULL) { // No adaptor
+// Perl comments out the warning, I'll put it back for now, just in case
+      fprintf(stderr,"Warning: Cannot get attributes without an adaptor.\n");
+      return Vector_new();
+    }
+
+    AttributeAdaptor *ata = DBAdaptor_getAttributeAdaptor(ta->dba);
+    transcript->attributes = AttributeAdaptor_fetchAllByTranscript(ata, transcript, NULL);
+  }
+
+  if (attribCode != NULL) {
+    Vector *results = Vector_new();
+    int i;
+    for (i=0; i<Vector_getNumElement(transcript->attributes); i++) {
+      Attribute *attrib = Vector_getElementAt(transcript->attributes, i);
+      if (!strcasecmp(attrib->code, attribCode)) {
+        Vector_addElement(results, attrib);
+      }
+    }
+    return results;
+  } else {
+// See NIY note above for why I'm making a copy
+    return Vector_copy(transcript->attributes);
+  }
+}
+
+
+// Note this used to be called getAllDBLinks but it looks more like the current getAllDBEntries so call it that
+Vector *Transcript_getAllDBEntries(Transcript *t) {
   if (!t->dbLinks) {
     TranscriptAdaptor *ta = (TranscriptAdaptor *)Transcript_getAdaptor(t);
 

@@ -4,6 +4,7 @@
 #include "AssemblyMapperAdaptor.h"
 #include "CoordSystemAdaptor.h"
 #include "DBAdaptor.h"
+#include "StrUtil.h"
 /*
 =head1 DESCRIPTION
 
@@ -349,7 +350,7 @@ Vector * TopLevelAssemblyMapper_list(TopLevelAssemblyMapper *tlam, char *frmSeqR
 // NIY: Odd name always returned no matter if ask for name or ids??????
   Vector *resVec = Vector_new();
   char *tmpStr;
-  StrUtil_copyString(&tmpStr, frmSeqRegionName);
+  StrUtil_copyString(&tmpStr, frmSeqRegionName, 0);
 
   Vector_addElement(resVec, tmpStr);
 
@@ -445,16 +446,20 @@ void TopLevelAssemblyMapper_registerAllImpl(TopLevelAssemblyMapper *am) {
 
 MapperRangeSet *TopLevelAssemblyMapper_mapCoordinatesToAssemblyImpl(TopLevelAssemblyMapper *am, char *contigName, long start, long end, int strand) {
   Object_errorUnimplementedMethod(am, "TopLevelAssemblyMapper_mapCoordinatesToAssembly");
+  return NULL;
 }
 
 MapperRangeSet *TopLevelAssemblyMapper_fastToAssemblyImpl(TopLevelAssemblyMapper *am, char *contigName, long start, long end, int strand) {
   Object_errorUnimplementedMethod(am, "TopLevelAssemblyMapper_fastToAssembly");
+  return NULL;
 }
 
 MapperRangeSet *TopLevelAssemblyMapper_mapCoordinatesToRawContigImpl(TopLevelAssemblyMapper *am, char *chrName, long start, long end, int strand) {
   Object_errorUnimplementedMethod(am, "TopLevelAssemblyMapper_mapCoordinatesToRawContig");
+  return NULL;
 }
 
 Vector *TopLevelAssemblyMapper_listContigIdsImpl(TopLevelAssemblyMapper *am, char *chrName, long start, long end, int strand) {
   Object_errorUnimplementedMethod(am, "TopLevelAssemblyMapper_listContigIds");
+  return NULL;
 }

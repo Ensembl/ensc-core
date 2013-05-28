@@ -39,6 +39,9 @@ struct SequenceStruct {
 void Sequence_freePtrs(Sequence *seq);
 Sequence *Sequence_new();
 
+ECOSTRING Sequence_setName(Sequence *seq, char *name);
+char *Sequence_setSeq(Sequence *seq, char *seqstr);
+
 #ifdef __SEQUENCE_MAIN__
  SequenceFuncs sequenceFuncs;
 #else

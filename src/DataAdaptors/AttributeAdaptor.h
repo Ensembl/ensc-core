@@ -19,5 +19,13 @@ Vector *AttributeAdaptor_fetchAllByTranslation(AttributeAdaptor *ata, Translatio
 Vector *AttributeAdaptor_doFetchAllByTypeAndTableAndID(AttributeAdaptor *ata, char *type, char *table, IDType objectId, char *code);
 Vector *AttributeAdaptor_objectsFromStatementHandle(AttributeAdaptor *ata, StatementHandle *sth);
 
+void AttributeAdaptor_storeOnGeneId(AttributeAdaptor *ata, IDType id, Vector *attributes);
+void AttributeAdaptor_storeOnTranscriptId(AttributeAdaptor *ata, IDType id, Vector *attributes);
+void AttributeAdaptor_storeOnTranslationId(AttributeAdaptor *ata, IDType id, Vector *attributes);
+void AttributeAdaptor_storeOnSlice(AttributeAdaptor *ata, Slice *slice, Vector *attributes);
+
+void AttributeAdaptor_doStoreAllByTypeAndTableAndID(AttributeAdaptor *ata, char *type, char *table, IDType objectId, Vector *attributes);
+IDType AttributeAdaptor_storeType(AttributeAdaptor *ata, Attribute *attrib);
+
 
 #endif

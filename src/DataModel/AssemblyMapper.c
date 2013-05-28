@@ -380,6 +380,7 @@ Vector *AssemblyMapper_listIdsImpl(AssemblyMapper *am, char *frmSeqRegionName, l
 
     fprintf(stderr, "Coordinate system %s %s is neither the assembled nor the component coordinate system of this AssemblyMapper\n",
                     CoordSystem_getName(frmCs), CoordSystem_getVersion(frmCs) );
+    exit(1);
 
   }
 }

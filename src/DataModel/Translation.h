@@ -22,6 +22,7 @@ struct TranslationStruct {
   Storable st; 
   StableIdInfo si;
   Vector *attributes;
+  Vector *dbLinks;
 };
 #undef FUNCSTRUCTTYPE
 

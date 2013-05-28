@@ -12,6 +12,7 @@
 #include "StrUtil.h"
 #include "BaseAlignFeature.h"
 #include "CoordSystem.h"
+#include "SeqUtil.h"
 
 Exon *Exon_new() {
   Exon *exon;

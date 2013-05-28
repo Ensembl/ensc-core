@@ -47,8 +47,10 @@ void Vector_sort(Vector *v, SortCompFunc sortFunc);
 void *Vector_getLastElement(Vector *v);
 void Vector_setNumElement(Vector *v, int nElem);
 void *Vector_removeElementAt(Vector *v, int ind);
+void Vector_removeAll(Vector *v);
 Vector *Vector_copy(Vector *v);
 void **Vector_toArray(Vector *v);
+void *Vector_insertElementAt(Vector *v, int ind, void *elem);
 
 
 #ifdef __VECTOR_MAIN__

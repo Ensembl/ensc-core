@@ -11,7 +11,7 @@
 #include "Slice.h"
 #include "AssemblyMapper.h"
 
-typedef char * NameTableType[][2];
+//typedef char * NameTableType[][2];
 
 typedef int      (*BaseFeatureAdaptor_StoreFunc)(BaseFeatureAdaptor *bfa, Vector *features);
 typedef NameTableType *(*BaseFeatureAdaptor_GetTablesFunc)(void);
@@ -76,6 +76,7 @@ Vector *BaseFeatureAdaptor_sliceFetch(BaseFeatureAdaptor *bfa, Slice *slice, cha
 Vector *BaseFeatureAdaptor_remap(BaseFeatureAdaptor *bfa, Vector *features, AssemblyMapper *mapper, Slice *slice);
 char *BaseFeatureAdaptor_logicNameToConstraint(BaseFeatureAdaptor *bfa, char *constraint, char *logicName);
 Vector *BaseFeatureAdaptor_listSeqRegionIds(BaseFeatureAdaptor *bfa, char *table);
+IDType BaseFeatureAdaptor_preStore(BaseFeatureAdaptor *bfa, SeqFeature *feature);
 
 
 /*

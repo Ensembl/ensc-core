@@ -327,15 +327,18 @@ IDType ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
 		       "seq_region_end, seq_region_strand, phase, "
 		       "end_phase, is_current, is_constitutive");
 
+  int version;
   if (Exon_getStableId(exon) != NULL) {
 /*
     my $created = $self->db->dbc->from_seconds_to_date($exon->created_date());
     my $modified = $self->db->dbc->from_seconds_to_date($exon->modified_date());
 */
-    strcat(qStr,", stable_id, version, created_date, modified_date"
+    version = Exon_getVersion(exon) <= 0 ? Exon_getVersion(exon) : 1;
+    strcat(qStr,", stable_id, version, created_date, modified_date");
      
   }
   sprintf(qStr, "%s) VALUES ("IDFMTSTR", %ld, %ld, %d, %d, %d, %d, %d",
+          qStr,
           (IDType)seqRegionId,
           Exon_getSeqRegionStart(exon),
           Exon_getSeqRegionEnd(exon),
@@ -355,7 +358,7 @@ IDType ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
     strcat(qStr,")");
   }
 
-  sth = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
+  StatementHandle *sth = ea->prepare((BaseAdaptor *)ea,qStr,strlen(qStr));
 
   IDType exonId = 0;
 
@@ -375,7 +378,7 @@ IDType ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
   // Finally, update the dbID and adaptor of the exon (and any component exons)
   // to point to the new database
   //
-  Exon_setAdaptor(exon, ea);
+  Exon_setAdaptor(exon, (BaseAdaptor *)ea);
   Exon_setDbID(exon, exonId);
 
   return exonId;
@@ -611,7 +614,8 @@ Vector *ExonAdaptor_objectsFromStatementHandle(ExonAdaptor *ea,
 // Note FEATURE label is here
 //FEATURE: while ($sth->fetch())
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+// Extra parentheses to please mac compiler
+  while ((row = sth->fetchRow(sth))) {
     IDType exonId       = row->getLongLongAt(row, 0);
     IDType seqRegionId  = row->getLongLongAt(row, 1);
     long seqRegionStart = row->getLongAt(row, 2);
@@ -676,9 +680,9 @@ Vector *ExonAdaptor_objectsFromStatementHandle(ExonAdaptor *ea,
       // Slightly suspicious about need for this if statement so left in perl statements for now
       if (destSlice != NULL &&
           assMapper->objectType == CLASS_CHAINEDASSEMBLYMAPPER) {
-        MapperRangeSet *mrs = ChainedAssemblyMapper_map(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, 1, destSlice);
+        mrs = ChainedAssemblyMapper_map(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, 1, destSlice);
       } else {
-        MapperRangeSet *mrs = AssemblyMapper_fastMap(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, NULL);
+        mrs = AssemblyMapper_fastMap(assMapper, srName, seqRegionStart, seqRegionEnd, seqRegionStrand, srCs, NULL);
       }
 
       // skip features that map to gaps or coord system boundaries
@@ -826,7 +830,7 @@ Vector *ExonAdaptor_objectsFromStatementHandle(ExonAdaptor *ea,
     Exon_setPhase          (exon, phase);
     Exon_setEndPhase       (exon, endPhase);
     Exon_setIsCurrent      (exon, isCurrent);
-    Exon_setIsConstituitive(exon, isCurrent);
+    Exon_setIsConstitutive (exon, isCurrent);
  
     Vector_addElement(exons, exon);
   }

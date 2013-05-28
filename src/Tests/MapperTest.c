@@ -245,7 +245,7 @@ int testTransform(Mapper *mapper, int srcId, int srcStart, int srcEnd, int srcSt
   if (diff) {
     printf("DIFFERENCE\n");
   }
-  return;
+  return 1;
 }
 
 

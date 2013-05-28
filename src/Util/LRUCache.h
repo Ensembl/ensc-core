@@ -33,6 +33,7 @@ void LRUCache_empty(LRUCache *cache);
 void *LRUCache_get(LRUCache *cache, char *key);
 int LRUCache_put(LRUCache *cache, char *key, void *data, LRUCache_FreeFunc freeFunc, int size);
 void LRUCache_remove(LRUCache *cache, char *key);
+int LRUCache_getSize(LRUCache *cache, char *key);
 
 void LRUCacheElement_free(LRUCacheElement *ce);
 LRUCacheElement *LRUCacheElement_new(char *key, void *data, LRUCache_FreeFunc freeFunc, int size);

@@ -44,6 +44,7 @@ NOTE: In perl this adaptor is implemented using the horrid AUTOLOAD lazyness. Ob
 #include "Slice.h"
 #include "BaseAdaptor.h"
 #include "MysqlUtil.h"
+#include "Storable.h"
 
 #include "StatementHandle.h"
 #include "ResultRow.h"
@@ -102,28 +103,28 @@ sub AUTOLOAD {
 
 
 // Here I explicitly implement the various store functions
-Vector *AttributeAdaptor_storeOnGeneId(AttributeAdaptor *ata, IDType id, Vector *attributes) {
+void AttributeAdaptor_storeOnGeneId(AttributeAdaptor *ata, IDType id, Vector *attributes) {
   char *type  = "gene";
   char *table = "gene";
 
   return AttributeAdaptor_doStoreAllByTypeAndTableAndID(ata, type, table, id, attributes);
 }
 
-Vector *AttributeAdaptor_storeOnTranscriptId(AttributeAdaptor *ata, IDType id, Vector *attributes) {
+void AttributeAdaptor_storeOnTranscriptId(AttributeAdaptor *ata, IDType id, Vector *attributes) {
   char *type  = "transcript";
   char *table = "transcript";
 
   return AttributeAdaptor_doStoreAllByTypeAndTableAndID(ata, type, table, id, attributes);
 }
 
-Vector *AttributeAdaptor_storeOnTranslationId(AttributeAdaptor *ata, IDType id, Vector *attributes) {
+void AttributeAdaptor_storeOnTranslationId(AttributeAdaptor *ata, IDType id, Vector *attributes) {
   char *type  = "translation";
   char *table = "translation";
 
   return AttributeAdaptor_doStoreAllByTypeAndTableAndID(ata, type, table, id, attributes);
 }
 
-Vector *AttributeAdaptor_storeOnSlice(AttributeAdaptor *ata, Slice *slice, Vector *attributes) {
+void AttributeAdaptor_storeOnSlice(AttributeAdaptor *ata, Slice *slice, Vector *attributes) {
   if (slice == NULL) {
     fprintf(stderr,"Error: NULL Slice in AttributeAdaptor_storeOnSlice\n");
     exit(1);
@@ -140,7 +141,7 @@ Vector *AttributeAdaptor_storeOnSlice(AttributeAdaptor *ata, Slice *slice, Vecto
     exit(1);
   }
 
-  return AttributeAdaptor_doStoreAllByTypeAndTableAndID(ata, type, table, id, attributes);
+  AttributeAdaptor_doStoreAllByTypeAndTableAndID(ata, type, table, id, attributes);
 }
 
 /* MiscFeature NIY
@@ -154,9 +155,11 @@ Vector *AttributeAdaptor_storeOnMiscFeature(AttributeAdaptor *ata, MiscFeature *
   char *table = "misc";
   IDType id   = MiscFeature_getDbID(miscFeature);
 
-  return AttributeAdaptor_doFetchAllByTypeAndTableAndID(ata, type, table, id, code);
+  return AttributeAdaptor_doSotrAllByTypeAndTableAndID(ata, type, table, id, code);
 }
 */
+
+
 // Removed the circular stuff 
 void AttributeAdaptor_doStoreAllByTypeAndTableAndID(AttributeAdaptor *ata, char *type, char *table, IDType objectId, Vector *attributes) {
   char qStr[1024];
@@ -452,7 +455,8 @@ Vector *AttributeAdaptor_objectsFromStatementHandle(AttributeAdaptor *ata, State
   Vector *results = Vector_new();
 
   ResultRow *row;
-  while (row = sth->fetchRow(sth)) {
+// Note extra parentheses are to keep mac compiler happy
+  while ((row = sth->fetchRow(sth))) {
     char *code  = row->getStringAt(row, 0);
     char *name  = row->getStringAt(row, 1);
     char *desc  = row->getStringAt(row, 2);

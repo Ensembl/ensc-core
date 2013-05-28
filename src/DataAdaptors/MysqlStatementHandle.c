@@ -56,7 +56,7 @@ void MysqlStatementHandle_execute(va_alist) {
 /* bits of this came from the process_query routine in the MYSQL
  * book.
  */
-int MysqlStatementHandle_execute(StatementHandle *sth, ...) {
+unsigned long long MysqlStatementHandle_execute(StatementHandle *sth, ...) {
   va_list args;
   char statement[655500];
   int qlen;

@@ -36,6 +36,7 @@ void BaseAssemblyMapper_freeImpl(BaseAssemblyMapper *am) {
 MapperRangeSet *BaseAssemblyMapper_mapImpl(BaseAssemblyMapper *am, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, 
                                            CoordSystem *frmCs, int fakeFastMapFlag, Slice *toSlice) {
   Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_map");
+  return NULL;
 }
 
 void BaseAssemblyMapper_flushImpl(BaseAssemblyMapper *am) {
@@ -45,30 +46,37 @@ void BaseAssemblyMapper_flushImpl(BaseAssemblyMapper *am) {
 MapperRangeSet *BaseAssemblyMapper_fastMapImpl(BaseAssemblyMapper *am, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, 
                                                CoordSystem *frmCs, Slice *toSlice) {
   Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_fastMap");
+  return NULL;
 }
 
 Vector *BaseAssemblyMapper_listIdsImpl(BaseAssemblyMapper *am, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
   Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_listIds");
+  return NULL;
 }
 
 Vector *BaseAssemblyMapper_listSeqRegionsImpl(BaseAssemblyMapper *am, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
   Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_listSeqRegions");
+  return NULL;
 }
 
 MapperRangeSet *BaseAssemblyMapper_mapCoordinatesToAssemblyImpl(BaseAssemblyMapper *am, char *contigName, long start, long end, int strand) {
   Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_mapCoordinatesToAssembly");
+  return NULL;
 }
 
 MapperRangeSet *BaseAssemblyMapper_fastToAssemblyImpl(BaseAssemblyMapper *am, char *contigName, long start, long end, int strand) {
   Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_fastToAssembly");
+  return NULL;
 }
 
 MapperRangeSet *BaseAssemblyMapper_mapCoordinatesToRawContigImpl(BaseAssemblyMapper *am, char *chrName, long start, long end, int strand) {
   Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_mapCoordinatesToRawContig");
+  return NULL;
 }
 
 Vector *BaseAssemblyMapper_listContigIdsImpl(BaseAssemblyMapper *am, char *chrName, long start, long end, int strand) {
   Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_listContigIds");
+  return NULL;
 }
 
 /* Not implementing deprecated methods

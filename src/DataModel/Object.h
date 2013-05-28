@@ -43,6 +43,7 @@ void Object_freeImpl(Object *obj);
 
 #define Object_getRefCount(obj) (obj)->referenceCount
 
+// Comment out to reduce warnings void Object_errorUnimplementedMethod(Object *obj, char *methodName);
 
 #define Object_free(obj) \
       ((obj)->funcs->free == NULL ? \

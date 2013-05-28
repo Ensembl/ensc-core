@@ -36,6 +36,8 @@ struct DBEntryStruct {
 
 DBEntry *DBEntry_new(void);
 
+#define DBEntry_isStored(d, db) Storable_isStored(&((d)->st), (db))
+
 #define DBEntry_setDbID(d,dbID) Storable_setDbID(&((d)->st),dbID)
 #define DBEntry_getDbID(d) Storable_getDbID(&((d)->st))
 

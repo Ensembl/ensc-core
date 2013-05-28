@@ -2,6 +2,8 @@
 #include "Sequence.h"
 #undef __SEQUENCE_MAIN__
 
+#include "StrUtil.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

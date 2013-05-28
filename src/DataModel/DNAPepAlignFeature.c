@@ -2,6 +2,8 @@
 #include "DNAPepAlignFeature.h"
 #undef __DNAPEPALIGNFEATURE_MAIN__
 
+#include <string.h>
+
 DNAPepAlignFeature *DNAPepAlignFeature_new() {
   DNAPepAlignFeature *dpaf;
 
