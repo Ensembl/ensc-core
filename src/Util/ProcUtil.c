@@ -1,4 +1,8 @@
 #include "ProcUtil.h"
+#include <stdio.h>
+#include "FileUtil.h"
+#include "StrUtil.h"
+#include <stdlib.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -14,6 +18,7 @@
 #ifdef __APPLE__
 #define UNW_LOCAL_ONLY
 #include <libunwind.h>
+#include <mach-o/dyld.h>
 #endif
 
 #ifndef dos
@@ -111,6 +116,8 @@ void ProcUtil_mallInfo() {
 #endif
 }
 
+int ProcUtil_getFileAndLine(char *prog, unw_word_t addr, char *file, size_t flen, int *line);
+
 // Adapted from code from http://blog.bigpixel.ro/2010/09/stack-unwinding-stack-trace-with-gcc/
 // Needs libunwind
 void ProcUtil_showBacktrace(char *prog) {
@@ -131,16 +138,16 @@ void ProcUtil_showBacktrace(char *prog) {
     unw_get_reg(&cursor, UNW_REG_IP, &ip);
     unw_get_reg(&cursor, UNW_REG_SP, &sp);
 
-#if defined(linux)
+//#if defined(linux)
     if (prog == NULL) {
       fprintf(stderr, "%s ip = %lx, sp = %lx\n", name, (long)ip, (long)sp);
     } else {
-      ProcUtil_getFileAndLine(prog, (long)ip, file, 2048, &line);
+      ProcUtil_getFileAndLine(prog, ip, file, 2048, &line);
       fprintf(stderr, "%s in file %s line %d\n", name, file, line);
     }
-# else
-    fprintf(stderr, "%s ip = %lx, sp = %lx\n", name, (long)ip, (long)sp);
-#endif
+//# else
+//    fprintf(stderr, "%s ip = %lx, sp = %lx\n", name, (long)ip, (long)sp);
+//#endif
   }
 #else
   fprintf(stderr, "backtrace not supported on this platform\n");
@@ -191,9 +198,16 @@ int ProcUtil_getFileAndLine(char *prog, unw_word_t addr, char *file, size_t flen
 #elif defined(__APPLE__)
 /// NOT WORKING YET. Need extra magic to get all the addresses I need
   //sprintf (buf, "/usr/bin/atos -p %s", prog, addr);
-  sprintf (buf, "/usr/bin/atos -p GeneWriteTest -l %lx", prog,addr);
-  fprintf(stderr,"Command: %s\n",buf);
+  void *mach_header = _dyld_get_image_header(0);
+  char exeName[1024];
+  FileUtil_stripPath(prog,exeName);
+  sprintf (buf, "/usr/bin/atos -p %s -l %p %p", exeName,mach_header,addr);
+//  fprintf(stderr,"Command: %s\n",buf);
   FILE* f = popen (buf, "r");
+
+//Examples:
+//AttributeAdaptor_storeOnGeneId (in GeneWriteTest) (AttributeAdaptor.c:110)
+//GeneAdaptor_store (in GeneWriteTest) + 2060
 
   if (f == NULL) {
     perror (buf);
@@ -206,27 +220,27 @@ int ProcUtil_getFileAndLine(char *prog, unw_word_t addr, char *file, size_t flen
 
   // get file and line
   fgets (buf, 2048, f);
-
-  if (buf[0] != '?') {
-    int l;
-    char *p = buf;
-
-    // file name is until ':'
-    while (*p != ':') {
-      p++;
-    }
-
-    *p++ = 0;
-    // after file name follows line number
-    strcpy (file , buf);
-    sscanf (p,"%d", line);
-  } else {
-    strcpy (file,"unknown");
-    *line = 0;
-  }
 */
+
   while (fgets(buf,2048, f)) {
-    fprintf(stderr,"%s\n",buf);
+    //fprintf(stderr,"%s\n",buf);
+    int nTok;
+    char **tokens;
+    StrUtil_tokenize(&tokens, &nTok, buf);
+    char *colonPos = NULL;
+    if ((colonPos = strchr(tokens[nTok-1], ':')) != NULL) {
+      int len = colonPos-tokens[nTok-1]-1;
+      strncpy(file, &(tokens[nTok-1][1]), len);
+      file[len] = '\0';
+      sscanf(colonPos+1,"%d",line);
+    } else {
+      strcpy (file,"unknown");
+      *line = 0;
+    }
+    int i;
+    for (i=0;i<nTok;i++) {
+      free(tokens[i]);
+    }
   }
 
   pclose(f); 
