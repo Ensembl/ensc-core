@@ -128,24 +128,44 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
     for (i=0; i<Vector_getNumElement(intronBamFiles); i++) {
       // Perl returned a hash but only seemed to use the FILE element
       char *intronFile = Vector_getElementAt(intronBamFiles, i);
+      char region[2048];
+      int ref;
+      int begRange;
+      int endRange;
     
-// NIY IMPLEMENT BAM STUFF HERE
-      my $sam = Bio::DB::Sam->new(   -bam => $intron_files->{FILE},
-                                     -autoindex => 1,
-                                     -expand_flags => 1,
-                                 );
+#ifdef _PBGZF_USE
+      bam_set_num_threads_per(5);
+#endif
+      samfile_t *sam = samopen(intronFile, "rb", 0);
       if (sam == NULL) {
-        fprintf(stderr, "Bam file " . $intron_files->{FILE} . "  not found \n");
+        fprintf(stderr, "Bam file %s not found\n", intronFile);
+        exit(1);
       }
+
+      bam_index_t *idx;
+      idx = bam_index_load(inFName); // load BAM index
+      if (idx == 0) {
+        fprintf(stderr, "BAM index file is not available.\n");
+        return 1;
+      }
+
       long long count = 0;
-
-      my $segment = $sam->segment($slice->seq_region_name,$slice->start,$slice->end);
-
-      fprintf(stderr,"Bam file segment not found for slice " .  $slice->name . "\n")
-        unless $segment;
+      sprintf(region,"%s:%ld-%ld", Slice_getSeqRegionName(slice),
+                                   Slice_getSeqRegionStart(slice),
+                                   Slice_getSeqRegionEnd(slice));
+      bam_parse_region(sam->header, region, &ref, &begRange, &endRange);
+      if (ref < 0) {
+        fprintf(stderr, "Invalid region %s %ld %ld\n", Slice_getSeqRegionName(slice),
+                                                     Slice_getSeqRegionStart(slice),
+                                                     Slice_getSeqRegionEnd(slice));
+        exit(1);
+      }
 
       // need to seamlessly merge here with the dna2simplefeatures code
-      RefineSolexaGenes_bamToIntronFeatures(rsg,  $self->bam_2_intron_features($segment,$intron_files);
+      RefineSolexaGenes_bamToIntronFeatures(rsg, intronFile, sam, idx, ref, begRange, endRange);
+
+      bam_index_destroy(idx);
+      samclose(sam);
     }
   } else {
     // pre fetch all the intron features
@@ -259,13 +279,14 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
 
         ($introns,$offset) = $self->fetch_intron_features($exon->seq_region_start,$exon->seq_region_end,$offset);
 
-        my @left_c_introns;
-        my @right_c_introns;
-        my @left_nc_introns;
-        my @right_nc_introns;
-        my @filtered_introns;
-        my $intron_overlap;
-        my @retained_introns;
+        Vector *leftConsIntrons = Vector_new();
+        Vector *rightConsIntrons = Vector_new();
+        Vector *leftNonConsIntrons = Vector_new();
+        Vector *rightNonConsIntrons = Vector_new();
+        Vector *filteredIntrons = Vector_new();
+        Vector *retainedIntrons = Vector_new();
+
+        int intronOverlap = 0;
 
 //      INTRON: 
         int k;
@@ -325,46 +346,86 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
         // Restrict internal exons splice sites to most common
         // that way our alt splices will all share the same boundaries
         // but have different combinations of exons
-        if ( $self->STRICT_INTERNAL_SPLICE_SITES && 
+        if ( RefineSolexaGenes_strictInternalSpliceSites(rsg) || 
              // either we apply it equeally to all exons
-             ( $self->STRICT_INTERNAL_END_EXON_SPLICE_SITES or
-               // only apply to internal exons, leave out end exons
-               ( !$self->STRICT_INTERNAL_END_EXON_SPLICE_SITES && 
-                 ( scalar(@left_c_introns)  + scalar(@left_nc_introns) ) > 0 &&
-                 ( scalar(@right_c_introns) + scalar(@right_nc_introns)) > 0 ))){
+             RefineSolexaGenes_strictInternalEndExonSpliceSites(rsg) ||
+             // only apply to internal exons, leave out end exons
+             ( !RefineSolexaGenes_strictInternalEndExonSpliceSites(rsg) &&
+               ( Vector_getNumElements(leftConsIntrons)  + Vector_getNumElements(leftNonConsIntrons) ) > 0 &&
+               ( Vector_getNumElements(rightConsIntrons) + Vector_getNumElements(rightNonConsIntrons)) > 0 )) {
           // pick best left splice
-          my $best_left_splice;
-          my $best_left_score = 0;
-          my @all_left_introns =  @left_c_introns;
-          push @all_left_introns, @left_nc_introns;
+          long bestLeftSplice;
+          double bestLeftScore = 0;
 
-          foreach my $intron ( @all_left_introns ) {
-            if ( $best_left_score < $intron->score ) {
-              $best_left_score = $intron->score;
-              $best_left_splice = $intron->end;
+          int k;
+          for (k=0; k<Vector_getNumElements(leftConsIntrons); k++) {
+            DNAAlignFeature *intron = Vector_getElementAt(leftConsIntrons, k);
+
+            if (bestLeftScore < DNAAlignFeature_getScore(intron)) {
+              bestLeftScore = DNAAlignFeature_getScore(intron);
+              bestLeftSplice = DNAAlignFeature_getEnd(intron);
+            }
+          }
+          for (k=0; k<Vector_getNumElements(leftNonConsIntrons); k++) {
+            DNAAlignFeature *intron = Vector_getElementAt(leftNonConsIntrons, k);
+
+            if (bestLeftScore < DNAAlignFeature_getScore(intron)) {
+              bestLeftScore = DNAAlignFeature_getScore(intron);
+              bestLeftSplice = DNAAlignFeature_getEnd(intron);
             }
           }
           
           // pick best right  splice
-          my $best_right_splice;
-          my $best_right_score = 0;
-          my @all_right_introns =  @right_c_introns;
-          push @all_right_introns, @right_nc_introns;
-          foreach my $intron ( @all_right_introns ) {
-            if ( $best_right_score < $intron->score ) {
-              $best_right_score = $intron->score;
-              $best_right_splice = $intron->start;
+          long bestRightSplice;
+          double bestRightScore = 0;
+
+          for (k=0; k<Vector_getNumElements(rightConsIntrons); k++) {
+            DNAAlignFeature *intron = Vector_getElementAt(rightConsIntrons, k);
+
+            if (bestRightScore < DNAAlignFeature_getScore(intron)) {
+              bestRightScore = DNAAlignFeature_getScore(intron);
+              bestRightSplice = DNAAlignFeature_getStart(intron);
             }
           }
-          // filter out introns that pick other splice sites
-          foreach my $intron ( @all_left_introns ) {
-            push @filtered_introns, $intron if $intron->end == $best_left_splice;
+          for (k=0; k<Vector_getNumElements(rightNonConsIntrons); k++) {
+            DNAAlignFeature *intron = Vector_getElementAt(rightNonConsIntrons, k);
+
+            if (bestRightScore < DNAAlignFeature_getScore(intron)) {
+              bestRightScore = DNAAlignFeature_getScore(intron);
+              bestRightSplice = DNAAlignFeature_getStart(intron);
+            }
           }
 
-          foreach my $intron ( @all_right_introns ) {
-            push @filtered_introns, $intron if $intron->start == $best_right_splice;
+          // filter out introns that pick other splice sites
+          for (k=0; k<Vector_getNumElements(leftConsIntrons); k++) {
+            DNAAlignFeature *intron = Vector_getElementAt(leftConsIntrons, k);
+
+            if (DNAAlignFeature_getEnd(intron) == bestLeftSplice) {
+              Vector_addElement(filteredIntrons, intron);
+            }
           }
-          
+          for (k=0; k<Vector_getNumElements(leftNonConsIntrons); k++) {
+            DNAAlignFeature *intron = Vector_getElementAt(leftNonConsIntrons, k);
+
+            if (DNAAlignFeature_getEnd(intron) == bestLeftSplice) {
+              Vector_addElement(filteredIntrons, intron);
+            }
+          }
+
+          for (k=0; k<Vector_getNumElements(rightConsIntrons); k++) {
+            DNAAlignFeature *intron = Vector_getElementAt(rightConsIntrons, k);
+
+            if (DNAAlignFeature_getStart(intron) == bestRightSplice) {
+              Vector_addElement(filteredIntrons, intron);
+            }
+          }
+          for (k=0; k<Vector_getNumElements(rightNonConsIntrons); k++) {
+            DNAAlignFeature *intron = Vector_getElementAt(rightNonConsIntrons, k);
+
+            if (DNAAlignFeature_getStart(intron) == bestRightSplice) {
+              Vector_addElement(filteredIntrons, intron);
+            }
+          }
         } else {
           
           // add non consensus introns only where there are no consensus introns
@@ -534,7 +595,9 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
         next GENE if $paths && $paths eq 'Give up';
         $strict++;
       }  
+
       print STDERR "STRAND $strand BEFORE COLLAPSING  PATHS  = " . scalar( keys %$paths ) . "\n";
+
       // lets collapse redundant paths
       foreach my $path ( sort keys %$paths ) {
         //  print "PATHS $path\n";
@@ -552,6 +615,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
       }
       
       print STDERR "AFTER COLLAPSING PATHS  = " . scalar( keys %$paths ) . "\n";
+
       push @models, @{$self->make_models($paths,$strand, \@exons,$gene,\%intron_hash )};
       print STDERR "Now have " . scalar ( @models ) ." models \n";
     }
@@ -730,8 +794,12 @@ Vector *RefineSolexaGenes_reclusterModels(RefineSolexaGenes *rsg, Vector *cluste
           continue;
         }
 
-        my @best_exons =  sort { $a->start <=> $b->start } @{$best->get_all_Transcripts->[0]->get_all_Exons};
-        my @other_exons = sort { $a->start <=> $b->start } @{$gene->get_all_Transcripts->[0]->get_all_Exons};
+        Transcript *bestTrans = Gene_getTranscriptAt(best, 0);
+        Vector *bestExons = Vector_sort(Vector_copy(Transcript_getAllExons(bestTrans)));
+
+        Transcript *geneTrans = Gene_getTranscriptAt(gene, 0);
+        Vector *geneExons = Vector_sort(Vector_copy(Transcript_getAllExons(geneTrans)));
+
         // exon overlap with a best model
 
       //BESTEXON: 
@@ -1688,7 +1756,7 @@ Transcript *RefineSolexaGenes_modifyTranscript(RefineSolexaGenes *rsg, Transcrip
   //# calculate_exon_phases($t,$start_phase);
 
   unless (  $tran->translation->seq eq $t->translation->seq ) {
-    $self->throw("Translations do not match: Before " . $tran->translation->seq ."\nAfter  " .           $t->translation->seq ."\n");
+    fprintf(stderr, "Translations do not match: Before %s\nAfter  %s\n", Transcript_translate(tran), Transcript_translate(t));
   }
   return t;
 }
@@ -1721,10 +1789,12 @@ void RefineSolexaGenes_writeOutput(RefineSolexaGenes *rsg) {
     }
 
     // filter single exon genes that may have been made through UTR trimming
-    my @exons = @{$gene->get_all_Exons};
-    if ( scalar(@exons == 1 )) {
-      if ( $self->SINGLE_EXON_MODEL ) {
-        next GENE unless $exons[0]->length >= $self->MIN_SINGLE_EXON;
+    if (Gene_getExonCount(gene) == 1) {
+      if (RefineSolexaGenes_singleExonModel) {
+        Exon *exon = Transcript_getExonAt(Gene_getTranscriptAt(gene, 0), 0);
+        if (Exon_getLength(exon) < RefineSolexaGenes_minSingleExon) {
+          continue; // next GENE
+        }
         Gene_setBiotype(gene, RefineSolexaGenes_getSingleExonModelType(rsg));
       } else {
         // dont store it
@@ -2044,30 +2114,50 @@ Vector *RefineSolexaGenes_modelCluster(RefineSolexaGenes *rsg, Vector *models, i
 // lets us merge exons with tiny  introns between them  unless they contain an intron
 
 Vector *RefineSolexaGenes_mergeExons(RefineSolexaGenes *rsg, Gene *gene, int strand) {
+  Vector *exons = Vector_new();
 
-  my @exons;
-  next unless $gene->get_all_Transcripts->[0];
-  foreach my $exon ( @{$gene->get_all_Transcripts->[0]->get_all_Exons} ) {
-    push @exons, clone_Exon($exon);
+  if (Gene_getNumTranscript(gene) < 1) {
+// Perl was 'next' but that doesn't really make sense, should either be return or exit. I'll go with a warn and then return
+    fprintf(stderr, "Warning: No transcript in gene\n");
+    return exons;
   }
 
-  my $ec = scalar(@exons) ;
-  my $extra_exons = $self->extra_exons;
+  Transcript *geneTrans = Gene_getTranscriptAt(gene, 0); 
+
+  int i;
+  for (i=0; i<Transcript_getExonCount(geneTrans); i++) {
+    Vector_addElement(exons, cloneExon(exon));
+  }
+
+  int ec = Vector_getNumElement(exons);
+
+  StringHash *extraExons = RefineSolexaGenes_getExtraExons(rsg);
 
   // the extra exon is a list of start end coords of the spliced intron sections
   // ie: end:start:end:start where the 1st and last coords are anchors to tie it 
   // into our rough model both must match before we can try and add any potentialy 
   // novel exons in
-  my @sortedexons =  sort { $a->start <=> $b->start } @exons;
+  Vector *sortedExons = Vector_copy(exons);
+  Vector_sort(sortedExons, SeqFeature_posSortFunc);
+
+  
   foreach my $key ( keys %$extra_exons ) {
-    my @coords = split(/:/,$key);
-    my $start_anchor = shift(@coords);
-    my $end_anchor = pop(@coords);
-    #print "START AND END $start_anchor  $end_anchor \n";
-    if ($start_anchor > $end_anchor) {
+    ExtraExonData *eed = StringHash_getValue(extraExons, key);
+
+//    my @coords = split(/:/,$key);
+
+//    long startAnchor = shift(@coords);
+//    long endAnchor = pop(@coords);
+    long startAnchor = eed->coords[0];
+    long endAnchor   = eed->coords[eed->nCoord-1];
+
+    //#print "START AND END $start_anchor  $end_anchor \n";
+
+    if (startAnchor > endAnchor) {
       fprintf(stderr, "START AND END %d %d\n", startAnchor,  endAnchor);
       exit(1);
     }
+
     //# do the anchors lie within the model?
     //# SMJS Did some optimisation here
 //#   foreach my $exon ( @exons ) {
@@ -2081,11 +2171,11 @@ Vector *RefineSolexaGenes_mergeExons(RefineSolexaGenes *rsg, Gene *gene, int str
 //#      }
 //#    }
 
-    if ($self->bin_search_for_overlap(\@sortedexons, $start_anchor)) {
-      $start_anchor = -1;
+    if (RefineSolexaGenes_binSearchForOverlap(rsg, sortedExons, startAnchor)) {
+      startAnchor = -1;
     }
-    if ($self->bin_search_for_overlap(\@sortedexons, $end_anchor)) {
-      $end_anchor = -1;
+    if (RefineSolexaGenes_binSearchForOverlap(rsg, sortedExons, endAnchor)) {
+      endAnchor = -1;
     }
        
 //#    my $i;
@@ -2110,17 +2200,26 @@ Vector *RefineSolexaGenes_mergeExons(RefineSolexaGenes *rsg, Gene *gene, int str
 //#        last;
 //#      }
 //#    }
-    if ( $start_anchor == -1 && $end_anchor == -1 ) {
+    if ( startAnchor == -1 && endAnchor == -1 ) {
       // now to make new the exon(s)
-      for ( my $i = 0 ; $i <= $#coords ; $i += 2 ) {
-        my $left = $coords[$i];
-        my $right = $coords[$i+1];
-        my $extra = $self->make_exon(undef,$left,$right,$extra_exons->{$key},$key );
+      for (j=0 ; j<= eed->nCoord; j+=2) {
+        long left  = eed->coords[j];
+        long right = eed->coords[j+1];
+
+        Exon *extra = RefineSolexaGenes_makeExon(NULL, left, right, eed->score, key);
+
+        //my $extra = $self->make_exon(undef,$left,$right,$extra_exons->{$key},$key );
+
+// Hack hack hack
         $extra->{"_extra"} = 1;
-        push @exons,$extra;
+
+        Vector_addElement(exons, extra);
       }
     }
   }
+
+// NIY: Free sortedExons
+
 //  print "After extras add have " . scalar(@exons) . "\n";
   
 //  print "Merging exons - done extras\n";
@@ -2154,31 +2253,42 @@ Vector *RefineSolexaGenes_mergeExons(RefineSolexaGenes *rsg, Gene *gene, int str
 //#    }
 //#  }
 
-  @exons =  sort { $a->start <=> $b->start } @exons;
-  for ( my $i = 1 ; $i < scalar(@exons) ; $i++ ) {
-     my $left_exon = $exons[$i-1];
-     my $right_exon = $exons[$i];
+  Vector_sort(exons, SeqFeature_posSortFunc);
+
+// Note deliberately 1
+  for (i=1 ; i<Vector_getNumElement(exons); i++) {
+     Exon *leftExon  = Vector_getElementAt(exons, i-1);
+     Exon *rightExon = Vector_getElementAt(exons, i);
+
      // do they overlap 
-     if ( $left_exon->start <= $right_exon->end && 
-          $left_exon->end >= $right_exon->start ) {
+     if (Exon_getStart(leftExon) <= Exon_getEnd(rightExon) && 
+         Exon_getEnd(leftExon)   >= Exon_getStart(rightExon)) {
       // merge them 
-      if ( $right_exon->end >= $left_exon->end &&
-           $right_exon->start <= $left_exon->start ){
+      if (Exon_getEnd(rightExon) >= Exon_getEnd(leftExon) &&
+          Exon_getStart(rightExon) <= Exon_getStart(leftExon)) {
+// Hack hack hack
         $left_exon->{"_extra"} = 0;
       }
 //# Don't see how this is possible - they are sorted on start!
 //#      $left_exon->start($right_exon->start) 
 //#        if $right_exon->start < $left_exon->start;
       
-      if ($right_exon->start < $left_exon->start) {
-        die "HOW IS THIS POSSIBLE\n";
+      if (Exon_getStart(rightExon) < Exon_getStart(leftExon)) {
+        fprintf(stderr,"HOW IS THIS POSSIBLE\n");
+        exit(1);
       }
 
-      $left_exon->end($right_exon->end) 
-        if $right_exon->end > $left_exon->end;
+      if (Exon_getEnd(rightExon) > Exon_getEnd(leftExon)) {
+        Exon_setEnd(leftExon, Exon_getEnd(rightExon); 
+      }
+
       // get rid of right exon
-      splice(@exons,$i,1);
-      $i-- ;
+      //splice(@exons,$i,1);
+      Vector_removeElementAt(exons, i);
+
+// NIY: Free removed exon??
+
+      i--;
 //#      @exons =  sort { $a->start <=> $b->start } @exons;
     }
   }
@@ -2266,31 +2376,43 @@ Exon *RefineSolexaGenes_binSearchForOverlap(RefineSolexaGenes *rsg, Vector *exon
 
 =cut
 */
+typedef struct IntronBamConfigStruct {
+  int depth;
+  int mixedBam;
+  Vector *groupNames;
+  char *fileName;
+} IntronBamConfig;
 
-sub bam_2_intron_features {
-  my ($self,$segment,$intron_files) = @_;
-  my $slice_adaptor = $self->gene_slice_adaptor;
-  my @ifs;
-  my $extra_exons = $self->extra_exons;
-  my %id_list;
-  my %read_groups;
-  if (  $intron_files->{GROUPNAME} && scalar(@{$intron_files->{GROUPNAME}} > 0 ) ) {
-    my @groups = @{$intron_files->{GROUPNAME}};
-    print "Limiting to read groups ";
-    foreach my $group ( @groups ) {
-      print " $group";
-      $read_groups{$group} = 1;
+void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConfig *intronBamConf, samfile_t *sam, bam_index_t *idx, int ref, int begRange, int endRange) {
+  SliceAdaptor *sliceAdaptor = RefineSolexaGenes_getGeneSliceAdaptor(rsg);
+  Vector *ifs = Vector_new();
+  StringHash *extraExons = RefineSolexaGenes_getExtraExons(rsg);
+  StringHash *idList = StringHash_new(STRINGHASH_SMALL);
+  StringHash *readGroups = StringHash_new(STRINGHASH_SMALL);
+
+
+  if (intronBamConf->groupNames != NULL && Vector_getNumElement(intronBamConf->groupNames) > 0) {
+    
+    printf("Limiting to read groups ");
+    int i;
+    for (i=0; i<Vector_getNumElement(intronBamConf->groupNames); i++) {
+      char *group = Vector_getElementAt(intronBamConf->groupNames, i);
+      printf(" %s", group);
+      StringHash_add(readGroups, group, &trueVal); 
     }
-    print "\n";
+    printf("\n");
   }
 
+  bam_iter_t iter = bam_iter_query(idx, ref, begRange, endRange);
+  bam1_t *read = bam_init1();
 
-  my $iterator = $segment->features(-iterator=>1);
- READ:  while (my $read = $iterator->next_seq) {
-    my $spliced;
+  while (bam_iter_read(sam->x.bam, iter, read) >= 0) {
+
+//READ:  
+    int spliced;
     // ignore unspliced reads if the bam file is a mixture of spliced and 
     // unspliced reads
-    if ( $intron_files->{MIXED_BAM} ) {
+    if (intronBamConf->mixedBam) {
       $spliced = $read->get_tag_values('XS');
       next READ unless $spliced; 
     }
@@ -2319,11 +2441,13 @@ sub bam_2_intron_features {
       $extra_exons->{$string} ++;
       //# print "Not doing extra_exon stuff for now\n";
     }
+
     my $strand = $read->target->strand;
     if   ($intron_files->{MIXED_BAM} ) {
       $strand = 1 if $spliced eq '+';
       $strand = -1 if $spliced eq '-'; 
     } 
+
     //# print "\nREAD " . $read->cigar_str;
     my $offset;
     for ( my $i = 0 ; $i <= $#mates  ; $i++ ) {
@@ -2351,20 +2475,24 @@ sub bam_2_intron_features {
  //#   print "\n";
   }
 
+/* SMJS These are for testing
   // For param testing store introns with different anal to results
   my $conslim = $ENV{CONSLIM};
   my $nonconslim = $ENV{NONCONSLIM};
   my $intron_anal = $self->create_analysis_object("intron_c" . $conslim . "_nc" . $nonconslim);
+*/
 
   //# collapse them down and make them into simple features
+  for (i=0; i<; i++) {
   foreach my $key ( keys %id_list ) {
     // filter on score if appropriate
-    if ( $intron_files->{DEPTH} ) {
-      if ( $intron_files->{DEPTH} > $id_list{$key} ) {
+    if (intronBamConf->depth) {
+      if (intronBamConf->depth >  //$intron_files->{DEPTH} > $id_list{$key} ) {
         //#print "Rejecting on score " . $id_list{$key} ."\n";
-        next;
+        continue;
       }
     }
+
     my @data = split(/:/,$key) ;
     my $length =  $data[2] - $data[1] -1;
     next unless $length > 0 ;
@@ -2378,103 +2506,114 @@ sub bam_2_intron_features {
        -hstart => 1,
        -hend => $length,
        -hstrand => 1,
-       -slice => $self->chr_slice,
+       -slice => RefineSolexaGenes_getChrSlice(rsg),
        -analysis => $intron_anal,#$self->analysis,
        -score =>  $id_list{$key},
        -hseqname => "$name",
        -cigar_string => $length ."M",
       );
-    my $canonical = 1;
+
+    int canonical = 1;
     // figure out if its cannonical or not
-    my $left_splice = $slice_adaptor->fetch_by_region('toplevel',
-                                                      $if->seq_region_name,
-                                                      $if->start+1,
-                                                      $if->start+2,
-                                                      $if->strand
-                                                     );
-    my $right_splice = $slice_adaptor->fetch_by_region('toplevel',
-                                                       $if->seq_region_name,
-                                                       $if->end-2,
-                                                       $if->end-1,
-                                                       $if->strand
-                                                      );
+// Was if->start+1 and if->start+2 rather than seqregionstart
+    Slice *leftSplice = SliceAdaptor_fetchByRegion(sliceAdaptor,
+                                                   "toplevel",
+                                                   DNAAlignFeature_getSeqRegionName(intronFeat),
+                                                   DNAAlignFeature_getSeqRegionStart(intronFeat)+1,
+                                                   DNAAlignFeature_getSeqRegionStart(intronFeat)+2,
+                                                   DNAAlignFeature_getSeqRegionStrand(intronFeat));
+    Slice *rightSplice = SliceAdaptor_fetchByRegion(sliceAdaptor,
+                                                    "toplevel",
+                                                    DNAAlignFeature_getSeqRegionName(intronFeat),
+                                                    DNAAlignFeature_getSeqRegionEnd(intronFeat)-2,
+                                                    DNAAlignFeature_getSeqRegionEnd(intronFeat)-1,
+                                                    DNAAlignFeature_getSeqRegionStrand(intronFeat));
     //#  print "KEY $key " . $if->score ."\n";;
     //#  print "LEFT  " . $left_splice->start ." " . $left_splice->end  ." " . $left_splice->strand ." " . $left_splice->seq . "\n";
     //#  print "RIGHT " . $right_splice->start ." " . $right_splice->end  ." " . $right_splice->strand  ." " . $right_splice->seq ."\n\n";
     
     
-    if ( $left_splice->seq eq 'NN' && $right_splice->seq eq 'NN' ) {
-      warn("Cannot find dna sequence for " . $key .
-           " this is used in detecting non cannonical splices\n");
+    if (!strcmp(Slice_getSeq(leftSplice), "NN") && !strcmp(Slice_getSeq(rightSplice), "NN")) {
+      fprintf(stderr,"Warning: Cannot find dna sequence for " . $key .  " this is used in detecting non cannonical splices\n");
     } else {
       //# is it cannonical
-      if ( $if->strand  == 1 ) {
-        #        print "Splice type " . $left_splice->seq ."-".  $right_splice->seq ." ";
-        # is it GTAG?
-        unless ( $left_splice->seq eq 'GT' && $right_splice->seq eq 'AG' ) {
-          $canonical = 0;
+      if (DNAAlignFeature_getStrand(intronFeat) == 1 ) {
+        //        print "Splice type " . $left_splice->seq ."-".  $right_splice->seq ." ";
+        // is it GTAG?
+        if (strcmp(Slice_getSeq(leftSplice), "GT") || strcmp(Slice_getSeq(rightSplice), "AG")) {
+          canonical = 0;
         }
       } else {
         //#        print "Splice type " . $right_splice->seq ."-".  $left_splice->seq ." ";
         //# is it GTAG?
-        unless ( $right_splice->seq eq 'GT' && $left_splice->seq eq 'AG' ) {
-          $canonical = 0;
+        if (strcmp(Slice_getSeq(rightSplice), "GT") || strcmp(Slice_getSeq(leftSplice), "AG")) {
+          canonical = 0;
         }
       }
     }
-    if ( $canonical ) {
+    if (canonical) {
        $if->hseqname($if->hseqname."canonical");
     } else {
       $if->hseqname($if->hseqname."non canonical");
     }
+
     //#print "INTRONS ".  $if->hseqname ."\n";
-    push @ifs , $if;
+    Vector_addElement(ifs, intronFeat);
   }
   // sort them
-  @ifs = sort {$a->start <=> $b->start} @ifs;
-  if ($self->FILTER_ON_OVERLAP) {
-      my @tmp_array;
-      my $threshold = $self->FILTER_ON_OVERLAP;
-      my $array_length = scalar(@ifs); 
-      if ($array_length > 1) {
-          for (my $j = 0; $j < $array_length-1; $j++) {
-              my $k = 0;
-              my $count = 1;
-              my $overlapped_support = 0;
-              while () {
-                  ++$k;
-                  if ($count > $threshold) {
-                      if ($overlapped_support < $ifs[$j]->score) {
-//#                          print STDERR "\t",$ifs[$j+$k]->hseqname, ': ', $ifs[$j+$k]->start, ':', $ifs[$j+$k]->end, "\n";
-                          push (@tmp_array, $ifs[$j]);
-                      }
-                      else {
-//#                          print STDERR 'THROWING: ', $ifs[$j]->hseqname, ': ', $ifs[$j]->start, ':', $ifs[$j]->end, "\n";
-                      }
-                      last;
-                  }
-                  $overlapped_support += $ifs[$j+$k]->score;
-                  if (($ifs[$j]->end < $ifs[$j+$k]->start) or (($j+$k) == $array_length-1)) {
-//#                      print STDERR "\t",$ifs[$j+$k]->hseqname, ': ', $ifs[$j+$k]->start, ':', $ifs[$j+$k]->end, "\n";
-                      push (@tmp_array, $ifs[$j]);
-                      last;
-                  }
-//#                      print STDERR $ifs[$j+$k]->hseqname, "\n";
-                  next unless ($ifs[$j]->strand == $ifs[$j+$k]->strand);
-                  ++$count;
-              }
+  Vector_sort(ifs, SeqFeature_posSortFunc);
+  if (RefineSolexaGenes_filterOnOverlap(rsg)) {
+    Vector *tmpArray = Vector_new();
+    int threshold = RefineSolexaGenes_filterOnOverlap(rsg);
+
+    int arrayLength = Vector_getNumElement(ifs);
+    if (arrayLength > 1) {
+      for (j=0; j<arrayLength-1; j++) {
+        DNAAlignFeature *ifj = Vector_getElementAt(ifs, j);
+        int k = 0;
+        int count = 1;
+        int overlappedSupport = 0;
+        while () {
+          ++k;
+          DNAAlignFeature *ifjpk = Vector_getElementAt(ifs, j+k);
+
+          if (count > threshold) {
+            if (overlappedSupport < DNAAlignFeature_getScore(ifj)) {
+//#            print STDERR "\t",$ifs[$j+$k]->hseqname, ': ', $ifs[$j+$k]->start, ':', $ifs[$j+$k]->end, "\n";
+              Vector_addElement(tmpArray, ifj);
+            } else {
+//#          print STDERR 'THROWING: ', $ifs[$j]->hseqname, ': ', $ifs[$j]->start, ':', $ifs[$j]->end, "\n";
+            }
+            break;
           }
-          @ifs = @tmp_array;
+          overlappedSupport += DNAAlignFeature_getScore(ifjpk);
+
+          if ((DNAAlignFeature_getEnd(ifj) < DNAAlignFeature_getStart(ifjpk)) || ((j+k) == arrayLength-1)) {
+//#          print STDERR "\t",$ifs[$j+$k]->hseqname, ': ', $ifs[$j+$k]->start, ':', $ifs[$j+$k]->end, "\n";
+            Vector_addElement(tmpArray, ifj);
+            break;
+          }
+//#        print STDERR $ifs[$j+$k]->hseqname, "\n";
+          if (DNAAlignFeature_getStrand(ifj) != DNAAlignFeature_getStrand(ifjpk)) {
+            continue;
+          }
+          ++count;
+        }
       }
+// NIY: Free old ifs??
+      ifs = tmpArray;
+    }
   }
 //#  print STDERR 'RES: ', scalar(@ifs), "\n";
+
+/* Filtering code is Steve's experimental code
 //# SMJS Filter here 
 
   if (!defined($conslim) || !defined($nonconslim)) {
     die "Env vars for CONSLIM and NONCONSLIM not set\n";
   }
 
-  print "Filter parameters:  Consensus splice coverage $conslim    Non consensus splice coverage $nonconslim\n";
+  printf("Filter parameters:  Consensus splice coverage %f  Non consensus splice coverage %f\n", conslim, nonconslim);
 
   my @tmp;
   foreach my $f (@ifs) {
@@ -2493,14 +2632,18 @@ sub bam_2_intron_features {
     }
   }
   @ifs = @tmp;
+*/
 
-  $self->intron_features(\@ifs);
-  $self->extra_exons($extra_exons);
-  print STDERR "Got " . scalar(@ifs)  . " unique introns  " ;
-  print STDERR " and " . scalar(keys %$extra_exons) . " potential novel exons from " . $intron_files->{FILE} . "\n";
+  RefineSolexaGenes_setIntronFeatures(rsg, ifs);
+
+  RefineSolexaGenes_setExtraExons(rsg, extraExons);
+
+  fprintf(stderr,"Got %d unique introns  ", Vector_getNumElements(ifs));
+  fprintf(stderr," and %d potential novel exons from %s\n", StringHash_getNumValue(extraExons), intronBamConf->fileName);
   return;
 }
 
+// Need to understand if I actually need to implement this?????
 sub ungapped_features {
   my ($self,$read) = @_;
   my @ugfs;
@@ -2640,9 +2783,10 @@ Vector *RefineSolexaGenes_dnaToExtraExons(RefineSolexaGenes *rsg, long start, lo
 
   // process extra reads and assign them to rough models
   while ( scalar @extra_reads > 0 ) {
+    char *roughId = NULL;
+
     my $read = pop(@extra_reads);
     my $type = 'canonical';
-    my $roughid;
     $type = 'non canonical' if ( $read->hseqname =~ /\:NC$/ ) ;
     $read = $read->transfer($self->chr_slice);
     // assign a rough model to the reads
@@ -2729,9 +2873,11 @@ Vector *RefineSolexaGenes_dnaToExtraExons(RefineSolexaGenes *rsg, long start, lo
       push @extra_exons, $extra_exon;
     }
   }
-  print STDERR "Got " . scalar(@extra_exons) . " extra exons\n";
+
+  fprintf(stderr, "Got %d extra exons\n", Vector_getNumElement(extraExons));
+
   // make the exon features
-  $self->extra_exons(\@extra_exons);
+  RefineSolexaGenes_setExtraExons(rsg, extraExons);
   return;
 }
 
@@ -2859,6 +3005,7 @@ void RefineSolexaGenes_dnaToIntronFeatures(RefineSolexaGenes *rsg, long start, l
       sprintf(cigStr, "%dM", length);
       DNAAlignFeature_setCigarString(intFeat, cigStr);
 
+/*
       my $if = Bio::EnsEMBL::DnaDnaAlignFeature->new
         (
          -start => $data[1],
@@ -2873,6 +3020,7 @@ void RefineSolexaGenes_dnaToIntronFeatures(RefineSolexaGenes *rsg, long start, l
          -hseqname => $name,
          -cigar_string => $length ."M",
         );
+*/
 
       Vector_addElement(intFeats, intFeat);
     }
