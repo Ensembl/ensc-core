@@ -23,3 +23,12 @@ int idTypeCompFunc(const void *one, const void *two) {
   return id1-id2;
 }
 
+long *long_new(long val) {
+  long *longP;
+  if ((longP = (long *)calloc(1,sizeof(long))) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for long\n");
+    return NULL;
+  }
+  *longP = val;
+  return longP;
+}
