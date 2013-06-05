@@ -44,7 +44,7 @@ StringHash *StringHash_new(StringHashSizes size) {
   }
 
   if ((stringHash->bucketCounts = (int *)calloc(stringHash->size,sizeof(int))) == NULL) {
-    fprintf(stderr,"ERROR: Failed allocating space for stringHash->buckets\n");
+    fprintf(stderr,"ERROR: Failed allocating space for stringHash->bucketCounts\n");
     return NULL;
   }
 
@@ -193,6 +193,7 @@ void StringHash_free(StringHash *stringHash, void freeFunc()) {
     }
   }
   
+  free(stringHash->buckets);
   free(stringHash->bucketCounts);
   free(stringHash);
 }

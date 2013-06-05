@@ -415,7 +415,8 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
   Vector *transcripts = TranscriptAdaptor_fetchAllBySliceConstraint(ta, slice, constraint, logicName);
 
   // if there are 0 or 1 transcripts still do lazy-loading
-  if ( ! loadExons || Vector_getNumElement(transcripts) < 2 ) {
+// SMJS Tweaked so never does lazy loading
+  if ( ! loadExons || Vector_getNumElement(transcripts) < 1 ) {
     return transcripts;
   }
 

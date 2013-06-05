@@ -226,6 +226,7 @@ void IDHash_free(IDHash *idHash, void freeFunc()) {
     }
   }
   
+  free(idHash->buckets);
   free(idHash->bucketCounts);
   free(idHash);
 }

@@ -224,8 +224,8 @@ char *Gene_setExternalName(Gene *g, char *externalName) {
 Vector *Gene_getAllExons(Gene *gene) {
   IDHash *exonHash = IDHash_new(IDHASH_SMALL);
   int i;
-  Vector *exonVector = Vector_new();
-  void **values;
+//  Vector *exonVector = Vector_new();
+//  void **values;
 
   for (i=0;i<Gene_getTranscriptCount(gene);i++) {
     Transcript *trans = Gene_getTranscriptAt(gene,i);
@@ -233,18 +233,19 @@ Vector *Gene_getAllExons(Gene *gene) {
 
     for (j=0;j<Transcript_getExonCount(trans);j++) {
       Exon *exon = Transcript_getExonAt(trans,j);
-      if (!IDHash_contains(exonHash,(long)exon)) {
-        IDHash_add(exonHash,(long)exon,exon);
+      if (!IDHash_contains(exonHash,(IDType)exon)) {
+        IDHash_add(exonHash,(IDType)exon,exon);
       }
     }
   }
 
-  values = IDHash_getValues(exonHash);
-
-  for (i=0;i<IDHash_getNumValues(exonHash);i++) {
-    Vector_addElement(exonVector, values[i]);
-  }
-  free(values);
+//  values = IDHash_getValues(exonHash);
+//
+//  for (i=0;i<IDHash_getNumValues(exonHash);i++) {
+//    Vector_addElement(exonVector, values[i]);
+//  }
+//  free(values);
+  Vector *exonVector = IDHash_getValuesVector(exonHash);
   IDHash_free(exonHash,NULL);
   
   return exonVector;

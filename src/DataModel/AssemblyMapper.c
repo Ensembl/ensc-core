@@ -187,7 +187,7 @@ MapperRangeSet *AssemblyMapper_mapImpl(AssemblyMapper *am, char *frmSeqRegionNam
 
 =cut
 */
-// HACK HACK HACK
+// HACK HACK HACK - freeing an IDHash within an IDHash
 void freeRegisterIDHash(IDHash *idHash) {
   int i;
   int j;
@@ -199,6 +199,7 @@ void freeRegisterIDHash(IDHash *idHash) {
     }
   }
 
+  free(idHash->buckets);
   free(idHash->bucketCounts);
   free(idHash);
 }
