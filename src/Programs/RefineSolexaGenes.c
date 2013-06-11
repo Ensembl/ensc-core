@@ -15,8 +15,6 @@ module is defined in Bio::EnsEMBL::Analysis::Config::GeneBuild::RefineSolexaGene
 static int  limit = 0;
 
 RefineSolexaGenes *RefineSolexaGenes_new() {
-  my ($class,@args) = @_;
-  my $self = $class->SUPER::new(@args);
   RefineSolexaGenes *rsg;
   
 
@@ -25,7 +23,7 @@ RefineSolexaGenes *RefineSolexaGenes_new() {
     exit(1);
   }
 
-  RunnableDB_readAndCheckConfig()
+  RunnableDB_readAndCheckConfig(rsg)
 //  $self->read_and_check_config($REFINESOLEXAGENES_CONFIG_BY_LOGIC);
 
   // Hard limit to the number of possible paths to explore
@@ -197,7 +195,6 @@ void  RefineSolexaGenes_run(RefineSolexaGenes *rsg) {
 */
 
 void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
-
   Vector *prelimGenes = RefineSolexaGenes_getPrelimGenes(rsg);
 
   int i;
@@ -766,15 +763,22 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
     
           // trim away strings of Ns from the start and  end
           // check start
-          my $ex_seq = $exon->seq->seq;
-          if ( $ex_seq =~ /^(N+)(\S+)$/ ) {
-            $exon->start($exon->start + length($1));
+          char *exSeq = Exon_getSeq(exon);
+
+          int nN;
+          for (nN=0; nN<Exon_getLength(exon) && exSeq[nN] == 'N'; nN++) { }
+          
+          if (nN) {
+            Exon_setStart(exon, Exon_getStart(exon) + nN);
           }
+
           // check end
-          $ex_seq = reverse $ex_seq;
-          if ( $ex_seq =~ /^(N+)(\S+)$/ ) {
-            $exon->end($exon->end - length($1));
+          StrUtil_reverse(exSeq);
+          for (nN=0; nN<Exon_getLength(exon) && exSeq[nN] == 'N'; nN++) { }
+          if (nN) {
+            Exon_setEnd(exon, Exon_getEnd(exon) - nN);
           }
+          // NIY: Not sure if I need to free exSeq
          
           // get the cds
           Exon *fwdExon =  cloneExon(exon);
@@ -782,32 +786,42 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
     
           Exon *revExon = cloneExon(exon);
     
-          my $fwd_t =  new Bio::EnsEMBL::Transcript(-EXONS => [$fwd_exon]);
+          Transcript *fwdT = Transcript_new();
+          Transcript_addExon(fwdExon);
+          //my $fwd_t =  new Bio::EnsEMBL::Transcript(-EXONS => [$fwd_exon]);
+          
           my $fwd_tran = compute_translation(clone_Transcript($fwd_t));
-          my $fwd_t_len;
-          $fwd_t_len = $fwd_tran->translation->genomic_end - $fwd_tran->translation->genomic_start 
-            if $fwd_tran->translateable_seq;
-    
+          
+          long fwdTLen = 0;
+          if (Transcript_getTranslation(fwdTran)) {
+            fwdTLen = Translation_getGenomicEnd(Transcript_getTranslation(fwdTran)) - Translation_getGenomicStart(Transcript_getTranslation(fwdTran));
+          }
+
           //print STDERR "FWD t length $fwd_t_len\n";
-          my $rev_t =  new Bio::EnsEMBL::Transcript(-EXONS => [$rev_exon]);
+          Transcript *revT = Transcript_new();
+          Transcript_addExon(revExon);
+          //my $rev_t =  new Bio::EnsEMBL::Transcript(-EXONS => [$rev_exon]);
+          
           my $rev_tran = compute_translation(clone_Transcript($rev_t));
-          my $rev_t_len;
-          $rev_t_len = $rev_tran->translation->genomic_end - $rev_tran->translation->genomic_start
-            if $rev_tran->translateable_seq;;
+          
+          long revTLen = 0;
+          if (Transcript_getTranslation(revTran)) {
+            revTLen = Translation_getGenomicEnd(Transcript_getTranslation(revTran)) - Translation_getGenomicStart(Transcript_getTranslation(revTran));
+          }
     
           //print STDERR "REV t length $rev_t_len\n";
-          if ( $fwd_tran->translateable_seq &&  
-               ( $fwd_t_len / $fwd_tran->length )* 100 >= $self->SINGLE_EXON_CDS &&
-               $fwd_t_len >  $rev_t_len ) {
+          if ( Transcript_getTranslation(fwdTran) &&  
+               ( fwdTLen / Transcript_getLength(fwdTran)* 100 >= RefineSolexaGenes_getSingleExonCDS(rsg) &&
+               fwdTLen >  revTLen ) {
             // keep this one
             singleExonModel =  fwdTran;
           }
     
-          if ( $rev_tran->translateable_seq &&  
-               ( $rev_t_len / $rev_tran->length )* 100 >= $self->SINGLE_EXON_CDS &&
-               $rev_t_len >  $fwd_t_len ) {
+          if ( Transcript_getTranslation(revTran) &&  
+               ( revTLen / Transcript_getLength(revTran)* 100 >= RefineSolexaGenes_getSingleExonCDS(rsg) &&
+               revTLen >  revTLen ) {
             // keep this one
-            singleExonModel = revTran;
+            singleExonModel =  revTran;
           }
     
           if (singleExonModel != NULL) {
@@ -938,9 +952,10 @@ Vector *RefineSolexaGenes_reclusterModels(RefineSolexaGenes *rsg, Vector *cluste
 
         // exon overlap with a best model
 
+        int doneBest = 0;
       //BESTEXON: 
         int k;
-        for ( k=0; k < Vector_getNumElement(bestExons); k++ ) {
+        for ( k=0; k < Vector_getNumElement(bestExons) && !doneBest; k++ ) {
           Exon *be = Exon_getElementAt(bestExons, k);
 
         //OTHEREXON: 
@@ -949,27 +964,33 @@ Vector *RefineSolexaGenes_reclusterModels(RefineSolexaGenes *rsg, Vector *cluste
             Exon *oe = Exon_getElementAt(otherExons, m);
 
             if (Exon_getEnd(oe) < Exon_getStart(be)) {
-              next OTHEREXON;
+              //next OTHEREXON;
+              continue;
             }
 // Big jump here - think about how to do
             if (Exon_getStart(oe) > Exon_getEnd(be)) {
-              next BESTEXON;
-            }
-
-            // does it have exon overlap with the best model
-            if (Exon_getStart(be) <= Exon_getEnd(oe) && 
-                Exon_getEnd(be)   >= Exon_getStart(oe)) {
-              // yes - store it and move on 
-              Vector_addElement(genes, gene);
-              
-           //   print "Overlap " . $gene->start . " " , $gene->end . " " . $gene->strand ."\n";
-// Big jump here - think about how to do
-              next OTHERGENE;
+              //next BESTEXON;
+              break;
+            } else {
+              // does it have exon overlap with the best model
+              if (Exon_getStart(be) <= Exon_getEnd(oe) && 
+                  Exon_getEnd(be)   >= Exon_getStart(oe)) {
+                // yes - store it and move on 
+                Vector_addElement(genes, gene);
+                
+             //   print "Overlap " . $gene->start . " " , $gene->end . " " . $gene->strand ."\n";
+  // Big jump here - think about how to do
+                //next OTHERGENE;
+                doneBest = 1;
+                break;
+              }
             }
           }
         }
         // other model has no exon overlap with best model it needs to be in a new cluster
-        Vector_addElement(otherGenes, gene);
+        if (!doneBest) {
+          Vector_addElement(otherGenes, gene);
+        }
         //#print "No overlap " . $gene->start . " " , $gene->end . " " . $gene->strand ."\n";
       }
 
@@ -1166,9 +1187,9 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
   for (i=0; i<Vector_getNumElement(models); i++) {
     GeneCluster *cluster = Vector_getElementAt(models, i);
     my %exon_use_hash;
-    my %exon_starts;
-    my %exon_ends;
-    my %exon_pattern;
+    IDHash *exonStarts = IDHash_new(STRINGHASH_MEDIUM);
+    IDHash *exonEnds = IDHash_new(STRINGHASH_MEDIUM);
+    StringHash *exonPattern = StringHash_new(STRINGHASH_SMALL);
 
     int count = 0;
     long translationStart = 2000000000;
@@ -1197,26 +1218,39 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
       //print "TRANSCRIPT " . $gene->get_all_Transcripts->[0]->{'_depth'} .           " Exon use $exon_use Biotype " . $gene->biotype ."\n";
       int es = 0;
       int ee = 0;
-      my $pattern;
-      foreach my $exon ( @{$gene->get_all_Exons} ) {
-        $pattern .= $exon->start.":".$exon->end.":";
-        $es++ if $exon_starts{$exon->start};
-        $ee++ if $exon_ends{$exon->end};
-        $exon_starts{$exon->start} = 1;
-        $exon_ends{$exon->end} = 1;
+      char pattern[65500];
+      pattern[0] = '\0';
+      Transcript *trans = Gene_getTranscriptAt(gene, 0);
+      for (k=0; k<Transcript_getExonCount(trans); k++) {
+        Exon *exon = Transcript_getExonAt(trans, k);
+
+        sprintf(pattern,"%s%ld:%ld:",pattern,Exon_getStart(exon),Exon_getEnd(exon));
+
+        if (IDHash_contains(exonStarts, Exon_getStart(exon))) {
+          es++;
+        } else {
+          IDHash_add(exonStarts, Exon_getStart(exon), &trueVal);
+        }
+        if (IDHash_contains(exonEnds, Exon_getEnd(exon))) {
+          ee++;
+        } else {
+          IDHash_add(exonEnds, Exon_getEnd(exon), &trueVal);
+        }
       }
-      if ( $ee == scalar(  @{$gene->get_all_Exons} ) &&
-           $es == scalar(  @{$gene->get_all_Exons} ) ) {
+      if ( ee == Transcript_getExonCount(trans) &&
+           es == Transcript_getExonCount(trans)) { 
         // seen it before - or something very much like it
         Gene_setBiotype(gene, "bad");
         //        print "CALLING it bad\n";
       }
-      if ( $exon_pattern{$pattern} ) {
+
+      if (StringHash_contains(exonPattern, pattern)) {
         // seen it before - or something very much like it
         Gene_setBiotype(gene, "duplicate");
         //print "CALLING it bad\n";
+      } else {
+        StringHash_add(exonPattern, pattern, &trueVal);
       }
-      $exon_pattern{$pattern} = 1;
     } 
 
     // promote "bad" models that have a cds as long as the best cds to 
@@ -1395,84 +1429,127 @@ sub RefineSolexaGenes_makeModels(RefineSolexaGenes *rsg, StringHash *paths, int 
 //  MODEL:   
     int j;
     for (j=0; j<Vector_getNumElement(modelsByScore); j++) {
+      Model *model = Vector_getElementAt(modelsByScore, j);
 
-      my @ises;
+
+      Vector *ises = Vector_new();
       // the score is the last array element 
-      my $s = pop(@{$model});
-      // list of the rough exons used in the model
-      my $exon_use = pop(@{$model});
+      double s = model->totalScore;
 
-      my @introns;
+      // list of the rough exons used in the model
+      char *exonUse = model->exonUse;
+
+      Vector *introns = Vector_new();
 
       int intronCount = 0;
       double intronScore = 0;
       double exonScore = 0;
       int nonConIntrons = 0;
 
-      my @new_exons;
+      Vector *newExons = Vector_new();
 
       // make an array containing cloned exons
       int k;
-      for ( my $k = 0 ; $k < scalar(@$model) ; $k++ ) {
-        unless ( $model->[$i]->isa("Bio::EnsEMBL::DnaDnaAlignFeature") ) {        
-          my $new_exon = clone_Exon($model->[$k]);
+      for (k=0; k<Vector_getNumElement(model->features); k++) {
+        SeqFeature *feature = Vector_getElementAt(model->features, k);
+
+        if (feature->objectType != CLASS_DNAALIGNFEATURE) {
+          Exon *origExon = (Exon *)feature;
+          Exon *newExon = cloneExon((Exon *)feature);
           // add in exon coverage scores from supporting features
-          foreach my $daf ( @{$model->[$k]->get_all_supporting_features} ) {
-            $exon_score += $daf->score;
+          
+          Vector *support = Exon_getAllSupportingFeatures(origExon);
+          int m;
+          for (m=0; m<Vector_getNumElement(support); m++) {
+            BaseAlignFeature *daf = Vector_getElementAt(support, m);
+            exonScore += BaseAlignFeature_getScore(daf);
           }
-          $new_exon->strand($strand);
-          push @new_exons,$new_exon;
+// NIY: Free supporting features vector??
+          Exon_setStrand(newExon, strand);
+          Vector_addElement(newExons, newExon);
         } else {
-          push @new_exons, $model->[$k];
+          Vector_addElement(newExons, feature);
         }
       }
 
       // trim the exons using the intron features to get the splice sites correct
-      for ( my $i = 0 ; $i < scalar(@$model) ; $i++ ) {
-        if ( $model->[$i]->isa("Bio::EnsEMBL::DnaDnaAlignFeature") ) {
-          my $intron = $model->[$k];
-          next unless $intron->strand == $strand;
-          next unless $new_exons[$k-1] && $new_exons[$k+1];
-          push @introns,$intron;
+// Note changed to only go up to num element - 1 because needs to be surrounded by exons and don't want to check in loop 
+      for (k = 0; k<Vector_getNumElement(model->features)-1; k++) {
+        SeqFeature *feature = Vector_getElementAt(model->features, k);
+        if (feature->objectType == CLASS_DNAALIGNFEATURE) {
+          DNAAlignFeature *intron = (DNAAlignFeature *)feature;
+          if (DNAAlignFeature_getStrand(intron) != strand) {
+            continue;
+          }
+
+          Exon *prevExon = Vector_getElementAt(newExons, k-1);
+          Exon *nextExon = Vector_getElementAt(newExons, k+1);
+
+          //next unless $new_exons[$k-1] && $new_exons[$k+1];
+          // Do some sanity checking
+          if (prevExon == NULL || nextExon == NULL ||
+              prevExon->objectType != CLASS_EXON ||
+              nextExon->objectType != CLASS_EXON) {
+            fprintf(stderr, "Didn't get two exons surrounding intron\n");
+            exit(1);
+          }
+
+          Vector_addElement(introns, intron);
+
           // its an intron trim the exons accordingly
-          $new_exons[$k-1]->end( $intron->start );
-          $new_exons[$k+1]->start( $intron->end );
-          if ( $new_exons[$i-1]->start >=  $new_exons[$i-1]->end ) {
+          Exon_setEnd(prevExon, DNAAlignFeature_getStart(intron));
+          Exon_setStart(nextExon, DNAAlignFeature_getEnd(intron));
+          if (Exon_getStart(prevExon) >= Exon_getEnd(prevExon) { //$new_exons[$k-1]->start >=  $new_exons[$k-1]->end ) {
+// Big jump - need to think about
             next MODEL;
           }
-          $intron_count++;
-          $intron_score+= $intron->score;
-          $non_con_introns++ if $intron->hseqname =~ /non canonical/;
+
+          intronCount++;
+          intronScore += DNAAlignFeature_getScore(intron);
+          if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) {
+            nonConIntrons++;
+          }
+
           // use the new intron feature code to store introns
           // provided we have not seen them before
-          my $if;
-          if ( $strand == 1 ){
-            $if =  Bio::EnsEMBL::Intron->new( $new_exons[$i-1] , $new_exons[$i+1] );
+          Intron *intronFeat;
+          if (strand == 1) {
+            intronFeat = Intron_new(prevExon, nextExon, DNAAlignFeature_getAnalysis(intron));
           } else {
-            $if =  Bio::EnsEMBL::Intron->new( $new_exons[$i+1] , $new_exons[$i-1] ); 
+            intronFeat = Intron_new(nextExon, prevExon, DNAAlignFeature_getAnalysis(intron));
           }
-          my $ise = Bio::EnsEMBL::IntronSupportingEvidence->new(
-                                                                  -ANALYSIS => $intron->analysis,
-                                                                -INTRON   => $if, 
-                                                                -HIT_NAME => $intron->hseqname,
-                                                                -SCORE    => $intron->score,
-                                                                -SCORE_TYPE  => 'DEPTH',
-                                                               );
-          if ( $intron->hseqname =~ /non canonical/ ) {
-            $ise->is_splice_canonical(0);
+          IntronSupportingEvidence *ise = IntronSupportingEvidence_new();
+          IntronSupportingEvidence_setAnalysis(ise, DNAAlignFeature_getAnalysis(intron));
+          IntronSupportingEvidence_setIntron(ise, intronFeat);
+          IntronSupportingEvidence_setHitName(ise, DNAAlignFeature_getHitName(intron));
+          IntronSupportingEvidence_setScore(ise, DNAAlignFeature_getScore(intron));
+          IntronSupportingEvidence_setScoreType(ise, "DEPTH");
+
+          if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) {
+            IntronSupportingEvidence_setIsSpliceCanonical(ise, 0);
+          } else {
+            IntronSupportingEvidence_setIsSpliceCanonical(ise, 1);
           }
-          push @ises, $ise if $ise;
+          Vector_addElement(ises, ise);
+
+          // Don't know why tested for ise defined push @ises, $ise if $ise;
         }
       }
-      next MODEL unless $intron_count;
+      if (!intronCount) {
+// Big jump - need to think about
+        next MODEL;
+      }
       
       // trim padding from the start and end exons
-      $new_exons[0]->start($new_exons[0]->start + 20) ;
-      $new_exons[-1]->end ($new_exons[-1]->end  - 20) ;
+      Exon *firstExon = Vector_getElementAt(newExons, 0);
+      Exon_setStart(firstExon, Exon_getStart(firstExon) + 20);
+      Exon *lastExon = Vector_getLastElement(newExons);
+      Exon_setEnd(lastExon, Exon_getEnd(lastExon) - 20);
 
       // get rid of impossibly small exons
       foreach my $e ( @new_exons){
         if ( $e->end - $e->start <= 0 ) {
+// Big jump - need to think about
           next MODEL;
         }
       }
@@ -1480,20 +1557,32 @@ sub RefineSolexaGenes_makeModels(RefineSolexaGenes *rsg, StringHash *paths, int 
       // trim away strings of Ns from the 1st and last exons
       // use same regex for 1st and last exon and reverse the
       // sequence accordingly depending on the strand
-      my $ex_seq = $new_exons[0]->seq->seq;
-      $ex_seq = reverse $ex_seq if $strand == - 1;
-      if ( $ex_seq =~ /^(N+)(\S+)$/ ) {
-        $new_exons[0]->start($new_exons[0]->start + length($1));
+      Exon *newExon = Vector_getElementAt(newExons,0);
+      char *exSeq = Exon_getSeq(newExon);
+      if (strand == -1) StrUtil_reverse(exSeq);
+
+      int nN;
+      for (nN=0; nN<Exon_getLength(newExon) && exSeq[nN] == 'N'; nN++) { }
+          
+      if (nN) {
+        Exon_setStart(newExon, Exon_getStart(newExon) + nN);
       }
-      $ex_seq = $new_exons[-1]->seq->seq;
-      $ex_seq = reverse $ex_seq if $strand ==  1;
-      if ( $ex_seq =~ /^(N+)(\S+)$/ ) {
-        $new_exons[-1]->end($new_exons[-1]->end - length($1));
+
+      Exon *newExon = Vector_getLastElement(newExons);
+      char *exSeq = Exon_getSeq(newExon);
+      if (strand == 1) StrUtil_reverse(exSeq);
+
+      int nN;
+      for (nN=0; nN<Exon_getLength(newExon) && exSeq[nN] == 'N'; nN++) { }
+          
+      if (nN) {
+        Exon_setEnd(newExon, Exon_getEnd(newExon) - nN);
       }
      
       // get rid of impossibly small exons again after the N trimming
       foreach my $e ( @new_exons){
         if ( $e->end - $e->start <= 0 ) {
+// Big jump - need to think about
           next MODEL;
         }
       }
@@ -1512,9 +1601,12 @@ sub RefineSolexaGenes_makeModels(RefineSolexaGenes *rsg, StringHash *paths, int 
 
       // make it into a gene
       my $t =  new Bio::EnsEMBL::Transcript(-EXONS => \@modified_exons);
-      foreach my $ise ( @ises ) {
-        $t->add_IntronSupportingEvidence($ise);
+
+      for (k=0; k<Vector_getNumElement(ises); k++) {
+        IntronSupportingEvidence *ise = Vector_getElementAt(ises, k);
+        Transcript_addIntronSupportingEvidence(t, ise);
       }
+// NIY: Free ises vector??
 
 //# check for dna
 //#      my $check = $t->seq->seq ;
@@ -1524,13 +1616,14 @@ sub RefineSolexaGenes_makeModels(RefineSolexaGenes *rsg, StringHash *paths, int 
 //#      }
       // add a translation 
       my $tran = compute_translation(clone_Transcript($t));
+
       // stop spam coming from the Exon module
-      $tran->dbID(0) ;        
+      Transcript_setDbID(tran, 0);
       // store the introns along with the transcript so we can use them later for UTR trimming 
       $tran->{'_introns'} = \@introns;
       // keep track of the scores for this transcript
-      $tran->analysis($self->analysis);
-      $tran->version(1);
+      Transcript_setAnalysis(tran, RefineSolexaGenes_getAnalysis(rsg));
+      Transcript_setVersion(tran, 1);
 
       // favor longer cds by adding doubling the score for coding exons
       // only use exons that are completely coding otherwise you also 
@@ -1539,32 +1632,43 @@ sub RefineSolexaGenes_makeModels(RefineSolexaGenes *rsg, StringHash *paths, int 
       double codingBonus = 0;
       int codingExons = 0;
       if ( Transcript_getTranslation(tran) != NULL ) {
-        foreach my $ce ( @{$tran->get_all_Exons} ) {
-          unless ( $ce->phase == -1 or $ce->end_phase == -1 ) {
-            $coding_bonus += $ce->get_all_supporting_features->[0]->score;
+        for (k=0; k<Transcript_getExonCount(tran); k++) {
+          Exon *ce = Transcript_getExonAt(tran, k);
+          if (! (Exon_getPhase(ce) == -1 || Exon_getEndPhase(ce) == -1)) {
+            Vector *support = Exon_getAllSupportingFeatures(ce);
+            DNAAlignFeature *daf = Vector_getElementAt(support, 0);
+
+            codingBonus += DNAAlignFeature_getScore(daf);
             codingExons++;
+// NIY: Free support?
           }
         }
       }
       
       // remove any supporting features from the exons
-      foreach my $e ( @{$tran->get_all_Exons} ) {
-        $e->flush_supporting_features;
+      for (k=0; k<Transcript_getExonCount(tran); k++) {
+        Exon *e = Transcript_getExonAt(tran, k);
+
+        Exon_flushSupportingFeatures(e);
       }
 
 // There's a bunch of hackery here adding random stuff to the transcript
 
       // print "Coding Bonus of $coding_bonus from $coding_exons completely coding exons \n";
-      $tran->{'_score'} =  ( (int ( $intron_score + $exon_score ) / 10 ) + $coding_bonus  );
+      Transcript_setScore(tran, (int)(( intronScore + exonScore ) / 10 ) + codingBonus);
+
       // print "Final score = $intron_score + int( $exon_score / 100 ) + $coding_bonus = " . $tran->{'_score'} ;
-      $tran->{'_depth'} =  ( $intron_score + $exon_score );
+// Doesn't seem to be used      $tran->{'_depth'} =  ( $intron_score + $exon_score );
       // print " for tran " .$tran->{'_depth'} . "\n";
+// Only used in this method
       $tran->{'_NC_introns'} =  $non_con_introns ;
+// Used in another method
       $tran->{'_exon_use'} = $exon_use;
       // print STDERR " EXON count $exon_count\n";
+// Only used in this method
       $tran->{'_intron_count'} = $intron_count;
 
-      push @trans, $tran;
+      Vector_addElement(trans, tran);
 
       // we want X number of models
       if ( $self->BEST_SCORE &&  $self->MAX_NUM  ) {
@@ -2568,9 +2672,9 @@ Vector *RefineSolexaGenes_mergeExons(RefineSolexaGenes *rsg, Gene *gene, int str
       //# ignore non consensus introns at this point
       if (!strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) continue;
 
-      if ($intron->start > $prev_exon->start &&
-          $intron->end <  $exon->end && 
-          $intron->strand == $strand ){
+      if (DNAAlignFeature_getStart(intron) > Exon_getStart(prevExon) &&
+          DNAAlignFeature_getEnd(intron) <  Exon_getEnd(exon) && 
+          DNAAlignFeature_getStrand(intron) == strand) {
         intronCount++;
       }
     }
@@ -2898,9 +3002,9 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
 }
 
 // Need to understand if I actually need to implement this?????
-sub ungapped_features {
-  my ($self,$read) = @_;
-  my @ugfs;
+Vector *RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam1_t *read) {
+  Vector *ugfs = Vector_new();
+
   my @tmp_ugfs;
   my $string = $read->cigar_str;
   my $start = $read->start;
