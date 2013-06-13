@@ -125,6 +125,9 @@ Translation *Transcript_getTranslation(Transcript *trans);
 #define Transcript_setSlice(trans,sl) AnnotatedSeqFeature_setSlice((trans),(sl))
 #define Transcript_getSlice(trans) AnnotatedSeqFeature_getSlice((trans))
 
+#define Transcript_setScore(trans,s) SeqFeature_setScore((trans),(s))
+#define Transcript_getScore(trans) SeqFeature_getScore((trans))
+
 #define Transcript_setEditsEnabled(transcript, flag)  (transcript)->editsEnabled = (flag)
 #define Transcript_getEditsEnabled(transcript)  (transcript)->editsEnabled
 

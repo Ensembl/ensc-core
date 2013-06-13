@@ -315,7 +315,6 @@ Exon *IntronSupportingEvidence_findPreviousExon(IntronSupportingEvidence *ise, T
 =cut
 */
 Exon *IntronSupportingEvidence_findNextExon(IntronSupportingEvidence *ise, Transcript *transcript) {
-  
   //Use DB IDs if we have them
   IDType exonId = 0;
 

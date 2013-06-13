@@ -53,6 +53,7 @@ void initEnsC(int argc, char **argv);
 
 typedef int (*SortCompFunc)(const void *a, const void *b);
 int idTypeCompFunc(const void *one, const void *two);
+long *long_new(long val);
 
 
 #endif
