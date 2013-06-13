@@ -96,6 +96,9 @@ Transcript *Transcript_new(void);
 #define Transcript_getExonCount(transcript) Vector_getNumElement((transcript)->exons)
 #define Transcript_sortExons(transcript, func) Vector_sort((transcript)->exons, (func))
 
+// Note: I've decided to implement this call - not sure about whether thats a good idea, but lets give it a go
+#define Transcript_getAllExons(transcript) (transcript)->exons
+
 #define Transcript_removeAllExons(transcript) Vector_removeAll((transcript)->exons)
 
 #define Transcript_setTranslationId(transcript,tid) (transcript)->translationId = (tid)

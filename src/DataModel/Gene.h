@@ -51,6 +51,8 @@ Gene *Gene_new(void);
 #define Gene_setStrand(gene,strand) AnnotatedSeqFeature_setStrand((gene),strand)
 #define Gene_getStrand(gene) AnnotatedSeqFeature_getStrand((gene))
 
+#define Gene_getLength(gene) AnnotatedSeqFeature_getLength((gene))
+
 #define Gene_setSlice(gene,sl) AnnotatedSeqFeature_setSlice((gene),(sl))
 #define Gene_getSlice(gene) AnnotatedSeqFeature_getSlice((gene))
 
@@ -119,9 +121,13 @@ char *Gene_setCanonicalAnnotation(Gene *g, char *canonicalAnnotation);
     for (iter=0; iter<Gene_getTranscriptCount(gene); iter++) { \
       trans = Gene_getTranscriptAt(gene,iter);
 
-Gene *Gene_transformToSlice(Gene *gene, Slice *slice);
-Vector *Gene_getAllExons(Gene *gene);
+Gene *Gene_transfer(Gene *gene, Slice *slice);
+Gene *Gene_transform(Gene *gene, char *csName, char *csVersion, Slice *toSlice);
 
+Vector *Gene_getAllExons(Gene *gene);
+Vector *Gene_getExonCount(Gene *gene);
+
+Gene *Gene_transformToSlice(Gene *gene, Slice *slice);
 Gene *Gene_transformToRawContig(Gene *gene);
 
 Vector *Gene_getAllAttributes(Gene *gene, char *attribCode);

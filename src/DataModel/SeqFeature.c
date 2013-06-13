@@ -47,25 +47,51 @@ ECOSTRING SeqFeature_getSeqName(SeqFeature *sf) {
 }
 
 int SeqFeature_startCompFunc(const void *a, const void *b) {
-  SeqFeature **e1 = (SeqFeature **)a;
-  SeqFeature **e2 = (SeqFeature **)b;
+  SeqFeature *e1 = *((SeqFeature **)a);
+  SeqFeature *e2 = *((SeqFeature **)b);
 
-  if (SeqFeature_getStart(*e1) > SeqFeature_getStart(*e2)) {
+  if (SeqFeature_getStart(e1) > SeqFeature_getStart(e2)) {
     return 1;
-  } else if (SeqFeature_getStart(*e1) < SeqFeature_getStart(*e2)) {
+  } else if (SeqFeature_getStart(e1) < SeqFeature_getStart(e2)) {
     return -1;
   } else {
     return 0;
   }
 }
 
-int SeqFeature_reverseStartCompFunc(const void *a, const void *b) {
-  SeqFeature **e1 = (SeqFeature **)a;
-  SeqFeature **e2 = (SeqFeature **)b;
+int SeqFeature_startEndCompFunc(const void *a, const void *b) {
+  SeqFeature *e1 = *(SeqFeature **)a;
+  SeqFeature *e2 = *(SeqFeature **)b;
 
-  if (SeqFeature_getStart(*e2) > SeqFeature_getStart(*e1)) {
+  if (SeqFeature_getStart(e1) > SeqFeature_getStart(e2)) {
     return 1;
-  } else if (SeqFeature_getStart(*e2) < SeqFeature_getStart(*e1)) {
+  } else if (SeqFeature_getStart(e1) < SeqFeature_getStart(e2)) {
+    return -1;
+  } else {
+    return SeqFeature_getEnd(e1) - SeqFeature_getEnd(e2);
+  }
+}
+
+int SeqFeature_reverseStartCompFunc(const void *a, const void *b) {
+  SeqFeature *e1 = *((SeqFeature **)a);
+  SeqFeature *e2 = *((SeqFeature **)b);
+
+  if (SeqFeature_getStart(e2) > SeqFeature_getStart(e1)) {
+    return 1;
+  } else if (SeqFeature_getStart(e2) < SeqFeature_getStart(e1)) {
+    return -1;
+  } else {
+    return 0;
+  }
+}
+
+int SeqFeature_reverseScoreCompFunc(const void *a, const void *b) {
+  SeqFeature *e1 = *((SeqFeature **)a);
+  SeqFeature *e2 = *((SeqFeature **)b);
+
+  if (SeqFeature_getScore(e2) > SeqFeature_getScore(e1)) {
+    return 1;
+  } else if (SeqFeature_getScore(e2) < SeqFeature_getScore(e1)) {
     return -1;
   } else {
     return 0;

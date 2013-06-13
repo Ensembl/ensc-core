@@ -236,3 +236,59 @@ void Translation_free(Translation *translation) {
 
   printf("Translation_free not implemented\n");
 }
+
+/*
+=head2 genomic_start
+
+    Args        : None
+    Example     : $translation_genomic_start =
+                      $translation->genomic_start();
+    Description : Returns the start position of the translation in
+                  genomic coordinates on the forward strand.
+    Return type : Integer
+    Exceptions  : None
+    Caller      : General
+    Status      : At Risk (Under Development)
+
+=cut
+*/
+// New (don't bother caching because its pretty quick to calculate
+long Translation_getGenomicStart(Translation *translation) {
+  long genomicStart;
+
+  if (Exon_getStrand(Translation_getStartExon(translation)) >= 0) {
+    genomicStart = Exon_getStart(Translation_getStartExon(translation)) + (Translation_getStart(translation) - 1);
+  } else {
+    genomicStart = Exon_getEnd(Translation_getEndExon(translation)) - (Translation_getEnd(translation) - 1);
+  }
+
+  return genomicStart;
+}
+
+/*
+=head2 genomic_end
+
+    Args        : None
+    Example     : $translation_genomic_end = $translation->genomic_end();
+    Description : Returns the end position of the translation in genomic
+                  coordinates on the forward strand.
+    Return type : Integer
+    Exceptions  : None
+    Caller      : General
+    Status      : At Risk (Under Development)
+
+=cut
+*/
+// New
+long Translation_getGenomicEnd(Translation *translation) {
+  long genomicEnd;
+
+  if (Exon_getStrand(Translation_getEndExon(translation)) >= 0) {
+    genomicEnd = Exon_getStart(Translation_getEndExon(translation)) + (Translation_getEnd(translation) - 1);
+  } else {
+    genomicEnd = Exon_getEnd(Translation_getStartExon(translation)) - (Translation_getStart(translation) - 1);
+  }
+
+  return genomicEnd;
+}
+

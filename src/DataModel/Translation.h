@@ -64,6 +64,8 @@ char *Translation_modifyTranslation(Translation *translation, char *seq);
 Vector *Translation_getAllSeqEdits(Translation *translation);
 Vector *Translation_getAllAttributes(Translation *translation, char *attribCode);
 
+long Translation_getGenomicEnd(Translation *translation);
+long Translation_getGenomicStart(Translation *translation);
 
 void Translation_free(Translation *translation);
 

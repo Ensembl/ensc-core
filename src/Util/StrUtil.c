@@ -799,3 +799,11 @@ int StrUtil_rmChar(char *string,char ch)
    string[j]='\0';
    return(j);
 }
+
+int StrUtil_stringCompFunc(const void *a, const void *b) {
+  char *s1 = *((char **)a);
+  char *s2 = *((char **)b);
+
+  return strcmp(s1,s2);
+}
+

@@ -31,6 +31,8 @@ int StrUtil_isLongInteger(long *retVal, char *str);
 int StrUtil_tokenize(char ***tokens, int *ntok, char *string);
 int StrUtil_rmspace(char *string);
 int StrUtil_rmChar(char *string,char ch);
+int StrUtil_stringCompFunc(const void *a, const void *b);
+
 
 
 #ifdef __STRUTIL_MAIN__

@@ -59,20 +59,21 @@ typedef struct SeqFeatureFuncsStruct {
 
 #define SEQFEATURE_DATA \
   ENSROOT_DATA \
-  long        start; \
-  long        end; \
-  signed char phase; \
-  signed char endPhase; \
-  signed char frame; \
-  signed char strand; \
-  char        isSplittable; \
-  ECOSTRING   seqName; \
-  Storable    st; \
-  Analysis *  analysis; \
-  double      pValue; \
-  float       score; \
-  float       percentId; \
-  BaseContig *contig;
+  long         start; \
+  long         end; \
+  signed char  phase; \
+  signed char  endPhase; \
+  signed char  frame; \
+  signed char  strand; \
+  char         isSplittable; \
+  ECOSTRING    seqName; \
+  Storable     st; \
+  Analysis *   analysis; \
+  double       pValue; \
+  float        score; \
+  float        percentId; \
+  unsigned int flags; \
+  BaseContig * contig;
 
 #define FUNCSTRUCTTYPE SeqFeatureFuncs
 struct SeqFeatureStruct {
@@ -81,6 +82,10 @@ struct SeqFeatureStruct {
 #undef FUNCSTRUCTTYPE
 
 SeqFeature *SeqFeature_new(void);
+
+#define SeqFeature_addFlag(sf, f) (sf)->flags |= (f)
+#define SeqFeature_getFlags(sf) (sf)->flags
+#define SeqFeature_removeFlag(sf, f) (sf)->flags &= ~((f))
 
 #define SeqFeature_setStart(sf,s) ((sf)->funcs->setStart == NULL ? ((sf)->start = (s)) : \
                                                                    ((sf)->funcs->setStart((sf),(s))))
@@ -138,7 +143,9 @@ Vector *SeqFeature_project(SeqFeature *sf, char *csName, char *csVersion);
 SeqFeature *SeqFeature_transform(SeqFeature *sf, char *csName, char *csVersion, Slice *toSlice);
 
 int SeqFeature_startCompFunc(const void *a, const void *b);
+int SeqFeature_startEndCompFunc(const void *a, const void *b);
 int SeqFeature_reverseStartCompFunc(const void *a, const void *b);
+int SeqFeature_reverseScoreCompFunc(const void *a, const void *b);
 
 
 Vector *SeqFeature_transformToRawContigImpl(SeqFeature *sf);

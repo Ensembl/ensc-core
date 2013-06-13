@@ -48,6 +48,10 @@ struct ExonStruct {
 
 #define Exon_isStored(exon, db) Storable_isStored(&((exon)->st), (db))
 
+#define Exon_addFlag(exon, f) SeqFeature_addFlag((exon), (f))
+#define Exon_getFlags(exon) SeqFeature_getFlags(exon)
+#define Exon_removeFlag(exon, f) SeqFeature_removeFlag((exon), (f))
+
 #define Exon_getSeqRegionStart(exon) SeqFeature_getSeqRegionStart((exon))
 #define Exon_getSeqRegionEnd(exon) SeqFeature_getSeqRegionEnd((exon))
 #define Exon_getSeqRegionStrand(exon) SeqFeature_getSeqRegionStrand((exon))

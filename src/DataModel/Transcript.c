@@ -485,6 +485,52 @@ Vector *Transcript_getAllIntronSupportingEvidence(Transcript *transcript) {
   return transcript->iseVector;
 }
 
+/*
+=head2 add_IntronSupportingEvidence
+
+  Arg [1]     : Bio::EnsEMBL::IntronSupportEvidence Object to add
+  Example     : $ise->add_IntronSupportingEvidence($ise);
+  Description : Adds the IntronSupportEvidence instance to this Transcript. The
+                code checks to see if it is a unique ISE instance
+  Returntype  : Boolean; true means it was added. False means it was not
+                as this ISE was already attached
+  Exceptions  : None
+
+=cut
+*/
+// New, but half hearted equals check implementation
+int Transcript_addIntronSupportingEvidence(Transcript *transcript, IntronSupportingEvidence *ise) {
+  int unique = 1;
+
+  if (transcript->iseVector == NULL) {
+    transcript->iseVector = Vector_new();
+  } else {
+    int i;
+    for (i=0; i<Vector_getNumElement(transcript->iseVector); i++) {
+      IntronSupportingEvidence *compIse = Vector_getElementAt(transcript->iseVector, i);
+      
+//Equals check not same as perl - I don't care that much and its acres of code to do these checks
+      if ( compIse == ise || 
+           ( IntronSupportingEvidence_getStart(ise) == IntronSupportingEvidence_getStart(ise) &&
+             IntronSupportingEvidence_getEnd(ise) == IntronSupportingEvidence_getEnd(ise) &&
+             IntronSupportingEvidence_getStrand(ise) == IntronSupportingEvidence_getStrand(ise) &&
+             Slice_getSeqRegionId(IntronSupportingEvidence_getSlice(ise)) == Slice_getSeqRegionId(IntronSupportingEvidence_getSlice(ise)) &&
+             IntronSupportingEvidence_getAnalysis(ise) == IntronSupportingEvidence_getAnalysis(ise)
+           )
+         ) {
+        unique = 0;
+        break;
+      }
+    }
+  }
+
+  if (unique) {
+    Vector_addElement(transcript->iseVector, ise);
+    return 1;
+  }
+  return 0;
+}
+
 
 void Transcript_flushExons(Transcript *trans) {
   Transcript_removeAllExons(trans);

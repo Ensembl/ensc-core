@@ -41,6 +41,146 @@ Gene *Gene_shallowCopy(Gene *gene) {
 }
 
 /*
+=head2 transform
+
+  Arg [1]    : String - coordinate system name to transform to
+  Arg [2]    : String - coordinate system version
+  Example    : my $new_gene = $gene->transform('supercontig');
+  Description: Moves this gene to the given coordinate system. If this gene has
+               Transcripts attached, they move as well.
+  Returntype : Bio::EnsEMBL::Gene
+  Exceptions : throw on wrong parameters
+  Caller     : general
+  Status     : Stable
+
+=cut
+*/
+// New NIY
+
+Gene *Gene_transform(Gene *gene, char *csName, char *csVersion, Slice *toSlice) {
+  fprintf(stderr, "Error: Gene_transform not implemented yet\n");
+  exit(1);
+
+/*
+  my $self = shift;
+
+  # catch for old style transform calls
+  if( !@_  || ( ref $_[0] && ($_[0]->isa( "Bio::EnsEMBL::Slice" ) or $_[0]->isa( "Bio::EnsEMBL::LRGSlice" )) )) {
+    deprecate('Calling transform without a coord system name is deprecated.');
+    return $self->_deprecated_transform(@_);
+  }
+
+  my $new_gene = $self->SUPER::transform(@_);
+
+  if ( !defined($new_gene) ) {
+    # check if this gene projects at all to requested coord system,
+    #  if not we are done.
+    my @segments = @{ $self->project(@_) };
+    if ( !@segments ) {
+      return undef;
+    }
+  }
+
+  #
+  # If you are transforming the gene then make sure the transcripts and exons are loaded
+  #
+
+  foreach my $tran (@{$self->get_all_Transcripts}){
+    $tran->get_all_Exons();
+  }
+
+  if( exists $self->{'_transcript_array'} ) {
+    my @new_transcripts;
+    my ( $strand, $slice );
+    my $low_start = POSIX::INT_MAX;
+    my $hi_end = POSIX::INT_MIN;
+    for my $old_transcript ( @{$self->{'_transcript_array'}} ) {
+      my $new_transcript = $old_transcript->transform( @_ );
+      # this can fail if gene transform failed
+
+      return undef unless $new_transcript;
+
+      if( ! defined $new_gene ) {
+        if( $new_transcript->start() < $low_start ) {
+          $low_start = $new_transcript->start();
+        }
+        if( $new_transcript->end() > $hi_end ) {
+          $hi_end = $new_transcript->end();
+        }
+        $slice = $new_transcript->slice();
+        $strand = $new_transcript->strand();
+      }
+      push( @new_transcripts, $new_transcript );
+    }
+
+    if( ! defined $new_gene ) {
+      %$new_gene = %$self;
+      bless $new_gene, ref( $self );
+
+      $new_gene->start( $low_start );
+      $new_gene->end( $hi_end );
+      $new_gene->strand( $strand );
+      $new_gene->slice( $slice );
+    }
+
+    $new_gene->{'_transcript_array'} = \@new_transcripts;
+  }
+
+  if(exists $self->{attributes}) {
+    $new_gene->{attributes} = [@{$self->{attributes}}];
+  }
+
+  return $new_gene;
+*/
+}
+
+
+
+/*
+=head2 transfer
+
+  Arg [1]    : Bio::EnsEMBL::Slice $destination_slice
+  Example    : my $new_gene = $gene->transfer($slice);
+  Description: Moves this Gene to given target slice coordinates. If Transcripts
+               are attached they are moved as well. Returns a new gene.
+  Returntype : Bio::EnsEMBL::Gene
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+*/
+// New
+Gene *Gene_transfer(Gene *gene, Slice *slice) {
+  // Call super transfer
+  Gene *newGene = SeqFeature_transfer(gene, slice);
+
+  if (newGene == NULL) {
+    return NULL;
+  }
+
+  if (gene->transcripts &&  Vector_getNumElement(gene->transcripts)) {
+    Vector *newTranscripts;
+    int i;
+    for (i=0; i<Vector_getNumElement(gene->transcripts); i++) {
+      Transcript *oldTranscript = Vector_getElementAt(gene->transcripts, i);
+      Transcript *newTranscript = Transcript_transfer(oldTranscript, slice);
+      Vector_addElement(newTranscripts, newTranscript);
+    }
+    newGene->transcripts = newTranscripts;
+  }
+
+/* Seems very hacky - don't do for now
+  if (exists $self->{attributes}) {
+    $new_gene->{attributes} = [@{$self->{attributes}}];
+  }
+*/
+
+  return newGene;
+}
+
+
+/*
 =head2 get_all_Attributes
 
   Arg [1]    : (optional) String $attrib_code
@@ -249,6 +389,29 @@ Vector *Gene_getAllExons(Gene *gene) {
   IDHash_free(exonHash,NULL);
   
   return exonVector;
+}
+
+Vector *Gene_getExonCount(Gene *gene) {
+  IDHash *exonHash = IDHash_new(IDHASH_SMALL);
+  int i;
+  int nExon = 0;
+
+  for (i=0;i<Gene_getTranscriptCount(gene);i++) {
+    Transcript *trans = Gene_getTranscriptAt(gene,i);
+    int j;
+
+    for (j=0;j<Transcript_getExonCount(trans);j++) {
+      Exon *exon = Transcript_getExonAt(trans,j);
+      if (!IDHash_contains(exonHash,(IDType)exon)) {
+        IDHash_add(exonHash,(IDType)exon,exon);
+        nExon++;
+      }
+    }
+  }
+
+  IDHash_free(exonHash,NULL);
+  
+  return nExon;
 }
 
 Gene *Gene_transformToSlice(Gene *gene, Slice *slice) {
