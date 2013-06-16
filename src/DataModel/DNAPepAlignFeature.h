@@ -89,6 +89,7 @@ int DNAPepAlignFeature_getQueryUnit(void);
 
 #define DNAPepAlignFeature_free(fp) BaseAlignFeature_free((fp))
 #define DNAPepAlignFeature_shallowCopy(fp) DNAPepAlignFeature_shallowCopyImpl((fp))
+#define DNAPepAlignFeature_deepCopy(fp) DNAPepAlignFeature_deepCopyImpl((fp))
 
 void DNAPepAlignFeature_freeImpl(DNAPepAlignFeature *dpaf);
 DNAPepAlignFeature *DNAPepAlignFeature_shallowCopyImpl(DNAPepAlignFeature *dpaf);

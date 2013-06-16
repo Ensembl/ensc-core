@@ -49,17 +49,23 @@ struct TranscriptStruct {
 
 #define Transcript_isStored(transcript, db) Storable_isStored(&((transcript)->st), (db))
 
+char *Transcript_getSplicedSeq(Transcript *trans);
 ECOSTRING Transcript_setBiotype(Transcript *transcript, char *biotype);
 #define Transcript_getBiotype(transcript)  (transcript)->biotype
 
 Vector *Transcript_getAllSupportingFeatures(Transcript *transcript);
 Vector *Transcript_getAllIntronSupportingEvidence(Transcript *transcript);
 
+int Transcript_addIntronSupportingEvidence(Transcript *transcript, IntronSupportingEvidence *ise);
+
 Vector *Transcript_getAllAttributes(Transcript *transcript, char *attribCode);
 
 #define Transcript_setIsCurrent(trans,isC)  StableIdInfo_setIsCurrent(&((trans)->si),(isC))
 #define Transcript_getIsCurrent(trans)  StableIdInfo_getIsCurrent(&((trans)->si))
 
+ECOSTRING DNAAlignFeature_setExtraData(DNAAlignFeature *fp, char *extraData);
+#define Transcript_setExtraData(trans, ed)  (trans)->extraData = (ed)
+#define Transcript_getExtraData(trans)  (trans)->extraData
 
 #define Transcript_setIsCanonical(transcript, flag)  (transcript)->isCanonical = (flag)
 int Transcript_getIsCanonical(Transcript *transcript);

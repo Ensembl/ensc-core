@@ -49,3 +49,11 @@ DNAPepAlignFeature *DNAPepAlignFeature_shallowCopyImpl(DNAPepAlignFeature *dpaf)
 
   return newDNAPepAlignFeature;
 }
+
+DNAPepAlignFeature *DNAPepAlignFeature_deepCopyImpl(DNAPepAlignFeature *dpaf) {
+  DNAPepAlignFeature *newDNAPepAlignFeature = DNAPepAlignFeature_new();
+
+  memcpy(newDNAPepAlignFeature,dpaf,sizeof(DNAPepAlignFeature));
+
+  return newDNAPepAlignFeature;
+}

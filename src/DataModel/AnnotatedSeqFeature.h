@@ -52,7 +52,7 @@ struct AnnotatedSeqFeatureStruct {
 #define AnnotatedSeqFeature_getStrand(asf) SeqFeature_getStrand((asf))
 
 #define AnnotatedSeqFeature_setStableId(asf,stableId)  StableIdInfo_setStableId(&((asf)->si),(stableId))
-char *AnnotatedSeqFeature_getStableId(AnnotatedSeqFeature *asf);
+#define AnnotatedSeqFeature_getStableId(asf)  StableIdInfo_getStableId(&((asf)->si))
 
 #define AnnotatedSeqFeature_setVersion(asf,ver)  StableIdInfo_setVersion(&((asf)->si),(ver))
 int AnnotatedSeqFeature_getVersion(AnnotatedSeqFeature *asf);

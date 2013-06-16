@@ -6,6 +6,7 @@
 #include "TranscriptAdaptor.h"
 #include "TranslationAdaptor.h"
 #include "IntronSupportingEvidenceAdaptor.h"
+#include "IntronSupportingEvidence.h"
 #include "TranscriptSupportingFeatureAdaptor.h"
 #include "AttributeAdaptor.h"
 #include "DBEntryAdaptor.h"
@@ -360,31 +361,37 @@ Transcript *Transcript_transfer(Transcript *transcript, Slice *slice) {
   }
 
   if (notWarned) {
-    fprintf(stderr,"support and translation transfer not implemented yet for transcript\n");
+    fprintf(stderr,"intron support and cache clearing not implemented yet for transcript transfer\n");
     notWarned = 0;
   }
 
+  if (transcript->supportingEvidence != NULL && Vector_getNumElement(transcript->supportingEvidence) != 0) {
+    Vector *newFeatures = Vector_new();
+
+    int i;
+    for (i=0; i<Vector_getNumElement(transcript->supportingEvidence); i++) {
+      SeqFeature *oldFeature = Vector_getElementAt(transcript->supportingEvidence, i);
+      SeqFeature *newFeature = SeqFeature_transfer(oldFeature, slice);
+      Vector_addElement(newFeatures, newFeature);
+    }
+    newTranscript->supportingEvidence = newFeatures;
+  }
+
+  if (transcript->iseVector != NULL && Vector_getNumElement(transcript->iseVector)) {
+    Vector *newFeatures = Vector_new();
+
+    int i;
+    for (i=0; i<Vector_getNumElement(transcript->iseVector); i++) {
+      SeqFeature *oldFeature = Vector_getElementAt(transcript->iseVector, i);
+      SeqFeature *newFeature = SeqFeature_transfer(oldFeature, slice);
+      Vector_addElement(newFeatures, newFeature);
+    }
+    newTranscript->iseVector = newFeatures;
+  }
+
+
 /*
-  if( exists $self->{'_supporting_evidence'} ) {
-    my @new_features;
-    for my $old_feature ( @{$self->{'_supporting_evidence'}} ) {
-      my $new_feature = $old_feature->transfer( @_ );
-      push( @new_features, $new_feature );
-    }
-    $new_transcript->{'_supporting_evidence'} = \@new_features;
-  }
-
-  if(exists $self->{_ise_array}) {
-    my @new_features;
-    foreach my $old_feature ( @{$self->{_ise_array}} ) {
-      my $new_feature = $old_feature->transfer(@_);
-      push( @new_features, $new_feature );
-    }
-    $new_transcript->{_ise_array} = \@new_features;
-  }
-
-
-  # flush cached internal values that depend on the exon coords
+  // flush cached internal values that depend on the exon coords
   $new_transcript->{'transcript_mapper'}   = undef;
   $new_transcript->{'coding_region_start'} = undef;
   $new_transcript->{'coding_region_end'}   = undef;

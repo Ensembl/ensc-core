@@ -125,7 +125,7 @@ Gene *Gene_transfer(Gene *gene, Slice *slice);
 Gene *Gene_transform(Gene *gene, char *csName, char *csVersion, Slice *toSlice);
 
 Vector *Gene_getAllExons(Gene *gene);
-Vector *Gene_getExonCount(Gene *gene);
+int Gene_getExonCount(Gene *gene);
 
 Gene *Gene_transformToSlice(Gene *gene, Slice *slice);
 Gene *Gene_transformToRawContig(Gene *gene);

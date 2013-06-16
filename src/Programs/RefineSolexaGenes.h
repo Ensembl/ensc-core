@@ -7,6 +7,7 @@
 #include "StringHash.h"
 #include "SliceAdaptor.h"
 #include "Analysis.h"
+#include "Transcript.h"
 
 #include "sam.h"
 #include "bam.h"
@@ -17,6 +18,7 @@
 typedef struct RefineSolexaGenesStruct {
   char *badModelsType;
   char *bestScoreType;
+  char *inputId;
   char *intronDb;
   char *modelDb;
   char *modelLogicName;
@@ -46,7 +48,8 @@ typedef struct RefineSolexaGenesStruct {
 
   Slice *chrSlice;
 
-  Vector *extraExons;
+  StringHash *extraExons;
+
   Vector *intronBamFiles;
   Vector *intronFeatures;
   Vector *logicNames;
@@ -80,12 +83,19 @@ typedef struct IntronBamConfigStruct {
   char *fileName;
 } IntronBamConfig;
 
+typedef struct ORFRangeStruct {
+  long length;
+  long start;
+  long end;
+} ORFRange;
+
+
+
 RefineSolexaGenes *RefineSolexaGenes_new(char *configFile);
 DBAdaptor *RefineSolexaGenes_getDbAdaptor(RefineSolexaGenes *rsg, char *alias);
 void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg);
 void  RefineSolexaGenes_run(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg);
-Analysis *RefineSolexaGenes_getAnalysis(RefineSolexaGenes *rsg);
 Analysis *RefineSolexaGenes_createAnalysisObject(RefineSolexaGenes *rsg, char *logicName);
 Vector *RefineSolexaGenes_reclusterModels(RefineSolexaGenes *rsg, Vector *clusters, Vector **retNewClusters);
 ModelCluster *RefineSolexaGenes_recalculateCluster(RefineSolexaGenes *rsg, Vector *genes);
@@ -115,15 +125,15 @@ Slice *RefineSolexaGenes_getChrSlice(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setChrSlice(RefineSolexaGenes *rsg, Slice *slice);
 Vector *RefineSolexaGenes_getIntronFeatures(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setIntronFeatures(RefineSolexaGenes *rsg, Vector *features);
-Vector *RefineSolexaGenes_getExtraExons(RefineSolexaGenes *rsg);
-void RefineSolexaGenes_setExtraExons(RefineSolexaGenes *rsg, Vector *extraExons);
+StringHash *RefineSolexaGenes_getExtraExons(RefineSolexaGenes *rsg);
+void RefineSolexaGenes_setExtraExons(RefineSolexaGenes *rsg, StringHash *extraExons);
 void RefineSolexaGenes_setIntronDb(RefineSolexaGenes *rsg, char *intronDb);
 char *RefineSolexaGenes_getIntronDb(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setOutputDb(RefineSolexaGenes *rsg, char *outputDb);
 char *RefineSolexaGenes_getOutputDb(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setModelDb(RefineSolexaGenes *rsg, char *modelDb);
 char *RefineSolexaGenes_getModelDb(RefineSolexaGenes *rsg);
-void RefineSolexaGenes_setLogicName(RefineSolexaGenes *rsg, Vector *logicNames);
+void RefineSolexaGenes_setLogicNames(RefineSolexaGenes *rsg, Vector *logicNames);
 Vector *RefineSolexaGenes_getLogicNames(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setRetainedIntronPenalty(RefineSolexaGenes *rsg, double retainedIntronPenalty);
 double RefineSolexaGenes_getRetainedIntronPenalty(RefineSolexaGenes *rsg);
@@ -173,15 +183,25 @@ void RefineSolexaGenes_setFilterOnOverlapThreshold(RefineSolexaGenes *rsg, int f
 int RefineSolexaGenes_getFilterOnOverlapThreshold(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setRejectIntronCutoff(RefineSolexaGenes *rsg, double rejectIntronCutoff);
 double RefineSolexaGenes_getRejectIntronCutoff(RefineSolexaGenes *rsg);
-void RefineSolexaGenes_setDb(RefineSolexaGenes *rsg, DBAdaptor *db);
-DBAdaptor *RefineSolexaGenes_getDb(RefineSolexaGenes *rsg);
 
-Vector *RefineSolexaGenes_getOutput(RefineSolexaGenes *rsg);
-void RefineSolexaGenes_addToOutput(RefineSolexaGenes *rsg, Gene *gene);
 
 // To move
-   Transcript *TranscriptUtils_computeTranslation(Transcript *tran);
-   Gene *TranscriptUtils_convertToGene(Transcript *t, Analysis *analysis, char *biotype);
-   Exon *ExonUtils_cloneExon(Exon *exon);
+  Transcript *TranslationUtils_addORFToTranscript(ORFRange *orf, Transcript *transcript);
+  Transcript *TranslationUtils_computeTranslation(Transcript *tran);
+  Gene *TranscriptUtils_convertToGene(Transcript *t, Analysis *analysis, char *biotype);
+  Exon *ExonUtils_createExon(long start, long end, int phase, int endPhase, int strand, Analysis *analysis, Vector *supportingFeatures, IDType dbId, Slice *slice, char *stableId, int version);
+  Exon *ExonUtils_cloneExon(Exon *exon);
+  BaseAlignFeature *EvidenceUtils_cloneEvidence(BaseAlignFeature *feature);
+  Slice *RefineSolexaGenes_fetchSequence(RefineSolexaGenes *rsg, char *name, DBAdaptor *db, Vector *repeatMaskTypes, int softMask);
+  void RefineSolexaGenes_setInputId(RefineSolexaGenes *rsg, char *inputId);
+  char *RefineSolexaGenes_getInputId(RefineSolexaGenes *rsg);
+  Vector *RefineSolexaGenes_getOutput(RefineSolexaGenes *rsg);
+  void RefineSolexaGenes_addToOutput(RefineSolexaGenes *rsg, Gene *gene);
+  void RefineSolexaGenes_setDb(RefineSolexaGenes *rsg, DBAdaptor *db);
+  DBAdaptor *RefineSolexaGenes_getDb(RefineSolexaGenes *rsg);
+  Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMet, int minLength);
+
+  Analysis *RefineSolexaGenes_setAnalysis(RefineSolexaGenes *rsg, Analysis *analysis);
+  Analysis *RefineSolexaGenes_getAnalysis(RefineSolexaGenes *rsg);
 
 #endif

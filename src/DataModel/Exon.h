@@ -129,6 +129,8 @@ Exon *Exon_transformSliceToRawContigImpl(Exon *exon);
 #define Exon_transformToSlice(exon,slice) AnnotatedSeqFeature_transformToSlice((exon), (slice))
 #define Exon_transformToRawContig(exon) AnnotatedSeqFeature_transformToRawContig((exon))
 
+void Exon_flushSupportingFeatures(Exon *exon);
+
 void Exon_freeImpl(Exon *exon);
 #define Exon_free(exon) AnnotatedSeqFeature_free((exon))
 

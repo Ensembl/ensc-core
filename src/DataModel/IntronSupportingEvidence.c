@@ -358,8 +358,15 @@ Exon *IntronSupportingEvidence_findNextExon(IntronSupportingEvidence *ise, Trans
   return NULL;
 }
 
+IntronSupportingEvidence *IntronSupportingEvidence_shallowCopyImpl(IntronSupportingEvidence *ise) {
+  IntronSupportingEvidence *newIse = IntronSupportingEvidence_new();
+
+  memcpy(newIse,ise,sizeof(IntronSupportingEvidence));
+
+  return newIse;
+}
+
 
 void IntronSupportingEvidence_freeImpl(IntronSupportingEvidence *ise) {
   fprintf(stderr, "NIY: IntronSupportingEvidenceFree\n");
-
 }

@@ -65,3 +65,11 @@ DNAAlignFeature *DNAAlignFeature_shallowCopyImpl(DNAAlignFeature *daf) {
 
   return newDNAAlignFeature;
 }
+
+DNAAlignFeature *DNAAlignFeature_deepCopyImpl(DNAAlignFeature *daf) {
+  DNAAlignFeature *newDNAAlignFeature = DNAAlignFeature_new();
+
+  memcpy(newDNAAlignFeature,daf,sizeof(DNAAlignFeature));
+
+  return newDNAAlignFeature;
+}

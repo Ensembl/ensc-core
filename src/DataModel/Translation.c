@@ -26,6 +26,31 @@ Translation *Translation_new() {
   return t;
 }
 
+
+/*
+=head2 length
+
+  Example    : print "Peptide length =", $translation->length();
+  Description: Retrieves the length of the peptide sequence (i.e. number of
+               amino acids) represented by this Translation object.
+  Returntype : int
+  Exceptions : none
+  Caller     : webcode (protview etc.)
+  Status     : Stable
+
+=cut
+*/
+/* NIY - requires 'seq' method which is fiddly - it requires 'transcript' method
+long Translation_getLength(Translation *translation) {
+  
+  my $seq = $self->seq();
+
+  return ($seq) ? CORE::length($seq) : 0;
+}
+*/
+
+
+
 // NIY:
 // Quick hack implementation of this because I got bored getting the gene storing working - revisit
 Vector *Translation_getAllDBEntries(Translation *t) {

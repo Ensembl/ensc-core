@@ -160,7 +160,7 @@ Gene *Gene_transfer(Gene *gene, Slice *slice) {
   }
 
   if (gene->transcripts &&  Vector_getNumElement(gene->transcripts)) {
-    Vector *newTranscripts;
+    Vector *newTranscripts = Vector_new();
     int i;
     for (i=0; i<Vector_getNumElement(gene->transcripts); i++) {
       Transcript *oldTranscript = Vector_getElementAt(gene->transcripts, i);
@@ -391,7 +391,7 @@ Vector *Gene_getAllExons(Gene *gene) {
   return exonVector;
 }
 
-Vector *Gene_getExonCount(Gene *gene) {
+int Gene_getExonCount(Gene *gene) {
   IDHash *exonHash = IDHash_new(IDHASH_SMALL);
   int i;
   int nExon = 0;

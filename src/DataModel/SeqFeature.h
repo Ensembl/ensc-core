@@ -73,6 +73,7 @@ typedef struct SeqFeatureFuncsStruct {
   float        score; \
   float        percentId; \
   unsigned int flags; \
+  void *       extraData; \
   BaseContig * contig;
 
 #define FUNCSTRUCTTYPE SeqFeatureFuncs

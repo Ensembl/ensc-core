@@ -12,8 +12,9 @@ typedef struct DNAAlignFeatureFuncsStruct {
   
 #define DNAALIGNFEATURE_DATA \
   BASEALIGNFEATURE_DATA \
-  ECOSTRING extraData; \
   IDType pairDNAAlignFeatureId;
+
+//  ECOSTRING extraData; \
 
 #define FUNCSTRUCTTYPE DNAAlignFeatureFuncs
 struct DNAAlignFeatureStruct {
@@ -113,6 +114,8 @@ int DNAAlignFeature_getQueryUnit(void);
 #define DNAAlignFeature_free(fp) BaseAlignFeature_free((fp))
 // Why go down the inheritance tree here??
 #define DNAAlignFeature_shallowCopy(fp) DNAAlignFeature_shallowCopyImpl((fp))
+
+#define DNAAlignFeature_deepCopy(fp) DNAAlignFeature_deepCopyImpl((fp))
 
 #define DNAAlignFeature_getLength(fp) BaseAlignFeature_getLength(fp)
 

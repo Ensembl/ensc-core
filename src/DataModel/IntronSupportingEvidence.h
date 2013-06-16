@@ -29,6 +29,7 @@ struct IntronSupportingEvidenceStruct {
 
 IntronSupportingEvidence *IntronSupportingEvidence_new(void);
 Intron *IntronSupportingEvidence_getIntron(IntronSupportingEvidence *ise, Transcript *transcript);
+void IntronSupportingEvidence_setValuesFromIntron(IntronSupportingEvidence *ise, Intron *intron);
 int IntronSupportingEvidence_hasLinkedTranscripts(IntronSupportingEvidence *ise);
 Exon *IntronSupportingEvidence_findPreviousExon(IntronSupportingEvidence *ise, Transcript *transcript);
 Exon *IntronSupportingEvidence_findNextExon(IntronSupportingEvidence *ise, Transcript *transcript);
@@ -76,11 +77,14 @@ void IntronSupportingEvidence_freeImpl(IntronSupportingEvidence *ise);
 #define IntronSupportingEvidence_getSeqRegionEnd(ise) SeqFeature_getSeqRegionEnd((ise))
 #define IntronSupportingEvidence_getSeqRegionStrand(ise) SeqFeature_getSeqRegionStrand((ise))
 
+IntronSupportingEvidence *IntronSupportingEvidence_shallowCopyImpl(IntronSupportingEvidence *ise);
+#define IntronSupportingEvidence_shallowCopy(ise) SeqFeature_shallowCopy((ise))
+
 #ifdef __INTRONSUPPORTINGEVIDENCE_MAIN__
   IntronSupportingEvidenceFuncs 
     intronSupportingEvidenceFuncs = {
                         IntronSupportingEvidence_freeImpl, // free
-                        NULL, // shallowCopy
+                        IntronSupportingEvidence_shallowCopyImpl, // shallowCopy
                         NULL, // deepCopy
                         NULL, // getStart
                         NULL, // setStart

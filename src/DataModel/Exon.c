@@ -104,6 +104,28 @@ void Exon_getHashKey(Exon *exon, char *hashKey) {
   return;
 }
 
+/*
+=head2 flush_supporting_features
+
+  Example     : $exon->flush_supporting_features;
+  Description : Removes all supporting evidence from the exon.
+  Return type : (Empty) listref
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+*/
+// New
+void Exon_flushSupportingFeatures(Exon *exon) {
+  if (exon->supportingFeatures != NULL) {
+// NIY: Do we need to free features??
+    Vector_free(exon->supportingFeatures);
+  }
+
+  exon->supportingFeatures = Vector_new();
+}
+
 
 Exon *Exon_shallowCopyImpl(Exon *exon) {
   Exon *newExon = Exon_new();
@@ -202,19 +224,22 @@ Exon *Exon_transfer(Exon *exon, Slice *slice) {
   }
 
   if (notWarned) {
-    fprintf(stderr,"support transfer not implemented yet for exon\n");
+    fprintf(stderr,"seq cache clearing not implemented yet for exon\n");
     notWarned = 0;
   }
-/*
-  if( exists $self->{'_supporting_evidence'} ) {
-    my @new_features;
-    for my $old_feature ( @{$self->{'_supporting_evidence'}} ) {
-      my $new_feature = $old_feature->transfer( @_ );
-      push( @new_features, $new_feature );
+  if (exon->supportingFeatures != NULL && Vector_getNumElement(exon->supportingFeatures) != 0) {
+    Vector *newFeatures = Vector_new();
+
+    int i;
+    for (i=0; i<Vector_getNumElement(exon->supportingFeatures); i++) {
+      SeqFeature *oldFeature = Vector_getElementAt(exon->supportingFeatures, i);
+      SeqFeature *newFeature = SeqFeature_transfer(oldFeature, slice);
+      Vector_addElement(newFeatures, newFeature);
     }
-    $new_exon->{'_supporting_evidence'} = \@new_features;
+    newExon->supportingFeatures = newFeatures;
   }
 
+/*
   #dont want to share the same sequence cache
   delete $new_exon->{'_seq_cache'};
 */
@@ -386,8 +411,8 @@ Vector *Exon_getAllSupportingFeaturesImpl(Exon *exon) {
   if (!exon->supportingFeatures)  {
     if (Exon_getAdaptor(exon)) {
       DBAdaptor *dba = Exon_getAdaptor(exon)->dba;
-      SupportingFeatureAdaptor *sfa=DBAdaptor_getSupportingFeatureAdaptor(dba);
-      exon->supportingFeatures=SupportingFeatureAdaptor_fetchAllByExon(sfa,exon);
+      SupportingFeatureAdaptor *sfa = DBAdaptor_getSupportingFeatureAdaptor(dba);
+      exon->supportingFeatures = SupportingFeatureAdaptor_fetchAllByExon(sfa,exon);
     }
   }
 

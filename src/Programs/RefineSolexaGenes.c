@@ -13,10 +13,12 @@
 #include "Slice.h"
 #include "StrUtil.h"
 #include "DNAAlignFeature.h"
+#include "DNAPepAlignFeature.h"
 #include "Gene.h"
 #include "Intron.h"
 #include "IntronSupportingEvidence.h"
 #include "Transcript.h"
+#include "translate.h"
 
 #include "sam.h"
 #include "bam.h"
@@ -71,6 +73,31 @@ int CigarBlock_startCompFunc(const void *a, const void *b) {
 
 void CigarBlock_free(CigarBlock *block) {
   free(block);
+}
+
+IntronBamConfig *IntronBamConfig_new(char *fileName, int mixedBam, int depth, Vector *groupNames) {
+  IntronBamConfig *ibc;
+
+  if ((ibc = (IntronBamConfig *)calloc(1,sizeof(IntronBamConfig))) == NULL) {
+    fprintf(stderr,"Failed allocating IntronBamConfig\n");
+    exit(1);
+  }
+  StrUtil_copyString(&ibc->fileName, fileName, 0);
+  ibc->mixedBam   = mixedBam;
+  ibc->depth      = depth;
+  ibc->groupNames = groupNames;
+
+  return ibc;
+}
+
+void IntronBamConfig_free(IntronBamConfig *ibc) {
+  if (ibc->fileName) free(ibc->fileName);
+  
+  if (ibc->groupNames) {
+    Vector_setFreeFunc(ibc->groupNames, free);
+    Vector_free(ibc->groupNames);
+  }
+  free(ibc);
 }
 
 typedef struct ModelStruct {
@@ -149,7 +176,6 @@ void ExtraExonData_free(ExtraExonData *eed) {
   free(eed);
 }
 
-
 typedef struct IntronCoordsStruct {
   long prevExonEnd;
   long nextExonStart;
@@ -193,41 +219,74 @@ void ModelCluster_free(ModelCluster *mc) {
   free(mc);
 }
 
+#define RSG_DRIVER
 #ifdef RSG_DRIVER
 int main(int argc, char *argv[]) {
   RefineSolexaGenes *rsg = RefineSolexaGenes_new(NULL);
 
-/*
-  RefineSolexaGenes_setIntronDb(rsg, char *intronDb);
-  RefineSolexaGenes_setOutputDb(rsg, char *outputDb);
-  RefineSolexaGenes_setModelDb(rsg, char *modelDb);
-  RefineSolexaGenes_setLogicNames(rsg, Vector *logicNames);
-  RefineSolexaGenes_setRetainedIntronPenalty(rsg, double retainedIntronPenalty);
-  RefineSolexaGenes_setMinIntronSize(rsg, int minIntronSize);
-  RefineSolexaGenes_setMaxIntronSize(rsg, int maxIntronSize);
-  RefineSolexaGenes_setBestScoreType(rsg, char *bestScoreType);
-  RefineSolexaGenes_setOtherNum(rsg, int otherNum);
-  RefineSolexaGenes_setOtherNum(rsg, int otherNum);
-  RefineSolexaGenes_setOtherIsoformsType(rsg, char *otherIsoformsType);
-  RefineSolexaGenes_setModelLogicName(rsg, char *modelLN);
-  RefineSolexaGenes_setBadModelsType(rsg, char *badModelsType);
-  RefineSolexaGenes_setMaxNum(rsg, int maxNum);
-  RefineSolexaGenes_setMaxRecursions(rsg, int maxRecursions);
-  RefineSolexaGenes_setMinSingleExonLength(rsg, int minSingleExonLength);
-  RefineSolexaGenes_setMinSingleExonCDSLength(rsg, int minSingleExonCDSLength);
-  RefineSolexaGenes_setSingleExonModelType(rsg, char *singleExonModelType);
-  RefineSolexaGenes_setStrictInternalSpliceSites(rsg, int strictInternalSpliceSites);
-  RefineSolexaGenes_setStrictInternalEndSpliceSites(rsg, int strictInternalEndSpliceSites);
-  RefineSolexaGenes_setIntronBamFiles(rsg, Vector *intronBamFiles);
-  RefineSolexaGenes_setWriteIntrons(rsg, int writeIntrons);
-  RefineSolexaGenes_setTrimUtr(rsg, int trimUtr);
-  RefineSolexaGenes_setMax3PrimeExons(rsg, int max3PrimeExons);
-  RefineSolexaGenes_setMax3PrimeLength(rsg, int max3PrimeLength);
-  RefineSolexaGenes_setMax5PrimeExons(rsg, int max5PrimeExons);
-  RefineSolexaGenes_setMax5PrimeLength(rsg, int max5PrimeLength);
+  initEnsC(argc, argv);
+
+  rsg->adaptorAliasHash = StringHash_new(STRINGHASH_SMALL);
+
+  StringHash_add(rsg->adaptorAliasHash, "REFERENCE_DB", 
+                 //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "steve_chicken_rnaseq_missing_reference", 3306, NULL));
+                 DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "steve_chicken_rnaseq_missing_reference", 13386, NULL));
+  StringHash_add(rsg->adaptorAliasHash, "REFINED_DB", 
+//                 DBAdaptor_new("genebuild1", "ensadmin", "ensembl", "steve_chicken_rnaseq_missing_refined_c", 3306, NULL));
+                 DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "steve_chicken_rnaseq_missing_refined_c", 13381, NULL));
+  StringHash_add(rsg->adaptorAliasHash, "ROUGH_DB", 
+//                 DBAdaptor_new("genebuild2", "ensadmin", "ensembl", "rn6_chicken_rnaseq2_rough", 3306, NULL));
+                 DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "rn6_chicken_rnaseq2_rough", 13382, NULL));
+
+  // Create a DBAdaptor hash
+  // Not used with Bam files  RefineSolexaGenes_setIntronDb(rsg, char *intronDb);
+
+  RefineSolexaGenes_setOutputDb(rsg, "REFINED_DB");
+  RefineSolexaGenes_setModelDb(rsg, "ROUGH_DB");
+
+  // Create a Vector of bam files
+  Vector *intronBamFiles = Vector_new();
+  
+  Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch110/ensembl/rn6/chicken/rnaseq/merge/introns.bam", 0, 0, NULL));
+  RefineSolexaGenes_setIntronBamFiles(rsg, intronBamFiles);
+
+  RefineSolexaGenes_setLogicNames(rsg, NULL);
+
+  RefineSolexaGenes_setRetainedIntronPenalty(rsg, 2);
+  RefineSolexaGenes_setMinIntronSize(rsg, 30);
+  RefineSolexaGenes_setMaxIntronSize(rsg, 200000);
+
+  RefineSolexaGenes_setBestScoreType(rsg, "best2");
+// Note perl seems to allow empty string for these as unset - I require NULL
+//  RefineSolexaGenes_setBadModelsType(rsg, NULL);
+//  RefineSolexaGenes_setModelLogicName(rsg, NULL);
+  RefineSolexaGenes_setSingleExonModelType(rsg, "single_exon");
+//  RefineSolexaGenes_setOtherIsoformsType(rsg, NULL);
+
+  RefineSolexaGenes_setOtherNum(rsg, 10);
+  RefineSolexaGenes_setMaxNum(rsg, 1000);
+  RefineSolexaGenes_setMaxRecursions(rsg, 100000);
+  RefineSolexaGenes_setMinSingleExonLength(rsg, 1000);
+  RefineSolexaGenes_setMinSingleExonCDSLength(rsg, 66);
+  RefineSolexaGenes_setStrictInternalSpliceSites(rsg, 1);
+  RefineSolexaGenes_setStrictInternalEndSpliceSites(rsg, 1);
+  RefineSolexaGenes_setWriteIntrons(rsg, 1);
+  RefineSolexaGenes_setTrimUtr(rsg, 1);
+  RefineSolexaGenes_setMax3PrimeExons(rsg, 2);
+  RefineSolexaGenes_setMax3PrimeLength(rsg, 5000);
+  RefineSolexaGenes_setMax5PrimeExons(rsg, 3);
+  RefineSolexaGenes_setMax5PrimeLength(rsg, 1000);
+  RefineSolexaGenes_setRejectIntronCutoff(rsg, 5);
+/* Wasn't set in perl config???
   RefineSolexaGenes_setFilterOnOverlapThreshold(rsg, int filterOnOverlapThreshold);
-  RefineSolexaGenes_setRejectIntronCutoff(rsg, double rejectIntronCutoff);
 */
+
+  // Get analysis from reference db
+  AnalysisAdaptor *refAa = DBAdaptor_getAnalysisAdaptor((DBAdaptor *)StringHash_getValue(rsg->adaptorAliasHash, "REFERENCE_DB"));
+  Analysis *analysis = AnalysisAdaptor_fetchByLogicName(refAa, "refine_all");
+  RefineSolexaGenes_setAnalysis(rsg, analysis);
+
+  RefineSolexaGenes_setInputId(rsg, "chromosome:Galgal4:13:1:10000000:1");
 
   RefineSolexaGenes_fetchInput(rsg);
   RefineSolexaGenes_run(rsg);
@@ -266,8 +325,62 @@ RefineSolexaGenes *RefineSolexaGenes_new(char *configFile) {
   return rsg;
 }
 
+/*
+=head2 fetch_sequence
+
+  Arg [1]   : Bio::EnsEMBL::Analysis::RunnableDB
+  Arg [2]   : string, name
+  Arg [3]   : Bio::EnsEMBL::DBAdaptor
+  Arg [4]   : arrayref of logic_name if sequence is to be masked
+  Arg [5]   : Boolean for softmasking if sequence is to be softmasked
+  Function  : gets sequence from specifed database
+  Returntype: Bio::EnsEMBL::Slice
+  Exceptions: none
+  Example   :
+
+=cut
+*/
+// This should go in RunnableDB
+Slice *RefineSolexaGenes_fetchSequence(RefineSolexaGenes *rsg, char *name, DBAdaptor *db, Vector *repeatMaskTypes, int softMask) {
+  if (!db) {
+    db = RefineSolexaGenes_getDb(rsg);
+  }
+
+  if (!name) {
+    name = RefineSolexaGenes_getInputId(rsg);
+  }
+
+  
+  SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(db); 
+  Slice *slice = SliceAdaptor_fetchByName(sa, name);
+
+  if (slice == NULL) {
+    fprintf(stderr,"Failed to fetch slice %s\n",name);
+    exit(1);
+  }
+
+  fprintf(stderr, "slice name = %s\n", Slice_getName(slice));
+
+  if (repeatMaskTypes != NULL && Vector_getNumElement(repeatMaskTypes)) {
+    fprintf(stderr,"RepeatMasked sequence fetching not implemented yet - bye\n");
+    exit(1);
+/* NIY
+    my $sequence = $slice->get_repeatmasked_seq($repeat_masking, $soft_masking);
+    $slice = $sequence
+*/
+  }
+
+  return slice;
+}
+
+
+
 // Hacky method for getting DbAdaptor given a string
 DBAdaptor *RefineSolexaGenes_getDbAdaptor(RefineSolexaGenes *rsg, char *alias) {
+  if (rsg->adaptorAliasHash == NULL) {
+    fprintf(stderr, "Error: adaptorAliasHash is NULL - no adaptor aliases set up - bye\n");
+    exit(1);
+  }
   if (StringHash_contains(rsg->adaptorAliasHash, alias)) {
 // Not sure if this is what I need 
     return StringHash_getValue(rsg->adaptorAliasHash, alias);
@@ -288,6 +401,7 @@ DBAdaptor *RefineSolexaGenes_getDbAdaptor(RefineSolexaGenes *rsg, char *alias) {
 =cut
 */
 void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
+  fprintf(stderr, "Fetch input\n");
   char *logic = Analysis_getLogicName(RefineSolexaGenes_getAnalysis(rsg));
   // fetch adaptors and store them for use later
   // explicitly attach the ref db
@@ -304,7 +418,7 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
   RefineSolexaGenes_setGeneSliceAdaptor(rsg, DBAdaptor_getSliceAdaptor(RefineSolexaGenes_getDbAdaptor(rsg, RefineSolexaGenes_getModelDb(rsg))));
 
   // want a slice and a full chromsome to keep everything on in the same coords
-  Slice *slice = RefineSolexaGenes_fetchSequence(rsg, RefineSolexaGenes_getInputId());
+  Slice *slice = RefineSolexaGenes_fetchSequence(rsg, RefineSolexaGenes_getInputId(rsg), NULL, NULL, 0);
   Slice *geneSlice =  SliceAdaptor_fetchByRegion(RefineSolexaGenes_getGeneSliceAdaptor(rsg),
                                                  "toplevel",
                                                  Slice_getSeqRegionName(slice),
@@ -339,14 +453,14 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
 
   Vector *prelimGenes = Vector_new();
   int i;
-  for (i=0; Vector_getNumElement(genes); i++) {
+  for (i=0; i<Vector_getNumElement(genes); i++) {
     Gene *gene = Vector_getElementAt(genes, i);
 
     // put them on the chromosome
     gene = Gene_transfer(gene, chrSlice);
+
     // reject genes that are from a different slice that overlap our slice at the start or end
     // say the models has to be > 10% on the slice
-
     long os = Slice_getStart(slice);
     if (Gene_getStart(gene) > Slice_getStart(slice)) {
       os = Gene_getStart(gene);
@@ -357,9 +471,12 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
     }
 
     long overlap = oe - os + 1;
-    long gc = (overlap / Gene_getLength(gene) * 1000) / 10;
-    long sc =  (overlap / Slice_getLength(slice) * 1000) /10;
-    printf("Gene has %ld %% overlap with the slice\nSlice has %ld %% overlap with the gene\n", gc, sc);
+    
+    double gc = ((double)overlap / (double)Gene_getLength(gene) * 1000.0) / 10.0;
+    double sc =  ((double)overlap / (double)Slice_getLength(slice) * 1000.0) /10.0;
+    printf("Gene (start %ld end %ld) has %lf %% overlap with the slice\n"
+           "Slice (%s) has %lf %% overlap with the gene\n", 
+           Gene_getStart(gene), Gene_getEnd(gene), gc, Slice_getName(slice), sc);
     if ( gc <= 10 && sc <= 10) {
       printf("Rejecting\n");
       continue;
@@ -376,7 +493,6 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
   if (Vector_getNumElement(intronBamFiles) > 0) {
     int i;
     for (i=0; i<Vector_getNumElement(intronBamFiles); i++) {
-      // Perl returned a hash but only seemed to use the FILE element
       IntronBamConfig *intronBamConf = Vector_getElementAt(intronBamFiles, i);
       char *intronFile = intronBamConf->fileName;
       char region[2048];
@@ -465,7 +581,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
     Vector *models = Vector_new();
 
     int singleExon = 0;
-    // first run on the fwd strand then on the reverse
+    // first run on the rev strand then on the fwd
 
 //  STRAND: 
     int strand;
@@ -866,7 +982,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
             //splice( @exons,$i,1,@new_exons);
             Vector_removeElementAt(exons, i);
             for (k=0; k<Vector_getNumElement(newExons); k++) {
-              Vector_insertElementAt(exons, i, Vector_getElementAt(newExons, k));
+              Vector_insertElementAt(exons, i+k, Vector_getElementAt(newExons, k));
             }
 /*  Doesn't seem to do anything
             for ( my $i = 0 ; $i<= $#exons ; $i++ ) {
@@ -1049,7 +1165,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
           
 // There were two more rounds of cloning here which seemed a bit excessive - I can't see why I need any 
        //   my $fwd_tran = TranscriptUtils_computeTranslation(clone_Transcript($fwdT));
-          Transcript *fwdTran = TranscriptUtils_computeTranslation(fwdT);
+          Transcript *fwdTran = TranslationUtils_computeTranslation(fwdT);
           
           long fwdTLen = 0;
           if (Transcript_getTranslation(fwdTran)) {
@@ -1062,7 +1178,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
           //my $rev_t =  new Bio::EnsEMBL::Transcript(-EXONS => [$rev_exon]);
           
          // my $rev_tran = compute_translation(clone_Transcript($rev_t));
-          Transcript *revTran = TranscriptUtils_computeTranslation(revT);
+          Transcript *revTran = TranslationUtils_computeTranslation(revT);
           
           long revTLen = 0;
           if (Transcript_getTranslation(revTran)) {
@@ -1123,7 +1239,10 @@ Vector *RefineSolexaGenes_getOutput(RefineSolexaGenes *rsg) {
   return rsg->output;
 }
 
-// getAnalysis Should probably be in RunnableDB - put here for now
+// setAnalysis and getAnalysis should probably be in RunnableDB - put here for now
+Analysis *RefineSolexaGenes_setAnalysis(RefineSolexaGenes *rsg, Analysis *analysis) {
+  rsg->analysis = analysis;
+}
 Analysis *RefineSolexaGenes_getAnalysis(RefineSolexaGenes *rsg) {
   return rsg->analysis;
 }
@@ -1135,7 +1254,7 @@ Analysis *RefineSolexaGenes_createAnalysisObject(RefineSolexaGenes *rsg, char *l
   Analysis *analysis = AnalysisAdaptor_fetchByLogicName(aa, logicName);
 
   if (analysis != NULL) {
-     return analysis ;
+     return analysis;
   }
   // need to create analysis object first
   analysis = Analysis_new();
@@ -1407,7 +1526,11 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
             continue;
           }
 
-          if (Translation_getLength(Transcript_getTranslation(ft)) <= 100) {
+          char *fwdTranslatedSeq = Transcript_translate(ft);
+          int lenFwdTranslation = strlen(fwdTranslatedSeq);
+          free(fwdTranslatedSeq);
+          //if (Translation_getLength(Transcript_getTranslation(ft)) <= 100) {
+          if (lenFwdTranslation <= 100) {
             Gene_setBiotype(fg, "bad");
             // Do an else instead next FG;
           } else {
@@ -1428,7 +1551,13 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
                 if (!Transcript_getTranslation(rt)) {
                   continue;
                 }
-                if (Translation_getLength(Transcript_getTranslation(rt)) <=  100 ) {
+
+                char *revTranslatedSeq = Transcript_translate(rt);
+                int lenRevTranslation = strlen(revTranslatedSeq);
+                free(revTranslatedSeq);
+
+//                if (Translation_getLength(Transcript_getTranslation(rt)) <=  100 ) {
+                if (lenRevTranslation <= 100) {
                   Gene_setBiotype(rg, "bad");
                   // Do an else instead next RG;
                 } else {
@@ -1718,9 +1847,9 @@ Vector *RefineSolexaGenes_makeModels(RefineSolexaGenes *rsg, StringHash *paths, 
       Vector *introns = Vector_new();
 
       int intronCount = 0;
+      int nonConIntrons = 0;
       double intronScore = 0;
       double exonScore = 0;
-      int nonConIntrons = 0;
 
       Vector *newExons = Vector_new();
 
@@ -1919,7 +2048,7 @@ Vector *RefineSolexaGenes_makeModels(RefineSolexaGenes *rsg, StringHash *paths, 
 //#      }
       // add a translation 
       // NOTE: Extra cloning my $tran = compute_translation(clone_Transcript($t));
-      Transcript *tran = TranscriptUtils_computeTranslation(t);
+      Transcript *tran = TranslationUtils_computeTranslation(t);
 
       // stop spam coming from the Exon module
       Transcript_setDbID(tran, 0);
@@ -2484,7 +2613,11 @@ void RefineSolexaGenes_writeOutput(RefineSolexaGenes *rsg) {
 //#    $intron->start($intron->start+1);
 //#    $intron->end($intron->end-1);
 //    eval {
-        DNAAlignFeatureAdaptor_store(intronAdaptor, intron);
+// tmpVec is just so can use _store method which takes a vector not a feature
+    Vector *tmpVec = Vector_new();
+    Vector_addElement(tmpVec, intron);
+    DNAAlignFeatureAdaptor_store(intronAdaptor, tmpVec);
+    Vector_free(tmpVec);
 //    };
 /*
     if ($@){
@@ -2525,7 +2658,7 @@ call
 Produces a hash of strings which have the format "exonIndex.intronName.exonIndex.intronName..."
 */
 
-#define PT_ERROR 1
+#define PT_ERROR 2
 int RefineSolexaGenes_processTree(RefineSolexaGenes *rsg, StringHash *hashref, char *index, char *soFar, StringHash *paths) {
   // dont let it go on for ever eating memory
   if (limit > RefineSolexaGenes_getRecursiveLimit(rsg)){
@@ -2558,12 +2691,13 @@ int RefineSolexaGenes_processTree(RefineSolexaGenes *rsg, StringHash *hashref, c
         return PT_ERROR; 
       }
     }
+    free(node);
   }
   if (nNode == 0) {
     printf("path key when nNode = 0 is %s\n", soFar);
     StringHash_add(paths, newSoFar, &trueVal);
   }
-  return paths;
+  return 0;
 }
 
 /*
@@ -3388,7 +3522,8 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
 
   RefineSolexaGenes_setIntronFeatures(rsg, ifs);
 
-  RefineSolexaGenes_setExtraExons(rsg, extraExons);
+// Do I need this - we fetch it at the start of the function and have been adding things to it, so it shouldn't need to be set
+//  RefineSolexaGenes_setExtraExons(rsg, extraExons);
 
   fprintf(stderr,"Got %d unique introns  ", Vector_getNumElement(ifs));
   fprintf(stderr," and %d potential novel exons from %s\n", StringHash_getNumValues(extraExons), intronBamConf->fileName);
@@ -3767,11 +3902,11 @@ void RefineSolexaGenes_dnaToIntronFeatures(RefineSolexaGenes *rsg, long start, l
 
   Slice *intronSlice = SliceAdaptor_fetchByRegion(intronSliceAdaptor, "toplevel", Slice_getSeqRegionName(chrSlice), start, end, 1, NULL, 0); 
 
-  // featch all the dna_align_features for this slice by logic name
+  // fetch all the dna_align_features for this slice by logic name
   Vector *logicNames = RefineSolexaGenes_getLogicNames(rsg);
   Vector *reads;
 
-  if (Vector_getNumElement(logicNames)) {
+  if (logicNames != NULL && Vector_getNumElement(logicNames)) {
     reads = Vector_new();
     fprintf(stderr,"Fetching reads with logic names: ");
 
@@ -3999,7 +4134,8 @@ Exon *RefineSolexaGenes_makeExon(RefineSolexaGenes *rsg, long start, long end, d
   }
 */
 
-  Exon *paddedExon = ExonUtils_createExon(start-20, end+20, -1, -1, -1, RefineSolexaGenes_getAnalysis(rsg), NULL, NULL, RefineSolexaGenes_getChrSlice(rsg));
+  Exon *paddedExon = ExonUtils_createExon(start-20, end+20, -1, -1, -1, RefineSolexaGenes_getAnalysis(rsg), NULL, 0, RefineSolexaGenes_getChrSlice(rsg), NULL, 0);
+
 
   // dont let it fall of the slice because of padding
   if (Exon_getStart(paddedExon) <= 0) {
@@ -4143,11 +4279,14 @@ sub intron_features {
 }
 */
 
-Vector *RefineSolexaGenes_getExtraExons(RefineSolexaGenes *rsg) {
+StringHash *RefineSolexaGenes_getExtraExons(RefineSolexaGenes *rsg) {
+  if (rsg->extraExons == NULL) {
+    rsg->extraExons = StringHash_new(STRINGHASH_MEDIUM);
+  }
   return rsg->extraExons;
 }
 
-void RefineSolexaGenes_setExtraExons(RefineSolexaGenes *rsg, Vector *extraExons) {
+void RefineSolexaGenes_setExtraExons(RefineSolexaGenes *rsg, StringHash *extraExons) {
   rsg->extraExons = extraExons;
 }
 
@@ -4180,7 +4319,7 @@ char *RefineSolexaGenes_getModelDb(RefineSolexaGenes *rsg) {
   return rsg->modelDb;
 }
 
-void RefineSolexaGenes_setLogicName(RefineSolexaGenes *rsg, Vector *logicNames) {
+void RefineSolexaGenes_setLogicNames(RefineSolexaGenes *rsg, Vector *logicNames) {
   rsg->logicNames = logicNames;
 }
 
@@ -4388,4 +4527,394 @@ DBAdaptor *RefineSolexaGenes_getDb(RefineSolexaGenes *rsg) {
   return rsg->db;
 }
 
+void RefineSolexaGenes_setInputId(RefineSolexaGenes *rsg, char *inputId) {
+  rsg->inputId = StrUtil_copyString(&rsg->inputId, inputId, 0);
+}
+
+char *RefineSolexaGenes_getInputId(RefineSolexaGenes *rsg) {
+  return rsg->inputId;
+}
+
+Exon *ExonUtils_cloneExon(Exon *exon) {
+  Vector *supportingFeatures = NULL;
+
+  Vector *origSupport = Exon_getAllSupportingFeatures(exon);
+  if (origSupport != NULL && Vector_getNumElement(origSupport)) {
+    supportingFeatures = Vector_new();
+    int i;
+    for (i=0; i<Vector_getNumElement(origSupport); i++) {
+      BaseAlignFeature *baf = Vector_getElementAt(origSupport, i);
+
+      BaseAlignFeature *newBaf = EvidenceUtils_cloneEvidence(baf);
+     
+      Vector_addElement(supportingFeatures, newBaf);
+    }
+  }
+
+  Exon *newExon = ExonUtils_createExon(Exon_getStart(exon), 
+                                       Exon_getEnd(exon),
+                                       Exon_getPhase(exon),
+                                       Exon_getEndPhase(exon),
+                                       Exon_getStrand(exon),
+                                       Exon_getAnalysis(exon),
+                                       supportingFeatures,
+                                       Exon_getDbID(exon),
+                                       Exon_getSlice(exon),
+                                       Exon_getStableId(exon),
+                                       Exon_getVersion(exon));
+
+  if (supportingFeatures) Vector_free(supportingFeatures);
+
+  return newExon;
+}
+
+
+// Makes a deep copy including dbid
+BaseAlignFeature *EvidenceUtils_cloneEvidence(BaseAlignFeature *feature) {
+  if (feature->objectType == CLASS_DNADNAALIGNFEATURE) {
+    DNAAlignFeature *newFeature = DNAAlignFeature_deepCopy(feature);
+    return newFeature;
+  } else if (feature->objectType == CLASS_DNAPEPALIGNFEATURE) {
+    DNAPepAlignFeature *newFeature = DNAPepAlignFeature_deepCopy(feature);
+    return newFeature;
+  } else {
+    fprintf(stderr, "ExidenceUtils:clone_Evidence Don't know what to do with a feature of type %s\n", Class_findByType(feature->objectType)->name);
+    exit(1);
+  }
+}
+
+Exon *ExonUtils_createExon(long start, long end, int phase, int endPhase, int strand, Analysis *analysis, Vector *supportingFeatures, IDType dbId, Slice *slice, char *stableId, int version) {
+
+  Exon *newExon = Exon_new();
+
+  Exon_setStart(newExon, start);
+  Exon_setEnd(newExon, end);
+  Exon_setPhase(newExon, phase);
+  Exon_setEndPhase(newExon, endPhase);
+  Exon_setStrand(newExon, strand);
+  Exon_setAnalysis(newExon, analysis);
+  Exon_setDbID(newExon, dbId);
+  Exon_setSlice(newExon, slice);
+  if (stableId) Exon_setStableId(newExon, stableId);
+  if (version)  Exon_setVersion(newExon, version);
+
+  if (supportingFeatures) {
+// Perl did this one at a time for some reason
+    Exon_addSupportingFeatures(newExon, supportingFeatures);
+  }
+
+  return newExon;
+}
+
+ORFRange *ORFRange_new(long length, long start, long end) {
+  ORFRange *orfRange;
+
+  if ((orfRange = (ORFRange *)calloc(1,sizeof(ORFRange))) == NULL) {
+    fprintf(stderr,"Failed allocating ORFRange\n");
+    exit(1);
+  }
+  orfRange->length = length;
+  orfRange->start  = start;
+  orfRange->end    = end;
+
+  return orfRange;
+}
+
+int ORFRange_reverseLengthCompFunc(const void *a, const void *b) {
+  ORFRange *orfRange1 = *((ORFRange **)a);
+  ORFRange *orfRange2 = *((ORFRange **)b);
+
+  return orfRange2->length - orfRange1->start;
+}
+
+void ORFRange_free(ORFRange *orfRange) {
+  free(orfRange);
+}
+
+Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMet, int minLength) {
+  long len;
+  int frame;
+  long start;
+  long end;
+  char *orf;
+  int i;
+  Vector *orfRanges = Vector_new();
+
+  int   lengths[6];
+  char *aaSeq[6];
+  char *endAaSeq[6];
+
+  char *mRNA = Transcript_getSplicedSeq(transcript);
+
+  int lenmRNA = strlen(mRNA);
+  
+  for (i=0;i<6;i++) {
+    aaSeq[i] = (char *)malloc(lenmRNA/3 + 2);
+  }
+
+  long codonTableId = 1;
+
+  //fprintf(stderr, "translateable seq = %s\n",mRNA);
+  translate(mRNA, aaSeq, lengths, codonTableId);
+
+  for (i=0;i<6;i++) {
+    endAaSeq[i] = aaSeq[i] + lengths[i] - 1;
+  }
+
+  free(mRNA);
+
+  for (frame = 0; frame < 6; frame++) {
+    orf = strtok(aaSeq[frame], "*");
+    while (orf != NULL && *orf != '\0') {
+      if (requireMet) {
+        while (*orf != 'M' && *orf != '\0') orf++;
+      }
+
+      if (*orf != '\0') {
+        len = strlen(orf);
+        if (len > minLength) {
+          start = (orf - aaSeq[frame]) * 3 + 1;
+          if (frame < 3) {
+            start += frame;
+          } else {
+            start -= frame-3;
+          }
+
+          if (frame < 3) {
+            end = start + len * 3 - 1;
+          } else {
+            //start = -1 * (start - sqinfo.len - 1);
+            start = -1 * (start - lenmRNA - 1);
+            end = start - len * 3 + 1;
+          }
+
+          if (orf != endAaSeq[i]) { // happens when the strtok found a '*' - add 3 to end to include it in translation range
+            Vector_addElement(orfRanges, ORFRange_new(len, start, end+3));
+          } else {  // should be no '*' (at end of aaSeq string - this should be the last token)
+            Vector_addElement(orfRanges, ORFRange_new(len, start, end));
+          }
+        }
+      }
+      orf = strtok(NULL, "*");
+    }
+  }
+
+// Free ORF strings
+  for (i=0;i<6;i++) {
+    free(aaSeq[i]);
+  }
+
+// Sort by length
+  Vector_sort(orfRanges, ORFRange_reverseLengthCompFunc);
+
+  return orfRanges;
+}
+
+Transcript *TranslationUtils_computeTranslation(Transcript *transcript) {
+  Vector *metPredictions   = TranslationUtils_generateORFRanges(transcript, 1, 0);
+  Vector *noMetPredictions = TranslationUtils_generateORFRanges(transcript, 0, 0);
+
+  // choosing the best ORF
+  ORFRange *orf = NULL;
+
+  // Here we take the best prediction with a methionine unless
+  // there aren't any of the best prediction without a
+  // methoinine is more than twice the length
+  if (Vector_getNumElement(metPredictions) && Vector_getNumElement(noMetPredictions)) {
+    ORFRange *metBest   = Vector_getElementAt(metPredictions, 0);
+    ORFRange *noMetBest = Vector_getElementAt(noMetPredictions, 0);
+
+    if (noMetBest->length > (2 * metBest->length)){
+      orf = noMetBest;
+    } else {
+      orf = metBest;
+    }
+  } else if (Vector_getNumElement(metPredictions)) {
+    orf = Vector_getElementAt(metPredictions, 0);
+  } else if (Vector_getNumElement(noMetPredictions)) {
+    orf = Vector_getElementAt(noMetPredictions, 0);
+  } else {
+    fprintf(stderr, "Warning: transcript has no translations\n");
+    return transcript;
+  }
+
+  // add ORF to transcript
+  transcript = TranslationUtils_addORFToTranscript(orf, transcript);
+
+  Vector_setFreeFunc(metPredictions, ORFRange_free);
+  Vector_setFreeFunc(noMetPredictions, ORFRange_free);
+  Vector_free(metPredictions);
+  Vector_free(noMetPredictions);
+
+  return transcript;
+}
+
+
+char *GeneBuildUtils_getId(SeqFeature *sf, char *idStr) {
+  idStr[0] = '\0';
+// assume annotated seq features can have stable ids
+  if (Class_isDescendent(CLASS_ANNOTATEDSEQFEATURE, sf->objectType)) {
+    AnnotatedSeqFeature *asf = (AnnotatedSeqFeature *)sf;
+    if (AnnotatedSeqFeature_getStableId(asf) != NULL) {
+      strcpy(idStr, AnnotatedSeqFeature_getStableId(asf));
+    }
+  }
+  if (idStr[0] == '\0') {
+    sprintf(idStr,IDFMTSTR,SeqFeature_getDbID(sf));
+  }
+
+  return idStr;
+}
+
+Transcript *TranslationUtils_addORFToTranscript(ORFRange *orf, Transcript *transcript) {
+  long orfStart = orf->start;
+  long orfEnd   = orf->end;
+
+  Translation *translation = Translation_new();
+
+  //logger_info ("Best orf for ".id($transcript)." ".$orf->[0] ." long ".$orf_start." to ".$orf_end);
+
+  long translationStart;
+  long translationEnd;
+  Exon *translationStartExon;
+  Exon *translationEndExon;
+
+  int exonCount = 0;
+  long pos = 1;
+
+  int i;
+  for (i=0; i<Transcript_getExonCount(transcript); i++) {
+    Exon *exon = Transcript_getExonAt(transcript, i);
+    exonCount++;
+    //logger_info("exon:$exon_count exon_length:".$exon->length." pos:$pos orf_start:$orf_start orf_end:$orf_end pos+:".($pos + $exon->length - 1));
+
+    if (orfStart >= pos && orfStart <= pos + Exon_getLength(exon) - 1) {
+      translationStart = orfStart - pos + 1;
+      translationStartExon = exon;
+    }
+    if (orfEnd >= pos && orfEnd <= pos + Exon_getLength(exon) - 1) {
+      translationEnd     = orfEnd - pos + 1;
+      translationEndExon = exon;
+    }
+    pos += Exon_getLength(exon);
+  }
+
+  if (!translationStart || !translationEnd || !translationStartExon || !translationEndExon) {
+    char idStr[1024];
+    fprintf(stderr,"problems making the translation for %s\n", GeneBuildUtils_getId(transcript, idStr));
+    return transcript;
+  } else {
+    Translation_setStart(translation, translationStart);
+    Translation_setEnd(translation, translationEnd);
+
+    Translation_setStartExon(translation, translationStartExon);
+    Translation_setEndExon(translation, translationEndExon);
+
+    Transcript_setTranslation(transcript, translation);
+  }
+
+  int foundStart = 0;
+  int foundEnd = 0;
+  int lastEndPhase;
+  int firstExon = 1;
+  // print "Setting phases on transcript after adding translation\n";
+
+  for (i=0; i<Transcript_getExonCount(transcript); i++) {
+    Exon *exon = Transcript_getExonAt(transcript, i);
+
+    Exon_setPhase(exon, -1);
+    Exon_setEndPhase(exon, -1);
+
+    // print "  Have exon " . $exon->start . " " . $exon->end . "\n";
+    if (Translation_getStartExon(translation) == exon) {
+      if (Translation_getStart(translation) == 1 && firstExon){
+        Exon_setPhase(exon, 0);
+        // print "   setting start phase on it to 0 (tstart = 1 and is start_Exon)\n";
+      }
+      foundStart = 1;
+    } else if (foundStart && !foundEnd){
+      Exon_setPhase(exon, lastEndPhase);
+      // print "   setting start phase on it to last_end_phase ($last_end_phase)\n";
+    }
+
+    int endPhase;
+    if (exon == Translation_getStartExon(translation)) {
+      endPhase = (Exon_getEnd(exon) - (Exon_getStart(exon) + Translation_getStart(translation) - 1) +1 ) %3;
+      // print "   start_Exon end phase calculated ($end_phase)\n";
+    } else {
+      endPhase = ((Exon_getLength(exon) + Exon_getPhase(exon)) %3);
+      // print "   end phase calculated ($end_phase)\n";
+    }
+
+    if ((exon == Translation_getEndExon(translation) && Exon_getLength(exon) == Translation_getEnd(translation))){
+      // print "   setting end phase to $end_phase (end exon condition)\n";
+      Exon_setEndPhase(exon, endPhase);
+    }
+
+    if (exon == Translation_getEndExon(translation)) {
+      foundEnd = 1;
+    }
+
+    if ((foundStart && !foundEnd)) {
+      // print "   setting end phase to $end_phase (found_start and not found_end condition)\n";
+      Exon_setEndPhase(exon, endPhase);
+    }
+
+    lastEndPhase = Exon_getEndPhase(exon);
+    firstExon = 0;
+  }
+
+  return transcript;
+}
+
+/* I've implemented the 'translate' program functionality and the other bits in the method in the method TranslationUtils_generateORFRanges 
+sub run_translate{
+  my ($trans,$met) = @_;
+
+  my $seq = $trans->seq;
+  my $trans_id = id($trans);
+  $seq->display_id($trans_id);
+
+  my $file = write_seqfile($seq);
+  my $command = "/software/ensembl/bin/translate";
+  $command .= " -m " if($met);
+  $command .= " ".$file." | ";
+  logger_info($command);
+  open ( ORF, $command ) || throw( "Error running translate" );
+
+  my @orf_predictions;
+ ORF:
+  while ( <ORF> ){
+    chomp;
+    next ORF unless /\>/;
+    my @entries = split;
+    next ORF unless ( $entries[3] && $entries[5] );
+    my $id = $entries[1];
+    my $orf_length = $entries[3];
+    $orf_length =~s/\,//;
+    $entries[5] =~/(\d+)\.\.(\d+)/;
+    my $orf_start = $1;
+    my $orf_end   = $2;
+    if ($orf_start>=$orf_end ) {
+      # print "can't compute translation for this transcript as translation start >= translation end : $orf_start >= $orf_end \n " ;
+      next ORF  ;
+    }
+
+    # Check if there's a stop codon and add it
+    if ($orf_end + 3 <= $seq->length) {
+      my $codon = uc($seq->subseq($orf_end+1,$orf_end+3));
+      if ($codon eq 'TAA' || $codon eq 'TAG' || $codon eq 'TGA' ) {
+        $orf_end+=3;
+      }
+    }
+    my @prediction = ($orf_length,$orf_start,$orf_end);
+    push( @orf_predictions, \@prediction );
+  }
+
+  my @sorted_predictions =
+    map { $_->[1] } sort { $b->[0] <=> $a->[0] } map { [$_->[0], $_] } @orf_predictions;
+  unlink $file;
+  return \@sorted_predictions;
+}
+*/
 

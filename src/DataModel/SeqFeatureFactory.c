@@ -10,6 +10,7 @@
 #include "PredictionExon.h"
 #include "Transcript.h"
 #include "SimpleFeature.h"
+#include "Class.h"
 
 SeqFeature *SeqFeatureFactory_newFeature(ClassType type) {
   void *feature;
@@ -45,8 +46,11 @@ SeqFeature *SeqFeatureFactory_newFeature(ClassType type) {
     case CLASS_PREDICTIONEXON:
       feature = PredictionExon_new(); 
       break;
+    case CLASS_INTRONSUPPORTINGEVIDENCE:
+      feature = IntronSupportingEvidence_new(); 
+      break;
     default:
-      fprintf(stderr,"Error: Unknown feature type %d\n",type);
+      fprintf(stderr,"Error: Unknown feature type %s SeqFeatureFactory_newFeature\n",Class_findByType(type)->name);
       exit(1);
   }
 
@@ -87,8 +91,14 @@ SeqFeature *SeqFeatureFactory_newFeatureFromFeature(SeqFeature *sf) {
     case CLASS_PREDICTIONEXON:
       feature = PredictionExon_shallowCopy(sf); 
       break;
+    case CLASS_GENE:
+      feature = Gene_shallowCopy(sf); 
+      break;
+    case CLASS_INTRONSUPPORTINGEVIDENCE:
+      feature = IntronSupportingEvidence_shallowCopy(sf);
+      break;
     default:
-      fprintf(stderr,"Error: Unknown feature type %d\n",sf->objectType);
+      fprintf(stderr,"Error: Unknown feature type %s in SeqFeatureFactory_newFeatureFromFeature\n",Class_findByType(sf->objectType)->name);
       exit(1);
   }
 
