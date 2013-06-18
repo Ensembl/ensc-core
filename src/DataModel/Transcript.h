@@ -157,25 +157,7 @@ char *Transcript_setExternalName(Transcript *t, char *externalName);
 #define Transcript_getSeqRegionStart(t) SeqFeature_getSeqRegionStart((t))
 #define Transcript_getSeqRegionEnd(t) SeqFeature_getSeqRegionEnd((t))
 #define Transcript_getSeqRegionStrand(t) SeqFeature_getSeqRegionStrand((t))
-
-
-Exon *Transcript_getStartExon(Transcript *trans);
-Exon *Transcript_getEndExon(Transcript *trans);
-
-void Transcript_flushExons(Transcript *transcript);
-
-int Transcript_addDBLink(Transcript *transcript, DBEntry *dbe);
-
-Transcript *Transcript_transform(Transcript *transcript, IDHash *exonTransforms);
-Transcript *Transcript_transfer(Transcript *transcript, Slice *slice);
-
-void Transcript_sort(Transcript *trans);
-
-int Transcript_getCodingRegionEnd(Transcript *trans);
-
-#define Transcript_getSeqRegionStart(t) SeqFeature_getSeqRegionStart((t))
-#define Transcript_getSeqRegionEnd(t) SeqFeature_getSeqRegionEnd((t))
-#define Transcript_getSeqRegionStrand(t) SeqFeature_getSeqRegionStrand((t))
+#define Transcript_getSeqRegionName(t) SeqFeature_getSeqRegionName((t))
 
 
 Exon *Transcript_getStartExon(Transcript *trans);

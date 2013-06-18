@@ -361,7 +361,7 @@ Transcript *Transcript_transfer(Transcript *transcript, Slice *slice) {
   }
 
   if (notWarned) {
-    fprintf(stderr,"intron support and cache clearing not implemented yet for transcript transfer\n");
+    fprintf(stderr,"cache clearing not implemented yet for transcript transfer\n");
     notWarned = 0;
   }
 
@@ -554,6 +554,10 @@ int Transcript_setCodingRegionEnd(Transcript *trans, int end) {
 int Transcript_getCodingRegionEnd(Transcript *trans) {
   Translation *translation = Transcript_getTranslation(trans);
 
+  if (!translation) {
+    return POS_UNDEF;
+  }
+
   if (!Transcript_getCodingRegionEndIsSet(trans) && translation) {
     int end;
     int strand = Exon_getStrand(Translation_getStartExon(translation));
@@ -579,6 +583,10 @@ int Transcript_setCodingRegionStart(Transcript *trans, int start) {
 
 int Transcript_getCodingRegionStart(Transcript *trans) {
   Translation *translation = Transcript_getTranslation(trans);
+
+  if (!translation) {
+    return POS_UNDEF;
+  }
 
   if (!Transcript_getCodingRegionStartIsSet(trans) && translation) {
     int start;

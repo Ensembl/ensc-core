@@ -169,8 +169,8 @@ void RefineSolexaGenes_setIntronBamFiles(RefineSolexaGenes *rsg, Vector *intronB
 Vector *RefineSolexaGenes_getIntronBamFiles(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setWriteIntrons(RefineSolexaGenes *rsg, int writeIntrons);
 int RefineSolexaGenes_writeIntrons(RefineSolexaGenes *rsg);
-void RefineSolexaGenes_setTrimUtr(RefineSolexaGenes *rsg, int trimUtr);
-int RefineSolexaGenes_trimUtr(RefineSolexaGenes *rsg);
+void RefineSolexaGenes_setTrimUTR(RefineSolexaGenes *rsg, int trimUtr);
+int RefineSolexaGenes_trimUTR(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setMax3PrimeExons(RefineSolexaGenes *rsg, int max3PrimeExons);
 int RefineSolexaGenes_getMax3PrimeExons(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setMax3PrimeLength(RefineSolexaGenes *rsg, int max3PrimeLength);
@@ -201,7 +201,7 @@ double RefineSolexaGenes_getRejectIntronCutoff(RefineSolexaGenes *rsg);
   DBAdaptor *RefineSolexaGenes_getDb(RefineSolexaGenes *rsg);
   Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMet, int minLength);
 
-  Analysis *RefineSolexaGenes_setAnalysis(RefineSolexaGenes *rsg, Analysis *analysis);
+  void RefineSolexaGenes_setAnalysis(RefineSolexaGenes *rsg, Analysis *analysis);
   Analysis *RefineSolexaGenes_getAnalysis(RefineSolexaGenes *rsg);
 
 #endif

@@ -271,7 +271,7 @@ int main(int argc, char *argv[]) {
   RefineSolexaGenes_setStrictInternalSpliceSites(rsg, 1);
   RefineSolexaGenes_setStrictInternalEndSpliceSites(rsg, 1);
   RefineSolexaGenes_setWriteIntrons(rsg, 1);
-  RefineSolexaGenes_setTrimUtr(rsg, 1);
+  RefineSolexaGenes_setTrimUTR(rsg, 1);
   RefineSolexaGenes_setMax3PrimeExons(rsg, 2);
   RefineSolexaGenes_setMax3PrimeLength(rsg, 5000);
   RefineSolexaGenes_setMax5PrimeExons(rsg, 3);
@@ -540,6 +540,7 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
 // NIY ??
 //    $self->intron_slice_adaptor->dbc->disconnect_when_inactive(1);
   }
+  fprintf(stderr,"Warning: Disconnect when inactive not implemented yet in C version\n");
 // NIY ??
 //  $self->db->disconnect_when_inactive(1);
 //  $self->gene_slice_adaptor->dbc->disconnect_when_inactive(1);
@@ -1240,9 +1241,10 @@ Vector *RefineSolexaGenes_getOutput(RefineSolexaGenes *rsg) {
 }
 
 // setAnalysis and getAnalysis should probably be in RunnableDB - put here for now
-Analysis *RefineSolexaGenes_setAnalysis(RefineSolexaGenes *rsg, Analysis *analysis) {
+void RefineSolexaGenes_setAnalysis(RefineSolexaGenes *rsg, Analysis *analysis) {
   rsg->analysis = analysis;
 }
+
 Analysis *RefineSolexaGenes_getAnalysis(RefineSolexaGenes *rsg) {
   return rsg->analysis;
 }
@@ -2174,7 +2176,6 @@ Gene *TranscriptUtils_convertToGene(Transcript *t, Analysis *analysis, char *bio
 // Odd!!!
   Gene_setDbID      (g, Transcript_getDbID(t));
   
-  
 /* Wierd checks
     throw("there are no transcripts for this gene\n") if scalar(@{$g->get_all_Transcripts}) == 0 ;
     for my $tr ( @{$g->get_all_Transcripts} ) {
@@ -2182,279 +2183,413 @@ Gene *TranscriptUtils_convertToGene(Transcript *t, Analysis *analysis, char *bio
     }
     throw("Problems with ".Gene_info($gene)." undef coords") if(!$gene->start || !$gene->end);
 */
-
   return g;
 }
 
 
-/* NIY
 Gene *RefineSolexaGenes_pruneUTR(RefineSolexaGenes *rsg, Gene *gene) {
-
   if (!RefineSolexaGenes_trimUTR(rsg)) {
     return gene;
+  } 
+// Temporary
+  else {
+    fprintf(stderr,"Warning: UTR trimming not implemented\n");
+//    return gene;
   }
 
-  my $transcript = $gene->get_all_Transcripts->[0];
-  unless ( $transcript->translateable_seq ) {
-    return $gene;
+// Work in progress
+  Transcript *transcript = Gene_getTranscriptAt(gene, 0);
+  if (!Transcript_getTranslation(transcript)) {
+    return gene;
   }
  
   // fetch introns 
-  my $introns = $transcript->{'_introns'};
+  TranscriptExtraData *ted = Transcript_getExtraData(transcript);
+
+  Vector *introns = ted->introns;
 
   // otherwise trim the UTR according to the values set out in the config
-  my %intron_hash;
+  StringHash *intronHash = StringHash_new(STRINGHASH_SMALL);
 
-  foreach my $intron ( @{$introns} ) {
-    my $key = $intron->start  .":". $intron->end .":". $intron->strand;
-    $intron_hash{$key} = $intron;
+  int i;
+  char key[1024];
+  for (i=0; i<Vector_getNumElement(introns); i++) {
+    SeqFeature *sf = Vector_getElementAt(introns, i);
+    
+    sprintf(key,"%ld:%ld:%d", SeqFeature_getStart(sf), SeqFeature_getEnd(sf), SeqFeature_getStrand(sf));
+    if (!StringHash_contains(intronHash, key)) {
+      StringHash_add(intronHash, key, sf);
+    } else {
+      fprintf(stderr,"Error: got an intron (Dna) feature twice with key %s\n", key);
+    }
   }
   
-  my @new_fivep;
-  my @new_threep;
-  my @new_exons;
-  my @features;
-  my @exons = sort {$a->start <=> $b->start }  @{$transcript->get_all_Exons};
+  Vector *newFiveP = Vector_new();
+  Vector *newThreeP = Vector_new();
+  Vector *features = Vector_new();
+
+  Vector *exons = Vector_copy(Transcript_getAllExons(transcript));
+  Vector_sort(exons, SeqFeature_startCompFunc);
   
   // put everything into the features array
-  push @features, @exons;
-  for ( my $i =0 ; $i < $#exons  ; $i++ ) {
-    my $key = ($exons[$i]->end) .":". ($exons[$i+1]->start ) . ":" . $exons[$i]->strand;    
-    if ( my $intron = $intron_hash{$key}  ) {
-      push @features, $intron;
+  Vector_append(features, exons);
+
+  for (i=0; i<Vector_getNumElement(exons)-1; i++) {
+    Exon *exon = Vector_getElementAt(exons, i); 
+    Exon *exonP1 = Vector_getElementAt(exons, i+1); 
+    sprintf(key, "%ld:%ld:%d", Exon_getEnd(exon), Exon_getStart(exonP1), Exon_getStrand(exon));
+
+    if (StringHash_contains(intronHash, key)) {
+      SeqFeature *intron = StringHash_getValue(intronHash, key);
+      Vector_addElement(features, intron);
+    } else {
+      fprintf(stderr,"Error: couldn't find an intron (Dna) feature with key %s\n", key);
     }
   }
-  @features = sort { $a->start <=> $b->start } @features;
+
+  Vector_sort(features, SeqFeature_startCompFunc);
   // so now we should have an array of alternating introns and exons
-  print "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-Trimming UTR
-Transcript " .  $transcript->seq_region_name ." " . 
-    $transcript->start ." " . 
-      $transcript->end ." " . 
-        $transcript->strand ." " . 
-          scalar(@{$transcript->get_all_Exons}) ."
+  printf("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\nTrimming UTR\nTranscript %s %ld %ld %d %d\n",
+         Transcript_getSeqRegionName(transcript), Transcript_getStart(transcript), Transcript_getEnd(transcript), Transcript_getStrand(transcript),
+         Transcript_getExonCount(transcript));
 
-";
-  throw("Something is wrong we are missing " . scalar(@{$introns}) ." introns " . scalar(@exons) . "  exons " . scalar(@features) . " exons and introns\n")
-    unless scalar(@features) == (scalar(@exons) * 2) -1 ;
-  my $average_intron = 0;
-  my $intron_count = 0;
+  if (Vector_getNumElement(features) != (Vector_getNumElement(exons)*2)-1) {
+    fprintf(stderr,"Something is wrong we have wrong number of introns compared to exons"
+                   " - have %d introns, %d exons and %d features in combined vector\n", 
+            Vector_getNumElement(introns), Vector_getNumElement(exons), Vector_getNumElement(features));
+  }
+  double averageIntron = 0;
+  int intronCount = 0;
+  Translation *translation = Transcript_getTranslation(transcript);
   // leave single exon genes alone for now
-  if ( scalar(@features) == 1 or scalar(@{$transcript->get_all_translateable_Exons}) == 1 )  {
+  if (Vector_getNumElement(features) == 1 || Translation_getStartExon(translation) == Translation_getEndExon(translation)) { // was: scalar(@{$transcript->get_all_translateable_Exons}) == 1 ) 
     // lets strip the UTR
-    my $trimmed_tran =  $self->modify_transcript($transcript,$transcript->get_all_translateable_Exons);
+// NIY: Probably a leak here
+    Transcript *trimmedTran = RefineSolexaGenes_modifyTranscript(rsg, transcript, Transcript_getAllTranslateableExons(transcript));
+
     // The naughty bit!
-    $gene->{_transcript_array} = [];
-    $gene->add_Transcript($trimmed_tran);
-    return   $gene;
+// NIY: Definitely a leak here
+    gene->transcripts = Vector_new();
+    Gene_addTranscript(gene, trimmedTran);
+    return gene;
   }
+
   // first calculate the average
-  foreach my $f ( @features ) {
-    if ( $f->isa("Bio::EnsEMBL::DnaDnaAlignFeature")) {
-      $average_intron += $f->score;
-      $intron_count++;
+  for (i=0; i<Vector_getNumElement(features); i++) {
+    SeqFeature *f = Vector_getElementAt(features, i);
+    if (f->objectType == CLASS_DNADNAALIGNFEATURE) {
+      averageIntron += SeqFeature_getScore(f);
+      intronCount++;
     }
   }
-  $average_intron /= $intron_count;
+  averageIntron /= intronCount;
 
-  foreach my $f ( @features ) {
-   //# print $f->start . "\t" . $f->end ."\t$f\t";
-    if ( $f->isa("Bio::EnsEMBL::DnaDnaAlignFeature")) {
-    //#  print $f->score;
-      if ( $average_intron && ($f->score /  $average_intron) * 100 <= $self->REJECT_INTRON_CUTOFF ) {
-        print " Potentially bad ";
+  for (i=0; i<Vector_getNumElement(features); i++) {
+    SeqFeature *f = Vector_getElementAt(features, i);
+    if (f->objectType == CLASS_DNADNAALIGNFEATURE) {
+      if (averageIntron && (SeqFeature_getScore(f) / averageIntron) * 100.0 <= RefineSolexaGenes_getRejectIntronCutoff(rsg)) {
+        printf(" Potentially bad ");
       }
     }
-  //#  print "\n";
   }
-  throw("Something is wrong we are missing introns " . scalar(@exons) . "  exons  and $intron_count introns\n")
-    unless $intron_count == scalar(@exons) -1 ;
-  print  "Average intron depth = $average_intron \n";
+
+  if (intronCount != Vector_getNumElement(exons)-1) {
+    fprintf(stderr, "Error: Something is wrong we are missing introns %d exons  and %d introns\n", Vector_getNumElement(exons), intronCount);
+    exit(1);
+  }
+  printf("Average intron depth = %lf\n", averageIntron);
   
-  
-  my @fivep;
-  my @threep;
-  my $coding =0 ;
+  Vector *fiveP  = Vector_new();
+  Vector *threeP = Vector_new();
+  int coding = 0;
+
   // need to account for strand
-  @features = sort { $b->start <=> $a->start } @features if $transcript->strand == -1;
+  if (Transcript_getStrand(transcript) == -1) {
+    Vector_sort(features, SeqFeature_reverseStartCompFunc);
+  }
 
-  for ( my $i = 0 ; $i <=  $#features ; $i += 2  ) {
-    my $e = $features[$i];
-    throw("Got a DNA align feature where I should have an exon\n")
-      unless $e->isa("Bio::EnsEMBL::Exon");
-    if ( $e->coding_region_start($transcript) ) {
+  for (i=0; i<=Vector_getNumElement(features); i+=2) {
+    Exon *e = Vector_getElementAt(features, i);
+    if (e->objectType != CLASS_EXON) {
+      fprintf(stderr, "Got a DNA align feature where I should have an exon\n");
+      exit(1);
+    }
+
+// Perl did    if ( $e->coding_region_start($transcript) ) {
+    if (Translation_getStartExon(translation) == e) {
       // first coding exon
-      for ( my $j = 0 ; $j <= $i ; $j++ ) {
-        push @fivep,$features[$j];
+      int j;
+      for (j=0 ; j<=i; j++) {
+        Vector_addElement(fiveP, Vector_getElementAt(features, j));
       }
-      last;
+      break;
     }
   }
-  for ( my $i = $#features ; $i >= 0 ;  $i -= 2  ) {
-    my $e = $features[$i];
-    throw("Got a DNA align feature where I should have an exon\n")
-      unless $e->isa("Bio::EnsEMBL::Exon");
-    if ( $e->coding_region_end($transcript) ) {
-          # first coding exon
-      for ( my $j = $i ; $j <= $#features ; $j++ ) {
-        push @threep,$features[$j];
+
+  for (i=Vector_getNumElement(features)-1; i>=0; i-=2) {
+    Exon *e = Vector_getElementAt(features, i);
+    if (e->objectType != CLASS_EXON) {
+      fprintf(stderr, "Got a DNA align feature where I should have an exon\n");
+      exit(1);
+    }
+// Perl was   if ( $e->coding_region_end($transcript) ) {
+    if (Translation_getEndExon(translation) == e) {
+      // first (last) coding exon
+      int j;
+      for (j=i ; j<Vector_getNumElement(features); j++) {
+        Vector_addElement(threeP, Vector_getElementAt(features, j));
       }
-      last;
+      break;
     }
   }
   
   // want to start at last coding exon and work outwards so....
-  @fivep = reverse @fivep;
+  Vector_reverse(fiveP);
+
   // now we should be good
-  print "FIVE P \n";
-  @new_exons = @{$transcript->get_all_translateable_Exons};
-  my $fivep_cds = shift(@new_exons);
-  my $threep_cds = pop(@new_exons);
-  my $fiveplen;
-  my $threeplen;
-  my $fivepc = 0 ;
-  my $threepc = 0 ;
-  my $nmd;
+  printf("FIVE P\n");
+
+// NIY Not sure if need to make a copy here (perl did)
+  Vector *newExons = Transcript_getAllTranslateableExons(transcript);
+
+  Exon *fivePCDS  = Vector_removeElementAt(newExons, 0);
+  Exon *threePCDS = Vector_removeElementAt(newExons, Vector_getNumElement(newExons)-1);
+//Perl was:
+//  my $fivep_cds = shift(@new_exons);
+//  my $threep_cds = pop(@new_exons);
+
+  long fivePLen;
+  long threePLen;
+  int fivePc  = 0;
+  int threePc = 0;
+  long nmd;
   
   // FIVE PRIME RULES
   
- FIVEP: for ( my $i = 0 ; $i <= $#fivep ; $i++ ) {
-    my $f =  $fivep[$i];
-    print $f->start . "\t" . $f->end ."\t$f\t";
-    if ( $i == 0 ) {
-      throw("First feature is not an exon \n")
-        unless $f->isa("Bio::EnsEMBL::Exon");
+// FIVEP: 
+  for (i = 0; i < Vector_getNumElement(fiveP); i++) {
+    SeqFeature *f = Vector_getElementAt(fiveP, i);
+
+    printf("%ld\t%ld\t%s(%p)",SeqFeature_getStart(f), SeqFeature_getEnd(f), Class_findByType(f->objectType)->name, f);
+
+    if (i == 0) {
+      if (f->objectType != CLASS_EXON) {
+        fprintf(stderr, "First feature is not an exon\n");
+        exit(1);
+      }
+
       // UTR starts in this exon - how long is it?
-      my $cds_start = $f->coding_region_start($transcript);
-      $cds_start = $f->coding_region_end($transcript)  if $transcript->strand == -1;
-      throw("First coding exon has no CDS \n") unless $cds_start;
-      print "CDS START $cds_start\t";
-      $fiveplen = $cds_start - $f->start +1 if $transcript->strand == 1;
-      $fiveplen = $f->end - $cds_start   +1 if $transcript->strand == -1;
+      long cdsStart = Exon_getCodingRegionStart((Exon *)f, transcript);
+      if (Transcript_getStrand(transcript) == -1) {
+        cdsStart = Exon_getCodingRegionEnd((Exon *)f, transcript);
+      }
+
+      if (cdsStart == POS_UNDEF) {
+        fprintf(stderr, "First coding exon has no CDS\n");
+        exit(1);
+      }
+
+      printf("CDS START %ld\t", cdsStart);
+
+      if (Transcript_getStrand(transcript) == 1) {
+        fivePLen = cdsStart - SeqFeature_getStart(f) + 1;
+      } else {
+        fivePLen = SeqFeature_getEnd(f) - cdsStart + 1;
+      }
+
       // is the coding exon too long
-      if ( $fiveplen > $self->MAX_5PRIME_LENGTH ) {
+      if (fivePLen > RefineSolexaGenes_getMax5PrimeLength(rsg)) {
         // replace it with the cds
-        @new_fivep = ($fivep_cds);
-        print " 5p too long $fiveplen \n";
-        last FIVEP;
+// Not sure there's anything in newFiveP at this point
+        Vector_removeAll(newFiveP);
+
+        Vector_addElement(newFiveP, fivePCDS);
+        printf(" 5p too long %ld\n", fivePLen);
+        //last FIVEP;
+        break;
       }
-      push @new_fivep,$f;
-      $fivepc++;
+      Vector_addElement(newFiveP, f);
+      fivePc++;
+
     } else {
-      if (  $f->isa("Bio::EnsEMBL::Exon") ) {
-        $fivepc++;
-        $fiveplen+= $f->end - $f->start +1;
+
+      if (f->objectType == CLASS_EXON) {
+        fivePc++;
+        fivePLen += SeqFeature_getLength(f);
+
         // does it make the UTR too long?
-        if ( $fiveplen > $self->MAX_5PRIME_LENGTH ) {
+        if (fivePLen > RefineSolexaGenes_getMax5PrimeLength(rsg)) {
           // dont add it
-          print " 5p too long $fiveplen \n";
-          last FIVEP;
+          printf(" 5p too long %ld\n", fivePLen);
+          //last FIVEP;
+          break;
         }
         // is it too many exons?
-        if ( $fivepc > $self->MAX_5PRIME_EXONS ) {
+        if (fivePc > RefineSolexaGenes_getMax5PrimeExons(rsg)) {
           // dont add it
-          print " too many 5p  $fivepc cut them all as we are not sure \n";
-          @new_fivep = ($fivep_cds);
-          last FIVEP;
+          printf(" too many 5p  %d cut them all as we are not sure\n", fivePc);
+
+          Vector_removeAll(newFiveP);
+
+          Vector_addElement(newFiveP, fivePCDS);
+          //last FIVEP;
+          break;
         }
-        push @new_fivep,$f;
+        Vector_addElement(newFiveP, f);
       }
     }
     // Does the intron score well enough to include the exon
     // apply rules and add successful exons into the mix
-    if ( $f->isa("Bio::EnsEMBL::DnaDnaAlignFeature")) {
-      print $f->score;
-      if ( $average_intron && ($f->score /  $average_intron) *100 <= $self->REJECT_INTRON_CUTOFF ) {
-        print " Rejecting on score cutoff " . $f->score ." vs  $average_intron\n";
+    if (f->objectType == CLASS_DNADNAALIGNFEATURE) {
+      printf("%lf",SeqFeature_getScore(f));
+
+      if (averageIntron && (SeqFeature_getScore(f) / averageIntron) * 100.0 <= RefineSolexaGenes_getRejectIntronCutoff(rsg)) {
+        printf(" Rejecting on score cutoff %f vs %lf\n", SeqFeature_getScore(f), averageIntron);
         // dont add any more 
-        last FIVEP;
+        //last FIVEP;
+        break;
       }
     }
-    print "\n";
+    printf("\n");
   }
   
+  printf("\n");
   // three P
-  print "THREE P \n";
- THREEP:   for ( my $i = 0 ; $i <= $#threep ; $i++ ) {
-    my $f = $threep[$i];
-    print $f->start . "\t" . $f->end ."\t$f\t";
-    if ( $i == 0 ) {
-      throw("First feature is not an exon \n")
-        unless $f->isa("Bio::EnsEMBL::Exon");
-      // UTR starts in this exon - how long is it?
-      my $cds_end = $f->coding_region_end($transcript);
-      $cds_end = $f->coding_region_start($transcript)  if $transcript->strand == -1;
-      throw("last coding exon has no CDS \n") unless $cds_end;
-      print "CDS END $cds_end\t";
-      $threeplen = $cds_end - $f->start +1 if $transcript->strand == -1;
-      $threeplen = $f->end - $cds_end   +1 if $transcript->strand == 1;
-      # is the coding exon too long
-      if ( $threeplen > $self->MAX_3PRIME_LENGTH ) {
-        // replace it with the cds
-        @new_threep = ($threep_cds);
-        print " 3p too long $threeplen \n";
-        last THREEP;
+  printf("THREE P\n");
+
+// THREEP:   
+  for (i = 0; i < Vector_getNumElement(threeP); i++) {
+    SeqFeature *f = Vector_getElementAt(threeP, i);
+
+    printf("%ld\t%ld\t%s(%p)",SeqFeature_getStart(f), SeqFeature_getEnd(f), Class_findByType(f->objectType)->name, f);
+
+    if (i == 0) {
+      if (f->objectType != CLASS_EXON) {
+        fprintf(stderr, "First feature is not an exon\n");
+        exit(1);
       }
-      push @new_threep,$f;
-      $nmd = $threeplen ;
-      $threepc++;
+
+      // UTR starts in this exon - how long is it?
+      long cdsEnd = Exon_getCodingRegionEnd((Exon *)f, transcript);
+      if (Transcript_getStrand(transcript) == -1) {
+        cdsEnd = Exon_getCodingRegionStart((Exon *)f, transcript);
+      }
+
+      if (cdsEnd == POS_UNDEF) {
+        fprintf(stderr, "Last coding exon has no CDS\n");
+        exit(1);
+      }
+
+      printf("CDS END %ld\t", cdsEnd);
+
+      if (Transcript_getStrand(transcript) == -1) {
+        threePLen = cdsEnd - SeqFeature_getStart(f) + 1;
+      } else {
+        threePLen = SeqFeature_getEnd(f) - cdsEnd + 1;
+      }
+
+      // is the coding exon too long
+      if (threePLen > RefineSolexaGenes_getMax3PrimeLength(rsg)) {
+        // replace it with the cds
+// Not sure there's anything in newThreeP at this point
+        Vector_removeAll(newThreeP);
+
+        Vector_addElement(newThreeP, threePCDS);
+        printf(" 3p too long %ld\n", threePLen);
+        //last THREEP;
+        break;
+      }
+      Vector_addElement(newThreeP, f);
+      nmd = threePLen ;
+      threePc++;
+
     } else {
-      if (  $f->isa("Bio::EnsEMBL::Exon") ) {
+
+      if (f->objectType == CLASS_EXON) {
         // does it break the NMD rule?
-        if ( $nmd > 55 ) {
-          print " splice is after $nmd bp from stop codon - rejected on NMD rule of maximum 55 bp \n";
-          @new_threep = ($threep_cds);
-          last THREEP;
+        if (nmd > 55) {
+          printf(" splice is after %ld bp from stop codon - rejected on NMD rule of maximum 55 bp\n", nmd);
+          Vector_removeAll(newThreeP);
+
+          Vector_addElement(newThreeP, threePCDS);
+          //last THREEP;
+          break;
         }
-        $threepc++;
-        $threeplen+= $f->end - $f->start +1;
+        threePc++;
+        threePLen += SeqFeature_getLength(f);
+
         // does it make the UTR too long?
-        if ( $threeplen > $self->MAX_3PRIME_LENGTH ) {
+        if (threePLen > RefineSolexaGenes_getMax3PrimeLength(rsg)) {
           // dont add it
-          print " 3p too long $threeplen \n";
-          last THREEP;
+          printf(" 3p too long %ld\n", threePLen);
+          //last THREEP;
+          break;
         }
         // is it too many exons?
-        if ( $threepc > $self->MAX_3PRIME_EXONS ) {
+        if (threePc > RefineSolexaGenes_getMax3PrimeExons(rsg)) {
           // dont add it
-          print " too many 3p  $threepc cut them all as we are not sure \n";
-          @new_threep = ($threep_cds);
-          last THREEP;
+          printf(" too many 3p  %d cut them all as we are not sure\n", threePc);
+
+          Vector_removeAll(newThreeP);
+
+          Vector_addElement(newThreeP, threePCDS);
+          //last THREEP;
+          break;
         }
-        push @new_threep,$f;
+        Vector_addElement(newThreeP, f);
       }
     }
+
     // Does the intron score well enough to include the exon
     // apply rules and add successful exons into the mix
-    if ( $f->isa("Bio::EnsEMBL::DnaDnaAlignFeature")) {
-      print $f->score;
-      if ( $average_intron && ($f->score /  $average_intron) * 100 <= $self->REJECT_INTRON_CUTOFF ) {
-        print " Rejecting on score cutoff " . $f->score ." vs  $average_intron\n";
-        // dont add any more 
-        last THREEP;
+    if (f->objectType == CLASS_DNADNAALIGNFEATURE) {
+      printf("%lf",SeqFeature_getScore(f));
+
+      if (averageIntron && (SeqFeature_getScore(f) / averageIntron) * 100.0 <= RefineSolexaGenes_getRejectIntronCutoff(rsg)) {
+        printf(" Rejecting on score cutoff %f vs %lf\n", SeqFeature_getScore(f), averageIntron);
+        // dont add any more
+        //last THREEP;
+        break;
       }
     }
-    print "\n";
+    printf("\n");
   }
   
-  push @new_exons, @new_fivep;
-  push @new_exons, @new_threep;
-  print " New transript has " . scalar(@new_exons) , " exons\n";
-  my @clones;
-  foreach my $e ( @new_exons ) {
-    throw("Not is not an exon " . $e->start ." " . $e->end . " $e\n")
-      unless $e->isa("Bio::EnsEMBL::Exon");
-    push @clones, clone_Exon($e);
+  Vector_append(newExons, newFiveP);
+  Vector_append(newExons, newThreeP);
+
+  printf(" New transript has %d exons\n", Vector_getNumElement(newExons));
+
+  Vector *clones = Vector_new();
+
+  for (i=0; i<Vector_getNumElement(newExons); i++) {
+    Exon *e = Vector_getElementAt(features, i);
+    if (e->objectType != CLASS_EXON) {
+      fprintf(stderr, "Feature is not an exon (start %ld end %ld %s (%p)\n",
+              SeqFeature_getStart(e), SeqFeature_getEnd(e), Class_findByType(e->objectType)->name, e);
+      exit(1);
+    }
+    Vector_addElement(clones, ExonUtils_cloneExon(e));
   }
-  @clones = sort { $a->start <=> $b->start } @clones;
-  @clones =  reverse(@clones) if $transcript->strand == -1;
-  my $trimmed_tran =  $self->modify_transcript($transcript,\@clones);
+
+  if (Transcript_getStrand(transcript) == 1) {
+    Vector_sort(clones, SeqFeature_startCompFunc);
+  } else {
+    Vector_sort(clones, SeqFeature_reverseStartCompFunc);
+  }
+
+  Transcript *trimmedTran = RefineSolexaGenes_modifyTranscript(rsg, transcript, clones);
+
   // The naughty bit!
-  $gene->{_transcript_array} = [];
-  $gene->add_Transcript($trimmed_tran);
-  return $gene;
+// NIY: Definitely a leak here
+  gene->transcripts = Vector_new();
+  Gene_addTranscript(gene, trimmedTran);
+
+
+// NIY: Free up everything!
+
+  return gene;
 }
-*/
 
 
 // NOTE: Exons MUST BE sorted in correct order for adding to transcript
@@ -4463,11 +4598,11 @@ int RefineSolexaGenes_writeIntrons(RefineSolexaGenes *rsg) {
   return rsg->writeIntrons;
 }
 
-void RefineSolexaGenes_setTrimUtr(RefineSolexaGenes *rsg, int trimUtr) {
+void RefineSolexaGenes_setTrimUTR(RefineSolexaGenes *rsg, int trimUtr) {
   rsg->trimUtr = trimUtr;
 }
 
-int RefineSolexaGenes_trimUtr(RefineSolexaGenes *rsg) {
+int RefineSolexaGenes_trimUTR(RefineSolexaGenes *rsg) {
   return rsg->trimUtr;
 }
 
@@ -4658,7 +4793,7 @@ Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMe
   translate(mRNA, aaSeq, lengths, codonTableId);
 
   for (i=0;i<6;i++) {
-    endAaSeq[i] = aaSeq[i] + lengths[i] - 1;
+    endAaSeq[i] = aaSeq[i] + lengths[i];
   }
 
   free(mRNA);
@@ -4688,7 +4823,7 @@ Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMe
             end = start - len * 3 + 1;
           }
 
-          if (orf != endAaSeq[i]) { // happens when the strtok found a '*' - add 3 to end to include it in translation range
+          if (orf + len != endAaSeq[i]) { // happens when the strtok found a '*' - add 3 to end to include it in translation range
             Vector_addElement(orfRanges, ORFRange_new(len, start, end+3));
           } else {  // should be no '*' (at end of aaSeq string - this should be the last token)
             Vector_addElement(orfRanges, ORFRange_new(len, start, end));

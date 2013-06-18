@@ -247,6 +247,158 @@ Exon *Exon_transfer(Exon *exon, Slice *slice) {
   return newExon;
 }
 
+
+
+/*
+=head2 coding_region_start
+
+    Arg [1]     : Bio::EnsEMBL::Transcript $transcript
+    Example     : $coding_region_start =
+                    $exon->coding_region_start($transcript);
+    Description : Returns the start position of the coding region
+                  of the exon in slice-relative coordinates on the
+                  forward strand.  Returns undef if the whole exon is
+                  non-coding.
+                  Since an exon may be part of one or more transcripts,
+                  the relevant transcript must be given as argument to
+                  this method.
+    Return type : Integer or undef
+    Exceptions  : Throws if the given argument is not a transcript.
+    Caller      : General
+    Status      : Stable
+
+=cut
+
+# The implementation of this method is analogous to the implementation
+# of cdna_coding_start().
+*/
+// New
+long Exon_getCodingRegionStart(Exon *exon, Transcript *transcript) {
+  IDType id = Transcript_getDbID(transcript);
+
+/* NIY
+  if (defined($id) && /exists $self->{coding_region_start}->{$id}) {
+    return $self->{coding_region_start}->{$id};
+  }
+*/
+  fprintf(stderr, "Caching of Exon_codingRegionStart not implemented yet\n");
+
+  long codingRegionStart;
+  long transcriptCodingStart = Transcript_getCodingRegionStart(transcript);
+  if (transcriptCodingStart != POS_UNDEF) {
+    long start = Exon_getStart(exon);
+
+    if (transcriptCodingStart < start) {
+      // Coding region starts upstream of this exon...
+
+      if (Transcript_getCodingRegionEnd(transcript) < start) {
+        // ... and also ends upstream of this exon.
+        codingRegionStart = POS_UNDEF;
+      } else {
+        // ... and does not end upstream of this exon.
+        codingRegionStart = start;
+      }
+    } else {
+      // Coding region starts either within or downstream of this
+      // exon.
+
+      if (transcriptCodingStart <= Exon_getEnd(exon)) {
+        // Coding region starts within this exon.
+        codingRegionStart = transcriptCodingStart;
+      } else {
+        // Coding region starts downstream of this exon.
+        codingRegionStart = POS_UNDEF;
+      }
+    }
+  } else {
+    codingRegionStart = POS_UNDEF;
+  }
+
+/* NIY
+  if (defined $id) {
+    $self->{codingRegionStart}->{$id} = $codingRegionStart;
+    $self->{coding_region_end}->{$id} = undef if ! defined $codingRegionStart;
+  }
+*/
+
+  return codingRegionStart;
+}
+
+/*
+=head2 coding_region_end
+
+    Arg [1]     : Bio::EnsEMBL::Transcript $transcript
+    Example     : $coding_region_end =
+                    $exon->coding_region_end($transcript);
+    Description : Returns the end position of the coding region of
+                  the exon in slice-relative coordinates on the
+                  forward strand.  Returns undef if the whole exon is
+                  non-coding.
+                  Since an exon may be part of one or more transcripts,
+                  the relevant transcript must be given as argument to
+                  this method.
+    Return type : Integer or undef
+    Exceptions  : Throws if the given argument is not a transcript.
+    Caller      : General
+    Status      : Stable
+
+=cut
+
+# The implementation of this method is analogous to the implementation
+# of cdna_coding_end().
+*/
+// New
+long Exon_getCodingRegionEnd(Exon *exon, Transcript *transcript) {
+  IDType id = Transcript_getDbID(transcript);
+
+/* NIY
+  if(defined $id && exists $self->{coding_region_end}->{$id}) {
+    return $self->{coding_region_end}->{$id};
+  }
+*/
+  fprintf(stderr, "Caching of Exon_codingRegionStart not implemented yet\n");
+
+  long codingRegionEnd;
+  long transcriptCodingEnd = Transcript_getCodingRegionEnd(transcript);
+  if (transcriptCodingEnd != POS_UNDEF) {
+
+    long end = Exon_getEnd(exon);
+    if (transcriptCodingEnd > end) {
+      // Coding region ends downstream of this exon...
+
+      if (Transcript_getCodingRegionStart(transcript) > end) {
+        // ... and also starts downstream of this exon.
+        codingRegionEnd = POS_UNDEF;
+      } else {
+        // ... and does not start downstream of this exon.
+        codingRegionEnd = end;
+      }
+    } else {
+      // Coding region ends either within or upstream of this
+      // exon.
+      if (transcriptCodingEnd >= Exon_getStart(exon)) {
+        codingRegionEnd = transcriptCodingEnd;
+      } else {
+        codingRegionEnd = POS_UNDEF;
+      }
+    }
+  } else {
+    // This is a non-coding transcript.
+    codingRegionEnd = POS_UNDEF;
+  }
+
+/* NIY
+  if(defined $id) {
+    $self->{codingRegionEnd}->{$id} = $codingRegionEnd;
+    $self->{coding_region_start}->{$id} = undef if ! defined $codingRegionEnd;
+  }
+*/
+
+  return codingRegionEnd;
+}
+
+
+
 Exon *Exon_transformRawContigToSliceImpl(Exon *exon, Slice *slice) {
   Exon *newExon;
   BaseAdaptor *adaptor;
