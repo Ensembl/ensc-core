@@ -229,14 +229,14 @@ int main(int argc, char *argv[]) {
   rsg->adaptorAliasHash = StringHash_new(STRINGHASH_SMALL);
 
   StringHash_add(rsg->adaptorAliasHash, "REFERENCE_DB", 
-                 //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "steve_chicken_rnaseq_missing_reference", 3306, NULL));
-                 DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "steve_chicken_rnaseq_missing_reference", 13386, NULL));
+                 //DBAdaptor_new("genebuild2", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL));
+                 DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_ref", 13382, NULL));
   StringHash_add(rsg->adaptorAliasHash, "REFINED_DB", 
-//                 DBAdaptor_new("genebuild1", "ensadmin", "ensembl", "steve_chicken_rnaseq_missing_refined_c", 3306, NULL));
-                 DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "steve_chicken_rnaseq_missing_refined_c", 13381, NULL));
+//                 DBAdaptor_new("genebuild1", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, NULL));
+                 DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_refined", 13386, NULL));
   StringHash_add(rsg->adaptorAliasHash, "ROUGH_DB", 
-//                 DBAdaptor_new("genebuild2", "ensadmin", "ensembl", "rn6_chicken_rnaseq2_rough", 3306, NULL));
-                 DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "rn6_chicken_rnaseq2_rough", 13382, NULL));
+//                 DBAdaptor_new("genebuild2", "ensadmin", "ensembl", "db8_rabbit_rough", 3306, NULL));
+                 DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_rough", 13385, NULL));
 
   // Create a DBAdaptor hash
   // Not used with Bam files  RefineSolexaGenes_setIntronDb(rsg, char *intronDb);
@@ -247,7 +247,7 @@ int main(int argc, char *argv[]) {
   // Create a Vector of bam files
   Vector *intronBamFiles = Vector_new();
   
-  Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch110/ensembl/rn6/chicken/rnaseq/merge/introns.bam", 0, 0, NULL));
+  Vector_addElement(intronBamFiles, IntronBamConfig_new("/nfs/ensembl/db8/rabbit_bam/introns.bam", 0, 0, NULL));
   RefineSolexaGenes_setIntronBamFiles(rsg, intronBamFiles);
 
   RefineSolexaGenes_setLogicNames(rsg, NULL);
@@ -286,7 +286,7 @@ int main(int argc, char *argv[]) {
   Analysis *analysis = AnalysisAdaptor_fetchByLogicName(refAa, "refine_all");
   RefineSolexaGenes_setAnalysis(rsg, analysis);
 
-  RefineSolexaGenes_setInputId(rsg, "chromosome:Galgal4:13:1:10000000:1");
+  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:10000000:1");
 
   RefineSolexaGenes_fetchInput(rsg);
   RefineSolexaGenes_run(rsg);
@@ -1710,15 +1710,13 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
         if (strcmp(Gene_getBiotype(gene), "duplicate")) {
           if (!strcmp(Gene_getBiotype(gene), RefineSolexaGenes_getBestScoreType(rsg))) {
             // trim the UTR
-            fprintf(stderr,"UTR trimming not implemented yet\n");
-// NIY            $self->prune_UTR($gene);
+            RefineSolexaGenes_pruneUTR(rsg, gene);
             RefineSolexaGenes_addToOutput(rsg, gene);
           } else {
 // Note here checking for whether other isoforms type is null, other places assume its not null
             if (RefineSolexaGenes_getOtherNum(rsg) && RefineSolexaGenes_getOtherIsoformsType(rsg) != NULL && count <= RefineSolexaGenes_getOtherNum(rsg)) {
               // trim the UTR
-              fprintf(stderr,"UTR trimming not implemented yet\n");
-// NIY              $self->prune_UTR($gene);
+              RefineSolexaGenes_pruneUTR(rsg, gene);
               RefineSolexaGenes_addToOutput(rsg, gene);
             }
           }

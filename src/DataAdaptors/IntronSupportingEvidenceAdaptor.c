@@ -497,7 +497,7 @@ IDType IntronSupportingEvidenceAdaptor_store(IntronSupportingEvidenceAdaptor *is
   return IntronSupportingEvidence_getDbID(sf);
 }
 
-/* NIY
+/* 
 =head2 store_transcript_linkage
 
   Arg[1]      : Bio::EnsEMBL::IntronSupportingEvidence Evidence to link
