@@ -93,6 +93,7 @@ int DNAPepAlignFeature_getQueryUnit(void);
 
 void DNAPepAlignFeature_freeImpl(DNAPepAlignFeature *dpaf);
 DNAPepAlignFeature *DNAPepAlignFeature_shallowCopyImpl(DNAPepAlignFeature *dpaf);
+DNAPepAlignFeature *DNAPepAlignFeature_deepCopyImpl(DNAPepAlignFeature *dpaf);
 
 #define DNAPepAlignFeature_getSeqRegionStart(paf) SeqFeature_getSeqRegionStart((paf))
 #define DNAPepAlignFeature_getSeqRegionEnd(paf) SeqFeature_getSeqRegionEnd((paf))
@@ -105,7 +106,7 @@ DNAPepAlignFeature *DNAPepAlignFeature_shallowCopyImpl(DNAPepAlignFeature *dpaf)
     dnaPepAlignFeatureFuncs = {
                              DNAPepAlignFeature_freeImpl,
                              DNAPepAlignFeature_shallowCopyImpl, // shallowCopy
-                             NULL, // deepCopy
+                             DNAPepAlignFeature_deepCopyImpl, // deepCopy
                              NULL, // getStart
                              NULL, // setStart
                              NULL, // getEnd

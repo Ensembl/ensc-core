@@ -121,6 +121,7 @@ int DNAAlignFeature_getQueryUnit(void);
 
 void DNAAlignFeature_freeImpl(DNAAlignFeature *daf);
 DNAAlignFeature *DNAAlignFeature_shallowCopyImpl(DNAAlignFeature *daf);
+DNAAlignFeature *DNAAlignFeature_deepCopyImpl(DNAAlignFeature *daf);
 
 
 #ifdef __DNAALIGNFEATURE_MAIN__
@@ -128,7 +129,7 @@ DNAAlignFeature *DNAAlignFeature_shallowCopyImpl(DNAAlignFeature *daf);
     dnaAlignFeatureFuncs = {
                              DNAAlignFeature_freeImpl, // free
                              DNAAlignFeature_shallowCopyImpl, // shallowCopy
-                             NULL, // deepCopy
+                             DNAAlignFeature_deepCopyImpl, // deepCopy
                              NULL, // getStart
                              NULL, // setStart
                              NULL, // getEnd
