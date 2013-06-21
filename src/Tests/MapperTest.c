@@ -6,6 +6,7 @@
 #include "CoordSystem.h"
 
 #include "BaseTest.h"
+#include "EnsC.h"
 
 #define NumOutput(a) sizeof(a)/(sizeof(int)*4)
 
@@ -15,6 +16,8 @@ int loadSGPDump(Mapper *mapper, int reverse);
 int testTransform(Mapper *mapper, int srcId, int srcStart, int srcEnd, int srcStrand, char *srcType, int dest[][4], int nDest );
 
 int main(int argc, char *argv[]) {
+
+  initEnsC(argc, argv);
 
   Mapper *mapper = Mapper_new( "rawcontig", "virtualcontig", NULL, NULL );
   int nToLoad = loadSGPDump(mapper, 0 );
