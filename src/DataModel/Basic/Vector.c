@@ -47,6 +47,7 @@ void Vector_setBatchSize(Vector *v, int batchSize) {
 void *Vector_getElementAt(Vector *v, int ind) {
   if (ind < 0 || ind >= v->nElement) {
     fprintf(stderr,"ERROR: Invalid element index %d in Vector_getElementAt\n",ind);
+    ProcUtil_showBacktrace(EnsC_progName);
     exit(1);
   }
   return v->elements[ind];
