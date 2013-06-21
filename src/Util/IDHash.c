@@ -172,6 +172,7 @@ int IDHash_remove(IDHash *idHash, IDType id, void freeFunc()) {
       freeFunc(toRemove);
     }
   }
+  idHash->nValue--;
   
   return 0;
 }
