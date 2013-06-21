@@ -643,8 +643,9 @@ char *Transcript_getSplicedSeq(Transcript *trans) {
 
   for (i=0; i<Transcript_getExonCount(trans); i++) {
     Exon *ex = Transcript_getExonAt(trans, i);
-    StrUtil_appendString(seqStr,Exon_getSeqString(ex));
+    seqStr = StrUtil_appendString(seqStr,Exon_getSeqString(ex));
   }
+
 
   return seqStr;
 }
