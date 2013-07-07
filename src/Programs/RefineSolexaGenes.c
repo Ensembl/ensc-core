@@ -170,6 +170,13 @@ ExtraExonData *ExtraExonData_new(long *coords, int nCoord) {
   return eed;
 }
 
+int ExtraExonData_startCompFunc(const void *a, const void *b) {
+  ExtraExonData *eed1 = *((ExtraExonData **)a);
+  ExtraExonData *eed2 = *((ExtraExonData **)b);
+
+  return eed1->coords[0] - eed2->coords[0];
+}
+
 void ExtraExonData_free(ExtraExonData *eed) {
   free(eed->coords);
   free(eed);
@@ -2106,7 +2113,6 @@ Vector *RefineSolexaGenes_makeModels(RefineSolexaGenes *rsg, StringHash *paths, 
       }
       if (tooShort) {
 // NIY: Free stuff??
-        fprintf(stderr,"TOOOOOOOOOOO SHHHOOOOORTTTTTTT!!!!!!!!!!!!\n");
         continue;
       }
       
@@ -2268,7 +2274,7 @@ Vector *RefineSolexaGenes_makeModels(RefineSolexaGenes *rsg, StringHash *paths, 
 
     if (Vector_getNumElement(trans) && !cluster->finalModels) cluster->finalModels = Vector_new();
 // Doesn't seem to be used (only set)    Transcript *best;
-    fprintf(stderr,"Have %d transcripts\n", Vector_getNumElement(trans));
+    //fprintf(stderr,"Have %d transcripts\n", Vector_getNumElement(trans));
     for (j=0; j<Vector_getNumElement(trans); j++) {
       Transcript *tran = Vector_getElementAt(trans, j);
 
@@ -3247,7 +3253,7 @@ Vector *RefineSolexaGenes_makeModelClusters(RefineSolexaGenes *rsg, Vector *mode
     Exon *firstExon = Vector_getElementAt(model->features, 0);
     Exon *lastExon  = Vector_getLastElement(model->features);
 
-    fprintf(stderr, "Model start %ld end %ld\n",Exon_getStart(firstExon), Exon_getEnd(lastExon));
+    //fprintf(stderr, "Model start %ld end %ld\n",Exon_getStart(firstExon), Exon_getEnd(lastExon));
     int j;
     for (j=startInd; j<nClust; j++) {
 //#    foreach my $cluster ( @clusters ) {
@@ -3328,6 +3334,9 @@ Vector *RefineSolexaGenes_mergeExons(RefineSolexaGenes *rsg, Gene *gene, int str
   Vector *sortedExons = Vector_copy(exons);
   Vector_sort(sortedExons, SeqFeature_startCompFunc);
 
+  Exon *lastExon = Vector_getLastElement(sortedExons);
+  long endLastExon = Exon_getEnd(lastExon);
+
   //char **keys = StringHash_getKeys(extraExons);
   char **keys = RefineSolexaGenes_getExtraExonsKeys(rsg);
   ExtraExonData **eeValues = RefineSolexaGenes_getExtraExonsValues(rsg);
@@ -3341,6 +3350,7 @@ Vector *RefineSolexaGenes_mergeExons(RefineSolexaGenes *rsg, Gene *gene, int str
 //    long startAnchor = shift(@coords);
 //    long endAnchor = pop(@coords);
 // NOTE: I'm not shifting and popping (ie removing from array) so need to take account of this when making exons
+
     long startAnchor = eed->coords[0];
     long endAnchor   = eed->coords[eed->nCoord-1];
 
@@ -3349,6 +3359,10 @@ Vector *RefineSolexaGenes_mergeExons(RefineSolexaGenes *rsg, Gene *gene, int str
     if (startAnchor > endAnchor) {
       fprintf(stderr, "START AND END %ld %ld\n", startAnchor,  endAnchor);
       exit(1);
+    }
+
+    if (startAnchor > endLastExon) {
+      break;
     }
 
     //# do the anchors lie within the model?
@@ -4724,6 +4738,11 @@ char **RefineSolexaGenes_getExtraExonsKeys(RefineSolexaGenes *rsg) {
 ExtraExonData **RefineSolexaGenes_getExtraExonsValues(RefineSolexaGenes *rsg) {
   if (rsg->extraExonsValues == NULL) {
     rsg->extraExonsValues  = StringHash_getValues(RefineSolexaGenes_getExtraExons(rsg));
+    if (rsg->extraExonsValues) 
+      qsort(rsg->extraExonsValues,
+            StringHash_getNumValues(RefineSolexaGenes_getExtraExons(rsg)),
+            sizeof(ExtraExonData *),
+            ExtraExonData_startCompFunc);
   }
 
   return rsg->extraExonsValues;

@@ -169,6 +169,23 @@ int CoordSystem_compare(CoordSystem *cs1, CoordSystem *cs2) {
   return 1;
 }
 
+char *CoordSystem_getNameColonVersion(CoordSystem *cs) {
+  if (cs->nameColonVersion == NULL) {
+    char tmpStr[1024];
+    sprintf(tmpStr,"%s:%s",CoordSystem_getName(cs),CoordSystem_getVersion(cs) ? CoordSystem_getVersion(cs):"");
+    StrUtil_copyString(&cs->nameColonVersion, tmpStr, 0);
+    cs->lenNameColonVersion = strlen(tmpStr);
+  }
+ 
+  return cs->nameColonVersion;
+}
+
+int CoordSystem_getLenNameColonVersion(CoordSystem *cs) {
+  if (cs->nameColonVersion == NULL) {
+    CoordSystem_getNameColonVersion(cs);
+  }
+  return cs->lenNameColonVersion;
+}
 
 void CoordSystem_free(CoordSystem *cs) {
   

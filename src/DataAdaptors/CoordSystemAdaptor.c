@@ -546,14 +546,22 @@ CoordSystem *CoordSystemAdaptor_fetchSeqLevel(CoordSystemAdaptor *csa) {
 
 
 Vector *CoordSystemAdaptor_getMappingPath(CoordSystemAdaptor *csa, CoordSystem *cs1, CoordSystem *cs2) {
-  char key1[1024];
-  char key2[1024];
+//  char key1[1024];
+//  char key2[1024];
+  char *key1;
+  char *key2;
   char keypair[2048];
   char revKeypair[2048];
   Vector *path;
 
-  int lenKey1 = sprintf(key1,"%s:%s", CoordSystem_getName(cs1), CoordSystem_getVersion(cs1) ? CoordSystem_getVersion(cs1) : "");
-  int lenKey2 = sprintf(key2,"%s:%s", CoordSystem_getName(cs2), CoordSystem_getVersion(cs2) ? CoordSystem_getVersion(cs2) : "");
+//  int lenKey1 = sprintf(key1,"%s:%s", CoordSystem_getName(cs1), CoordSystem_getVersion(cs1) ? CoordSystem_getVersion(cs1) : "");
+  
+  key1 = CoordSystem_getNameColonVersion(cs1);
+  int lenKey1 = CoordSystem_getLenNameColonVersion(cs1);
+
+  key2 = CoordSystem_getNameColonVersion(cs2);
+  int lenKey2 = CoordSystem_getLenNameColonVersion(cs2);
+//  int lenKey2 = sprintf(key2,"%s:%s", CoordSystem_getName(cs2), CoordSystem_getVersion(cs2) ? CoordSystem_getVersion(cs2) : "");
 
   memcpy(keypair,key1,lenKey1);
   keypair[lenKey1] = '|';

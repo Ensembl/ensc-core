@@ -18,6 +18,8 @@ struct CoordSystemStruct {
   Storable st;
   char *name;
   char *version;
+  char *nameColonVersion;
+  int   lenNameColonVersion;
   int   rank;
 
   int  isTopLevel;
@@ -47,6 +49,9 @@ CoordSystem *CoordSystem_new(char *name, char *version, int rank, IDType dbID, C
 #define CoordSystem_getIsDefaultVersion(cs) cs->isDefaultVersion
 
 int CoordSystem_compare(CoordSystem *cs1, CoordSystem *cs2);
+
+char *CoordSystem_getNameColonVersion(CoordSystem *cs);
+int CoordSystem_getLenNameColonVersion(CoordSystem *cs);
 
 void CoordSystem_free(CoordSystem *coordSystem);
 
