@@ -1843,6 +1843,23 @@ Vector *AssemblyMapperAdaptor_seqRegionsToIds(AssemblyMapperAdaptor *ama, CoordS
   return out;
 }
 
+IDType AssemblyMapperAdaptor_seqRegionToId(AssemblyMapperAdaptor *ama, CoordSystem *coordSystem, char *seqRegionName) {
+  IDType csId = CoordSystem_getDbID(coordSystem);
+  char key[1024];
+
+  IDType seqRegionId;
+
+  sprintf(key,"%s:"IDFMTSTR, seqRegionName, csId);
+    
+  if (StringHash_contains(ama->srNameCache, key)) {
+    SeqRegionCacheEntry *cacheData = StringHash_getValue(ama->srNameCache, key);
+    seqRegionId = cacheData->regionId;
+  } else {
+    seqRegionId = AssemblyMapperAdaptor_seqRegionNameToId(ama, seqRegionName, csId);
+  }
+
+  return seqRegionId;
+}
 
 /*
 =head2 seq_ids_to_regions

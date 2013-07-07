@@ -552,10 +552,14 @@ Vector *CoordSystemAdaptor_getMappingPath(CoordSystemAdaptor *csa, CoordSystem *
   char revKeypair[2048];
   Vector *path;
 
-  sprintf(key1,"%s:%s", CoordSystem_getName(cs1), CoordSystem_getVersion(cs1) ? CoordSystem_getVersion(cs1) : "");
-  sprintf(key2,"%s:%s", CoordSystem_getName(cs2), CoordSystem_getVersion(cs2) ? CoordSystem_getVersion(cs2) : "");
+  int lenKey1 = sprintf(key1,"%s:%s", CoordSystem_getName(cs1), CoordSystem_getVersion(cs1) ? CoordSystem_getVersion(cs1) : "");
+  int lenKey2 = sprintf(key2,"%s:%s", CoordSystem_getName(cs2), CoordSystem_getVersion(cs2) ? CoordSystem_getVersion(cs2) : "");
 
-  sprintf(keypair,"%s|%s",key1,key2);
+  memcpy(keypair,key1,lenKey1);
+  keypair[lenKey1] = '|';
+  memcpy(&keypair[lenKey1+1],key2,lenKey2+1);
+
+  //sprintf(keypair,"%s|%s",key1,key2);
   
   if (StringHash_contains(csa->mappingPaths, keypair)) {
     path = StringHash_getValue(csa->mappingPaths, keypair);
@@ -563,7 +567,11 @@ Vector *CoordSystemAdaptor_getMappingPath(CoordSystemAdaptor *csa, CoordSystem *
     if (path) return path; // Not sure if a NULL path should ever be returned from hash but perl was checking for it
   }
 
-  sprintf(revKeypair,"%s|%s",key2,key1); // reverse of path
+  memcpy(keypair,key2,lenKey2);
+  keypair[lenKey2] = '|';
+  memcpy(&keypair[lenKey2+1],key1,lenKey1+1);
+
+  //sprintf(revKeypair,"%s|%s",key2,key1); // reverse of path
 
   if (StringHash_contains(csa->mappingPaths, revKeypair)) {
     path = StringHash_getValue(csa->mappingPaths, revKeypair);

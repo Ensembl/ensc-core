@@ -39,6 +39,7 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
 void AssemblyMapperAdaptor_buildCombinedMapper(AssemblyMapperAdaptor *ama, Vector *ranges, Mapper *startMidMapper,
                                               Mapper *endMidMapper, Mapper *combinedMapper, char *startName);
 Vector *AssemblyMapperAdaptor_seqRegionsToIds(AssemblyMapperAdaptor *ama, CoordSystem *coordSystem, Vector *seqRegions);
+IDType AssemblyMapperAdaptor_seqRegionToId(AssemblyMapperAdaptor *ama, CoordSystem *coordSystem, char *seqRegionName);
 Vector *AssemblyMapperAdaptor_seqIdsToRegions(AssemblyMapperAdaptor *ama, Vector *seqRegionIds);
 void AssemblyMapperAdaptor_deleteCache(AssemblyMapperAdaptor *ama);
 void AssemblyMapperAdaptor_registerRegion(AssemblyMapperAdaptor *ama, AssemblyMapper *asmMapper, char *type,

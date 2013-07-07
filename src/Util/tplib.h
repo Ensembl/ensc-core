@@ -32,9 +32,7 @@ void initbasebits(void);
 int compilemx(char *);
 void translate(char *in, char **out, int *l, int codonTableId);
 //void translate(char *, char **, int*);
-#ifdef NVSN
-void rev_comp(char *, char *);
-#endif
+void rev_comp(char *in, char *out, int length);
 
 /* Error stuff in error.c */
 typedef enum {

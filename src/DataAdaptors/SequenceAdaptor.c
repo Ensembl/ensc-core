@@ -26,7 +26,7 @@ An adaptor for the retrieval of DNA sequence from the EnsEMBL database
 
 static long const SEQ_CHUNK_PWR = 18; // 2^18 = approx. 250KB
 //static long const SEQ_CHUNK_PWR = 1; // Basically means don't cache
-static long const SEQ_CACHE_SZ  = 5;
+static long const SEQ_CACHE_SZ  = 20;
 static long SEQ_CACHE_MAX;
 
 static int init = 0;
@@ -89,7 +89,7 @@ SequenceAdaptor *SequenceAdaptor_new(DBAdaptor *dba) {
 
   int count = 0;
   ResultRow *row;
-  while (row = sth->fetchRow(sth)){
+  while ((row = sth->fetchRow(sth))){
     IDType seqRegionId = row->getLongLongAt(row, 0);
     char *value        = row->getStringAt(row, 1);
 
@@ -274,6 +274,7 @@ char *SequenceAdaptor_fetchBySliceStartEndStrandRecursive(SequenceAdaptor *sa,
       char *tmpSeq = SequenceAdaptor_fetchBySliceStartEndStrandRecursive(sa, symlinkSlice, 1, POS_UNDEF, 1, recLev);
       // memcpy here
       memcpy(&(seq[segStart-1]), tmpSeq, segEnd-segStart+1);
+      free(tmpSeq);
     }
 // Will slice be the right length if there are rnaEdits???????? - disallow rnaEdits which are different length to original slice
     if (strand == -1) {
@@ -339,6 +340,11 @@ char *SequenceAdaptor_fetchBySliceStartEndStrandRecursive(SequenceAdaptor *sa,
 // Think projection segment from coordinates are slice coordinates so relative to slice and starting at 1
     memcpy(&(seq[start-1]), tmpSeq, lenSegment);
     free(tmpSeq);
+
+
+// Hopefully OK to free this here
+    Slice_free(seqSlice);
+
 //    $seq .= $tmp_seq;
 //    $total = $end;
   }
@@ -367,6 +373,10 @@ char *SequenceAdaptor_fetchBySliceStartEndStrandRecursive(SequenceAdaptor *sa,
   // if they asked for the negative slice strand revcomp the whole thing
   if (strand == -1) {
     SeqUtil_reverseComplement(seq, Slice_getLength(slice));
+  }
+
+  if (haveAllocedSlice == 1) {
+    Slice_free(slice);
   }
 
   return seq;
@@ -611,7 +621,8 @@ char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long st
     // piece together sequence from cached component parts
 
     char *entireSeq = NULL;
-    if ((entireSeq = calloc(((chunkMax-chunkMin+1) * (1<<SEQ_CHUNK_PWR))+1, sizeof(char))) == NULL) {
+//    if ((entireSeq = calloc(((chunkMax-chunkMin+1) * (1<<SEQ_CHUNK_PWR))+1, sizeof(char))) == NULL) {
+    if ((entireSeq = malloc((((chunkMax-chunkMin+1) * (1<<SEQ_CHUNK_PWR))+1) * sizeof(char))) == NULL) {
       fprintf(stderr,"Failed allocating entireSeq\n");
       exit(1);
     }
@@ -671,7 +682,8 @@ char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long st
     //seq = substr( $entire_seq, $start - $min, $length );
     // memmove it down and set '\0' at position length
     if (start-min != 0) {
-      memmove(entireSeq, &entireSeq[start-min], length);
+//      memmove(entireSeq, &entireSeq[start-min], length);
+      bcopy(&entireSeq[start-min], entireSeq, length);
     }
     entireSeq[length] = '\0';
 

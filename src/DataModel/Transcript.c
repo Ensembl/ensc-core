@@ -52,6 +52,233 @@ Transcript *Transcript_shallowCopy(Transcript *transcript) {
 }
 
 /*
+=head2 add_Exon
+
+ Title   : add_Exon
+ Example : $trans->add_Exon($exon)
+ Returns : None
+ Args [1]: Bio::EnsEMBL::Exon object to add
+ Args [2]: rank
+ Exceptions: throws if not a valid Bio::EnsEMBL::Exon
+           : or exon clashes with another one
+ Status  : Stable
+
+=cut
+*/
+// New
+void Transcript_addExon(Transcript *transcript, Exon *exon, int rank) {
+  if (transcript->exons == NULL) {
+    transcript->exons = Vector_new();
+  }
+
+  if (rank > 0) {
+    Vector_setElementAt(transcript->exons, rank-1, exon);
+    return;
+  }
+
+  int wasAdded = 0;
+
+  Vector *ea = transcript->exons;
+
+  if (Vector_getNumElement(ea)) {
+    if (Exon_getStrand(exon) == 1 ) {
+
+      long exonStart = Exon_getStart(exon);
+
+      Exon *lastExon = Vector_getLastElement(ea);
+      if ( exonStart > Exon_getEnd(lastExon)) {
+        Vector_addElement(ea, exon);
+        wasAdded = 1;
+      } else {
+        // Insert it at correct place
+
+        int i=0;
+        for (i=0; i<Vector_getNumElement(ea); i++) {
+          Exon *e = Vector_getElementAt(ea, i);
+          if (Exon_getStart(exon) < Exon_getStart(e) ) {
+            if ( Exon_getEnd(exon) >= Exon_getStart(e) ) {
+              // Overlap
+              break;
+            }
+            if (i) {
+              Exon *prevExon = Vector_getElementAt(ea, i-1);
+              if (exonStart <= Exon_getEnd(prevExon) ) {
+                // Overlap
+                break;
+              }
+            }
+            Vector_insertElementAt(ea, i, exon);
+            wasAdded = 1;
+            break;
+          }
+        }
+      }
+
+    } else {
+      long exonEnd = Exon_getEnd(exon);
+
+      Exon *lastExon = Vector_getLastElement(ea);
+      if ( exonEnd < Exon_getStart(lastExon) ) {
+        Vector_addElement(ea, exon);
+        wasAdded = 1;
+      } else {
+        // Insert it at correct place
+
+        int i=0;
+        for (i=0; i<Vector_getNumElement(ea); i++) {
+          Exon *e = Vector_getElementAt(ea, i);
+          if (Exon_getEnd(exon) > Exon_getEnd(e) ) {
+            if (Exon_getStart(exon) <= Exon_getEnd(e) ) {
+              // Overlap
+              break;
+            }
+            if (i) {
+              Exon *prevExon = Vector_getElementAt(ea, i-1);
+              if (exonEnd >= Exon_getStart(prevExon) ) {
+                // Overlap
+                break;
+              }
+            }
+            Vector_insertElementAt(ea, i, exon);
+            wasAdded = 1;
+            break;
+          }
+        }
+      }
+    }
+  } else {
+    Vector_addElement(ea, exon);
+    wasAdded = 1;
+  }
+
+  // sanity check:
+  if ( !wasAdded ) {
+    // The exon was not added because it was overloapping with an
+    // existing exon.
+/* NIY
+    my $all_str = '';
+
+    foreach my $e ( @{$ea} ) {
+      $all_str .= '  '
+        . $e->start() . '-'
+        . $e->end() . ' ('
+        . $e->strand() . ') '
+        . ( $e->stable_id() || '' ) . "\n";
+    }
+
+    my $cur_str = '  '
+      . $exon->start() . '-'
+      . $exon->end() . ' ('
+      . $exon->strand() . ') '
+      . ( $exon->stable_id() || '' ) . "\n";
+*/
+
+    fprintf(stderr,"Exon overlaps with other exon in same transcript.\n");
+    exit(1);
+/* NIY
+                    "Transcript Exons:\n$all_str\n"
+                    "This Exon:\n$cur_str" );
+*/
+  }
+
+  // recalculate start, end, slice, strand
+  //fprintf(stderr,"added exon with coords %ld-%ld:%d\n", Exon_getStart(exon), Exon_getEnd(exon), Exon_getStrand(exon));
+  Transcript_recalculateCoordinates(transcript);
+  //fprintf(stderr,"recalculating coords for transcript after adding exon. Start now %ld end now %ld strand now %d\n",
+  //        Transcript_getStart(transcript), Transcript_getEnd(transcript), Transcript_getStrand(transcript));
+}
+
+/*
+=head recalculate_coordinates
+
+  Args       : none
+  Example    : none
+  Description: called when exon coordinate change happened to recalculate the
+               coords of the transcript.  This method should be called if one
+               of the exons has been changed.
+  Returntype : none
+  Exceptions : none
+  Caller     : internal
+  Status     : Stable
+
+=cut
+*/
+// New
+void Transcript_recalculateCoordinates(Transcript *transcript) {
+  Vector *exons = Transcript_getAllExons(transcript);
+
+  if (exons == NULL || Vector_getNumElement(exons) == 0) { return; }
+
+  Slice *slice;
+  long start;
+  long end;
+  int strand;
+
+  int eIndex;
+  for (eIndex = 0; eIndex < Vector_getNumElement(exons); eIndex++ ) {
+    Exon *e = Vector_getElementAt(exons, eIndex);
+
+    // Skip missing or unmapped exons!
+    if (e != NULL) { // Perl had defined($e) && defined( $e->start() ) )
+      slice  = Exon_getSlice(e);
+      strand = Exon_getStrand(e);
+      start = Exon_getStart(e);
+      end = Exon_getEnd(e);
+
+      break;
+    }
+  }
+
+  int transSplicing = 0;
+
+  // Start loop after first exon with coordinates
+  for ( ; eIndex < Vector_getNumElement(exons); eIndex++) {
+    Exon *e = Vector_getElementAt(exons, eIndex);
+
+    // Skip missing or unmapped exons!
+    //Perl :if ( !defined($e) || !defined( $e->start() ) ) { next }
+    if (e == NULL) continue;
+
+    if (Exon_getStart(e) < start ) {
+      start = Exon_getStart(e);
+    }
+
+    if ( Exon_getEnd(e) > end ) {
+      end = Exon_getEnd(e);
+    }
+
+    if (slice != NULL && Exon_getSlice(e) != NULL && EcoString_strcmp(Slice_getName(slice), Slice_getName(Exon_getSlice(e)))) {
+      fprintf(stderr, "Exons with different slices are not allowed on one Transcript\n");
+      fprintf(stderr, "slice %s   exon slice %s\n", Slice_getName(slice), Slice_getName(Exon_getSlice(e)));
+      exit(1);
+    }
+    if (Exon_getStrand(e) != strand ) {
+      transSplicing = 1;
+    }
+  }
+  if (transSplicing) {
+    fprintf(stderr, "Warning: Transcript contained trans splicing event\n");
+  }
+
+  Transcript_setStart(transcript, start);
+  Transcript_setEnd(transcript, end);
+  Transcript_setStrand(transcript, strand);
+  Transcript_setSlice(transcript, slice);
+
+  // flush cached internal values that depend on the exon coords
+/* NIY
+  $self->{'transcript_mapper'}   = undef;
+*/
+  Transcript_setCodingRegionStartIsSet(transcript,FALSE);
+  Transcript_setCodingRegionEndIsSet(transcript,FALSE);
+  Transcript_setcDNACodingStartIsSet(transcript,FALSE);
+  Transcript_setcDNACodingEndIsSet(transcript,FALSE);
+
+// NIY: Free temporay exons vector???
+}
+
+
+/*
 =head2 swap_exons
 
   Arg [1]    : Bio::EnsEMBL::Exon $old_Exon
@@ -160,7 +387,7 @@ Vector *Transcript_getAllAttributes(Transcript *transcript, char *attribCode) {
     TranscriptAdaptor *ta = (TranscriptAdaptor *)Transcript_getAdaptor(transcript);
     if (ta == NULL) { // No adaptor
 // Perl comments out the warning, I'll put it back for now, just in case
-      fprintf(stderr,"Warning: Cannot get attributes without an adaptor.\n");
+      //fprintf(stderr,"Warning: Cannot get attributes without an adaptor.\n");
       return Vector_new();
     }
 
@@ -336,19 +563,24 @@ Transcript *Transcript_transfer(Transcript *transcript, Slice *slice) {
   if (transcript->exons != NULL && Vector_getNumElement(transcript->exons)) {
     Vector *newExons = Vector_new();
 
+    //fprintf(stderr,"transcript has %d exons\n", Vector_getNumElement(transcript->exons));
     int i;
     for (i=0;i<Vector_getNumElement(transcript->exons);i++) {
       Exon *oldExon = Vector_getElementAt(transcript->exons, i);
-      Exon *newExon = Exon_transfer(oldExon, slice);
+      Exon *newExon = NULL;
 
-      if (newTranscript->translation) {
-        Translation *newTranslation = Transcript_getTranslation(newTranscript);
-
-        if( Translation_getStartExon(newTranslation) == oldExon ) {
-          Translation_setStartExon(newTranslation, newExon);
-        }
-        if( Translation_getEndExon(newTranslation) == oldExon ) {
-          Translation_setEndExon(newTranslation, newExon);
+      if (oldExon != NULL) {
+        newExon = Exon_transfer(oldExon, slice);
+  
+        if (newTranscript->translation) {
+          Translation *newTranslation = Transcript_getTranslation(newTranscript);
+  
+          if( Translation_getStartExon(newTranslation) == oldExon ) {
+            Translation_setStartExon(newTranslation, newExon);
+          }
+          if( Translation_getEndExon(newTranslation) == oldExon ) {
+            Translation_setEndExon(newTranslation, newExon);
+          }
         }
       }
       Vector_addElement(newExons, newExon );
@@ -357,7 +589,6 @@ Transcript *Transcript_transfer(Transcript *transcript, Slice *slice) {
     newTranscript->exons = newExons;
 
 // NIY Free old stuff
-
   }
 
   if (notWarned) {
@@ -390,14 +621,16 @@ Transcript *Transcript_transfer(Transcript *transcript, Slice *slice) {
   }
 
 
-/*
+/* NIY
   // flush cached internal values that depend on the exon coords
   $new_transcript->{'transcript_mapper'}   = undef;
-  $new_transcript->{'coding_region_start'} = undef;
-  $new_transcript->{'coding_region_end'}   = undef;
-  $new_transcript->{'cdna_coding_start'}   = undef;
-  $new_transcript->{'cdna_coding_end'}     = undef;
 */
+  Transcript_setCodingRegionStartIsSet(newTranscript,FALSE);
+  Transcript_setCodingRegionEndIsSet(newTranscript,FALSE);
+  Transcript_setcDNACodingStartIsSet(newTranscript,FALSE);
+  Transcript_setcDNACodingEndIsSet(newTranscript,FALSE);
+
+// NIY: Free temporay exons vector???
 
   return newTranscript;
 }
@@ -429,7 +662,7 @@ Transcript *Transcript_transform(Transcript *trans, IDHash *exonTransforms) {
   // attach the new list of exons to the transcript
   for (i=0; i<Vector_getNumElement(mappedExonVector); i++) {
 // Added rank arg temporarily just to get to compile
-    Transcript_addExon(trans,(Exon *)Vector_getElementAt(mappedExonVector,i),0);
+    Transcript_addExon(trans,(Exon *)Vector_getElementAt(mappedExonVector,i),-1);
   }
 
   if ( Transcript_getTranslation(trans)) {
@@ -570,6 +803,7 @@ int Transcript_getCodingRegionEnd(Transcript *trans) {
       end -= (Translation_getStart(translation) - 1 );
     }
     Transcript_setCodingRegionEnd(trans,end);
+    //fprintf(stderr, "Getting coding region end - exon strand = %d result is %d\n", strand, end);
   }
 
   return trans->codingRegionEnd;
@@ -600,6 +834,7 @@ int Transcript_getCodingRegionStart(Transcript *trans) {
       start -= (Translation_getEnd(translation) - 1 );
     }
     Transcript_setCodingRegionStart(trans,start);
+    //fprintf(stderr, "Getting coding region start - exon strand = %d result is %d\n", strand, start);
   }
 
   return trans->codingRegionStart;
@@ -692,13 +927,33 @@ char *Transcript_getTranslateableSeq(Transcript *trans) {
 //    Exon_setSeqCacheString(exon, NULL);
   }
 
-  Vector_free(translateableExons);
 
   //fprintf(stderr,"Length of seq = %d\n", strlen(mrna));
 
 // NIY free adjusted
+  Transcript_freeAdjustedTranslateableExons(trans, translateableExons);
+
+  Vector_free(translateableExons);
 
   return mrna;
+}
+
+void Transcript_freeAdjustedTranslateableExons(Transcript *transcript, Vector *translateableExons) {
+  Translation *translation = Transcript_getTranslation(transcript);
+
+  if (translation != NULL) {
+    Exon *firstTranslateable = Vector_getElementAt(translateableExons, 0);
+    Exon *lastTranslateable = Vector_getLastElement(translateableExons);
+
+    if (Translation_getStartExon(translation) != firstTranslateable) {
+      Exon_free(firstTranslateable);
+    }
+    if (Vector_getNumElement(translateableExons) > 1) {
+      if (Translation_getEndExon(translation) != lastTranslateable) {
+        Exon_free(lastTranslateable);
+      }
+    }
+  }
 }
 
 
@@ -826,6 +1081,7 @@ Vector *Transcript_getAllTranslateableExons(Transcript *trans) {
   tlnStart       = Translation_getStart(translation);
   tlnEnd         = Translation_getEnd(translation);
 
+//  fprintf(stderr,"Transcript_getAllTranslateableExons with tstart %d tend %d startEx %p endEx %p num exon in transcript %d\n", tlnStart,tlnEnd, startExon,endExon, Transcript_getExonCount(trans));
 // Hack
   Transcript_sort(trans);
 
@@ -839,7 +1095,7 @@ Vector *Transcript_getAllTranslateableExons(Transcript *trans) {
     int adjustStart = 0;
     int adjustEnd   = 0;
 
-    //fprintf(stderr,"   exon %p %s\n",ex, Exon_getStableId(ex));
+    //fprintf(stderr,"   exon %p (%ld-%ld:%d)\n",ex, Exon_getStart(ex), Exon_getEnd(ex), Exon_getStrand(ex));
  
     if (ex != startExon && !Vector_getNumElement(translateable)) {
        //fprintf(stderr,"  skip %p %s\n",ex, Exon_getStableId(ex));
@@ -856,6 +1112,7 @@ Vector *Transcript_getAllTranslateableExons(Transcript *trans) {
         exit(1);
       }
       adjustStart = tlnStart - 1;
+      //fprintf(stderr, "adjustStart = %d\n", adjustStart); 
     }
 
     // Adjust to translation end if this is the end exon
@@ -865,6 +1122,7 @@ Vector *Transcript_getAllTranslateableExons(Transcript *trans) {
         exit(1);
       }
       adjustEnd = tlnEnd - length;
+      //fprintf(stderr, "adjustEnd = %d\n", adjustEnd); 
     }
 
     // Make a truncated exon if the translation start or
@@ -898,6 +1156,8 @@ char *Transcript_translate(Transcript *trans) {
 
   Slice *slice = Transcript_getSlice(trans);
   if (slice) {
+    codonTableId = Slice_getCodonTableId(slice);
+/*
     Vector *ctAttribs = Slice_getAllAttributes(slice, "codon_table");
     // NIY free properly - Slice attributes current are NOT cached in Slice
     if (Vector_getNumElement(ctAttribs) > 1) {
@@ -911,9 +1171,10 @@ char *Transcript_translate(Transcript *trans) {
         exit(1);
       }
 
-      Vector_setFreeFunc(ctAttribs, Attribute_free);
+      //Vector_setFreeFunc(ctAttribs, Attribute_free);
     }
-    Vector_free(ctAttribs);
+    //Vector_free(ctAttribs);
+*/
   }
   
     
@@ -1132,5 +1393,14 @@ void Transcript_free(Transcript *trans) {
                    "       Freeing it anyway\n");
   }
 
+  int i;
+  for (i=0; i<Transcript_getExonCount(trans); i++) {
+    Exon *exon = Transcript_getExonAt(trans, i);
+    if (exon != NULL) {
+      Exon_free(exon);
+    }
+  }
+
+  free(trans);
 //  printf("Transcript_free not implemented\n");
 }

@@ -208,7 +208,7 @@ Vector *Gene_getAllAttributes(Gene *gene, char *attribCode) {
     GeneAdaptor *ga = (GeneAdaptor *)Gene_getAdaptor(gene);
     if (ga == NULL) { // No adaptor
 // Perl comments out the warning, I'll put it back for now, just in case
-      fprintf(stderr,"Warning: Cannot get attributes without an adaptor.\n");
+//      fprintf(stderr,"Warning: Cannot get attributes without an adaptor.\n");
       return Vector_new();
     }
 
@@ -497,5 +497,143 @@ void Gene_free(Gene *gene) {
     fprintf(stderr,"Error: Negative reference count for Gene\n"
                    "       Freeing it anyway\n");
   }
+
+  int i;
+  for (i=0; i<Gene_getTranscriptCount(gene);i++) {
+    Transcript *trans = Gene_getTranscriptAt(gene, i);
+    Transcript_free(trans);
+  }
+  free(gene);
 //  printf("Gene_free not implemented\n");
 }
+
+/*
+=head2 add_Transcript
+
+  Arg [1]    : Bio::EnsEMBL::Transcript $trans
+               The transcript to add to the gene
+  Example    : my $transcript = Bio::EnsEMBL::Transcript->new(...);
+               $gene->add_Transcript($transcript);
+  Description: Adds another Transcript to the set of alternatively
+               spliced Transcripts of this gene. If it shares exons
+               with another Transcript, these should be object-identical.
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+*/
+// New
+void Gene_addTranscript(Gene *gene, Transcript *trans) {
+
+  if (gene->transcripts == NULL) {
+    gene->transcripts = Vector_new();
+  }
+
+  Vector_addElement(gene->transcripts, trans);
+
+  Gene_recalculateCoordinates(gene);
+}
+
+
+/*
+=head2 recalculate_coordinates
+
+  Example    : $gene->recalculate_coordinates;
+  Description: Called when transcript added to the gene, tries to adapt the
+               coords for the gene.
+  Returntype : none
+  Exceptions : none
+  Caller     : internal
+  Status     : Stable
+
+=cut
+*/
+// New
+void Gene_recalculateCoordinates(Gene *gene) {
+  Vector *transcripts = Gene_getAllTranscripts(gene);
+  
+  if (transcripts == NULL || Vector_getNumElement(transcripts) == 0) {
+    return;
+  }
+
+  Slice *slice;
+  long start;
+  long end;
+  int strand;
+
+  Transcript *firstTrans = Vector_getElementAt(transcripts, 0);
+
+  slice  = Transcript_getSlice(firstTrans);
+  strand = Transcript_getStrand(firstTrans);
+  start  = Transcript_getStart(firstTrans);
+  end    = Transcript_getEnd(firstTrans);
+
+  int transSplicing = 0;
+
+  int i;
+  for (i=0; i<Vector_getNumElement(transcripts); i++) {
+    Transcript *t = Vector_getElementAt(transcripts, i);
+    if (Transcript_getStart(t) < start) {
+      start = Transcript_getStart(t);
+    }
+
+    if (Transcript_getEnd(t) > end) {
+      end = Transcript_getEnd(t);
+    }
+
+    if (EcoString_strcmp(Slice_getName(slice), Slice_getName(Transcript_getSlice(t)))) {
+      fprintf(stderr, "Transcripts with different slices not allowed on one Gene\n");
+      exit(1);
+    }
+
+    if ( Transcript_getStrand(t) != strand ) {
+      transSplicing = 1;
+    }
+  }
+
+  if (transSplicing) {
+    fprintf(stderr,"Warning: Gene contained trans splicing event\n");
+  }
+
+  Gene_setStart(gene, start);
+  Gene_setEnd(gene, end);
+  Gene_setStrand(gene, strand);
+  Gene_setSlice(gene, slice);
+}
+
+
+/*
+=head2 get_all_Transcripts
+
+  Example    : my @transcripts = @{ $gene->get_all_Transcripts };
+  Description: Returns the Transcripts in this gene.
+  Returntype : Listref of Bio::EnsEMBL::Transcript objects
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+*/
+// New
+// NIY Transcript lazy loading
+Vector *Gene_getAllTranscripts(Gene *gene) {
+
+/*
+  if( ! exists $self->{'_transcript_array'} ) {
+    if( defined $self->adaptor() ) {
+      my $ta = $self->adaptor()->db()->get_TranscriptAdaptor();
+      my $transcripts = $ta->fetch_all_by_Gene( $self );
+      $self->{'_transcript_array'} = $transcripts;
+    }
+  }
+*/
+  return gene->transcripts;
+}
+
+
+
+
+
+

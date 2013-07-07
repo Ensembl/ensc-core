@@ -8,18 +8,21 @@ Abstract base class for AssemblyMapper classes - very limited functionality (jus
 */
 
 IDType BaseAssemblyMapper_getSeqRegionId(BaseAssemblyMapper *am, char *seqRegionName, CoordSystem *cs) {
-  // Not the most efficient thing to do making these temporary vectors to get one value, but hey its what the perl does!
-  Vector *tmp = Vector_new();
-  Vector_addElement(tmp, seqRegionName);
-
   AssemblyMapperAdaptor *adaptor = AssemblyMapper_getAdaptor(am);
-  
-  Vector *idVec = AssemblyMapperAdaptor_seqRegionsToIds(adaptor, cs, tmp);
+  IDType seqRegionId = AssemblyMapperAdaptor_seqRegionToId(adaptor, cs, seqRegionName);
 
-  IDType seqRegionId = *((IDType *)Vector_getElementAt(idVec, 0));
-
-  Vector_free(tmp);
-  Vector_free(idVec);
+  // Not the most efficient thing to do making these temporary vectors to get one value, but hey its what the perl does!
+//  Vector *tmp = Vector_new();
+//  Vector_addElement(tmp, seqRegionName);
+//
+//  AssemblyMapperAdaptor *adaptor = AssemblyMapper_getAdaptor(am);
+//  
+//  Vector *idVec = AssemblyMapperAdaptor_seqRegionsToIds(adaptor, cs, tmp);
+//
+//  IDType seqRegionId = *((IDType *)Vector_getElementAt(idVec, 0));
+//
+//  Vector_free(tmp);
+//  Vector_free(idVec);
   // End of somewhat inefficient stuff
 
   return seqRegionId;

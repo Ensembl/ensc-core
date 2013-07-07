@@ -316,11 +316,11 @@ void translate(char *in, char **out, int *l, int codonTableId) {
    sequence.  It is only used when comparing a nucleotide pattern
    against a nucleotide db */
 
-void rev_comp(char *in, char *out) {
+void rev_comp(char *in, char *out, int length) {
   register char *p = in;
   register char *q;
   
-  q = &out[strlen(p)];
+  q = &out[length];
   *q-- ='\0';
   
   while (q>=out)

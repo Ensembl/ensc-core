@@ -487,7 +487,8 @@ void BaseAdaptor_generateSql(BaseAdaptor *ba, char *constraint, char **inputColu
 SeqFeature *BaseAdaptor_fetchByDbID(BaseAdaptor *ba, IDType id) {
 
   if (BaseAdaptor_hasNoIdCache(ba)) {
-    return BaseAdaptor_uncachedFetchByDbID(ba, id);
+    SeqFeature *sf = BaseAdaptor_uncachedFetchByDbID(ba, id);
+    return sf;
   }
   fprintf(stderr,"Cached fetching not implemented yet - didn't seem to be used much in perl so I didn't bother - ask Steve\n");
   exit(1);

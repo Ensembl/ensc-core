@@ -11,6 +11,7 @@ typedef enum StringHashSizesEnum {
 
 typedef struct KeyValuePairStruct {
   char *key;
+  int keyLen;
   void *value;
 } KeyValuePair;
 
@@ -26,11 +27,14 @@ StringHash *StringHash_new(StringHashSizes size);
 int     StringHash_add(StringHash *stringHash, char *string, void *val);
 int     StringHash_contains(StringHash *stringHash, char *string);
 void    StringHash_free(StringHash *stringHash, void freeFunc());
+void StringHash_freeNoValFree(StringHash *stringHash);
 int     StringHash_getNumValues(StringHash *stringHash);
 void *  StringHash_getValue(StringHash *stringHash, char *string);
 void *  StringHash_getValues(StringHash *stringHash);
 char ** StringHash_getKeys(StringHash *stringHash);
 int     StringHash_remove(StringHash *stringHash, char *key, void freeFunc());
+
+unsigned int StringHash_getBucketNum(StringHash *stringHash, char *key, int keyLen);
 
 
 #endif

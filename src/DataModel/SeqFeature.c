@@ -72,6 +72,19 @@ int SeqFeature_startEndCompFunc(const void *a, const void *b) {
   }
 }
 
+int SeqFeature_startRevEndCompFunc(const void *a, const void *b) {
+  SeqFeature *e1 = *(SeqFeature **)a;
+  SeqFeature *e2 = *(SeqFeature **)b;
+
+  if (SeqFeature_getStart(e1) > SeqFeature_getStart(e2)) {
+    return 1;
+  } else if (SeqFeature_getStart(e1) < SeqFeature_getStart(e2)) {
+    return -1;
+  } else {
+    return SeqFeature_getEnd(e2) - SeqFeature_getEnd(e1);
+  }
+}
+
 int SeqFeature_reverseStartCompFunc(const void *a, const void *b) {
   SeqFeature *e1 = *((SeqFeature **)a);
   SeqFeature *e2 = *((SeqFeature **)b);

@@ -112,9 +112,13 @@ long Intron_getLength(Intron *intron) {
 
 =cut
 */
+static int warnedAboutCanon = 0;
 int Intron_getIsSpliceCanonical(Intron *intron) {
 
-  fprintf(stderr,"NIY: Intron_getIsSpliceCanonical\n");
+  if (!warnedAboutCanon) {
+    fprintf(stderr,"NIY: Intron_getIsSpliceCanonical\n");
+    warnedAboutCanon = 1;
+  }
 /* NIY
   my $splice = join q{}, @{$self->splice_seq()}; 
   my $canonical = {

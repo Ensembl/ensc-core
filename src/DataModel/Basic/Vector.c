@@ -155,7 +155,7 @@ void *Vector_addElement(Vector *v, void *elem) {
     //ProcUtil_showBacktrace(EnsC_progName);
   }
 
-  if (!v->nElement) v->elements = NULL;
+// Why??  if (!v->nElement) v->elements = NULL;
 
   Vector_setNumElement(v,v->nElement+1);
 

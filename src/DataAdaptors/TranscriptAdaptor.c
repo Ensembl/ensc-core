@@ -570,6 +570,7 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
     int j;
     for (j=0; j<Vector_getNumElement(exVec); j++) {
       TranscriptRankPair *trp = Vector_getElementAt(exVec, j);
+      //fprintf(stderr,"Adding exon at rank %d to transcript %p\n", trp->rank, trp->transcript);
       Transcript_addExon(trp->transcript, newEx, trp->rank);
     }
   }

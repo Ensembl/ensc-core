@@ -23,6 +23,7 @@ struct SliceStruct {
   long seqRegionLength;
   IDType seqRegionId;
   CoordSystem *coordSystem;
+  long codonTable;
 
   char isReference;
   char isTopLevel;
@@ -39,6 +40,8 @@ struct SliceStruct {
 //#endif
 
 Slice *Slice_new(char *regionName, long start, long end, int strand, long length, CoordSystem *cs, SliceAdaptor *sa);
+
+long Slice_getCodonTableId(Slice *slice);
 
 #define Slice_setStart(sl,s) (sl)->start = (s)
 #define Slice_getStart(sl) (sl)->start

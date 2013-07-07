@@ -26,6 +26,10 @@ struct DNAAlignFeatureStruct {
 
 DNAAlignFeature *DNAAlignFeature_new(void);
 
+#define DNAAlignFeature_addFlag(fp, f) SeqFeature_addFlag((fp), (f))
+#define DNAAlignFeature_getFlags(fp) SeqFeature_getFlags(fp)
+#define DNAAlignFeature_removeFlag(fp, f) SeqFeature_removeFlag((fp), (f))
+
 #define DNAAlignFeature_setCigarString(fp, ciggy) BaseAlignFeature_setCigarString((BaseAlignFeature *)(fp), (ciggy))
 #define DNAAlignFeature_getCigarString(fp) BaseAlignFeature_getCigarString((fp))
 

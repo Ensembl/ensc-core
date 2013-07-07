@@ -9,12 +9,11 @@
 #include "ProcUtil.h"
 
 
-unsigned int StringHash_getBucketNum(StringHash *stringHash, char *key) {
+unsigned int StringHash_getBucketNum(StringHash *stringHash, char *key, int keyLen) {
   unsigned int hash, i;
-  int len = strlen(key);
   unsigned int hashCode;
 
-  for (hash=len, i=0; i<len; ++i) {
+  for (hash=keyLen, i=0; i<keyLen; ++i) {
     hash = (hash<<5)^(hash>>27)^key[i];
   }
   hashCode = (hash%stringHash->size);
@@ -62,6 +61,7 @@ char **StringHash_getKeys(StringHash *stringHash) {
   int keyCnt = 0;
 
   if (!stringHash->nValue) {
+    fprintf(stderr, "Warning: tried to get Keys for empty StringHash\n");
     return NULL;
   }
 
@@ -117,26 +117,40 @@ void *StringHash_getValues(StringHash *stringHash) {
 }
 
 void *StringHash_getValue(StringHash *stringHash, char *key) {
-  int bucketNum = StringHash_getBucketNum(stringHash,key);
+  int keyLen = strlen(key);
+  int bucketNum = StringHash_getBucketNum(stringHash,key,keyLen);
   int i;
 
   for (i=0; i<stringHash->bucketCounts[bucketNum]; i++) {
-    if (!strcmp(key, stringHash->buckets[bucketNum][i].key)) {
-      return stringHash->buckets[bucketNum][i].value;
+    
+    if (keyLen == stringHash->buckets[bucketNum][i].keyLen) {
+      //fprintf(stderr,"equal keylen %d %d\n",keyLen, stringHash->buckets[bucketNum][i].keyLen);
+      if (!memcmp(key, stringHash->buckets[bucketNum][i].key,keyLen)) {
+      //if (!strcmp(key, stringHash->buckets[bucketNum][i].key)) {
+        return stringHash->buckets[bucketNum][i].value;
+      }
     }
   }
 
   fprintf(stderr,"ERROR: Didn't find key %s in StringHash\n",key);
+  //fprintf(stderr,"keylen %d\n",keyLen);
+  //for (i=0; i<stringHash->bucketCounts[bucketNum]; i++) {
+  //  fprintf(stderr,"bucket key %s keylen %d\n",stringHash->buckets[bucketNum][i].key, stringHash->buckets[bucketNum][i].keyLen);
+  //}
   return NULL;
 }
 
 int StringHash_contains(StringHash *stringHash, char *key) {
-  int bucketNum = StringHash_getBucketNum(stringHash,key);
+  int keyLen = strlen(key);
+  int bucketNum = StringHash_getBucketNum(stringHash,key, keyLen);
   int i;
 
   for (i=0; i<stringHash->bucketCounts[bucketNum]; i++) {
-    if (!strcmp(key,stringHash->buckets[bucketNum][i].key)) {
-      return 1;
+    //if (!strcmp(key,stringHash->buckets[bucketNum][i].key)) {
+    if (keyLen == stringHash->buckets[bucketNum][i].keyLen) {
+      if (!memcmp(key, stringHash->buckets[bucketNum][i].key,keyLen)) {
+        return 1;
+      }
     }
   }
 
@@ -144,7 +158,8 @@ int StringHash_contains(StringHash *stringHash, char *key) {
 }
 
 int StringHash_add(StringHash *stringHash, char *key, void *val) {
-  int bucketNum = StringHash_getBucketNum(stringHash,key);
+  int keyLen = strlen(key);
+  int bucketNum = StringHash_getBucketNum(stringHash,key,keyLen);
   int count = stringHash->bucketCounts[bucketNum];
 
   if (StringHash_contains(stringHash,key)) {
@@ -174,6 +189,7 @@ int StringHash_add(StringHash *stringHash, char *key, void *val) {
       return 0;
     }
     stringHash->buckets[bucketNum][count].value = val;
+    stringHash->buckets[bucketNum][count].keyLen = keyLen;
 
     stringHash->nValue++;
     stringHash->bucketCounts[bucketNum]++;
@@ -203,8 +219,27 @@ void StringHash_free(StringHash *stringHash, void freeFunc()) {
   free(stringHash);
 }
 
+void StringHash_freeNoValFree(StringHash *stringHash) {
+  int i;
+  int j;
+  
+  for (i=0; i<stringHash->size; i++) {
+    if (stringHash->bucketCounts[i]) {
+      for (j=0; j<stringHash->bucketCounts[i]; j++) {
+        free(stringHash->buckets[i][j].key);
+      }
+      free(stringHash->buckets[i]);
+    }
+  }
+  
+  free(stringHash->buckets);
+  free(stringHash->bucketCounts);
+  free(stringHash);
+}
+
 int StringHash_remove(StringHash *stringHash, char *key, void freeFunc()) {
-  int bucketNum = StringHash_getBucketNum(stringHash, key);
+  int keyLen = strlen(key);
+  int bucketNum = StringHash_getBucketNum(stringHash, key, keyLen);
   int i;
   int cnt = 0;
   char *toRemoveKey = NULL;
@@ -221,6 +256,7 @@ int StringHash_remove(StringHash *stringHash, char *key, void freeFunc()) {
     } else {
       stringHash->buckets[bucketNum][cnt].key   = stringHash->buckets[bucketNum][i].key;
       stringHash->buckets[bucketNum][cnt].value = stringHash->buckets[bucketNum][i].value;
+      stringHash->buckets[bucketNum][cnt].keyLen = stringHash->buckets[bucketNum][i].keyLen;
       cnt++;
     }
   }

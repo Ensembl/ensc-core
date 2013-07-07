@@ -15,6 +15,14 @@
 #define RSGEXON_RETAINED 1<<1
 #define RSGEXON_EXTRA    1<<2
 
+#define RSGINTRON_NONCANON    1<<3
+
+typedef struct ExtraExonDataStruct {
+  int nCoord;
+  long *coords;
+  int score;
+} ExtraExonData;
+
 typedef struct RefineSolexaGenesStruct {
   char *badModelsType;
   char *bestScoreType;
@@ -49,6 +57,10 @@ typedef struct RefineSolexaGenesStruct {
   Slice *chrSlice;
 
   StringHash *extraExons;
+
+  char ** extraExonsKeys;
+
+  ExtraExonData *extraExonsValues;
 
   Vector *intronBamFiles;
   Vector *intronFeatures;
@@ -127,6 +139,8 @@ void RefineSolexaGenes_setChrSlice(RefineSolexaGenes *rsg, Slice *slice);
 Vector *RefineSolexaGenes_getIntronFeatures(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setIntronFeatures(RefineSolexaGenes *rsg, Vector *features);
 StringHash *RefineSolexaGenes_getExtraExons(RefineSolexaGenes *rsg);
+char **RefineSolexaGenes_getExtraExonsKeys(RefineSolexaGenes *rsg);
+ExtraExonData **RefineSolexaGenes_getExtraExonsValues(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setExtraExons(RefineSolexaGenes *rsg, StringHash *extraExons);
 void RefineSolexaGenes_setIntronDb(RefineSolexaGenes *rsg, char *intronDb);
 char *RefineSolexaGenes_getIntronDb(RefineSolexaGenes *rsg);
@@ -200,7 +214,7 @@ double RefineSolexaGenes_getRejectIntronCutoff(RefineSolexaGenes *rsg);
   void RefineSolexaGenes_addToOutput(RefineSolexaGenes *rsg, Gene *gene);
   void RefineSolexaGenes_setDb(RefineSolexaGenes *rsg, DBAdaptor *db);
   DBAdaptor *RefineSolexaGenes_getDb(RefineSolexaGenes *rsg);
-  Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMet, int minLength);
+  Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMet, int minLength, int allowReverse);
 
   void RefineSolexaGenes_setAnalysis(RefineSolexaGenes *rsg, Analysis *analysis);
   Analysis *RefineSolexaGenes_getAnalysis(RefineSolexaGenes *rsg);

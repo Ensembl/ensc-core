@@ -116,7 +116,7 @@ Vector *Translation_getAllAttributes(Translation *translation, char *attribCode)
     TranslationAdaptor *tlna = (TranslationAdaptor *)Translation_getAdaptor(translation);
     if (tlna == NULL) { // No adaptor
 // Perl comments out the warning, I'll put it back for now, just in case
-      fprintf(stderr,"Warning: Cannot get attributes without an adaptor.\n");
+      //fprintf(stderr,"Warning: Cannot get attributes without an adaptor.\n");
       return Vector_new();
     }
 
@@ -224,6 +224,8 @@ char *Translation_modifyTranslation(Translation *translation, char *seq) {
   
     //$seq->seq($peptide);
   }
+
+  Vector_free(seqEds);
 
   return seq;
 }

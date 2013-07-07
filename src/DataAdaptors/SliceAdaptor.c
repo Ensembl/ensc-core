@@ -889,6 +889,7 @@ Vector *SliceAdaptor_fetchByRegionUnique(SliceAdaptor *sa, char *coordSystemName
     // which are symlinked because these are duplicates.
 
     Vector *projection = SliceAdaptor_fetchNormalizedSliceProjection(sa, slice, 0);
+    Vector_setFreeFunc(projection, ProjectionSegment_free);
 
     int i;
     for (i=0; i<Vector_getNumElement(projection); i++) {
@@ -901,6 +902,7 @@ Vector *SliceAdaptor_fetchByRegionUnique(SliceAdaptor *sa, char *coordSystemName
         Vector_addElement(out, toSlice);
       }
     }
+    Vector_free(projection);
   } else {
     Vector_addElement(out, slice);
   }
@@ -2059,6 +2061,8 @@ Vector *SliceAdaptor_fetchNormalizedSliceProjection(SliceAdaptor *sa, Slice *sli
     //just return this slice, there were no haps or pars
     ProjectionSegment *segment = ProjectionSegment_new(1, Slice_getLength(slice), slice);
     Vector_addElement(out, segment);
+    Vector_free(haps);
+    Vector_free(pars);
     return out;
   }
 
@@ -2190,6 +2194,11 @@ Vector *SliceAdaptor_fetchNormalizedSliceProjection(SliceAdaptor *sa, Slice *sli
   }
 
   // NIY: Tidy up before return
+  MapperRangeSet_free(linked);
+  Vector_free(pars);
+  Vector_free(haps);
+  Vector_free(syms);
+  Mapper_free(mapper);
 
   return out;
 }

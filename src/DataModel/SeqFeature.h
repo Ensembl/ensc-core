@@ -147,6 +147,7 @@ int SeqFeature_startCompFunc(const void *a, const void *b);
 int SeqFeature_startEndCompFunc(const void *a, const void *b);
 int SeqFeature_reverseStartCompFunc(const void *a, const void *b);
 int SeqFeature_reverseScoreCompFunc(const void *a, const void *b);
+int SeqFeature_startRevEndCompFunc(const void *a, const void *b);
 
 
 Vector *SeqFeature_transformToRawContigImpl(SeqFeature *sf);

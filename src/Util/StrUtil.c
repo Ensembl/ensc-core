@@ -17,7 +17,8 @@ char *StrUtil_appendString(char *to, char *from) {
     exit(1);
   }
 
-  strcat(to,from);
+  memcpy(&to[lenTo], from, lenFrom);
+//  strcat(to,from);
   to[lenTo+lenFrom] = '\0';
 
   return to;
@@ -109,7 +110,7 @@ char *StrUtil_copyString(char **to, char *from,int Start) {
   } else {
     Len-=Start;
     cp = &from[Start];
-    if ((*to = (char *)calloc(Len+2,sizeof(char)))==NULL) {
+    if ((*to = (char *)calloc(Len+3,sizeof(char)))==NULL) {
       Error_write(EMALLERR,"StrUtil_copyString",ERR_SEVERE,"to");
       return NULL;
     }

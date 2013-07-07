@@ -53,6 +53,8 @@ char *Transcript_getSplicedSeq(Transcript *trans);
 ECOSTRING Transcript_setBiotype(Transcript *transcript, char *biotype);
 #define Transcript_getBiotype(transcript)  (transcript)->biotype
 
+void Transcript_freeAdjustedTranslateableExons(Transcript *transcript, Vector *translateableExons);
+
 Vector *Transcript_getAllSupportingFeatures(Transcript *transcript);
 Vector *Transcript_getAllIntronSupportingEvidence(Transcript *transcript);
 
@@ -96,7 +98,9 @@ int Transcript_getVersion(Transcript *transcript);
 
 Transcript *Transcript_new(void);
 
-#define Transcript_addExon(transcript,exon, rank) Vector_addElement((transcript)->exons, (exon))
+void Transcript_addExon(Transcript *transcript, Exon *exon, int rank);
+void Transcript_recalculateCoordinates(Transcript *transcript);
+//#define Transcript_addExon(transcript,exon, rank) Vector_addElement((transcript)->exons, (exon))
 #define Transcript_getExonAt(transcript,ind) Vector_getElementAt((transcript)->exons, (ind))
 
 #define Transcript_getExonCount(transcript) Vector_getNumElement((transcript)->exons)

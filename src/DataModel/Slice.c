@@ -770,6 +770,7 @@ Vector *Slice_project(Slice *slice, char *csName, char *csVersion) {
   // no mapping is needed if the requested coord system is the one we are in
   // but we do need to check if some of the slice is outside of defined regions
   if (!CoordSystem_compare(sliceCs, cs)) {
+    Vector_free(projection);
     return Slice_constrainToRegion(slice);
   }
 
@@ -778,6 +779,7 @@ Vector *Slice_project(Slice *slice, char *csName, char *csVersion) {
   // decompose this slice into its symlinked components.
   // this allows us to handle haplotypes and PARs
   Vector *normalSliceProj = SliceAdaptor_fetchNormalizedSliceProjection(sa, slice, 0);
+  Vector_setFreeFunc(normalSliceProj, ProjectionSegment_free);
 
   int i;
   for (i=0; i<Vector_getNumElement(normalSliceProj); i++) {
@@ -840,6 +842,9 @@ Vector *Slice_project(Slice *slice, char *csName, char *csVersion) {
         // 'toplevel' was requested.
         if (!CoordSystem_compare(coordCs,sliceCs)) {
           // trim off regions which are not defined
+          Vector_free(projection);
+          MapperRangeSet_free(coords);
+          Vector_free(normalSliceProj);
           return Slice_constrainToRegion(slice);
         }
         //create slices for the mapped-to coord system
@@ -857,14 +862,15 @@ Vector *Slice_project(Slice *slice, char *csName, char *csVersion) {
 
       currentStart += length;
     }
+    MapperRangeSet_free(coords);
   }
+  Vector_free(normalSliceProj);
 
   return projection;
 }
 
 
 Vector *Slice_constrainToRegion(Slice *slice) {
-
   long entireLen = Slice_getSeqRegionLength(slice);
 
   // if the slice has negative coordinates or coordinates exceeding the
@@ -1215,6 +1221,35 @@ IDType Slice_getSeqRegionId(Slice *slice) {
   }
 }
 
+long Slice_getCodonTableId(Slice *slice) {
+  long codonTableId = 1;
+
+  if (slice->codonTable > 0) {
+    return slice->codonTable;
+  }
+
+  Vector *ctAttribs = Slice_getAllAttributes(slice, "codon_table");
+
+  // NIY free properly - Slice attributes current are NOT cached in Slice
+  if (Vector_getNumElement(ctAttribs) > 1) {
+    fprintf(stderr,"Invalid number of codon_table attributes for slice %s\n", Slice_getName(slice));
+    exit(1);
+  }
+  if (Vector_getNumElement(ctAttribs) == 1) {
+    Attribute *attrib = Vector_getElementAt(ctAttribs, 0);
+    if (!StrUtil_isLongInteger(&codonTableId, Attribute_getValue(attrib))) {
+      fprintf(stderr,"Invalid codon_table attribute format for slice %s attribute value %s\n", Slice_getName(slice),Attribute_getValue(attrib));
+      exit(1);
+    }
+
+    Vector_setFreeFunc(ctAttribs, Attribute_free);
+  }
+  Vector_free(ctAttribs);
+
+  slice->codonTable = codonTableId;
+
+  return slice->codonTable;
+}
 
 /*
 =head2 get_all_Attributes
@@ -1235,16 +1270,17 @@ IDType Slice_getSeqRegionId(Slice *slice) {
 Vector *Slice_getAllAttributes(Slice *slice, char *attribCode) {
   SliceAdaptor *sa = (SliceAdaptor *)Slice_getAdaptor(slice);
   if (sa == NULL) {
-    fprintf(stderr,"Warning: Cannot get attributes without an adaptor.\n");
+    //fprintf(stderr,"Warning: Cannot get attributes without an adaptor.\n");
     return Vector_new();
   }
 
+//  fprintf(stderr, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Getting attribs with code %s\n", attribCode);
+ 
   AttributeAdaptor *aa = DBAdaptor_getAttributeAdaptor(sa->dba);
 
 // ??? Why don't pass in code
   Vector *results = AttributeAdaptor_fetchAllBySlice(aa, slice, attribCode);
   
-/*
   if (attribCode!=NULL) {
     int i;
     for  (i=0;i<Vector_getNumElement(results);i++) {
@@ -1255,7 +1291,6 @@ Vector *Slice_getAllAttributes(Slice *slice, char *attribCode) {
       }
     }
   }
-*/
 
   return results;
 }

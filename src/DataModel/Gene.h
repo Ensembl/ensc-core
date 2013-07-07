@@ -112,7 +112,12 @@ char *Gene_setCanonicalAnnotation(Gene *g, char *canonicalAnnotation);
 #define Gene_setAnalysis(gene,ana) AnnotatedSeqFeature_setAnalysis((gene),ana)
 #define Gene_getAnalysis(gene) AnnotatedSeqFeature_getAnalysis((gene))
 
-#define Gene_addTranscript(gene,trans) Vector_addElement((gene)->transcripts,(trans))
+//#define Gene_addTranscript(gene,trans) Vector_addElement((gene)->transcripts,(trans))
+void Gene_addTranscript(Gene *gene, Transcript *trans);
+void Gene_recalculateCoordinates(Gene *gene);
+
+Vector *Gene_getAllTranscripts(Gene *gene);
+
 #define Gene_getTranscriptAt(gene,ind) (Transcript *)Vector_getElementAt((gene)->transcripts,ind)
 
 #define Gene_getTranscriptCount(gene) Vector_getNumElement((gene)->transcripts)

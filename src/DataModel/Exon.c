@@ -120,6 +120,7 @@ void Exon_getHashKey(Exon *exon, char *hashKey) {
 void Exon_flushSupportingFeatures(Exon *exon) {
   if (exon->supportingFeatures != NULL) {
 // NIY: Do we need to free features??
+    exon->supportingFeatures->freeElement = NULL;
     Vector_free(exon->supportingFeatures);
   }
 
@@ -185,16 +186,10 @@ int Exon_forwardStrandCompFunc(const void *a, const void *b) {
 }
 
 int Exon_reverseStrandCompFunc(const void *a, const void *b) {
-  Exon **e1 = (Exon **)a;
-  Exon **e2 = (Exon **)b;
+  Exon *e1 = *((Exon **)a);
+  Exon *e2 = *((Exon **)b);
 
-  if (Exon_getStart(*e1) < Exon_getStart(*e2)) {
-    return 1;
-  } else if (Exon_getStart(*e1) > Exon_getStart(*e2)) {
-    return -1;
-  } else {
-    return 0;
-  }
+  return Exon_getStart(e2) - Exon_getStart(e1);
 }
 
 /*
@@ -591,6 +586,11 @@ Exon *Exon_adjustStartEndImpl(Exon *exon, int startAdjust, int endAdjust) {
   // invalidate the sequence cache
   // NIY delete $new_exon->{'_seq_cache'};
 
+/*
+  fprintf(stderr,"adjustStartEndImpl with exon %ld-%ld:%d adjustStart %d adjustEnd %d\n", 
+          Exon_getStart(exon), Exon_getEnd(exon), Exon_getStrand(exon), startAdjust, endAdjust);
+*/
+
   if (Exon_getStrand(exon) == 1 ) {
     Exon_setStart(newExon, Exon_getStart(exon) + startAdjust );
     Exon_setEnd(newExon, Exon_getEnd(exon) + endAdjust );
@@ -719,11 +719,14 @@ char  *Exon_getSeqStringImpl(Exon *exon) {
                                1);
 
     if (Exon_getStrand(exon) == -1){
-      SeqUtil_reverseComplement(seq,strlen(seq));
+//      SeqUtil_reverseComplement(seq,strlen(seq));
+      
+      char tmpSeq[600000];
+      rev_comp(seq, tmpSeq, Exon_getLength(exon));
+      strcpy(seq,tmpSeq);
     }
   }
   Exon_setSeqCacheString(exon, seq);
-
   return Exon_getSeqCacheString(exon);
 }
 
@@ -865,5 +868,12 @@ void Exon_loadGenomicMapperImpl(Exon *exon, Mapper *mapper, IDType id, int start
 
 void Exon_freeImpl(Exon *exon) {
  // printf("Exon_free not implemented\n");
+//  StableIdInfo_freePtrs(exon->si);
+
+  if (Exon_getSeqCacheString(exon)!=NULL) {
+    free(Exon_getSeqCacheString(exon));
+  }
+  
+  free(exon);
 }
 

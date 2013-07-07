@@ -16,6 +16,7 @@ features from the database.
 #include "DBAdaptor.h"
 #include "BaseFeatureAdaptor.h"
 #include "SliceAdaptor.h"
+#include "SeqFeature.h"
 
 #include <string.h>
 
