@@ -19,6 +19,7 @@ struct CoordSystemStruct {
   char *name;
   char *version;
   char *nameColonVersion;
+  char *dbIdStr;
   int   lenNameColonVersion;
   int   rank;
 
@@ -52,6 +53,8 @@ int CoordSystem_compare(CoordSystem *cs1, CoordSystem *cs2);
 
 char *CoordSystem_getNameColonVersion(CoordSystem *cs);
 int CoordSystem_getLenNameColonVersion(CoordSystem *cs);
+
+char *CoordSystem_getDbIDStr(CoordSystem *cs);
 
 void CoordSystem_free(CoordSystem *coordSystem);
 

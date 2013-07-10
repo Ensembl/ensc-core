@@ -132,7 +132,7 @@ void *StringHash_getValue(StringHash *stringHash, char *key) {
     }
   }
 
-  fprintf(stderr,"ERROR: Didn't find key %s in StringHash\n",key);
+//  fprintf(stderr,"ERROR: Didn't find key %s in StringHash\n",key);
   //fprintf(stderr,"keylen %d\n",keyLen);
   //for (i=0; i<stringHash->bucketCounts[bucketNum]; i++) {
   //  fprintf(stderr,"bucket key %s keylen %d\n",stringHash->buckets[bucketNum][i].key, stringHash->buckets[bucketNum][i].keyLen);

@@ -5,6 +5,7 @@
 
 #include "DBAdaptor.h"
 #include "CoordSystemAdaptor.h"
+#include "CachingSequenceAdaptor.h"
 #include "AnalysisAdaptor.h"
 #include "GeneAdaptor.h"
 #include "DNAAlignFeatureAdaptor.h"
@@ -305,7 +306,8 @@ int main(int argc, char *argv[]) {
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:3000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:30000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:100000000:1");
-  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:150000000:1");
+//  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:150000000:1");
+  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:1:1:250000000:1");
 
   RefineSolexaGenes_fetchInput(rsg);
   RefineSolexaGenes_run(rsg);
@@ -3734,6 +3736,7 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
   IntronCoords **icArray = StringHash_getValues(idList);
   Slice *chrSlice = RefineSolexaGenes_getChrSlice(rsg);
   Analysis *analysis = RefineSolexaGenes_getAnalysis(rsg);
+  CachingSequenceAdaptor *cachingSeqAdaptor = DBAdaptor_getCachingSequenceAdaptor(Slice_getAdaptor(chrSlice)->dba);
 
   int i;
   for (i=0; i<StringHash_getNumValues(idList); i++) {
@@ -3774,6 +3777,7 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
       int canonical = 1;
       // figure out if its cannonical or not
   // Was if->start+1 and if->start+2 rather than seqregionstart
+/*
       Slice *leftSplice = SliceAdaptor_fetchByRegion(sliceAdaptor,
                                                      "toplevel",
                                                      Slice_getSeqRegionName(DNAAlignFeature_getSlice(intFeat)),
@@ -3794,6 +3798,18 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
       //fprintf(stderr, "leftSplice seq = %s rightSplice seq = %s\n", Slice_getSeq(leftSplice), Slice_getSeq(rightSplice));
       char *leftSpliceSeq = Slice_getSeq(leftSplice);
       char *rightSpliceSeq = Slice_getSeq(rightSplice);
+*/
+      char *leftSpliceSeq = CachingSequenceAdaptor_fetchBySliceStartEndStrand(cachingSeqAdaptor, 
+                                                                              chrSlice,
+                                                                              DNAAlignFeature_getSeqRegionStart(intFeat)+1,
+                                                                              DNAAlignFeature_getSeqRegionStart(intFeat)+2,
+                                                                              DNAAlignFeature_getSeqRegionStrand(intFeat));
+      char *rightSpliceSeq = CachingSequenceAdaptor_fetchBySliceStartEndStrand(cachingSeqAdaptor, 
+                                                                               chrSlice,
+                                                                               DNAAlignFeature_getSeqRegionEnd(intFeat)-2,
+                                                                               DNAAlignFeature_getSeqRegionEnd(intFeat)-1,
+                                                                               DNAAlignFeature_getSeqRegionStrand(intFeat));
+      //fprintf(stderr,"%s %s\n", leftSpliceSeq, rightSpliceSeq);
       if (!strcmp(leftSpliceSeq, "NN") && !strcmp(rightSpliceSeq, "NN")) {
         fprintf(stderr,"Warning: Cannot find dna sequence for %s this is used in detecting non cannonical splices\n", name);
       } else {
@@ -3812,8 +3828,8 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
       }
       free(leftSpliceSeq);
       free(rightSpliceSeq);
-      Slice_free(leftSplice);
-      Slice_free(rightSplice);
+      //Slice_free(leftSplice);
+      //Slice_free(rightSplice);
 
       char hitName[2048];
       if (canonical) {

@@ -9,6 +9,7 @@ typedef struct AttributeAdaptorStruct AttributeAdaptor;
 typedef struct BaseAdaptorStruct BaseAdaptor;
 typedef struct BaseDBAdaptorStruct BaseDBAdaptor;
 typedef struct BaseFeatureAdaptorStruct BaseFeatureAdaptor;
+typedef struct CachingSequenceAdaptorStruct CachingSequenceAdaptor;
 typedef struct CoordSystemAdaptorStruct CoordSystemAdaptor;
 typedef struct ChromosomeAdaptorStruct ChromosomeAdaptor;
 typedef struct CloneAdaptorStruct CloneAdaptor;

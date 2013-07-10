@@ -63,6 +63,8 @@ long Slice_getCodonTableId(Slice *slice);
 #define Slice_setSeqRegionLength(sl,len) (sl)->seqRegionLength = (len)
 #define Slice_getSeqRegionLength(sl) (sl)->seqRegionLength
 
+Slice *Slice_getSeqRegionSlice(Slice *slice);
+
 //#define Slice_setSeqRegionId(sl,c) (sl)->seqRegionId = (c)
 //#define Slice_getSeqRegionId(sl) (sl)->seqRegionId
 

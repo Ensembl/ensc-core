@@ -665,7 +665,7 @@ char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long st
         sth->finish(sth);
 
         // always give back uppercased sequence so it can be properly softmasked
-        StrUtil_strupr(tmpSeq);
+        //StrUtil_strupr(tmpSeq);
 
         memcpy(&(entireSeq[min-minChunkMin]), tmpSeq, lenTmpSeq);
 //        StrUtil_appendString(entireSeq,tmpSeq);
@@ -703,7 +703,7 @@ char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long st
     char *tmpSeq = row->getStringCopyAt(row, 0);
     sth->finish(sth);
     // always give back uppercased sequence so it can be properly softmasked
-    StrUtil_strupr(tmpSeq);
+    //StrUtil_strupr(tmpSeq);
 
     return tmpSeq;
   }

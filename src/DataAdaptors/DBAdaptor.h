@@ -29,6 +29,7 @@ void DBAdaptor_addToSrCaches(DBAdaptor *dba, IDType regionId, char *regionName, 
 AnalysisAdaptor             *DBAdaptor_getAnalysisAdaptor(DBAdaptor *dba);
 AssemblyMapperAdaptor       *DBAdaptor_getAssemblyMapperAdaptor(DBAdaptor *dba);
 AttributeAdaptor            *DBAdaptor_getAttributeAdaptor(DBAdaptor *dba);
+CachingSequenceAdaptor      *DBAdaptor_getCachingSequenceAdaptor(DBAdaptor *dba); 
 ChromosomeAdaptor           *DBAdaptor_getChromosomeAdaptor(DBAdaptor *dba);
 CoordSystemAdaptor          *DBAdaptor_getCoordSystemAdaptor(DBAdaptor *dba);
 DBEntryAdaptor              *DBAdaptor_getDBEntryAdaptor(DBAdaptor *dba);

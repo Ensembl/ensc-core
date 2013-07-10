@@ -13,6 +13,7 @@
 #include "BaseAlignFeature.h"
 #include "CoordSystem.h"
 #include "SeqUtil.h"
+#include "CachingSequenceAdaptor.h"
 
 Exon *Exon_new() {
   Exon *exon;
@@ -713,10 +714,19 @@ char  *Exon_getSeqStringImpl(Exon *exon) {
     return NULL;
   } else {
 
+/*    
     seq = BaseContig_getSubSeq(Exon_getContig(exon), 
                                Exon_getStart(exon), 
                                Exon_getEnd(exon),
                                1);
+*/
+    DBAdaptor *dba = Slice_getAdaptor(Exon_getSlice(exon))->dba;
+    CachingSequenceAdaptor *csa = DBAdaptor_getCachingSequenceAdaptor(dba);
+    seq = CachingSequenceAdaptor_fetchBySliceStartEndStrand(csa, 
+                                                            Exon_getSlice(exon),
+                                                            Exon_getStart(exon),
+                                                            Exon_getEnd(exon),
+                                                            1);
 
     if (Exon_getStrand(exon) == -1){
 //      SeqUtil_reverseComplement(seq,strlen(seq));

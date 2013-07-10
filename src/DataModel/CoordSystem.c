@@ -180,6 +180,16 @@ char *CoordSystem_getNameColonVersion(CoordSystem *cs) {
   return cs->nameColonVersion;
 }
 
+char *CoordSystem_getDbIDStr(CoordSystem *cs) {
+  if (cs->dbIdStr == NULL) {
+    char tmpStr[1024];
+    sprintf(tmpStr,IDFMTSTR,CoordSystem_getDbID(cs));
+    StrUtil_copyString(&cs->dbIdStr, tmpStr, 0);
+  }
+ 
+  return cs->dbIdStr;
+}
+
 int CoordSystem_getLenNameColonVersion(CoordSystem *cs) {
   if (cs->nameColonVersion == NULL) {
     CoordSystem_getNameColonVersion(cs);

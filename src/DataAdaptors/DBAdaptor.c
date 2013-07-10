@@ -4,6 +4,7 @@
 #include "AnalysisAdaptor.h"
 #include "AssemblyMapperAdaptor.h"
 #include "AttributeAdaptor.h"
+#include "CachingSequenceAdaptor.h"
 #include "ChromosomeAdaptor.h"
 #include "CoordSystemAdaptor.h"
 #include "CloneAdaptor.h"
@@ -255,6 +256,14 @@ SequenceAdaptor *DBAdaptor_getSequenceAdaptor(DBAdaptor *dba) {
                             (BaseAdaptor *)SequenceAdaptor_new(dba));
   }
   return (SequenceAdaptor *)DBConnection_getAdaptor(dba->dbc,SEQUENCE_ADAPTOR);
+}
+
+CachingSequenceAdaptor *DBAdaptor_getCachingSequenceAdaptor(DBAdaptor *dba) {
+  if (!DBConnection_getAdaptor(dba->dbc,CACHINGSEQUENCE_ADAPTOR)) {
+    DBConnection_addAdaptor(dba->dbc,
+                            (BaseAdaptor *)CachingSequenceAdaptor_new(dba));
+  }
+  return (CachingSequenceAdaptor *)DBConnection_getAdaptor(dba->dbc,CACHINGSEQUENCE_ADAPTOR);
 }
 
 TranslationAdaptor *DBAdaptor_getTranslationAdaptor(DBAdaptor *dba) {

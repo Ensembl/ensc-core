@@ -1101,12 +1101,16 @@ IDType SliceAdaptor_getSeqRegionId(SliceAdaptor *sa, Slice *slice) {
   char *seqRegionName = Slice_getSeqRegionName(slice);
 
   char key[1024];
-  sprintf(key, "%s:"IDFMTSTR, seqRegionName, CoordSystem_getDbID(Slice_getCoordSystem(slice)));
+//  sprintf(key, "%s:"IDFMTSTR, seqRegionName, CoordSystem_getDbID(Slice_getCoordSystem(slice)));
+  char *endP = stpcpy(key,seqRegionName);
+  *endP++ = ':';
+  stpcpy(endP, CoordSystem_getDbIDStr(Slice_getCoordSystem(slice)));
 
-  if (StringHash_contains(sa->srNameCache, key)) {
+
+  //if (StringHash_contains(sa->srNameCache, key)) {
     SeqRegionCacheEntry *cacheData = StringHash_getValue(sa->srNameCache, key);
-    return cacheData->regionId;
-  }
+    if (cacheData) return cacheData->regionId;
+  //}
 
   IDType csId = CoordSystem_getDbID(Slice_getCoordSystem(slice));
 
