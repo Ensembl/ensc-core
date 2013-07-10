@@ -72,6 +72,7 @@ void Transcript_addExon(Transcript *transcript, Exon *exon, int rank) {
   }
 
   if (rank > 0) {
+    Object_incRefCount(exon);
     Vector_setElementAt(transcript->exons, rank-1, exon);
     return;
   }
@@ -179,6 +180,8 @@ void Transcript_addExon(Transcript *transcript, Exon *exon, int rank) {
                     "Transcript Exons:\n$all_str\n"
                     "This Exon:\n$cur_str" );
 */
+  } else {
+    Object_incRefCount(exon);
   }
 
   // recalculate start, end, slice, strand

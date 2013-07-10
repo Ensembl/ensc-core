@@ -24,7 +24,7 @@ Exon *Exon_new() {
   }
 
   exon->objectType = CLASS_EXON;
-  Object_incRefCount(exon);
+//  Object_incRefCount(exon);
 
   exon->funcs = &exonFuncs;
 
@@ -581,6 +581,7 @@ Exon *Exon_adjustStartEndImpl(Exon *exon, int startAdjust, int endAdjust) {
 
   Exon *newExon = Exon_new();
 
+
 // Copy - NIY won't copy support
   Exon_copy(newExon, exon, SHALLOW_DEPTH);
 
@@ -601,6 +602,8 @@ Exon *Exon_adjustStartEndImpl(Exon *exon, int startAdjust, int endAdjust) {
   }
 
 // NIY Delete old exon
+
+  Object_incRefCount(newExon);
 
   return newExon;
 }
@@ -740,6 +743,11 @@ char  *Exon_getSeqStringImpl(Exon *exon) {
   return Exon_getSeqCacheString(exon);
 }
 
+void Exon_setSeqCacheString(Exon *exon, char *seq) {
+  //fprintf(stderr,"Setting seq cache string for exon %p %s to %p\n", exon, Exon_getStableId(exon), seq);
+  exon->seqCacheString = seq;
+}
+
 Exon *Exon_transformSliceToRawContigImpl(Exon *exon) {
   SliceAdaptor *sa;
   Slice *slice;
@@ -877,9 +885,18 @@ void Exon_loadGenomicMapperImpl(Exon *exon, Mapper *mapper, IDType id, int start
 
 
 void Exon_freeImpl(Exon *exon) {
- // printf("Exon_free not implemented\n");
+  //printf("Exon_free not implemented\n");
 //  StableIdInfo_freePtrs(exon->si);
+  Object_decRefCount(exon);
 
+  if (Object_getRefCount(exon) > 0) {
+    return;
+  } else if (Object_getRefCount(exon) < 0) {
+    fprintf(stderr,"Error: Negative reference count for Exon\n"
+                   "       Freeing it anyway\n");
+  }
+
+  // fprintf(stderr, "freeing exon %p %s\n", exon, Exon_getStableId(exon));
   if (Exon_getSeqCacheString(exon)!=NULL) {
     free(Exon_getSeqCacheString(exon));
   }

@@ -36,9 +36,9 @@ typedef struct ExonFuncsStruct {
 
 #define EXON_DATA \
   ANNOTATEDSEQFEATURE_DATA \
+  char *seqCacheString; \
   Vector *supportingFeatures; \
   char isConstitutive; \
-  char *seqCacheString;
 
 #define FUNCSTRUCTTYPE ExonFuncs
 struct ExonStruct {
@@ -68,7 +68,7 @@ struct ExonStruct {
 #define Exon_setEnd(exon,end) AnnotatedSeqFeature_setEnd((exon),(end))
 #define Exon_getEnd(exon) AnnotatedSeqFeature_getEnd((exon))
 
-#define Exon_setSeqCacheString(exon,seq) (exon)->seqCacheString = (seq)
+//#define Exon_setSeqCacheString(exon,seq) (exon)->seqCacheString = (seq)
 #define Exon_getSeqCacheString(exon) (exon)->seqCacheString
 
 #define Exon_setScore(exon,score) AnnotatedSeqFeature_setScore((exon),(score))
@@ -114,6 +114,8 @@ time_t Exon_getModified(Exon *exon);
 
 Vector *Exon_getAllSupportingFeaturesImpl(Exon *exon);
 void Exon_addSupportingFeaturesImpl(Exon *exon, Vector *features);
+
+void Exon_setSeqCacheString(Exon *exon, char *seq);
 
 
 #define Exon_setContig(exon,c) AnnotatedSeqFeature_setContig((exon),(c))

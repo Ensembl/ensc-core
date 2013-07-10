@@ -82,6 +82,7 @@ void Cache_empty(Cache *cache) {
 }
 
 void CacheElement_free(CacheElement *ce) {
+  // fprintf(stderr,"CacheElement_free for element with key %s\n", ce->key);
   if (ce->freeFunc) {
     ce->freeFunc(ce->val);
   }

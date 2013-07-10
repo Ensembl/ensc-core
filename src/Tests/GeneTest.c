@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
   ok(3, genes!=NULL);
   ok(4, Vector_getNumElement(genes)!=0);
 
-  failed = dumpGenes(genes, 1);
+  failed = dumpGenes(genes, 0);
   ok(5, !failed);
 
   //Vector *toplevelSlices = SliceAdaptor_fetchAll(sa, "toplevel", NULL, 0);
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
     failed = dumpGenes(genes, 0);
   }
 
-  tc_malloc_stats();
+  //tc_malloc_stats();
 
   fprintf(stderr,"\nEcostring table stats:\n");
   EcoString_getInfo(ecoSTable);

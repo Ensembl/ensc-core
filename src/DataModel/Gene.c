@@ -498,8 +498,9 @@ void Gene_free(Gene *gene) {
                    "       Freeing it anyway\n");
   }
 
+  // fprintf(stderr,"Freeing gene %p %s\n", gene, Gene_getStableId(gene));
   int i;
-  for (i=0; i<Gene_getTranscriptCount(gene);i++) {
+  for (i=0; i<Gene_getTranscriptCount(gene); i++) {
     Transcript *trans = Gene_getTranscriptAt(gene, i);
     Transcript_free(trans);
   }
