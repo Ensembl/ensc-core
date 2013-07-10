@@ -575,9 +575,9 @@ Vector *CoordSystemAdaptor_getMappingPath(CoordSystemAdaptor *csa, CoordSystem *
     if (path) return path; // Not sure if a NULL path should ever be returned from hash but perl was checking for it
   }
 
-  memcpy(keypair,key2,lenKey2);
-  keypair[lenKey2] = '|';
-  memcpy(&keypair[lenKey2+1],key1,lenKey1+1);
+  memcpy(revKeypair,key2,lenKey2);
+  revKeypair[lenKey2] = '|';
+  memcpy(&revKeypair[lenKey2+1],key1,lenKey1+1);
 
   //sprintf(revKeypair,"%s|%s",key2,key1); // reverse of path
 
