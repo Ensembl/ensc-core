@@ -5,14 +5,16 @@ CC = cc
 MYSQLCFLAGS=${shell mysql_config --cflags}
 MYSQLLIBS=${shell mysql_config --libs}
 #SAMDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/bin/samtools-0.1.18
-SAMDIR=/Users/searle/progs/ensc-dependencies/bin/samtools_parallel
+#SAMDIR=/Users/searle/progs/ensc-dependencies/bin/samtools_parallel
 #SAMDIR=/nfs/users/nfs_s/searle/src/samtools_parallel
 #SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools-0.1.18
+SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools_parallel
 ZLIBDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/include
 
-CFLAGS =  -O3 -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
-LDFLAGS = $(MYSQLLIBS) -L/usr/lib/system -lSystem -L/Users/searle/progs/ensc-dependencies/lib -ltcmalloc
-CPPFLAGS = -I/Users/searle/progs/ensc-dependencies/include
+CFLAGS =  -Ofast -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
+#LDFLAGS = $(MYSQLLIBS) -L/usr/lib/system -lSystem -L/Users/searle/progs/ensc-dependencies/lib -ltcmalloc
+LDFLAGS = $(MYSQLLIBS) -lunwind
+#CPPFLAGS = -I/Users/searle/progs/ensc-dependencies/include
 
 BINDIR=../bin
 
@@ -20,12 +22,14 @@ all	: directories \
           libensc.a \
           Programs/testdbc \
           Programs/bamcount \
+          Programs/bamcount_exon \
           Programs/bamcov \
           Programs/bammap \
           Programs/countsnps \
           Programs/indicate \
           Programs/fastasplit \
           Programs/moveperl \
+          Programs/RefineSolexaGenes \
           Tests/AssemblyMapperTest \
           Tests/CacheTest \
           Tests/ChainedAssemblyMapperTest \
@@ -95,6 +99,7 @@ libensc.a	: \
 	objectfiles/DataAdaptors/AttributeAdaptor.o \
 	objectfiles/DataAdaptors/BaseAdaptor.o \
 	objectfiles/DataAdaptors/BaseFeatureAdaptor.o \
+	objectfiles/DataAdaptors/CachingSequenceAdaptor.o \
 	objectfiles/DataAdaptors/ChromosomeAdaptor.o \
 	objectfiles/DataAdaptors/CoordSystemAdaptor.o \
 	objectfiles/DataAdaptors/CloneAdaptor.o \
@@ -221,6 +226,11 @@ Programs/bamcount: \
 	Programs/bamcount.c
 	$(CC) $(CFLAGS) -I$(SAMDIR) -I$(ZLIBDIR) -D_PBGZF_USE -o Programs/bamcount Programs/bamcount.c -L. -lensc  -L$(SAMDIR) -lbam $(LDFLAGS)
 
+Programs/bamcount_exon: \
+	libensc.a \
+	Programs/bamcount_exon.c
+	$(CC) $(CFLAGS) -I$(SAMDIR) -I$(ZLIBDIR) -D_PBGZF_USE -o Programs/bamcount_exon Programs/bamcount_exon.c -L. -lensc  -L$(SAMDIR) -lbam $(LDFLAGS)
+
 Programs/bamcov: \
 	libensc.a \
 	Programs/bamcov.c
@@ -240,6 +250,11 @@ Programs/countsnps: \
 Programs/moveperl: \
 	Programs/moveperl.c
 	$(CC) $(CFLAGS) -o Programs/moveperl Programs/moveperl.c $(LDFLAGS)
+
+Programs/RefineSolexaGenes: \
+	libensc.a \
+	Programs/RefineSolexaGenes.c
+	$(CC) $(CFLAGS) -I$(SAMDIR) -I$(ZLIBDIR) -D_PBGZF_USE -o Programs/RefineSolexaGenes Programs/RefineSolexaGenes.c -L. -lensc  -L$(SAMDIR) -lbam $(LDFLAGS)
 
 Tests/AssemblyMapperTest: \
 	libensc.a \
