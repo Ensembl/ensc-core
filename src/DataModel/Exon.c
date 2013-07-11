@@ -717,7 +717,7 @@ char  *Exon_getSeqStringImpl(Exon *exon) {
     return NULL;
   } else {
 
-/*    
+/*
     seq = BaseContig_getSubSeq(Exon_getContig(exon), 
                                Exon_getStart(exon), 
                                Exon_getEnd(exon),

@@ -34,7 +34,9 @@ struct VectorStruct {
 Vector *Vector_new();
 void *Vector_addElement(Vector *vector, void *elem);
 #define Vector_getNumElement(v) (v)->nElement
-void *Vector_getElementAt(Vector *v, int ind);
+//void *Vector_getElementAt(Vector *v, int ind);
+#define Vector_getElementAt(v, ind) (v)->elements[(ind)]
+
 void Vector_free(Vector *vector);
 void Vector_setFreeFunc(Vector *vector, void freeFunc());
 void Vector_setBatchSize(Vector *vector, int batchSize);

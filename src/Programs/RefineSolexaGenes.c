@@ -306,8 +306,8 @@ int main(int argc, char *argv[]) {
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:3000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:30000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:100000000:1");
-//  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:150000000:1");
-  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:1:1:250000000:1");
+  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:150000000:1");
+//  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:1:1:250000000:1");
 
   RefineSolexaGenes_fetchInput(rsg);
   RefineSolexaGenes_run(rsg);
@@ -4497,6 +4497,7 @@ Vector *RefineSolexaGenes_fetchIntronFeatures(RefineSolexaGenes *rsg, long start
 
   Vector *filteredIntrons = Vector_new();
 // INTRON: 
+  int startCompInd = 0;
   for (i=0; i<Vector_getNumElement(chosenSf); i++) {
     DNAAlignFeature *intron = Vector_getElementAt(chosenSf, i);
 
@@ -4515,8 +4516,11 @@ Vector *RefineSolexaGenes_fetchIntronFeatures(RefineSolexaGenes *rsg, long start
       // unless it out scores a consensus intron
       int done = 0;
       int j;
-      for (j=0; j<Vector_getNumElement(chosenSf) && !done; j++) {
+      for (j=startCompInd; j<Vector_getNumElement(chosenSf) && !done; j++) {
         DNAAlignFeature *compIntron = Vector_getElementAt(chosenSf, j);
+
+        //if (DNAAlignFeature_getEnd(intron) < DNAAlignFeature_getStart(compIntron)) break;
+
         //if (strstr(DNAAlignFeature_getHitSeqName(compIntron), "non canonical") == NULL) {
         if (!(DNAAlignFeature_getFlags(compIntron) & RSGINTRON_NONCANON)) {
           if (DNAAlignFeature_getStrand(intron) == DNAAlignFeature_getStrand(compIntron) &&

@@ -44,6 +44,7 @@ void Vector_setBatchSize(Vector *v, int batchSize) {
   v->batchSize = batchSize;
 }
 
+/*
 void *Vector_getElementAt(Vector *v, int ind) {
   if (ind < 0 || ind >= v->nElement) {
     fprintf(stderr,"ERROR: Invalid element index %d in Vector_getElementAt\n",ind);
@@ -52,6 +53,7 @@ void *Vector_getElementAt(Vector *v, int ind) {
   }
   return v->elements[ind];
 }
+*/
 
 void *Vector_getLastElement(Vector *v) {
   if (!v->nElement) {

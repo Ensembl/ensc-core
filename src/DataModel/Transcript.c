@@ -890,41 +890,45 @@ char *Transcript_getSplicedSeq(Transcript *trans) {
 
 char *Transcript_getTranslateableSeq(Transcript *trans) {
   int i;
-  int lastPhase = 0;
+//  int lastPhase = 0;
   int first = 1;
-  char *mrna = StrUtil_copyString(&mrna,"",0);
+ // char *mrna = StrUtil_copyString(&mrna,"",0);
+  char *mrna;
   Vector *translateableExons;
 
   translateableExons = Transcript_getAllTranslateableExons(trans);
  
+  long lengthTranslateable = 3; // Cater for starting in any phase without having to actually check while
+                                // working out length
   for (i=0; i<Vector_getNumElement(translateableExons); i++) {
     Exon *exon = Vector_getElementAt(translateableExons, i);
+    lengthTranslateable += Exon_getLength(exon);
+  }
+
+  if ((mrna = calloc(lengthTranslateable+1, sizeof(char *))) == NULL) {
+    fprintf(stderr, "Error: failed allocating string for translateable seq\n");
+    exit(1);
+  }
+
+  int curPos = 0;
+// Deal with phase padding outside loop
+  Exon *firstExon = Vector_getElementAt(translateableExons, 0);
+  int phase = Exon_getPhase(firstExon);
+  for (i=0; i<phase; i++) mrna[curPos++] = 'N';
+  
+
+
+  for (i=0; i<Vector_getNumElement(translateableExons); i++) {
+    Exon *exon = Vector_getElementAt(translateableExons, i);
+    int j;
     //fprintf(stderr, "translateable exons %d from %ld to %ld\n", i, Exon_getStart(exon), Exon_getEnd(exon));
-    int phase = 0;
 
-// NIY    if (defined($exon->phase)) {
-      phase = Exon_getPhase(exon);
-//    }
+//    mrna = StrUtil_appendString(mrna, Exon_getSeqString(exon));
+    memcpy(&mrna[curPos], Exon_getSeqString(exon), Exon_getLength(exon));
+    curPos += Exon_getLength(exon);
 
-    if (first) {
-      mrna = SeqUtil_addNs(mrna,phase);
-      first = 0;
-    }
-
-/*
-    if (phase != lastPhase && getenv("MONKEY_EXONS")) {
-      // endpadding for the last exon
-      if (lastPhase == 1 ) {
-        mrna = StrUtil_appendString(mrna,"NN");
-      } else if (lastPhase == 2) {
-        mrna = StrUtil_appendString(mrna,"N");
-      }
-      //startpadding for this exon
-      mrna = SeqUtil_addNs(mrna,phase);
-    }
-*/
-    mrna = StrUtil_appendString(mrna, Exon_getSeqString(exon));
-    lastPhase = Exon_getEndPhase(exon);
+ 
+//    lastPhase = Exon_getEndPhase(exon);
 // Hack to test memory usage
 //    free(Exon_getSeqCacheString(exon));
 //    Exon_setSeqCacheString(exon, NULL);
