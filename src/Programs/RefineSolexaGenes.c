@@ -3212,7 +3212,7 @@ StringHash *RefineSolexaGenes_processPaths(RefineSolexaGenes *rsg, Vector *exons
   }
   
   // work out all the possible paths given the features we have
-  int result;
+  int result = 0;
   StringHash *paths = StringHash_new(STRINGHASH_LARGE);
   char soFar[1000000];
   for (i=0; i<Vector_getNumElement(exons) && result != PT_ERROR; i++) {
