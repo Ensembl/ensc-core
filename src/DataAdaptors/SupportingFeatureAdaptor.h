@@ -13,5 +13,7 @@ SupportingFeatureAdaptor *SupportingFeatureAdaptor_new(DBAdaptor *dba);
 Vector *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, Exon *exon);
 void SupportingFeatureAdaptor_store(SupportingFeatureAdaptor *sfa, IDType exonDbID, Vector *alnObjs);
 
+Vector *SupportingFeatureAdaptor_fetchAllByExonList(SupportingFeatureAdaptor *sfa, Vector *exons, Slice *slice);
+
 
 #endif

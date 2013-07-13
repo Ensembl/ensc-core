@@ -129,7 +129,7 @@ void *IDHash_getValue(IDHash *idHash, IDType id) {
     }
   }
 
-  fprintf(stderr,"ERROR: Didn't find key " IDFMTSTR " in IDHash\n",id);
+//  fprintf(stderr,"ERROR: Didn't find key " IDFMTSTR " in IDHash\n",id);
   return NULL;
 }
 

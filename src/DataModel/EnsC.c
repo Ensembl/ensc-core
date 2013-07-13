@@ -32,3 +32,14 @@ long *long_new(long val) {
   *longP = val;
   return longP;
 }
+
+IDType *IDType_new(IDType val) {
+  IDType *IDTypeP;
+  if ((IDTypeP = (IDType *)calloc(1,sizeof(IDType))) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for IDType\n");
+    return NULL;
+  }
+  *IDTypeP = val;
+  return IDTypeP;
+}
+

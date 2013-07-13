@@ -543,7 +543,6 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
 
   free(uniqueIds);
 
-
   ExonAdaptor *ea = DBAdaptor_getExonAdaptor(ta->dba);
   Vector *exons = ExonAdaptor_fetchAllBySliceConstraint(ea, extSlice, qStr, NULL);  
 

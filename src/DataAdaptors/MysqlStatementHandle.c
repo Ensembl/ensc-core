@@ -85,7 +85,7 @@ unsigned long long MysqlStatementHandle_execute(StatementHandle *sth, ...) {
     exit(1);
   }
 
-  //printf("Statement after formatting = %s\n",statement);
+  //fprintf(stderr, "Statement after formatting = %s\n",statement);
 
   if (mysql_real_query (m_sth->dbc->mysql, statement, qlen) != 0) {    /* the query failed */
     fprintf(stderr, "Could not execute query %s\n\n", statement);

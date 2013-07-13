@@ -42,6 +42,7 @@ static int nExonClone = 0;
 
 FILE *logfp;
 
+/*
 typedef enum CigarBlockTypeEnum {
   CB_NONE,
   CB_MATCH,
@@ -54,6 +55,7 @@ typedef struct CigarBlockStruct {
   long  start;    // start pos on reference, 1 based I think
   long  end;      // end pos on reference, 1 based I think
 } CigarBlock;
+*/
 
 CigarBlock *CigarBlock_new(CigarBlockType type, long start, long end) {
   CigarBlock *block;
@@ -67,6 +69,25 @@ CigarBlock *CigarBlock_new(CigarBlockType type, long start, long end) {
   block->end   = end;
 
   return block;
+}
+
+CigarBlock *CigarBlock_fill(CigarBlock *block, CigarBlockType type, long start, long end) {
+  block->type  = type;
+  block->start = start;
+  block->end   = end;
+
+  return block;
+}
+
+void CigarBlock_copy(CigarBlock *to, CigarBlock *from) {
+  memcpy(to,from,sizeof(CigarBlock));
+/*
+  to->type  = from->type;
+  to->start = from->start;
+  to->end   = from->end;
+*/
+
+  return;
 }
 
 int CigarBlock_startCompFunc(const void *a, const void *b) {
@@ -3599,14 +3620,21 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
   SliceAdaptor *sliceAdaptor = RefineSolexaGenes_getGeneSliceAdaptor(rsg);
   Vector *ifs = Vector_new();
   StringHash *extraExons = RefineSolexaGenes_getExtraExons(rsg);
-  StringHash *idList = StringHash_new(STRINGHASH_SMALL);
+  StringHash *idList = StringHash_new(STRINGHASH_LARGE);
   StringHash *readGroups = NULL;
+
+  CigarBlock blockArray[1024];
+  CigarBlock *mates[1024];
+  int nMate;
+  int i;
+  for (i=0;i<1024;i++) {
+    mates[i] = &blockArray[i];
+  }
 
 
   if (intronBamConf->groupNames != NULL && Vector_getNumElement(intronBamConf->groupNames) > 0) {
     
     fprintf(logfp, "Limiting to read groups ");
-    int i;
     readGroups = StringHash_new(STRINGHASH_SMALL);
     for (i=0; i<Vector_getNumElement(intronBamConf->groupNames); i++) {
       char *group = Vector_getElementAt(intronBamConf->groupNames, i);
@@ -3619,6 +3647,9 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
   bam_iter_t iter = bam_iter_query(idx, ref, begRange, endRange);
   bam1_t *read = bam_init1();
 
+  int firstRead = 1;
+  char name[1024];
+  fprintf(stderr,"before bam read loop\n");
   while (bam_iter_read(sam->x.bam, iter, read) >= 0) {
 
 //READ:  
@@ -3644,42 +3675,49 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
       }
     }
 
-    Vector *mates = RefineSolexaGenes_getUngappedFeatures(rsg, read);
+    // Vector *mates = RefineSolexaGenes_getUngappedFeatures(rsg, read);
+    nMate = RefineSolexaGenes_getUngappedFeatures(rsg, read, mates);
 
-    Vector_sort(mates, CigarBlock_startCompFunc);
+    //qsort(mates, nMate, sizeof(CigarBlock *), CigarBlock_startCompFunc);
+
+    //Vector_sort(mates, CigarBlock_startCompFunc);
     //my @mates = sort { $a->[2] <=> $b->[2] } @{$self->ungapped_features($read)};
 
     // if mates > 2 then we have a possibility of adding in some extra exons into our rough models
     // as the read has spliced into and out of an exon
     // lets make them unique
-    if (Vector_getNumElement(mates) > 2) {
+//    if (Vector_getNumElement(mates) > 2) {
+    if (nMate > 2) {
       char keyString[2048]; keyString[0]='\0';
       long coords[1024]; // Hopefully won't have more than this!
       int nCoord = 0;
 
-      int i;
-      for (i=0; i<Vector_getNumElement(mates); i++) {
-        CigarBlock *mate = Vector_getElementAt(mates, i);
+      //for (i=0; i<Vector_getNumElement(mates); i++) {
+      //  CigarBlock *mate = Vector_getElementAt(mates, i);
+      for (i=0; i<nMate; i++) {
+        CigarBlock *mate = mates[i];
 
         long start = mate->start;
         long end   = mate->end;
 
 //  Unused      my $hstrand = $read->strand;
-
         if (i > 0) {
           sprintf(keyString, "%s%ld:", keyString, start);
           coords[nCoord++] = start;
         }
-        if (i < Vector_getNumElement(mates)-1) {
+//        if (i < Vector_getNumElement(mates)-1) {
+        if (i < nMate) {
           sprintf(keyString,"%s%ld:", keyString, end);
           coords[nCoord++] = end;
         }
       }
 
-      if (!StringHash_contains(extraExons, keyString)) {
-        StringHash_add(extraExons, keyString, ExtraExonData_new(coords, nCoord));
-      }
       ExtraExonData *eed = StringHash_getValue(extraExons, keyString);
+      if (!eed) { //(!StringHash_contains(extraExons, keyString)) {
+        eed = ExtraExonData_new(coords, nCoord);
+        StringHash_add(extraExons, keyString, eed);
+      }
+      //ExtraExonData *eed = StringHash_getValue(extraExons, keyString);
 
       eed->score++;
       //# print "Not doing extra_exon stuff for now\n";
@@ -3694,16 +3732,20 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
     } 
 
 // Moved name setting out of loop
-    char name[1024];
-    strcpy(name, sam->header->target_name[read->core.tid]);
-    StrUtil_strReplChr(name, '.', '*');
+    if (firstRead == 1) {
+      strcpy(name, sam->header->target_name[read->core.tid]);
+      StrUtil_strReplChr(name, '.', '*');
+      firstRead = 0;
+    }
 
 // Not used    long offset;
     char uniqueId[2048];
-    int i;
-    for (i=0; i<Vector_getNumElement(mates)-1; i++) {
-      CigarBlock *mate   = Vector_getElementAt(mates, i);
-      CigarBlock *mateP1 = Vector_getElementAt(mates, i+1);
+//    for (i=0; i<Vector_getNumElement(mates)-1; i++) {
+//      CigarBlock *mate   = Vector_getElementAt(mates, i);
+//      CigarBlock *mateP1 = Vector_getElementAt(mates, i+1);
+    for (i=0; i<nMate-1; i++) {
+      CigarBlock *mate   = mates[i];
+      CigarBlock *mateP1 = mates[i+1];
 
       // intron reads should be split according to the CIGAR line
       // the default split function seems to ad
@@ -3713,16 +3755,18 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
 
       sprintf(uniqueId, "%s:%ld:%ld:%d", name, mate->end, mateP1->start, strand);
 
-      if (!StringHash_contains(idList, uniqueId)) {
+      IntronCoords *ic = StringHash_getValue(idList, uniqueId);
+      if (!ic) {
+        ic = IntronCoords_new(mate->end, mateP1->start, strand, -1, 0);
         StringHash_add(idList,
                        uniqueId,
-                       IntronCoords_new(mate->end, mateP1->start, strand, -1, 0));
+                       ic);
       }
-      IntronCoords *ic = StringHash_getValue(idList, uniqueId);
+      //IntronCoords *ic = StringHash_getValue(idList, uniqueId);
       ic->score++;
     }
-    Vector_setFreeFunc(mates, CigarBlock_free);
-    Vector_free(mates);
+//    Vector_setFreeFunc(mates, CigarBlock_free);
+//    Vector_free(mates);
   }
 
 /* SMJS These are for testing
@@ -3732,13 +3776,13 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
   my $intron_anal = $self->create_analysis_object("intron_c" . $conslim . "_nc" . $nonconslim);
 */
 
+  fprintf(stderr,"before intron loop\n");
   //# collapse them down and make them into simple features
   IntronCoords **icArray = StringHash_getValues(idList);
   Slice *chrSlice = RefineSolexaGenes_getChrSlice(rsg);
   Analysis *analysis = RefineSolexaGenes_getAnalysis(rsg);
   CachingSequenceAdaptor *cachingSeqAdaptor = DBAdaptor_getCachingSequenceAdaptor(Slice_getAdaptor(chrSlice)->dba);
 
-  int i;
   for (i=0; i<StringHash_getNumValues(idList); i++) {
     IntronCoords *ic = icArray[i];
 
@@ -3810,18 +3854,18 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
                                                                                DNAAlignFeature_getSeqRegionEnd(intFeat)-1,
                                                                                DNAAlignFeature_getSeqRegionStrand(intFeat));
       //fprintf(stderr,"%s %s\n", leftSpliceSeq, rightSpliceSeq);
-      if (!strcmp(leftSpliceSeq, "NN") && !strcmp(rightSpliceSeq, "NN")) {
+      if (!strncmp(leftSpliceSeq, "NN", 2) && !strncmp(rightSpliceSeq, "NN", 2)) {
         fprintf(stderr,"Warning: Cannot find dna sequence for %s this is used in detecting non cannonical splices\n", name);
       } else {
         //# is it cannonical
         if (DNAAlignFeature_getStrand(intFeat) == 1 ) {
           // is it GTAG?
-          if (strcmp(leftSpliceSeq, "GT") || strcmp(rightSpliceSeq, "AG")) {
+          if (strncmp(leftSpliceSeq, "GT", 2) || strncmp(rightSpliceSeq, "AG", 2)) {
             canonical = 0;
           }
         } else {
           //# is it GTAG?
-          if (strcmp(rightSpliceSeq, "GT") || strcmp(leftSpliceSeq, "AG")) {
+          if (strncmp(rightSpliceSeq, "GT", 2) || strncmp(leftSpliceSeq, "AG", 2)) {
             canonical = 0;
           }
         }
@@ -3842,9 +3886,10 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
   
       Vector_addElement(ifs, intFeat);
 // NIY: Free splice site sequence strings and slices??
-
     }
   }
+  
+  fprintf(stderr,"before filter\n");
 
   // sort them
   Vector_sort(ifs, SeqFeature_startCompFunc);
@@ -3960,13 +4005,14 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
 */
 // NOTE: I think this method assumed that there were no cases with multiple 'M' blocks between two introns eg 20M 100N 20M D 20M 1000N 20M
 //       I've added a check to make sure that assumption is true.
-Vector *RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam1_t *b) {
-  Vector *    ugfs = Vector_new();
+int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam1_t *b, CigarBlock **ugfs) {
   CigarBlock *lastMatchBlock;
   int         hadIntron = 0;
   int         nIntron = 0;
   CigarBlock *currentBlock = NULL;
   uint32_t *  cigar = bam1_cigar(b);
+  int         nBlock = 0;
+  CigarBlock  tmpBlock;
 
   int cigInd;
   int refPos;
@@ -3977,16 +4023,17 @@ Vector *RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam1_t *b)
 
 // M, =, X
     if (op == BAM_CMATCH || op == BAM_CEQUAL || op == BAM_CDIFF) {
-      CigarBlock *block = CigarBlock_new(CB_MATCH, refPos, refPos+lenCigBlock-1);
+      CigarBlock *block = CigarBlock_fill(&tmpBlock, CB_MATCH, refPos, refPos+lenCigBlock-1);
 
       if (hadIntron) {
         hadIntron = 0;
-        Vector_addElement(ugfs, block);
+        CigarBlock_copy(ugfs[nBlock++], block);
+        //Vector_addElement(ugfs, block);
         currentBlock = NULL;
       } else {
-        if (currentBlock) {
-          CigarBlock_free(currentBlock);
-        }
+        //if (currentBlock) {
+        //  CigarBlock_free(currentBlock);
+        //}
         currentBlock = block;
       }
 
@@ -4007,7 +4054,8 @@ Vector *RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam1_t *b)
       hadIntron = 1;
       nIntron++;
       if (currentBlock) {
-        Vector_addElement(ugfs, currentBlock);
+        //Vector_addElement(ugfs, currentBlock);
+        CigarBlock_copy(ugfs[nBlock++], currentBlock);
         currentBlock = NULL;
       }
       refPos += lenCigBlock;
@@ -4020,16 +4068,17 @@ Vector *RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam1_t *b)
     fprintf(stderr,"Error parsing cigar string - don't have two M regions surrounding an N region (intron)\n");
     exit(1);
   } 
-  if (currentBlock) {
-    CigarBlock_free(currentBlock);
-  }
-  if (Vector_getNumElement(ugfs) != nIntron+1) {
+  //if (currentBlock) {
+  //  CigarBlock_free(currentBlock);
+  //}
+  //if (Vector_getNumElement(ugfs) != nIntron+1) {
+  if (nBlock != nIntron+1) {
     fprintf(stderr,"Error parsing cigar string - don't have the expected number of blocks (%d) for %d introns (have %d)\n", 
-            nIntron+1, nIntron, Vector_getNumElement(ugfs));
+            nIntron+1, nIntron, nBlock);
     exit(1);
   }
 
-  return ugfs;
+  return nBlock;
 
 /* How perl did this:
   my @tmp_ugfs;

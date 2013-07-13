@@ -22,6 +22,7 @@ objects.
 #include "AssemblyMapper.h"
 #include "ChainedAssemblyMapper.h"
 #include "CoordSystemAdaptor.h"
+#include "SupportingFeatureAdaptor.h"
 #include "MetaCoordContainer.h"
 
 #include "ExonAdaptor.h"
@@ -761,6 +762,7 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
   Vector *transcripts = TranscriptAdaptor_fetchAllBySlice(ta, extSlice, 1, NULL, qStr /*which is transcript constraint*/);
 
   // Move transcripts onto gene slice, and add them to genes.
+  Vector *exons = Vector_new();
   for (i=0; i<Vector_getNumElement(transcripts); i++) {
     Transcript *tr = Vector_getElementAt(transcripts, i);
     
@@ -769,6 +771,7 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
     Transcript *newTr;
     if (slice != extSlice) {
       newTr = Transcript_transfer(tr, slice);
+      fprintf(stderr,"Transferring transcript\n");
       if (newTr == NULL) {
         fprintf(stderr, "Unexpected. Transcript could not be transferred onto Gene slice.\n");
         exit(1);
@@ -780,9 +783,16 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
     // Note perl used tr->dbID rather than new_tr, but I may free that before here
     Gene *g = IDHash_getValue(trGHash, Transcript_getDbID(newTr));
     Gene_addTranscript(g, newTr);
+
+    // Used below for fetching 
+    Vector_append(exons, Transcript_getAllExons(newTr));
   }
 
   IDHash_free(trGHash, NULL);
+
+  SupportingFeatureAdaptor *sfa = DBAdaptor_getSupportingFeatureAdaptor(ga->dba);
+  Vector *tmpVec = SupportingFeatureAdaptor_fetchAllByExonList(sfa, exons, slice);
+  Vector_free(tmpVec);
 
   return genes;
 }

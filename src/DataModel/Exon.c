@@ -577,10 +577,17 @@ void Exon_addSupportingFeaturesImpl(Exon *exon, Vector *v) {
   Vector_append(exon->supportingFeatures,v);
 }
 
+void Exon_addSupportingFeature(Exon *exon, SeqFeature *sf) {
+  if (!exon->supportingFeatures || exon->supportingFeatures == emptyVector) {
+    exon->supportingFeatures = Vector_new();
+  }
+  //fprintf(stderr,"Adding support "IDFMTSTR" to exon "IDFMTSTR" %p\n",SeqFeature_getDbID(sf),Exon_getDbID(exon),exon);
+  Vector_addElement(exon->supportingFeatures,sf);
+}
+
 Exon *Exon_adjustStartEndImpl(Exon *exon, int startAdjust, int endAdjust) {
 
   Exon *newExon = Exon_new();
-
 
 // Copy - NIY won't copy support
   Exon_copy(newExon, exon, SHALLOW_DEPTH);
@@ -709,6 +716,7 @@ char  *Exon_getSeqStringImpl(Exon *exon) {
   char *seq;
 
   if (Exon_getSeqCacheString(exon)) {
+    //fprintf(stderr,"Returning cached exon seq str\n");
     return Exon_getSeqCacheString(exon);
   }
 
@@ -731,11 +739,14 @@ char  *Exon_getSeqStringImpl(Exon *exon) {
                                                             Exon_getEnd(exon),
                                                             1);
 
+    //fprintf(stderr,"fetched exon seq str %s\n", seq);
     if (Exon_getStrand(exon) == -1){
 //      SeqUtil_reverseComplement(seq,strlen(seq));
       
+      //fprintf(stderr,"rev comping exon length %d\n", Exon_getLength(exon));
       char tmpSeq[600000];
       rev_comp(seq, tmpSeq, Exon_getLength(exon));
+      //fprintf(stderr,"after rev comping exon tmpSeq = %s\n", tmpSeq);
       strcpy(seq,tmpSeq);
     }
   }

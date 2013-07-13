@@ -114,6 +114,7 @@ time_t Exon_getModified(Exon *exon);
 
 Vector *Exon_getAllSupportingFeaturesImpl(Exon *exon);
 void Exon_addSupportingFeaturesImpl(Exon *exon, Vector *features);
+void Exon_addSupportingFeature(Exon *exon, SeqFeature *sf);
 
 void Exon_setSeqCacheString(Exon *exon, char *seq);
 

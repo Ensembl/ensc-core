@@ -881,7 +881,9 @@ char *Transcript_getSplicedSeq(Transcript *trans) {
 
   for (i=0; i<Transcript_getExonCount(trans); i++) {
     Exon *ex = Transcript_getExonAt(trans, i);
+    //fprintf(stderr,"Exon %d: %ld %ld\n", i, Exon_getStart(ex), Exon_getEnd(ex));
     seqStr = StrUtil_appendString(seqStr,Exon_getSeqString(ex));
+    //fprintf(stderr,"SeqStr after adding exon seq %s\n", seqStr);
   }
 
 

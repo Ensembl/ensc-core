@@ -618,6 +618,8 @@ Vector *BaseAdaptor_uncachedFetchAllByDbIDList(BaseAdaptor *ba, Vector *idList, 
 
   Vector *out = Vector_new();
 
+  int endPoint;
+  int lenNum;
   for (i=0; i<nUniqueId; i+=maxSize) {
     char constraint[655500];
     strcpy(constraint, constraintPref);
@@ -627,16 +629,19 @@ Vector *BaseAdaptor_uncachedFetchAllByDbIDList(BaseAdaptor *ba, Vector *idList, 
       sprintf(constraint, "%s = "IDFMTSTR, constraint, uniqueIds[i]);
     } else {
       char tmpStr[1024];
-      strcat(constraint, " IN (");
+      int endPoint = sprintf(constraint, "%s IN (", constraint);
       int j;
       for (j=0; j<maxSize && j+i<nUniqueId; j++) {
         if (j!=0) {
-          strcat(constraint,", ");
+          constraint[endPoint++] = ',';
+          constraint[endPoint++] = ' ';
         }
-        sprintf(tmpStr, IDFMTSTR, uniqueIds[i+j]);
-        strcat(constraint, tmpStr);
+        lenNum = sprintf(tmpStr, IDFMTSTR, uniqueIds[i+j]);
+        memcpy(&(constraint[endPoint]), tmpStr, lenNum);
+        endPoint+=lenNum;
       }
-      strcat(constraint, ")");
+      constraint[endPoint++] = ')';
+      constraint[endPoint] = '\0';
     }
 
     Vector *resChunk = BaseAdaptor_genericFetch(ba, constraint, NULL, slice);

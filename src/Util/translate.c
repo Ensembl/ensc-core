@@ -205,6 +205,10 @@ void translate(char *in, char **out, int *l, int codonTableId) {
   }
 
   n = strlen(in);
+  if (n == 0) {
+    fprintf(stderr,"Warning: 0 length sequence in translate - returning\n");
+    return;
+  }
   end = &in[n]-5;
 
   /* How much of a part codon do we have at the end */
@@ -319,6 +323,12 @@ void translate(char *in, char **out, int *l, int codonTableId) {
 void rev_comp(char *in, char *out, int length) {
   register char *p = in;
   register char *q;
+
+  if (initTable == 0) {
+ // Hack for now
+    initbasebits();
+    initTable = -1;
+  }
   
   q = &out[length];
   *q-- ='\0';

@@ -41,6 +41,7 @@ int main(int argc, char *argv[]) {
 
   slice = SliceAdaptor_fetchByRegion(sa,"chromosome","20",10000000,50000000,1,NULL,0);
 //  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","17",1000000,5000000,1,NULL,0);
+//  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","17",1,5000000,1,NULL,0);
 // Has a seleno
 //  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","1",1000000,27000000,1,NULL,0);
 //  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","MT",1,17000,1,NULL,0);
@@ -50,7 +51,7 @@ int main(int argc, char *argv[]) {
   ok(3, genes!=NULL);
   ok(4, Vector_getNumElement(genes)!=0);
 
-  failed = dumpGenes(genes, 0);
+  failed = dumpGenes(genes, 1);
   ok(5, !failed);
 
   //Vector *toplevelSlices = SliceAdaptor_fetchAll(sa, "toplevel", NULL, 0);
@@ -104,7 +105,7 @@ int dumpGenes(Vector *genes, int withSupport) {
 
       for (k=0;k<Transcript_getExonCount(t);k++) {
         Exon *e = Transcript_getExonAt(t,k);
-        fprintf(fp,"  exon %s coords: %ld %ld %d\n",Exon_getStableId(e), Exon_getStart(e),Exon_getEnd(e),Exon_getStrand(e));
+        fprintf(fp,"  exon %s (%p) coords: %ld %ld %d\n",Exon_getStableId(e), e, Exon_getStart(e), Exon_getEnd(e), Exon_getStrand(e));
         if (withSupport) {
           Vector *support = Exon_getAllSupportingFeatures(e);
           int m;

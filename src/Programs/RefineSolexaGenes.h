@@ -17,6 +17,19 @@
 
 #define RSGINTRON_NONCANON    1<<3
 
+typedef enum CigarBlockTypeEnum {
+  CB_NONE,
+  CB_MATCH,
+  CB_INTRON,
+  CB_DELETION
+} CigarBlockType;
+
+typedef struct CigarBlockStruct {
+  CigarBlockType type;
+  long  start;    // start pos on reference, 1 based I think
+  long  end;      // end pos on reference, 1 based I think
+} CigarBlock;
+
 typedef struct ExtraExonDataStruct {
   int nCoord;
   long *coords;
@@ -121,7 +134,8 @@ Vector *RefineSolexaGenes_makeModelClusters(RefineSolexaGenes *rsg, Vector *mode
 Vector *RefineSolexaGenes_mergeExons(RefineSolexaGenes *rsg, Gene *gene, int strand);
 Exon *RefineSolexaGenes_binSearchForOverlap(RefineSolexaGenes *rsg, Vector *exons, int pos);
 void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConfig *intronBamConf, samfile_t *sam, bam_index_t *idx, int ref, int begRange, int endRange);
-Vector *RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam1_t *b);
+//Vector *RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam1_t *b);
+int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam1_t *b, CigarBlock **ugfs);
 void RefineSolexaGenes_dnaToIntronFeatures(RefineSolexaGenes *rsg, long start, long end);
 Vector *RefineSolexaGenes_fetchIntronFeatures(RefineSolexaGenes *rsg, long start, long end, long *offsetP);
 Exon *RefineSolexaGenes_makeExon(RefineSolexaGenes *rsg, long start, long end, double score, char *diplayId);

@@ -109,6 +109,157 @@ Vector *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, E
 }
 
 
+Vector *SupportingFeatureAdaptor_fetchAllByExonList(SupportingFeatureAdaptor *sfa, Vector *exons, Slice *slice) {
+  char constraint[655500];
+  int i;
+
+  // associate exon identifiers with transcripts
+  IDHash *exHash = IDHash_new(IDHASH_MEDIUM);
+  for (i=0; i<Vector_getNumElement(exons); i++) {
+    Exon *e  = Vector_getElementAt(exons, i);
+    if ( ! IDHash_contains(exHash, Exon_getDbID(e))) {
+      Vector *exVec = Vector_new();
+      IDHash_add(exHash, Exon_getDbID(e), exVec);
+    }
+    // I thought exons would always have been pruned to one exon for each db id, but it appears that if transcripts are 
+    // transferred (can happen in gene adaptor fetch by slice), then duplicate shallow copies are made.
+    Vector *exVec = IDHash_getValue(exHash, Exon_getDbID(e));
+    Vector_addElement(exVec, e);
+/*
+    } else {
+      Exon *compEx = IDHash_getValue(exHash, Exon_getDbID(e));
+      if (compEx != e) {
+        fprintf(stderr,"ERROR: Multiple exons with same dbId for dbId "IDFMTSTR" (%p and %p)\n", Exon_getDbID(e),compEx, e);
+        //exit(1);
+      }
+    }
+*/
+  }
+
+  IDType *uniqueIds = IDHash_getKeys(exHash);
+
+  char tmpStr[1024];
+  char qStr[655500];
+  int lenNum;
+  int endPoint = sprintf(qStr, "SELECT sf.feature_type, sf.feature_id, sf.exon_id FROM supporting_feature sf WHERE sf.exon_id IN (" );
+  for (i=0; i<IDHash_getNumValues(exHash); i++) {
+    if (i!=0) {
+      qStr[endPoint++] = ',';
+      qStr[endPoint++] = ' ';
+    }
+    lenNum = sprintf(tmpStr,IDFMTSTR,uniqueIds[i]);
+    memcpy(&(qStr[endPoint]), tmpStr, lenNum);
+    endPoint+=lenNum;
+  }
+  qStr[endPoint++] = ')';
+  qStr[endPoint] = '\0';
+
+  free(uniqueIds);
+
+  StatementHandle *sth = sfa->prepare((BaseAdaptor *)sfa,qStr,strlen(qStr));
+  sth->execute(sth);
+
+  IDHash *dnaFeatIdToExHash  = IDHash_new(IDHASH_MEDIUM);
+  IDHash *protFeatIdToExHash = IDHash_new(IDHASH_MEDIUM);
+  IDHash *idToEx;
+  ResultRow *row;
+  while ((row = sth->fetchRow(sth))) {
+    char * type = row->getStringAt(row,0);
+    IDType sfId = row->getLongLongAt(row,1);
+    IDType exId = row->getLongLongAt(row,2);
+
+    if (type[0] == 'd') {
+      idToEx = dnaFeatIdToExHash;
+    } else {
+      idToEx = protFeatIdToExHash;
+    }
+    if (!IDHash_contains(exHash, exId)) {
+      fprintf(stderr, "Warning: exon not in exhash for supporting feature [type = %s id = "IDFMTSTR" exon_id "IDFMTSTR"]\n", type, sfId, exId);
+    } else {
+      Vector *exVec = IDHash_getValue(idToEx, sfId);
+      if (!exVec) {
+        exVec = Vector_new();
+        IDHash_add(idToEx, sfId, exVec);
+      }
+      //Vector_addElement(exVec, IDHash_getValue(exHash, exId));
+      Vector_append(exVec, IDHash_getValue(exHash, exId));
+    }
+  }
+
+  sth->finish(sth);
+
+  Vector *out = Vector_new();
+  for (i=0; i<2;i++) {
+    char *type;
+    BaseAdaptor *ba;
+    if (i==0) {
+      idToEx = dnaFeatIdToExHash;
+      ba = DBAdaptor_getDNAAlignFeatureAdaptor(sfa->dba);
+      type = "dna";
+    } else {
+      idToEx = protFeatIdToExHash;
+      ba = DBAdaptor_getProteinAlignFeatureAdaptor(sfa->dba);
+      type = "protein";
+    }
+
+    if (IDHash_getNumValues(idToEx)) {
+      fprintf(stderr, "Have %d ids of type %s\n", IDHash_getNumValues(idToEx), type);
+  
+      IDType *idArray = IDHash_getKeys(idToEx);
+      Vector *idVec = Vector_new();
+
+      int j;
+      for (j=0; j < IDHash_getNumValues(idToEx); j++) {
+        Vector_addElement(idVec, &idArray[j]);
+      }
+  
+      Vector *features = BaseAdaptor_fetchAllByDbIDList((BaseAdaptor *)ba, idVec, slice);
+  
+      for (j=0; j<Vector_getNumElement(features); j++) {
+        BaseAlignFeature *feature = Vector_getElementAt(features, j);
+  
+        Vector *exVec = IDHash_getValue(idToEx, BaseAlignFeature_getDbID(feature));
+        //fprintf(stderr,"nexon in exVec = %d sf id = %d\n",Vector_getNumElement(exVec),BaseAlignFeature_getDbID(feature));
+        int k;
+        for (k=0; k<Vector_getNumElement(exVec); k++) {
+          Exon *exon = Vector_getElementAt(exVec, k);
+          //fprintf(stderr," exon id = "IDFMTSTR"\n", Exon_getDbID(exon));
+        
+          BaseAlignFeature *newFeature;
+          if (slice == NULL) {
+            newFeature = (BaseAlignFeature *)SeqFeature_transfer((SeqFeature *)feature, Exon_getSlice(exon));
+          } else {
+            newFeature = feature;
+          }
+  // NIY: Free feature???
+          if (newFeature) {
+            Exon_addSupportingFeature(exon, newFeature);
+            Vector_addElement(out, newFeature);
+          } else if (slice == NULL) {
+            fprintf(stderr,"Failed to transfer feature\n");
+          }
+        }
+      }
+      free(idArray);
+      Vector_free(idVec);
+    }
+  }
+
+  IDHash_free(exHash, Vector_free);
+  IDHash_free(dnaFeatIdToExHash, Vector_free);
+  IDHash_free(protFeatIdToExHash, Vector_free);
+
+// Hack - if exon hasn't had any support added then it doesn't have any so set to emptyVector to flag that we've looked for
+// support and didn't find any in db
+  for (i=0;i<Vector_getNumElement(exons);i++) {
+    Exon *exon = Vector_getElementAt(exons, i);
+    if (exon->supportingFeatures == NULL) exon->supportingFeatures = emptyVector;
+  }
+
+  return out;
+}
+
+
 /*
 =head2 store
 

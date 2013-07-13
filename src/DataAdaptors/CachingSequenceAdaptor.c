@@ -158,9 +158,11 @@ char *CachingSequenceAdaptor_fetchBySliceStartEndStrand(CachingSequenceAdaptor *
 //   Store in cache
     Slice *seqRegSlice = Slice_getSeqRegionSlice(slice);
 
+
     seqRegSeq = Slice_getSeq(seqRegSlice);
     seqRegLen  = Slice_getLength(seqRegSlice); 
 
+    // fprintf(stderr,"seqRegSlice name %s length %d\n", Slice_getName(seqRegSlice), seqRegLen);
     LRUCache_put(csa->seqCache, idStr, seqRegSeq, free, seqRegLen);
   //fprintf(stderr,"put with idStr = %s\n", idStr);
 
@@ -170,6 +172,7 @@ char *CachingSequenceAdaptor_fetchBySliceStartEndStrand(CachingSequenceAdaptor *
 //   fetch sequence string (with its length) from cache
     seqRegSeq = LRUCache_get(csa->seqCache, idStr);
     seqRegLen = LRUCache_getSize(csa->seqCache, idStr);
+    // fprintf(stderr,"seqRegSeq length %d\n", seqRegLen);
   //fprintf(stderr,"get with idStr = %s\n", idStr);
   }
 
@@ -179,7 +182,6 @@ char *CachingSequenceAdaptor_fetchBySliceStartEndStrand(CachingSequenceAdaptor *
   long startPos = seqRegStart - 1;
   long endPos   = seqRegEnd - 1;
 
-  //fprintf(stderr,"startPos = %ld endPos = %ld\n", startPos, endPos);
   if (startPos < 0) {
     startOffset = -startPos;
   }
@@ -187,8 +189,8 @@ char *CachingSequenceAdaptor_fetchBySliceStartEndStrand(CachingSequenceAdaptor *
   if (endPos >= seqRegLen) {
     endPos = seqRegLen;
   }
+  // fprintf(stderr,"startOffet = %ld startPos = %ld endPos = %ld\n", startOffset, startPos, endPos);
   memcpy(&seq[startOffset], &seqRegSeq[startPos], endPos-startPos+1);
-
 
   // if they asked for the negative slice strand revcomp the whole thing
   if (strand == -1) {
