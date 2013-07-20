@@ -343,7 +343,9 @@ char *SequenceAdaptor_fetchBySliceStartEndStrandRecursive(SequenceAdaptor *sa,
 
 
 // Hopefully OK to free this here
-    Slice_free(seqSlice);
+    if (seqSlice != slice) {
+      Slice_free(seqSlice);
+    }
 
 //    $seq .= $tmp_seq;
 //    $total = $end;
