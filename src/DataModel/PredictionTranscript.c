@@ -331,7 +331,7 @@ char *PredictionTranscript_translate(PredictionTranscript *trans) {
     frm[i] = (char *)malloc(lenDNA/3 + 2);
   }
 
-  translate(dna, frm, lengths, 1);
+  translate(dna, frm, lengths, 1, lenDNA);
 
   free(dna);
 

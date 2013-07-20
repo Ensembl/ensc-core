@@ -178,7 +178,7 @@ void initbasebits(void)
 
    Thanks to Peter Benie for help optimising the code */
 
-void translate(char *in, char **out, int *l, int codonTableId) {
+void translate(char *in, char **out, int *l, int codonTableId, int lenIn) {
   int n, rem, index;
   char *p, *end, *r3, *r4, *r5;
   char *r0 = out[0];
@@ -204,7 +204,8 @@ void translate(char *in, char **out, int *l, int codonTableId) {
     initTable = codonTableId;
   }
 
-  n = strlen(in);
+  //n = strlen(in);
+  n = lenIn;
   if (n == 0) {
     fprintf(stderr,"Warning: 0 length sequence in translate - returning\n");
     return;

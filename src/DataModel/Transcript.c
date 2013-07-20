@@ -1229,7 +1229,7 @@ char *Transcript_translate(Transcript *trans) {
   }
 
   //fprintf(stderr, "translateable seq = %s\n",mRNA);
-  translate(mRNA, frm, lengths, codonTableId);
+  translate(mRNA, frm, lengths, codonTableId, lenmRNA);
 
   free(mRNA);
 

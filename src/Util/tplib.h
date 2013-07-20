@@ -30,7 +30,8 @@ extern txmatrix matrix;
 void make_revmatrix(void);
 void initbasebits(void);
 int compilemx(char *);
-void translate(char *in, char **out, int *l, int codonTableId);
+//void translate(char *in, char **out, int *l, int codonTableId);
+void translate(char *in, char **out, int *l, int codonTableId, int lenIn);
 //void translate(char *, char **, int*);
 void rev_comp(char *in, char *out, int length);
 
