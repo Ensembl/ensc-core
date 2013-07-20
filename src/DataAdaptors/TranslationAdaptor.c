@@ -383,7 +383,7 @@ IDType TranslationAdaptor_store(TranslationAdaptor *tlna, Translation *translati
       my $modified = $self->db->dbc->from_seconds_to_date($translation->modified_date());
 */
     // Assume version will be positive, Translation sets it to -1 when initialised
-    int version = Translation_getVersion(translation) <= 0 ? Translation_getVersion(translation) : 1; 
+    int version = Translation_getVersion(translation) > 0 ? Translation_getVersion(translation) : 1; 
     sprintf(qStr,"%s, stable_id = '%s', version = %d, created_date = FROM_UNIXTIME(%ld), modified_date = FROM_UNIXTIME(%ld)",
             qStr, Translation_getStableId(translation), version, Translation_getCreated(translation), Translation_getModified(translation));
   }

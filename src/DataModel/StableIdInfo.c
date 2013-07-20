@@ -9,6 +9,7 @@ char *StableIdInfo_setStableId(StableIdInfo *si, char *sid) {
     return NULL;
   }
 
+  // fprintf(stderr,"Allocated stable id string %p in stable id object %p for stable id %s\n", si->stableId, si, sid);
   strcpy(si->stableId,sid);
 
   return si->stableId;

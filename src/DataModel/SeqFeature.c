@@ -113,7 +113,7 @@ int SeqFeature_reverseScoreCompFunc(const void *a, const void *b) {
 
 void SeqFeature_freePtrs(SeqFeature *sf) {
   if (sf->seqName)  EcoString_freeStr(ecoSTable, sf->seqName);
-  if (sf->analysis) Analysis_free(sf->analysis);
+//  if (sf->analysis) Analysis_free(sf->analysis);
 // NIY Is this the right thing to do
   // NIY Freeing contig if (sf->contig)   BaseContig_free(sf->contig);
 }

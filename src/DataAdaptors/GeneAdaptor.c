@@ -1391,34 +1391,56 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
 
   IDType seqRegionId = BaseFeatureAdaptor_preStore((BaseFeatureAdaptor *)ga, gene); 
 
+  char fmtStr[1024];
   char qStr[1024];
+ 
   // Canonical transcript ID will be updated later.
   // Set it to zero for now.
-  sprintf(qStr, 
+  sprintf(fmtStr, 
         "INSERT INTO gene "
-           "SET biotype = '%s',"
-               "analysis_id = "IDFMTSTR","
+           "SET analysis_id = "IDFMTSTR","
                "seq_region_id = "IDFMTSTR","
                "seq_region_start = %ld,"
                "seq_region_end = %ld,"
                "seq_region_strand = %d,"
-               "description = '%s',"
-               "source = '%s',"
-               "status = '%s',"
+               "biotype = '%s',"
+               "description = %%s,"
+               "source = %%s,"
+               "status = %%s,"
+               //"description = '%s',"
+               //"source = '%s',"
+               //"status = '%s',"
                "is_current = %d,"
                "canonical_transcript_id = 0," 
-               "canonical_annotation = '%s'", 
-           type, 
+               //"canonical_annotation = '%s'", 
+               "canonical_annotation = %%s", 
            analysisId, 
            seqRegionId, 
            Gene_getSeqRegionStart(gene),
            Gene_getSeqRegionEnd(gene),
            Gene_getSeqRegionStrand(gene),
-           Gene_getDescription(gene),
-           Gene_getSource(gene),
-           Gene_getStatus(gene),
-           isCurrent,
-           Gene_getCanonicalAnnotation(gene));
+           type, 
+           //Gene_getDescription(gene),
+           //Gene_getSource(gene),
+           //Gene_getStatus(gene),
+           isCurrent);
+           //Gene_getCanonicalAnnotation(gene));
+
+  char descQStr[1024];
+  Gene_getDescription(gene) ? sprintf(descQStr,"'%s'", Gene_getDescription(gene)) : sprintf(descQStr, "NULL");
+
+  char sourceQStr[1024];
+  Gene_getSource(gene) ? sprintf(sourceQStr,"'%s'", Gene_getSource(gene)) : sprintf(sourceQStr, "NULL");
+
+  char statusQStr[1024];
+  Gene_getStatus(gene) ? sprintf(statusQStr,"'%s'", Gene_getStatus(gene)) : sprintf(statusQStr, "NULL");
+
+  char canAnnQStr[1024];
+  Gene_getCanonicalAnnotation(gene) ? sprintf(canAnnQStr,"'%s'", Gene_getCanonicalAnnotation(gene)) : sprintf(canAnnQStr, "NULL");
+
+  sprintf(qStr, fmtStr, descQStr, sourceQStr, statusQStr, canAnnQStr);
+
+
 
   if (Gene_getStableId(gene)) {
 /* Use FROM_UNIXTIME for now
@@ -1426,7 +1448,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
     my $modified = $self->db->dbc->from_seconds_to_date($gene->modified_date());
 */
   
-    int version = Gene_getVersion(gene) <= 0 ? Gene_getVersion(gene) : 1; // Assume version will be positive, Gene sets it to -1 when initialised
+    int version = Gene_getVersion(gene) > 0 ? Gene_getVersion(gene) : 1; // Assume version will be positive, Gene sets it to -1 when initialised
     sprintf(qStr,"%s, stable_id = '%s', version = %d, created_date = FROM_UNIXTIME(%ld), modified_date = FROM_UNIXTIME(%ld)",
             qStr, Gene_getStableId(gene), version, Gene_getCreated(gene), Gene_getModified(gene));
   }

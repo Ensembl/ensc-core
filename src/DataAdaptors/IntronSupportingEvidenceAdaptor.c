@@ -425,7 +425,7 @@ IDType IntronSupportingEvidenceAdaptor_store(IntronSupportingEvidenceAdaptor *is
   DBAdaptor *db = isea->dba;
   AnalysisAdaptor *analysisAdaptor = DBAdaptor_getAnalysisAdaptor(db);
   
-  if (! IntronSupportingEvidence_isStored(sf, db)) {
+  if (IntronSupportingEvidence_isStored(sf, db)) {
     fprintf(stderr,"ISE already stored\n");
     return IntronSupportingEvidence_getDbID(sf);
   }

@@ -10,10 +10,13 @@
 #include "ChromosomeAdaptor.h"
 #include "RawContigAdaptor.h"
 #include "StrUtil.h"
-#include "BaseAlignFeature.h"
 #include "CoordSystem.h"
 #include "SeqUtil.h"
 #include "CachingSequenceAdaptor.h"
+#include "DNAAlignFeature.h"
+#include "BaseAlignFeature.h"
+#include "Object.h"
+
 
 Exon *Exon_new() {
   Exon *exon;
@@ -121,7 +124,8 @@ void Exon_getHashKey(Exon *exon, char *hashKey) {
 void Exon_flushSupportingFeatures(Exon *exon) {
   if (exon->supportingFeatures != NULL) {
 // NIY: Do we need to free features??
-    exon->supportingFeatures->freeElement = NULL;
+    //exon->supportingFeatures->freeElement = NULL;
+    Vector_setFreeFunc(exon->supportingFeatures, Object_freeImpl);
     Vector_free(exon->supportingFeatures);
   }
 
@@ -133,6 +137,10 @@ Exon *Exon_shallowCopyImpl(Exon *exon) {
   Exon *newExon = Exon_new();
 
   memcpy(newExon,exon,sizeof(Exon));
+
+// Make a copy of this string
+  
+  if (exon->si.stableId) StrUtil_copyString(&(newExon->si.stableId), exon->si.stableId, 0);
 
   return newExon;
 }
@@ -574,6 +582,11 @@ void Exon_addSupportingFeaturesImpl(Exon *exon, Vector *v) {
   if (!exon->supportingFeatures || exon->supportingFeatures == emptyVector) {
     exon->supportingFeatures = Vector_new();
   }
+  int i;
+  for (i=0; i<Vector_getNumElement(v); i++) {
+    Object *obj = Vector_getElementAt(v, i);
+    Object_incRefCount(obj);
+  }
   Vector_append(exon->supportingFeatures,v);
 }
 
@@ -582,6 +595,7 @@ void Exon_addSupportingFeature(Exon *exon, SeqFeature *sf) {
     exon->supportingFeatures = Vector_new();
   }
   //fprintf(stderr,"Adding support "IDFMTSTR" to exon "IDFMTSTR" %p\n",SeqFeature_getDbID(sf),Exon_getDbID(exon),exon);
+  Object_incRefCount(sf);
   Vector_addElement(exon->supportingFeatures,sf);
 }
 
@@ -897,19 +911,25 @@ void Exon_loadGenomicMapperImpl(Exon *exon, Mapper *mapper, IDType id, int start
 
 void Exon_freeImpl(Exon *exon) {
   //printf("Exon_free not implemented\n");
-//  StableIdInfo_freePtrs(exon->si);
   Object_decRefCount(exon);
 
+//  fprintf(stderr,"Exon_free called refCount after dec = %d\n", Object_getRefCount(exon));
   if (Object_getRefCount(exon) > 0) {
     return;
   } else if (Object_getRefCount(exon) < 0) {
-    fprintf(stderr,"Error: Negative reference count for Exon\n"
-                   "       Freeing it anyway\n");
+    //fprintf(stderr,"Error: Negative reference count for Exon\n"
+    //               "       Freeing it anyway\n");
   }
 
-  // fprintf(stderr, "freeing exon %p %s\n", exon, Exon_getStableId(exon));
+//  fprintf(stderr, "freeing exon %p %s nsupport = %d\n", exon, Exon_getStableId(exon), exon->supportingFeatures? Vector_getNumElement(exon->supportingFeatures) : 0);
+  StableIdInfo_freePtrs(&(exon->si));
   if (Exon_getSeqCacheString(exon)!=NULL) {
     free(Exon_getSeqCacheString(exon));
+  }
+
+  if (exon->supportingFeatures) {
+    Vector_setFreeFunc(exon->supportingFeatures, DNAAlignFeature_freeImpl);
+    Vector_free(exon->supportingFeatures);
   }
   
   free(exon);

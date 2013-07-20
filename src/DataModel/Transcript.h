@@ -51,7 +51,8 @@ struct TranscriptStruct {
 
 char *Transcript_getSplicedSeq(Transcript *trans);
 ECOSTRING Transcript_setBiotype(Transcript *transcript, char *biotype);
-#define Transcript_getBiotype(transcript)  (transcript)->biotype
+ECOSTRING Transcript_getBiotype(Transcript *t);
+//#define Transcript_getBiotype(transcript)  (transcript)->biotype
 
 void Transcript_freeAdjustedTranslateableExons(Transcript *transcript, Vector *translateableExons);
 

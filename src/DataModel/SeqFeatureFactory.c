@@ -47,6 +47,7 @@ SeqFeature *SeqFeatureFactory_newFeature(ClassType type) {
       feature = PredictionExon_new(); 
       break;
     case CLASS_INTRONSUPPORTINGEVIDENCE:
+      fprintf(stderr,"!!!!!! ise new in seqfeaturefactory\n");
       feature = IntronSupportingEvidence_new(); 
       break;
     default:

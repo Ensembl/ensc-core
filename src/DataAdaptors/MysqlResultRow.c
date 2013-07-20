@@ -20,6 +20,7 @@ MysqlResultRow *MysqlResultRow_new() {
   rr->funcs = &mysqlResultRowFuncs;
 
   rr->getStringAt     = MysqlResultRow_getStringAt;
+  rr->getStringAllowNullAt = MysqlResultRow_getStringAllowNullAt;
   rr->getStringCopyAt = MysqlResultRow_getStringCopyAt;
   rr->getIntAt        = MysqlResultRow_getIntAt;
   rr->getLongAt       = MysqlResultRow_getLongAt;
@@ -40,6 +41,16 @@ char * MysqlResultRow_getStringCopyAt(ResultRow *row, int ind) {
   return MysqlUtil_getStringCopy(m_row->mysql_row, ind);
 }
 
+char * MysqlResultRow_getStringAllowNullAt(ResultRow *row, int ind) {
+  MysqlResultRow *m_row;
+
+  Class_assertType(CLASS_MYSQLRESULTROW, row->objectType);
+
+  m_row = (MysqlResultRow *)row;
+
+  return MysqlUtil_getStringAllowNull(m_row->mysql_row, ind);
+}
+
 char * MysqlResultRow_getStringAt(ResultRow *row, int ind) {
   MysqlResultRow *m_row;
 
@@ -47,7 +58,7 @@ char * MysqlResultRow_getStringAt(ResultRow *row, int ind) {
 
   m_row = (MysqlResultRow *)row;
 
-  return MysqlUtil_getString(m_row->mysql_row, ind);
+  return MysqlUtil_getStringNoNull(m_row->mysql_row, ind);
 }
 
 char * MysqlResultRow_col(ResultRow *row, int ind) {

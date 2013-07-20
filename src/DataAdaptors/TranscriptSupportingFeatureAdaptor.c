@@ -127,6 +127,8 @@ void TranscriptSupportingFeatureAdaptor_store(TranscriptSupportingFeatureAdaptor
   char assocCheckSql[1024];
   char assocWriteSql[1024];
 
+  if (alnObjs == NULL) return;
+
   sprintf(pepCheckSql,
       "SELECT protein_align_feature_id "
       "FROM protein_align_feature "

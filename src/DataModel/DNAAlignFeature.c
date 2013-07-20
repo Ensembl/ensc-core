@@ -14,7 +14,7 @@ DNAAlignFeature *DNAAlignFeature_new() {
   }
 
   daf->objectType = CLASS_DNADNAALIGNFEATURE;
-  Object_incRefCount(daf);
+//  Object_incRefCount(daf);
 
   daf->funcs = &dnaAlignFeatureFuncs;
 
@@ -42,8 +42,9 @@ ECOSTRING DNAAlignFeature_setExtraData(DNAAlignFeature *daf, char *extraData) {
 
 void DNAAlignFeature_freeImpl(DNAAlignFeature *daf) {
   Object_decRefCount(daf);
+//  Object_decRefCount(daf);
 
-  fprintf(stderr,"DAF_freeImpl called\n");
+//  fprintf(stderr,"DAF_freeImpl called ref count %d\n", Object_decRefCount(daf));
   if (Object_getRefCount(daf) > 0) {
 //    ProcUtil_showBacktrace(EnsC_progName);
 //    printf("return\n");
@@ -53,7 +54,8 @@ void DNAAlignFeature_freeImpl(DNAAlignFeature *daf) {
                    "       Freeing it anyway\n");
   }
 
-  BaseAlignFeature_freePtrs((BaseAlignFeature *)daf);
+  //BaseAlignFeature_freePtrs((BaseAlignFeature *)daf);
+//  fprintf(stderr," freeing daf\n");
   
   free(daf);
 }
@@ -70,6 +72,11 @@ DNAAlignFeature *DNAAlignFeature_deepCopyImpl(DNAAlignFeature *daf) {
   DNAAlignFeature *newDNAAlignFeature = DNAAlignFeature_new();
 
   memcpy(newDNAAlignFeature,daf,sizeof(DNAAlignFeature));
+
+  //BaseAlignFeature_copyData(newDNAAlignFeature, daf);
+  
+
+  newDNAAlignFeature->referenceCount = 0;
 
   return newDNAAlignFeature;
 }

@@ -46,6 +46,9 @@ Transcript *Transcript_new() {
 Transcript *Transcript_shallowCopy(Transcript *transcript) {
   Transcript *newTranscript = Transcript_new();
 
+  // Exons will come in mem copy so free vector just created in Transcript_new
+  Vector_free(newTranscript->exons);
+
   memcpy(newTranscript,transcript,sizeof(Transcript));
 
   return newTranscript;
@@ -451,6 +454,23 @@ ECOSTRING Transcript_setBiotype(Transcript *t, char *biotype) {
   return t->biotype;
 }
 
+// Biotype defaults to protein coding - pain to do in C
+static char *tmpBiotype = NULL;
+ECOSTRING Transcript_getBiotype(Transcript *t) {
+  if (t->biotype == NULL) {
+    if (tmpBiotype == NULL) {
+      EcoString_copyStr(ecoSTable, &(tmpBiotype),"protein_coding",0);
+      if (tmpBiotype == NULL) {
+        fprintf(stderr,"ERROR: Failed allocating space for biotype\n");
+        exit(1);
+      }
+    }
+    return tmpBiotype;
+  } else {
+    return t->biotype;
+  }
+}
+
 ECOSTRING Transcript_setStatus(Transcript *t, char *status) {
   EcoString_copyStr(ecoSTable, &(t->status),status,0);
 
@@ -754,11 +774,11 @@ int Transcript_addIntronSupportingEvidence(Transcript *transcript, IntronSupport
       
 //Equals check not same as perl - I don't care that much and its acres of code to do these checks
       if ( compIse == ise || 
-           ( IntronSupportingEvidence_getStart(ise) == IntronSupportingEvidence_getStart(ise) &&
-             IntronSupportingEvidence_getEnd(ise) == IntronSupportingEvidence_getEnd(ise) &&
-             IntronSupportingEvidence_getStrand(ise) == IntronSupportingEvidence_getStrand(ise) &&
-             Slice_getSeqRegionId(IntronSupportingEvidence_getSlice(ise)) == Slice_getSeqRegionId(IntronSupportingEvidence_getSlice(ise)) &&
-             IntronSupportingEvidence_getAnalysis(ise) == IntronSupportingEvidence_getAnalysis(ise)
+           ( IntronSupportingEvidence_getStart(ise) == IntronSupportingEvidence_getStart(compIse) &&
+             IntronSupportingEvidence_getEnd(ise) == IntronSupportingEvidence_getEnd(compIse) &&
+             IntronSupportingEvidence_getStrand(ise) == IntronSupportingEvidence_getStrand(compIse) &&
+             Slice_getSeqRegionId(IntronSupportingEvidence_getSlice(ise)) == Slice_getSeqRegionId(IntronSupportingEvidence_getSlice(compIse)) &&
+             IntronSupportingEvidence_getAnalysis(ise) == IntronSupportingEvidence_getAnalysis(compIse)
            )
          ) {
         unique = 0;
@@ -768,6 +788,7 @@ int Transcript_addIntronSupportingEvidence(Transcript *transcript, IntronSupport
   }
 
   if (unique) {
+    Object_incRefCount(ise);
     Vector_addElement(transcript->iseVector, ise);
     return 1;
   }
@@ -1395,19 +1416,29 @@ Mapper *Transcript_getcDNACoordMapper(Transcript *trans) {
 void Transcript_free(Transcript *trans) {
   Object_decRefCount(trans);
 
+  // fprintf(stderr,"Transcript_free called for transcript %p\n", trans);
   if (Object_getRefCount(trans) > 0) {
+    fprintf(stderr,"  TRANSCRIPT REF COUNT GREATER THAN ZERO (%d) - NOT FREEING!!!!!!!!!!!!!!!!\n", Object_getRefCount(trans));
     return;
   } else if (Object_getRefCount(trans) < 0) {
     fprintf(stderr,"Error: Negative reference count for Transcript\n"
                    "       Freeing it anyway\n");
   }
 
+  // fprintf(stderr,"Actually freeing transcript\n");
   int i;
+  // fprintf(stderr,"Freeing exon vector with %d elements\n", Transcript_getExonCount(trans));
   for (i=0; i<Transcript_getExonCount(trans); i++) {
     Exon *exon = Transcript_getExonAt(trans, i);
     if (exon != NULL) {
       Exon_free(exon);
     }
+  }
+  if (trans->exons) Vector_free(trans->exons);
+  if (trans->iseVector) {
+    // fprintf(stderr,"Freeing iseVector with %d elements\n", Vector_getNumElement(trans->iseVector));
+    Vector_setFreeFunc(trans->iseVector, IntronSupportingEvidence_freeImpl);
+    Vector_free(trans->iseVector);
   }
 
   free(trans);

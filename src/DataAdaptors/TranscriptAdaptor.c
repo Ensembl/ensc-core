@@ -895,6 +895,7 @@ void TranscriptAdaptor_biotypeConstraint(TranscriptAdaptor *ta, Vector *biotypes
 =cut
 */
 
+static int doneAltTransWarn = 0;
 IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, IDType geneDbID, IDType analysisId) {
 
   if (transcript == NULL) {
@@ -943,7 +944,7 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
 */
   } else if (analysisId) {
     // Fall back to analysis passed in (usually from gene) if analysis
-    // wasn't set explicitely for the transcript. This is deprectated
+    // wasn't set explicitly for the transcript. This is deprectated
     // though.
     fprintf(stderr,"You should explicitly attach an analysis object to the Transcript.\n"
                    "Will fall back to Gene analysis, but this behaviour is deprecated.\n" );
@@ -982,17 +983,21 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
   //
   // Store transcript
   // 
+  char fmtStr[1024];
   char qStr[1024];
-  sprintf(qStr, "INSERT INTO transcript "
+  sprintf(fmtStr, "INSERT INTO transcript "
                 "SET gene_id = "IDFMTSTR", "
                     "analysis_id = "IDFMTSTR", "
                     "seq_region_id = "IDFMTSTR", " 
                     "seq_region_start = %ld, "
                     "seq_region_end = %ld, "
                     "seq_region_strand = %d, " 
-                    "biotype = '%s', "
-                    "status = '%s', "
-                    "description = '%s', "
+                    "biotype = %%s, "
+                    "status = %%s, "
+                    "description = %%s, "
+                    //"biotype = '%s', "
+                    //"status = '%s', "
+                    //"description = '%s', "
                     "is_current = %d, "
                     "canonical_translation_id = NULL",
          geneDbID,
@@ -1001,10 +1006,31 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
          Transcript_getSeqRegionStart(transcript),
          Transcript_getSeqRegionEnd(transcript),
          Transcript_getSeqRegionStrand(transcript),
-         Transcript_getBiotype(transcript),
-         Transcript_getStatus(transcript),
-         Transcript_getDescription(transcript),
+         //Transcript_getBiotype(transcript),
+         //Transcript_getStatus(transcript),
+         //Transcript_getDescription(transcript),
          isCurrent); 
+
+  char bioTypeQStr[1024];
+  if (Transcript_getBiotype(transcript)) {
+    sprintf(bioTypeQStr,"'%s'", Transcript_getBiotype(transcript));
+  } else {
+    sprintf(bioTypeQStr, "NULL");
+  }
+  char statusQStr[1024];
+  if (Transcript_getStatus(transcript)) {
+    sprintf(statusQStr,"'%s'", Transcript_getStatus(transcript));
+  } else {
+    sprintf(statusQStr, "NULL");
+  }
+  char descQStr[1024];
+  if (Transcript_getDescription(transcript)) {
+    sprintf(descQStr,"'%s'", Transcript_getDescription(transcript));
+  } else {
+    sprintf(descQStr, "NULL");
+  }
+
+  sprintf(qStr, fmtStr, bioTypeQStr, statusQStr, descQStr);
 
   if (Transcript_getStableId(transcript)) {
 /* Use FROM_UNIXTIME for now
@@ -1013,7 +1039,7 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
 */
 
     // Assume version will be positive, Transcript sets it to -1 when initialised
-    int version = Transcript_getVersion(transcript) <= 0 ? Transcript_getVersion(transcript) : 1; 
+    int version = Transcript_getVersion(transcript) > 0 ? Transcript_getVersion(transcript) : 1; 
     sprintf(qStr,"%s, stable_id = '%s', version = %d, created_date = FROM_UNIXTIME(%ld), modified_date = FROM_UNIXTIME(%ld)",
             qStr, Transcript_getStableId(transcript), version, Transcript_getCreated(transcript), Transcript_getModified(transcript));
   }
@@ -1133,7 +1159,10 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
   // Store the alternative translations, if there are any.
   //
 
-  fprintf(stderr, "Alt translation storing not implemented\n");
+  if (!doneAltTransWarn) {
+    fprintf(stderr, "Alt translation storing not implemented\n");
+    doneAltTransWarn = 1;
+  }
   if ( altTranslations != NULL &&
        Vector_getNumElement(altTranslations) > 0) {
     fprintf(stderr, "Alt translation storing not implemented\n");
@@ -1256,10 +1285,12 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
   IntronSupportingEvidenceAdaptor *iseAdaptor = DBAdaptor_getIntronSupportingEvidenceAdaptor(db);
   Vector *intronSupportingEvidence = Transcript_getAllIntronSupportingEvidence(transcript);
 
-  for (i=0; i<Vector_getNumElement(intronSupportingEvidence); i++) {
-    IntronSupportingEvidence *ise = Vector_getElementAt(intronSupportingEvidence, i);
-    IntronSupportingEvidenceAdaptor_store(iseAdaptor, ise);
-    IntronSupportingEvidenceAdaptor_storeTranscriptLinkage(iseAdaptor, ise, transcript, transcDbID);
+  if (intronSupportingEvidence != NULL) {
+    for (i=0; i<Vector_getNumElement(intronSupportingEvidence); i++) {
+      IntronSupportingEvidence *ise = Vector_getElementAt(intronSupportingEvidence, i);
+      IntronSupportingEvidenceAdaptor_store(iseAdaptor, ise);
+      IntronSupportingEvidenceAdaptor_storeTranscriptLinkage(iseAdaptor, ise, transcript, transcDbID);
+    }
   }
 
   // Update the original transcript object - not the transfered copy that

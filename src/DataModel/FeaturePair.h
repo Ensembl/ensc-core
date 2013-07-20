@@ -33,6 +33,7 @@ struct FeaturePairStruct {
 #undef FUNCSTRUCTTYPE
 
 FeaturePair *FeaturePair_new(void);
+int FeaturePair_copyData(FeaturePair *to, FeaturePair *from);
 
 ECOSTRING FeaturePair_setHitSeqName(FeaturePair *fp, char *str);
 #define FeaturePair_getHitSeqName(fp)  (fp)->hitId

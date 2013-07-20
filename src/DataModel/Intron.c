@@ -152,5 +152,6 @@ sub splice_seq {
 */
 
 void Intron_freeImpl(Intron *intron) {
-  fprintf(stderr,"NIY: Intron_freeImpl\n");
+  //fprintf(stderr,"NIY: Intron_freeImpl\n");
+  free(intron);
 }

@@ -333,10 +333,10 @@ IDType ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
     my $created = $self->db->dbc->from_seconds_to_date($exon->created_date());
     my $modified = $self->db->dbc->from_seconds_to_date($exon->modified_date());
 */
-    version = Exon_getVersion(exon) <= 0 ? Exon_getVersion(exon) : 1;
+    version = Exon_getVersion(exon) > 0 ? Exon_getVersion(exon) : 1;
     strcat(qStr,", stable_id, version, created_date, modified_date");
-     
   }
+
   sprintf(qStr, "%s) VALUES ("IDFMTSTR", %ld, %ld, %d, %d, %d, %d, %d",
           qStr,
           (IDType)seqRegionId,
@@ -626,7 +626,7 @@ Vector *ExonAdaptor_objectsFromStatementHandle(ExonAdaptor *ea,
     int endPhase        = row->getIntAt(row, 6);
     int isCurrent       = row->getIntAt(row, 7);
     int isConstitutive  = row->getIntAt(row, 8);
-    char *stableId      = row->getStringAt(row, 9);
+    char *stableId      = row->getStringAllowNullAt(row, 9);
     int version         = row->getIntAt(row, 10);
     int createdDate     = row->getIntAt(row, 11);
     int modifiedDate    = row->getIntAt(row, 12);
@@ -824,7 +824,7 @@ Vector *ExonAdaptor_objectsFromStatementHandle(ExonAdaptor *ea,
     Exon_setAdaptor        (exon, (BaseAdaptor *)ea);
     Exon_setSlice          (exon, exonSlice);
     Exon_setDbID           (exon, exonId);
-    Exon_setStableId       (exon, stableId);
+    if (stableId) Exon_setStableId(exon, stableId);
     Exon_setVersion        (exon, version);
     Exon_setCreated        (exon, createdDate);
     Exon_setModified       (exon, modifiedDate);

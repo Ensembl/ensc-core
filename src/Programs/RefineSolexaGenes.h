@@ -90,6 +90,8 @@ typedef struct RefineSolexaGenesStruct {
   Analysis *analysis;
 
   DBAdaptor *db;
+
+  long longestIntronLength;
 } RefineSolexaGenes;
 
 typedef struct ModelClusterStruct {
@@ -212,6 +214,9 @@ void RefineSolexaGenes_setFilterOnOverlapThreshold(RefineSolexaGenes *rsg, int f
 int RefineSolexaGenes_getFilterOnOverlapThreshold(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setRejectIntronCutoff(RefineSolexaGenes *rsg, double rejectIntronCutoff);
 double RefineSolexaGenes_getRejectIntronCutoff(RefineSolexaGenes *rsg);
+
+void RefineSolexaGenes_setLongestIntronLength(RefineSolexaGenes *rsg, long maxLength);
+long RefineSolexaGenes_getLongestIntronLength(RefineSolexaGenes *rsg);
 
 
 // To move

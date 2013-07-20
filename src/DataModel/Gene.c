@@ -490,6 +490,7 @@ Gene *Gene_transformToRawContig(Gene *gene) {
 void Gene_free(Gene *gene) {
 // NIY
   Object_decRefCount(gene);
+//  fprintf(stderr,"Gene_free called\n");
 
   if (Object_getRefCount(gene) > 0) {
     return;
@@ -498,7 +499,7 @@ void Gene_free(Gene *gene) {
                    "       Freeing it anyway\n");
   }
 
-  // fprintf(stderr,"Freeing gene %p %s\n", gene, Gene_getStableId(gene));
+//  fprintf(stderr,"  Freeing gene %p %s\n", gene, Gene_getStableId(gene));
   int i;
   for (i=0; i<Gene_getTranscriptCount(gene); i++) {
     Transcript *trans = Gene_getTranscriptAt(gene, i);

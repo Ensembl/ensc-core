@@ -19,6 +19,10 @@ FeaturePair *FeaturePair_new(void) {
   return fp;
 }
 
+int FeaturePair_copyData(FeaturePair *to, FeaturePair *from) {
+  if (FeaturePair_getHitSeqName(from)) FeaturePair_setHitSeqName(to, FeaturePair_getHitSeqName(from));
+}
+
 ECOSTRING FeaturePair_setHitSeqName(FeaturePair *fp, char *str) {
   EcoString_copyStr(ecoSTable,&(fp->hitId),str,0);
 

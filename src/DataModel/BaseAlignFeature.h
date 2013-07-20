@@ -42,6 +42,8 @@ struct BaseAlignFeatureStruct {
 
 BaseAlignFeature *BaseAlignFeature_new(void);
 
+int BaseAlignFeature_copyData(BaseAlignFeature *to, BaseAlignFeature *from);
+
 #define BaseAlignFeature_getSeqRegionStart(baf) SeqFeature_getSeqRegionStart((baf))
 #define BaseAlignFeature_getSeqRegionEnd(baf) SeqFeature_getSeqRegionEnd((baf))
 #define BaseAlignFeature_getSeqRegionStrand(baf) SeqFeature_getSeqRegionStrand((baf))

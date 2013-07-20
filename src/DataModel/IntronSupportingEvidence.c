@@ -52,9 +52,10 @@ IntronSupportingEvidence *IntronSupportingEvidence_new(void) {
     fprintf(stderr,"ERROR: Failed allocating space for IntronSupportingEvidence\n");
     return NULL;
   }
+  //fprintf(stderr,"Making an ISE pointer = %p\n", ise);
 
   ise->objectType = CLASS_INTRONSUPPORTINGEVIDENCE;
-  Object_incRefCount(ise);
+  //Object_incRefCount(ise);
 
   ise->funcs = &intronSupportingEvidenceFuncs;
 
@@ -359,6 +360,7 @@ Exon *IntronSupportingEvidence_findNextExon(IntronSupportingEvidence *ise, Trans
 }
 
 IntronSupportingEvidence *IntronSupportingEvidence_shallowCopyImpl(IntronSupportingEvidence *ise) {
+  fprintf(stderr,"!!!!!!!!!!!!!!!!!!! ise shallowcopy\n");
   IntronSupportingEvidence *newIse = IntronSupportingEvidence_new();
 
   memcpy(newIse,ise,sizeof(IntronSupportingEvidence));
@@ -368,5 +370,17 @@ IntronSupportingEvidence *IntronSupportingEvidence_shallowCopyImpl(IntronSupport
 
 
 void IntronSupportingEvidence_freeImpl(IntronSupportingEvidence *ise) {
-  fprintf(stderr, "NIY: IntronSupportingEvidenceFree\n");
+  Object_decRefCount(ise);
+
+  //fprintf(stderr,"IntronSupportingEvidence_free called (refcount after dec = %d\n", Object_getRefCount(ise));
+  if (Object_getRefCount(ise) > 0) {
+    return;
+  } else if (Object_getRefCount(ise) < 0) {
+//    fprintf(stderr,"Error: Negative reference count for IntronSupportingEvidence\n"
+//                   "       Freeing it anyway\n");
+  }
+  
+  //fprintf(stderr, "IntronSupportingEvidenceFree - freeing\n");
+  if (ise->hitName) free(ise->hitName);
+  free(ise);
 }

@@ -48,9 +48,17 @@ double MysqlUtil_getDouble(MYSQL_ROW row, int col) {
 }
 
 // Doesn't make a copy of string
-char *MysqlUtil_getString(MYSQL_ROW row, int col) {
+char *MysqlUtil_getStringNoNull(MYSQL_ROW row, int col) {
   if (row[col] == NULL) {
     return "";
+  } else {
+    return row[col];
+  }
+}
+
+char *MysqlUtil_getStringAllowNull(MYSQL_ROW row, int col) {
+  if (row[col] == NULL) {
+    return NULL;
   } else {
     return row[col];
   }

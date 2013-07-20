@@ -44,6 +44,11 @@ ECOSTRING BaseAlignFeature_setCigarString(BaseAlignFeature *baf, char *str) {
   return baf->cigarString;
 }
 
+int BaseAlignFeature_copyData(BaseAlignFeature *to, BaseAlignFeature *from) {
+  if (BaseAlignFeature_getCigarString(from)) BaseAlignFeature_setCigarString(to, BaseAlignFeature_getCigarString(from));
+  FeaturePair_copyData(to, from);
+}
+
 ECOSTRING BaseAlignFeature_setDbName(BaseAlignFeature *baf, char *dbName) {
   EcoString_copyStr(ecoSTable, &(baf->dbName),dbName,0);
 

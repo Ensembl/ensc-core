@@ -10,6 +10,7 @@ MysqlResultRow *MysqlResultRow_new();
 
 char *    MysqlResultRow_getStringAt(ResultRow *row, int ind);
 char *    MysqlResultRow_getStringCopyAt(ResultRow *row, int ind);
+char *    MysqlResultRow_getStringAllowNullAt(ResultRow *row, int ind);
 int       MysqlResultRow_getIntAt(ResultRow *row, int ind);
 long      MysqlResultRow_getLongAt(ResultRow *row, int ind);
 IDType    MysqlResultRow_getLongLongAt(ResultRow *row, int ind);

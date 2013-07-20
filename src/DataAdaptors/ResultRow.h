@@ -7,6 +7,7 @@
 typedef struct ResultRowStruct ResultRow;
 
 typedef char *    (*ResultRow_getStringAtFunc)(ResultRow *row, int ind);
+typedef char *    (*ResultRow_getStringAllowNullAtFunc)(ResultRow *row, int ind);
 typedef char *    (*ResultRow_getStringCopyAtFunc)(ResultRow *row, int ind);
 typedef int       (*ResultRow_getIntAtFunc)(ResultRow *row, int ind);
 typedef long      (*ResultRow_getLongAtFunc)(ResultRow *row, int ind);
@@ -24,6 +25,7 @@ typedef struct ResultRowFuncsStruct {
 #define RESULTROW_DATA \
   OBJECT_DATA \
   ResultRow_getStringAtFunc   getStringAt; \
+  ResultRow_getStringAtFunc   getStringAllowNullAt; \
   ResultRow_getStringCopyAtFunc   getStringCopyAt; \
   ResultRow_getIntAtFunc      getIntAt; \
   ResultRow_getLongAtFunc     getLongAt; \
