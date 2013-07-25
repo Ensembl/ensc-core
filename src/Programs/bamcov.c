@@ -143,7 +143,7 @@ int main(int argc, char *argv[]) {
 
   SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
 
-  Slice *slice = SliceAdaptor_fetchByRegion(sa,NULL,chrName,1,7000000,1,NULL, 0);
+  Slice *slice = SliceAdaptor_fetchByRegion(sa,NULL,chrName,POS_UNDEF,POS_UNDEF,1,NULL, 0);
 
   Vector_addElement(slices,slice);
 
@@ -172,7 +172,7 @@ int main(int argc, char *argv[]) {
   for (i=0; i<Vector_getNumElement(slices); i++) {
     Slice *slice = Vector_getElementAt(slices,i);
 
-    if (verbosity > 0) printf("Working on '%s'\n",Slice_getChrName(slice));
+    if (verbosity > 0) printf("Working on '%s'\n",Slice_getName(slice));
 
 //    if (verbosity > 0) printf("Stage 1 - retrieving annotation from database\n");
 //    Vector *genes = getGenes(slice, flags);
@@ -193,7 +193,7 @@ int main(int argc, char *argv[]) {
  Program usage message
 */
 void Bamcov_usage() {
-  printf("bamcount \n"
+  printf("bamcov \n"
          "  -i --in_file     Input BAM file to map from (string)\n"
          "  -o --out_file    Output Wiggle file to write (string)\n"
          "  -U --ucsc_naming Input BAM file has 'chr' prefix on ALL seq region names (flag)\n"
