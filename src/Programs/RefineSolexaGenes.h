@@ -136,8 +136,7 @@ Vector *RefineSolexaGenes_makeModelClusters(RefineSolexaGenes *rsg, Vector *mode
 Vector *RefineSolexaGenes_mergeExons(RefineSolexaGenes *rsg, Gene *gene, int strand);
 Exon *RefineSolexaGenes_binSearchForOverlap(RefineSolexaGenes *rsg, Vector *exons, int pos);
 void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConfig *intronBamConf, samfile_t *sam, bam_index_t *idx, int ref, int begRange, int endRange);
-//Vector *RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam1_t *b);
-int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam1_t *b, CigarBlock **ugfs);
+int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam_header_t *header, bam1_t *b, CigarBlock **ugfs);
 void RefineSolexaGenes_dnaToIntronFeatures(RefineSolexaGenes *rsg, long start, long end);
 Vector *RefineSolexaGenes_fetchIntronFeatures(RefineSolexaGenes *rsg, long start, long end, long *offsetP);
 Exon *RefineSolexaGenes_makeExon(RefineSolexaGenes *rsg, long start, long end, double score, char *diplayId);
