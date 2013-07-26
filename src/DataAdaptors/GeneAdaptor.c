@@ -771,7 +771,6 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
     Transcript *newTr;
     if (slice != extSlice) {
       newTr = Transcript_transfer(tr, slice);
-      fprintf(stderr,"Transferring transcript\n");
       if (newTr == NULL) {
         fprintf(stderr, "Unexpected. Transcript could not be transferred onto Gene slice.\n");
         exit(1);
