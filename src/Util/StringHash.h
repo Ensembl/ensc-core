@@ -32,6 +32,8 @@ int     StringHash_getNumValues(StringHash *stringHash);
 void *  StringHash_getValue(StringHash *stringHash, char *string);
 void *  StringHash_getValues(StringHash *stringHash);
 char ** StringHash_getKeys(StringHash *stringHash);
+char ** StringHash_getKeysNoCopy(StringHash *stringHash);
+char *  StringHash_getKey(StringHash *stringHash, char *key);
 int     StringHash_remove(StringHash *stringHash, char *key, void freeFunc());
 
 unsigned int StringHash_getBucketNum(StringHash *stringHash, char *key, int keyLen);

@@ -84,6 +84,36 @@ char **StringHash_getKeys(StringHash *stringHash) {
   return keys;
 }
 
+char **StringHash_getKeysNoCopy(StringHash *stringHash) {
+  int i;
+  int j;
+  char **keys;
+  int keyCnt = 0;
+
+  if (!stringHash->nValue) {
+    fprintf(stderr, "Warning: tried to get Keys for empty StringHash\n");
+    return NULL;
+  }
+
+  if ((keys = (char **)calloc(stringHash->nValue,sizeof(char *))) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for keys\n");
+    return NULL;
+  }
+
+  for (i=0; i<stringHash->size; i++) {
+    if (stringHash->bucketCounts[i]) {
+      for (j=0; j<stringHash->bucketCounts[i]; j++) {
+        keys[keyCnt++] = stringHash->buckets[i][j].key;
+      }
+    }
+  }
+  if (keyCnt != stringHash->nValue) {
+    fprintf(stderr,"ERROR: Internal StringHash error - keyCnt != stringHash->nValue\n");
+    ProcUtil_showBacktrace(EnsC_progName);
+  }
+  return keys;
+}
+
 int StringHash_getNumValues(StringHash *stringHash) {
   return stringHash->nValue;
 }
@@ -155,6 +185,23 @@ int StringHash_contains(StringHash *stringHash, char *key) {
   }
 
   return 0;
+}
+
+char *StringHash_getKey(StringHash *stringHash, char *key) {
+  int keyLen = strlen(key);
+  int bucketNum = StringHash_getBucketNum(stringHash,key, keyLen);
+  int i;
+
+  for (i=0; i<stringHash->bucketCounts[bucketNum]; i++) {
+    //if (!strcmp(key,stringHash->buckets[bucketNum][i].key)) {
+    if (keyLen == stringHash->buckets[bucketNum][i].keyLen) {
+      if (!memcmp(key, stringHash->buckets[bucketNum][i].key,keyLen)) {
+        return stringHash->buckets[bucketNum][i].key;
+      }
+    }
+  }
+
+  return NULL;
 }
 
 int StringHash_add(StringHash *stringHash, char *key, void *val) {
