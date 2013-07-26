@@ -61,6 +61,19 @@ typedef struct CigarBlockStruct {
 } CigarBlock;
 */
 
+int pointer_compFunc(const void *a, const void *b) {
+  void *one = *((void **)a);
+  void *two = *((void **)b);
+
+  if (one == two) {
+    return 0;
+  } else if (one > two) {
+    return 1;
+  } else {
+    return -1;
+  }
+}
+
 CigarBlock *CigarBlock_new(CigarBlockType type, long start, long end) {
   CigarBlock *block;
 
@@ -300,22 +313,21 @@ int main(int argc, char *argv[]) {
 
   rsg->adaptorAliasHash = StringHash_new(STRINGHASH_SMALL);
 
-  DBAdaptor *refDb = 
-                     DBAdaptor_new("genebuild1", "ensadmin", "ensembl", "th3_sheep_core", 3306, NULL);
-                    // DBAdaptor_new("genebuild2", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL);
+  DBAdaptor *refDb = //DBAdaptor_new("genebuild1", "ensadmin", "ensembl", "th3_sheep_core", 3306, NULL);
+                     //DBAdaptor_new("genebuild2", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL);
                      //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_ref", 13382, NULL);
- //                DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL);
+                     DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL);
   StringHash_add(rsg->adaptorAliasHash, "REFERENCE_DB", refDb);
   StringHash_add(rsg->adaptorAliasHash, "REFINED_DB", 
-                 DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_sheep_refine", 3306, refDb));
+                 //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_sheep_refine", 3306, refDb));
                  //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
-//                 DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_refined", 13386, refDb));
-                 //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
+                 //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_refined", 13386, refDb));
+                 DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
   StringHash_add(rsg->adaptorAliasHash, "ROUGH_DB", 
-                 DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "th3_sheep_rough", 3306, refDb));
+                 //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "th3_sheep_rough", 3306, refDb));
                  //DBAdaptor_new("genebuild5", "ensadmin", "ensembl", "db8_rabbit_rough", 3306, refDb));
-//                 DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_rough", 13385, refDb));
-                 //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_rough", 3306, refDb));
+                 //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_rough", 13385, refDb));
+                 DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_rough", 3306, refDb));
 
   // Create a DBAdaptor hash
   // Not used with Bam files  RefineSolexaGenes_setIntronDb(rsg, char *intronDb);
@@ -327,9 +339,9 @@ int main(int argc, char *argv[]) {
   Vector *intronBamFiles = Vector_new();
   
   // Note depth 10 here
-  Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns.bam", 0, 10, NULL));
+  //Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns.bam", 0, 10, NULL));
   //Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns.bam", 0, 0, NULL));
-  //Vector_addElement(intronBamFiles, IntronBamConfig_new("/Users/searle/rabbit/introns.bam", 0, 0, NULL));
+  Vector_addElement(intronBamFiles, IntronBamConfig_new("/Users/searle/rabbit/introns.bam", 0, 0, NULL));
   RefineSolexaGenes_setIntronBamFiles(rsg, intronBamFiles);
 
   RefineSolexaGenes_setLogicNames(rsg, NULL);
@@ -349,7 +361,7 @@ int main(int argc, char *argv[]) {
 
   RefineSolexaGenes_setOtherNum(rsg, 10);
   RefineSolexaGenes_setMaxNum(rsg, 1000);
-  RefineSolexaGenes_setMaxRecursions(rsg, 100000);
+  RefineSolexaGenes_setMaxRecursions(rsg, 10000);
   RefineSolexaGenes_setMinSingleExonLength(rsg, 1000);
   RefineSolexaGenes_setMinSingleExonCDSLength(rsg, 66);
   RefineSolexaGenes_setStrictInternalSpliceSites(rsg, 1);
@@ -374,9 +386,9 @@ int main(int argc, char *argv[]) {
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:3000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:30000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1100000000:1");
-//  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:150000000:1");
+  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:150000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:1:1:250000000:1");
-  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:11710000:1");
+//  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:11710000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:280000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:100000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:100000000:120000000:1");
@@ -388,8 +400,8 @@ int main(int argc, char *argv[]) {
   fprintf(stderr,"Ended up with %d models to write\n", Vector_getNumElement(RefineSolexaGenes_getOutput(rsg)));
 //  RefineSolexaGenes_dumpOutput(rsg);
   dumpGenes(RefineSolexaGenes_getOutput(rsg), 1);
-  RefineSolexaGenes_writeOutput(rsg);
-  tc_malloc_stats();
+  //RefineSolexaGenes_writeOutput(rsg);
+  //tc_malloc_stats();
   ProcUtil_timeInfo("end of main");
   fprintf(stderr,"Number of exon clone calls = %d\n",nExonClone);
 }
@@ -773,7 +785,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
 //        $exon->{'right_mask'} = $exon->length;
 
 
-        fprintf(logfp, "Ex: %d : %ld %ld\n",j, Exon_getStart(exon), Exon_getEnd(exon));
+        //fprintf(logfp, "Ex: %d : %ld %ld\n",j, Exon_getStart(exon), Exon_getEnd(exon));
         // make intron features by collapsing the dna_align_features
 
 // Note in perl introns and offset are both returned - in C change to pass offset as pointer so can be modified
@@ -1079,13 +1091,13 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
                   DNAAlignFeature_getLength(intron) > RefineSolexaGenes_getMinIntronSize(rsg)) {
                 // we are going to make a new exon and chop it up
                 // add intron penalty
-                fprintf(stderr, "RETAINED INTRON PENALTY for %s before %f", DNAAlignFeature_getHitSeqName(intron), DNAAlignFeature_getScore(intron));
+                //fprintf(stderr, "RETAINED INTRON PENALTY for %s before %f", DNAAlignFeature_getHitSeqName(intron), DNAAlignFeature_getScore(intron));
                 rejectScore = DNAAlignFeature_getScore(intron) - RefineSolexaGenes_getRetainedIntronPenalty(rsg);
                 // intron penalty is doubled for nc introns 
                 if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) {
                   rejectScore = rejectScore - RefineSolexaGenes_getRetainedIntronPenalty(rsg);
                 }
-                fprintf(stderr, " after %f\n",rejectScore);
+                //fprintf(stderr, " after %f\n",rejectScore);
                 if (rejectScore < 1 ) {
                   // treat as single exon
                   if (Vector_getNumElement(exons) == 1 ) {
@@ -1093,7 +1105,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
                     singleExon += 1;
                   }
                 } else {
-                  fprintf(stderr, "Exon %ld\t%ld has retained intron: %ld\t%ld\n",Exon_getStart(exon), Exon_getEnd(exon), DNAAlignFeature_getStart(intron), DNAAlignFeature_getEnd(intron));
+                  //fprintf(stderr, "Exon %ld\t%ld has retained intron: %ld\t%ld\n",Exon_getStart(exon), Exon_getEnd(exon), DNAAlignFeature_getStart(intron), DNAAlignFeature_getEnd(intron));
                   // dont have circular references to exons or the paths
                   // will be infinite so clone this exon instead
                   // I guess we also want to keep the original exon too?
@@ -1101,7 +1113,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
                   Exon *newExon2 = ExonUtils_cloneExon( exon );
     
                   // chop it up a bit so it no longer overlaps the other introns
-                  fprintf(stderr, "TRIMMING EXON\n");
+                  //fprintf(stderr, "TRIMMING EXON\n");
                   int length = DNAAlignFeature_getEnd(intron) - DNAAlignFeature_getStart(intron);
                   Exon_setEnd  (newExon1, DNAAlignFeature_getStart(intron) + ( length / 2 ) - 2);
                   Exon_setStart(newExon2, DNAAlignFeature_getEnd(intron) - ( length / 2 ) + 2);
@@ -1140,7 +1152,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
             for (k=0; k<Vector_getNumElement(newExons); k++) {
               Exon *ex = Vector_getElementAt(newExons, k);
               Vector_insertElementAt(exons, j+k, ex);
-              fprintf(stderr,"Adding exon %ld %ld at %d\n", Exon_getStart(ex), Exon_getEnd(ex), j+k);
+              //fprintf(stderr,"Adding exon %ld %ld at %d\n", Exon_getStart(ex), Exon_getEnd(ex), j+k);
             }
 /*  Doesn't seem to do anything
             for ( my $i = 0 ; $i<= $#exons ; $i++ ) {
@@ -1149,9 +1161,9 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
 */
             for (k=j; k<j+Vector_getNumElement(newExons);k++) {
               Exon *ex = Vector_getElementAt(exons, k);
-              fprintf(stderr,"Added exon %ld %ld at %d\n", Exon_getStart(ex), Exon_getEnd(ex), k);
+              //fprintf(stderr,"Added exon %ld %ld at %d\n", Exon_getStart(ex), Exon_getEnd(ex), k);
             }
-            fprintf(logfp, "ADDED %d new exons\n", Vector_getNumElement(newExons));
+            //fprintf(logfp, "ADDED %d new exons\n", Vector_getNumElement(newExons));
             exonCount += (Vector_getNumElement(newExons) -1); // was $#new_exons;
             // make sure they are all stil sorted
             // This needs to sort reverse end for equal start to maintain the location of the retained intron version of
@@ -1194,13 +1206,34 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
         if (!giveUpFlag) {
           fprintf(stderr, "STRAND %d BEFORE COLLAPSING NUM PATHS = %d NUM EXONS %d\n", strand, StringHash_getNumValues(paths), Vector_getNumElement(exons));
     
-          char **pathKeys = StringHash_getKeys(paths);
+          char **pathKeys = StringHash_getKeysNoCopy(paths);
+//          char **pathKeys = StringHash_getKeys(paths);
 
           int nPath = StringHash_getNumValues(paths);
 
-          // Perl sorted them , not sure why???
-          // Try without sorting ??
-          qsort(pathKeys, nPath, sizeof(char *), StrUtil_stringCompFunc);
+/*
+          int m;
+          IDType totLen = 0;
+          for (m=0;m<StringHash_getNumValues(paths);m++) {
+            totLen+=strlen(pathKeys[m])+1;
+          }
+          fprintf(stderr,"Total length of path strings  = "IDFMTSTR"\n", totLen);
+*/
+
+          // Note reason for making this array to store the paths to delete is to save space - the path strings can take up a lot of memory
+          // so making a copy of the keys is expensive in both space and time terms. It's difficult to use the uncopied strings because we're
+          // removing elements from the hash, so the key strings are freed, but could be used subsequently leading to a seg fault. By storing 
+          // the ones to removed from the hash, and only removing them after the loop has finsihed executing we can avoid that problem.
+          int nPathsToRemove = 0;
+          char **pathsToRemove;
+          if ((pathsToRemove = (char **)calloc(StringHash_getNumValues(paths), sizeof(char *))) == NULL) {
+            fprintf(stderr, "Failed allocating pathsToRemove\n");
+            exit(1);
+          }
+
+          // Perl sorted them , not sure why - maybe longest first???
+          // I didn't see any difference in results after commenting this out, so do without it (hopefully!)
+          //qsort(pathKeys, nPath, sizeof(char *), StrUtil_stringCompFunc);
 
           int k;
           // lets collapse redundant paths
@@ -1256,18 +1289,25 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
 
             // remove redundancy from the array
             //delete $paths->{$start} if $start && $paths->{$start};
-            if (start[0] != '\0' && StringHash_contains(paths, start)) {
-              StringHash_remove(paths, start, NULL);
+            char *keyP;
+            if (start[0] != '\0' && (keyP = StringHash_getKey(paths, start)) != NULL) {
+              //StringHash_remove(paths, start, NULL);
+              //fprintf(stderr,"Adding start path %s\n", keyP);
+              pathsToRemove[nPathsToRemove++] = keyP;
             }
 
             // delete $paths->{$end} if $end && $paths->{$end};
-            if (end[0] != '\0' && StringHash_contains(paths, end)) {
-              StringHash_remove(paths, end, NULL);
+            if (end[0] != '\0' && (keyP = StringHash_getKey(paths, end)) != NULL) {
+              //StringHash_remove(paths, end, NULL);
+              //fprintf(stderr,"Adding end path %s\n", keyP);
+              pathsToRemove[nPathsToRemove++] = keyP;
             }
 
             //delete $paths->{$middle} if $middle && $paths->{$middle};
-            if (middle[0] != '\0' && StringHash_contains(paths, middle)) {
-              StringHash_remove(paths, middle, NULL);
+            if (middle[0] != '\0' && (keyP = StringHash_getKey(paths, middle)) != NULL) {
+              //StringHash_remove(paths, middle, NULL);
+              //fprintf(stderr,"Adding middle path %s\n", keyP);
+              pathsToRemove[nPathsToRemove++] = keyP;
             }
 
             for (m=0;m<nArray;m++) {
@@ -1276,11 +1316,20 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
             free(array);
           }
           
-
-          for (k=0; k<nPath; k++) {
-            free(pathKeys[k]);
+          //fprintf(stderr, "Have %d paths to remove\n", nPathsToRemove);
+          qsort(pathsToRemove, nPathsToRemove, sizeof(char *), pointer_compFunc); // Note pointer sort NOT string sort
+          for (k=0; k<nPathsToRemove; k++) {
+            if (!k || pathsToRemove[k] != pathsToRemove[k-1]) {
+              //fprintf(stderr, "Removing path |%s| (pointer %p)\n", pathsToRemove[k], pathsToRemove[k]);
+              StringHash_remove(paths, pathsToRemove[k], NULL);
+            }
           }
+
+          //for (k=0; k<nPath; k++) {
+          //  free(pathKeys[k]);
+          //}
           free(pathKeys);
+          free(pathsToRemove);
           
           fprintf(stderr, "AFTER COLLAPSING NUM PATHS  = %d NUM EXONS = %d\n", StringHash_getNumValues(paths), Vector_getNumElement(exons));
          
@@ -1405,7 +1454,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
             fwdTLen = Translation_getGenomicEnd(Transcript_getTranslation(fwdTran)) - Translation_getGenomicStart(Transcript_getTranslation(fwdTran));
           }
 
-          fprintf(stderr, "FWD t length %ld\n", fwdTLen);
+          //fprintf(stderr, "FWD t length %ld\n", fwdTLen);
           Transcript *revT = Transcript_new();
           Transcript_addExon(revT, revExon, 0);
           //my $rev_t =  new Bio::EnsEMBL::Transcript(-EXONS => [$rev_exon]);
@@ -1418,7 +1467,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
             revTLen = Translation_getGenomicEnd(Transcript_getTranslation(revTran)) - Translation_getGenomicStart(Transcript_getTranslation(revTran));
           }
     
-          fprintf(stderr, "REV t length %ld\n", revTLen);
+          //fprintf(stderr, "REV t length %ld\n", revTLen);
           if ( Transcript_getTranslation(fwdTran) &&  
                ( (double)fwdTLen / (double)Transcript_getLength(fwdTran)* 100.0 >= RefineSolexaGenes_getMinSingleExonCDSLength(rsg) &&
                fwdTLen >  revTLen )) {
@@ -1481,7 +1530,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
 //    }
     //fprintf(stderr,"Number of final models in all clusters = %d\n", nFinal);
     Vector_free(models);
-    MallocExtension_ReleaseFreeMemory();
+    //MallocExtension_ReleaseFreeMemory();
   }
 }
 
@@ -1843,12 +1892,12 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
 // Hack hack hack
                       if (Transcript_getScore(ft) < Transcript_getScore(rt)) {
                         //# get rid of / label the reverse genes 
-                        fprintf(stderr,"overlap - taking reverse - score rev %f v fwd %f\n", 
-                                Transcript_getScore(rt), Transcript_getScore(ft));
+                        //fprintf(stderr,"overlap - taking reverse - score rev %f v fwd %f\n", 
+                        //        Transcript_getScore(rt), Transcript_getScore(ft));
                         Gene_setBiotype(fg, "bad");
                       } else {
-                        fprintf(stderr,"overlap - taking forward - score fwd %f v rev %f\n", 
-                                Transcript_getScore(ft), Transcript_getScore(rt));
+                        //fprintf(stderr,"overlap - taking forward - score fwd %f v rev %f\n", 
+                        //        Transcript_getScore(ft), Transcript_getScore(rt));
                         Gene_setBiotype(rg, "bad");
                       }
 // Big jump - think about how to do
@@ -1907,7 +1956,7 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
 
       StringHash_add(exonUseHash, ted->exonUse, &trueVal);
 
-      fprintf(stderr, "TRANSCRIPT %d Exon use %s biotype %s\n", ted->depth, ted->exonUse, Gene_getBiotype(gene));
+      //fprintf(stderr, "TRANSCRIPT %d Exon use %s biotype %s\n", ted->depth, ted->exonUse, Gene_getBiotype(gene));
       int es = 0;
       int ee = 0;
       char pattern[65500];
@@ -1934,14 +1983,14 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
            es == Transcript_getExonCount(trans)) { 
         // seen it before - or something very much like it
         Gene_setBiotype(gene, "bad");
-        fprintf(stderr, "CALLING it bad\n");
+        //fprintf(stderr, "CALLING it bad\n");
       }
 
       if (StringHash_contains(exonPattern, pattern)) {
         // seen it before - or something very much like it
         Gene_setBiotype(gene, "duplicate");
         //print "CALLING it bad\n";
-        fprintf(stderr, "CALLING it duplicate\n");
+        //fprintf(stderr, "CALLING it duplicate\n");
       } else {
         StringHash_add(exonPattern, pattern, &trueVal);
       }
@@ -1961,8 +2010,8 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
 
       Transcript *transcript = Gene_getTranscriptAt(gene, 0);
       
-      fprintf(logfp, "%d - %f tran length %d\n", 
-              g, Transcript_getScore(transcript), Transcript_getcDNACodingEnd(transcript) - Transcript_getcDNACodingStart(transcript));
+      //fprintf(logfp, "%d - %f tran length %d\n", 
+       //       g, Transcript_getScore(transcript), Transcript_getcDNACodingEnd(transcript) - Transcript_getcDNACodingStart(transcript));
 
       if (g == 0) {
         // best scoring model 
@@ -3727,7 +3776,7 @@ Vector *RefineSolexaGenes_mergeExons(RefineSolexaGenes *rsg, Gene *gene, int str
     }
   }
   
-  fprintf(logfp, "Merging exons - done overlap filter\n");
+//  fprintf(logfp, "Merging exons - done overlap filter\n");
   
   long offset = 0;
   for (i = 1; i<Vector_getNumElement(exons); i++) {
@@ -3768,7 +3817,7 @@ Vector *RefineSolexaGenes_mergeExons(RefineSolexaGenes *rsg, Gene *gene, int str
     }
     Vector_free(introns);
   }
-  fprintf(logfp, "Merging exons done\n");
+//  fprintf(logfp, "Merging exons done\n");
   
   return exons;
 }
@@ -5789,3 +5838,265 @@ int dumpGenes(Vector *genes, int withSupport) {
   }
   return failed;
 }
+
+#if 0
+// First arg should eventually be RunnableDB type I think - need a method to get the configvar -> setting function hash
+Utilities_parseConfig(RefineSolexaGenes *rsg, config_setting_t *cfgBlock, char *label, int ignoreThrow) {
+  char *DEFAULT_ENTRY_KEY = "DEFAULT"';
+
+  //my ($obj, $var_hash, $label, $ignore_throw) = @_;
+
+  if (label == NULL) {
+    fprintf(stderr, "Can't parse the config hash for object if we are give no label\n");
+    exit(1);
+  }
+
+  StringHash *keyCheckHash = StringHash_new(STRINGHASH_SMALL);
+
+  
+  int count = config_setting_length(cfgBlock);
+  
+  int i;
+  char ucKey[2048];
+  for(i = 0; i < count; ++i) {
+    config_setting_t *setting = config_setting_get_elem(cfgBlock, i);
+
+    strcpy(ucKey, config_setting_name(setting));
+    strupr(ucKey);
+
+    if (StringHash_contains(keyCheckHash, ucKey)) {
+      fprintf(stderr, "You have two entries in your config with the same name (ignoring case) for name %s\n", ucKey);
+      exit(1);
+    }
+    StringHash_add(keyCheckHash, ucKey, setting);
+  }
+
+  
+
+  // replace entries in config has with upper (perl said lower but I think its upper) case versions.
+/* Don't do this modifying of the config hash - instead use the keyCheckHash to return the required section (its key is upcased already
+  foreach my $k (keys %check) {
+    my $old_k = $check{$k};
+    my $entry = $var_hash->{$old_k};
+    delete $var_hash->{$old_k};
+
+    $var_hash->{$k} = $entry;
+  }
+*/
+
+  config_setting_t *analSection = StringHash_getValue(keyCheckHash, DEFAULT_ENTRY_KEY);
+
+  //config_setting_t *defaultSection = config_setting_get_member(cfgBlock, DEFAULT_ENTRY_KEY);
+
+  if (defaultSection == NULL) {
+    fprintf(stderr, "You must define a %s entry in your config", DEFAULT_ENTRY_KEY);
+    exit(1);
+  }
+
+  // the following will fail if there are config variables that
+  // do not have a corresponding method here
+
+  count = config_setting_length(defaultSection);
+
+  int i;
+  for(i = 0; i < count; ++i) {
+    config_setting_t *setting = config_setting_get_elem(defaultSection, i);
+
+    if (!StringHash_contains(funcHash, config_setting_name(setting))) {
+      fprintf(stderr, "Error: no method defined in Utilities for config variable '%s'\n", onfig_setting_name(setting));
+      exit(1);
+    }
+  
+    SetFuncData *setFuncData = StringHash_getValue(funcHash, config_setting_name(setting);
+
+    ConfigConverter_wrapSetCall(rsg, setFuncData, setting);
+  }
+
+  //#########################################################
+  // read values of config variables for this logic name into
+  // instance variable, set by method
+  //#########################################################
+  char ucLogic[2048];
+  strcpy(ucLogic, label);
+  strupr(ucLogic);
+  
+  config_setting_t *analSection = StringHash_getValue(keyCheckHash, ucLogic);
+
+  StringHash_free(keyCheckHash, NULL);
+
+  if (analSection != NULL) {
+    // entry contains more specific values for the variables
+    int count = config_setting_length(analSection);
+  
+    int i;
+    for(i = 0; i < count; ++i) {
+      config_setting_t *setting = config_setting_get_elem(analSection, i);
+  
+      if (!StringHash_contains(funcHash, config_setting_name(setting))) {
+        fprintf(stderr, "Error: no method defined in Utilities for config variable '%s'\n", onfig_setting_name(setting));
+        exit(1);
+      }
+    
+      SetFuncData *setFuncData = StringHash_getValue(funcHash, config_setting_name(setting);
+  
+      ConfigConverter_wrapSetCall(rsg, setFuncData, setting);
+    }
+
+  } else {
+    if (ignoreThrow == 1 ) {
+      fprintf(stderr,"Warning: Your logic_name %s doesn't appear in your config file hash - using default settings\n".  ucLogic);
+    } else {
+      fprintf(stderr,"Error: Your logic_name %s doesn't appear in your config file hash - using default settings\n".  ucLogic);
+      exit(1);
+    }
+  }
+}
+
+typedef struct SetFuncDataStruct {
+} SetFuncData;
+
+void ConfigConverter_wrapSetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncData, config_setting_t *setting) {
+  switch (config_setting_type(setting)) {
+    case CONFIG_TYPE_INT:
+      if (setFuncData->type != CONFIG_TYPE_INT) {
+        fprintf(stderr,"Error: Inconsistency between expected config arg type and actual arg type "
+                       "for %s (value = %d), type is %s expected type is %s (config type code)\n", 
+                config_setting_name(setting), config_setting_get_int(setting), 
+                ConfigConverter_typeCodeToString(config_setting_type(setting)), 
+                ConfigConverter_typeCodeToString(setFuncData->type));
+        exit(1);
+      }
+      setFuncData->setFunc.setIntValue(rsg, config_setting_get_int(setting));
+      break;
+
+    case CONFIG_TYPE_INT64:
+      if (setFuncData->type != CONFIG_TYPE_INT64) {
+        fprintf(stderr,"Error: Inconsistency between expected config arg type and actual arg type "
+                       "for %s (value = %ld), type is %s expected type is %s (config type code)\n", 
+                config_setting_name(setting), config_setting_get_int64(setting),
+                ConfigConverter_typeCodeToString(config_setting_type(setting)), 
+                ConfigConverter_typeCodeToString(setFuncData->type));
+        exit(1);
+      }
+      setFuncData->setFunc.setInt64Value(rsg, config_setting_get_int64(setting));
+      break;
+
+    case CONFIG_TYPE_FLOAT:
+      if (setFuncData->type != CONFIG_TYPE_FLOAT) {
+        fprintf(stderr,"Error: Inconsistency between expected config arg type and actual arg type "
+                       "for %s (value = %f), type is %s expected type is %s (config type code)\n", 
+                config_setting_name(setting), config_setting_get_float(setting),
+                ConfigConverter_typeCodeToString(config_setting_type(setting)), 
+                ConfigConverter_typeCodeToString(setFuncData->type));
+        exit(1);
+      }
+      setFuncData->setFunc.setFloatValue(rsg, config_setting_get_float(setting));
+      break;
+
+    case CONFIG_TYPE_ STRING:
+      if (setFuncData->type != CONFIG_TYPE_STRING) {
+        fprintf(stderr,"Error: Inconsistency between expected config arg type and actual arg type "
+                       "for %s (value = %s), type is %s expected type is %s (config type code)\n", 
+                config_setting_name(setting), config_setting_get_string(setting),
+                ConfigConverter_typeCodeToString(config_setting_type(setting)), 
+                ConfigConverter_typeCodeToString(setFuncData->type));
+        exit(1);
+      }
+      setFuncData->setFunc.setStringValue(rsg, config_setting_get_string(setting));
+      break;
+
+    case CONFIG_TYPE_BOOL:
+      if (setFuncData->type != CONFIG_TYPE_BOOL) {
+        fprintf(stderr,"Error: Inconsistency between expected config arg type and actual arg type "
+                       "for %s (value = %d), type is %s expected type is %s (config type code)\n", 
+                config_setting_name(setting), config_setting_get_bool(setting),
+                ConfigConverter_typeCodeToString(config_setting_type(setting)), 
+                ConfigConverter_typeCodeToString(setFuncData->type));
+        exit(1);
+      }
+      setFuncData->setFunc.setBoolValue(rsg, config_setting_get_bool(setting));
+      break;
+
+    case CONFIG_TYPE_ARRAY:
+      if (setFuncData->type != CONFIG_TYPE_ARRAY) {
+        fprintf(stderr,"Error: Inconsistency between expected config arg type and actual arg type "
+                       "for %s, type is %s expected type is %s (config type code)\n", 
+                config_setting_name(setting), 
+                ConfigConverter_typeCodeToString(config_setting_type(setting)), 
+                ConfigConverter_typeCodeToString(setFuncData->type));
+        exit(1);
+      }
+      ConfigConverter_wrapArraySetCall(rsg, setFuncData, config_setting);
+      break;
+
+    case CONFIG_TYPE_LIST:
+      if (setFuncData->type != CONFIG_TYPE_LIST) {
+        fprintf(stderr,"Error: Inconsistency between expected config arg type and actual arg type "
+                       "for %s, type is %s expected type is %s (config type code)\n", 
+                config_setting_name(setting), 
+                ConfigConverter_typeCodeToString(config_setting_type(setting)), 
+                ConfigConverter_typeCodeToString(setFuncData->type));
+        exit(1);
+      }
+      ConfigConverter_wrapListSetCall(rsg, setFuncData, config_setting);
+      break;
+
+    case CONFIG_TYPE_GROUP:
+      if (setFuncData->type != CONFIG_TYPE_GROUP) {
+        fprintf(stderr,"Error: Inconsistency between expected config arg type and actual arg type "
+                       "for %s, type is %s expected type is %s (config type code)\n", 
+                config_setting_name(setting), 
+                ConfigConverter_typeCodeToString(config_setting_type(setting)), 
+                ConfigConverter_typeCodeToString(setFuncData->type));
+        exit(1);
+      }
+      ConfigConverter_wrapGroupSetCall(rsg, setFuncData, config_setting);
+      break;
+    
+    default:
+      fprintf(stderr,"Error: Unknown type in config type switch for %s, type is %d expected type is %d (config type code)\n", 
+              config_setting_name(setting), config_setting_get_int64(setting), config_setting_type(setting), setFuncData->type);
+      exit(1);
+  }
+}
+
+char *ConfigConverter_typeCodeToString(int code) {
+  switch (code) {
+    case CONFIG_TYPE_INT:
+      return "INT";
+      break;
+
+    case CONFIG_TYPE_INT64:
+      return "INT64";
+      break;
+
+    case CONFIG_TYPE_FLOAT:
+      return "FLOAT";
+      break;
+
+    case CONFIG_TYPE_ STRING:
+      return "STRING";
+      break;
+
+    case CONFIG_TYPE_BOOL:
+      return "BOOL";
+      break;
+
+    case CONFIG_TYPE_ARRAY:
+      return "ARRAY";
+      break;
+
+    case CONFIG_TYPE_LIST:
+      return "LIST";
+      break;
+
+    case CONFIG_TYPE_GROUP:
+      return "GROUP";
+      break;
+
+    default:
+      fprintf(stderr,"Error: Unknown type in ConfigConverter_typeCodeToString - code = %d\n", code);
+      exit(1);
+  }
+}
+#endif
