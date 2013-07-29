@@ -350,18 +350,16 @@ int main(int argc, char *argv[]) {
   RefineSolexaGenes_setMinIntronSize(rsg, 30);
   RefineSolexaGenes_setMaxIntronSize(rsg, 200000);
 
-  RefineSolexaGenes_setBestScoreType(rsg, "best_c1");
 // Note perl seems to allow empty string for these as unset - I require NULL
 //  RefineSolexaGenes_setBadModelsType(rsg, NULL);
 //  RefineSolexaGenes_setModelLogicName(rsg, NULL);
-  RefineSolexaGenes_setSingleExonModelType(rsg, "single_exon_c1");
 
 // Not sure I should have to set this one
   RefineSolexaGenes_setOtherIsoformsType(rsg, "");
 
   RefineSolexaGenes_setOtherNum(rsg, 10);
   RefineSolexaGenes_setMaxNum(rsg, 1000);
-  RefineSolexaGenes_setMaxRecursions(rsg, 10000);
+  RefineSolexaGenes_setMaxRecursions(rsg, 100000);
   RefineSolexaGenes_setMinSingleExonLength(rsg, 1000);
   RefineSolexaGenes_setMinSingleExonCDSLength(rsg, 66);
   RefineSolexaGenes_setStrictInternalSpliceSites(rsg, 1);
@@ -373,6 +371,7 @@ int main(int argc, char *argv[]) {
   RefineSolexaGenes_setMax5PrimeExons(rsg, 3);
   RefineSolexaGenes_setMax5PrimeLength(rsg, 1000);
   RefineSolexaGenes_setRejectIntronCutoff(rsg, 5);
+
 /* Wasn't set in perl config???
   RefineSolexaGenes_setFilterOnOverlapThreshold(rsg, int filterOnOverlapThreshold);
 */
@@ -394,16 +393,41 @@ int main(int argc, char *argv[]) {
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:100000000:120000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:170000000:190000000:1");
 
-  RefineSolexaGenes_fetchInput(rsg);
-  RefineSolexaGenes_run(rsg);
+  double consLims[]    = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0 };
+  double nonConsLims[] = { 5.0, 10.0, 15.0, 20.0 };
 
-  fprintf(stderr,"Ended up with %d models to write\n", Vector_getNumElement(RefineSolexaGenes_getOutput(rsg)));
-//  RefineSolexaGenes_dumpOutput(rsg);
-  dumpGenes(RefineSolexaGenes_getOutput(rsg), 1);
-  //RefineSolexaGenes_writeOutput(rsg);
-  //tc_malloc_stats();
-  ProcUtil_timeInfo("end of main");
-  fprintf(stderr,"Number of exon clone calls = %d\n",nExonClone);
+  int i;
+  for (i=0; i<10; i++) {
+    RefineSolexaGenes_setConsLim(rsg, consLims[i]);
+    int j;
+    for (j=0; j<4; j++) {
+      RefineSolexaGenes_setNonConsLim(rsg, nonConsLims[j]);
+
+      char typeName[1024];
+      sprintf(typeName, "best_c%d_nc%d", (int)consLims[i], (int)nonConsLims[j]);
+      RefineSolexaGenes_setBestScoreType(rsg, typeName);
+
+      sprintf(typeName, "single_exon_c%d_nc%d", (int)consLims[i], (int)nonConsLims[j]);
+      RefineSolexaGenes_setSingleExonModelType(rsg, typeName);
+
+      RefineSolexaGenes_fetchInput(rsg);
+      RefineSolexaGenes_run(rsg);
+    
+      fprintf(stderr,"Ended up with %d models to write\n", Vector_getNumElement(RefineSolexaGenes_getOutput(rsg)));
+
+      //  RefineSolexaGenes_dumpOutput(rsg);
+      fprintf(stderr, "cons lim %f non cons lim %f\n", consLims[i], nonConsLims[j]);
+      dumpGenes(RefineSolexaGenes_getOutput(rsg), 1);
+      //RefineSolexaGenes_writeOutput(rsg);
+      //tc_malloc_stats();
+      ProcUtil_timeInfo("end of main");
+      fprintf(stderr,"Number of exon clone calls = %d\n",nExonClone);
+
+      Vector_setFreeFunc(rsg->output, Gene_free);
+      Vector_free(rsg->output);
+      rsg->output = NULL;
+    }
+  }
 }
 #endif
 
@@ -4192,16 +4216,16 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
 /* Filtering code is Steve's experimental code */
 //# SMJS Filter here 
 
-  double nonConsLim = 15.0;
-  double consLim    = 5.0;
+//  double nonConsLim = 15.0;
+//  double consLim    = 5.0;
 /*
   if (!defined($conslim) || !defined($nonconslim)) {
     die "Env vars for CONSLIM and NONCONSLIM not set\n";
   }
 */
 
-/*
-  fprintf(stderr, "Filter parameters:  Consensus splice coverage %f  Non consensus splice coverage %f\n", consLim, nonConsLim);
+  fprintf(stderr, "Filter parameters:  Consensus splice coverage %f  Non consensus splice coverage %f\n", 
+          RefineSolexaGenes_getConsLim(rsg), RefineSolexaGenes_getNonConsLim(rsg));
 
 // NIY: Need to free stuff here!!!!!
   Vector *tmp = Vector_new();
@@ -4209,13 +4233,13 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
     DNAAlignFeature *f = Vector_getElementAt(ifs, i);
 
     if (DNAAlignFeature_getFlags(f) & RSGINTRON_NONCANON) {
-      if (DNAAlignFeature_getScore(f) > nonConsLim && DNAAlignFeature_getLength(f) < 50000) {
+      if (DNAAlignFeature_getScore(f) > RefineSolexaGenes_getNonConsLim(rsg) && DNAAlignFeature_getLength(f) < 50000) {
         Vector_addElement(tmp, f);
       } else {
         fprintf(stderr, "Rejected non_canonical feature with score %f\n", DNAAlignFeature_getScore(f));
       }
     } else {
-      if (DNAAlignFeature_getScore(f) > consLim && DNAAlignFeature_getLength(f) < 150000) {
+      if (DNAAlignFeature_getScore(f) > RefineSolexaGenes_getConsLim(rsg) && DNAAlignFeature_getLength(f) < 150000) {
         Vector_addElement(tmp, f);
       } else {
         fprintf(stderr, "Rejected CANONICAL feature with score %f\n", DNAAlignFeature_getScore(f));
@@ -4224,7 +4248,6 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
   }
   Vector_free(ifs);
   ifs = tmp;
-*/
 
   RefineSolexaGenes_setIntronFeatures(rsg, ifs);
 
@@ -5079,7 +5102,9 @@ Vector *RefineSolexaGenes_getIntronFeatures(RefineSolexaGenes *rsg) {
 void RefineSolexaGenes_setIntronFeatures(RefineSolexaGenes *rsg, Vector *features) {
   if (rsg->intronFeatures != NULL) {
     fprintf(stderr, "Trying to set intronFeatures when its already set - may want append behaviour which isn't implemented - exiting\n");
-    exit(1);
+//    exit(1);
+    Vector_setFreeFunc(rsg->intronFeatures, DNAAlignFeature_freeImpl);
+    Vector_free(rsg->intronFeatures);
   }
 // Perl did this sort - it did startComp, I'm doing startEndComp
   Vector_sort(features, SeqFeature_startEndCompFunc);
@@ -5380,6 +5405,22 @@ void RefineSolexaGenes_setRejectIntronCutoff(RefineSolexaGenes *rsg, double reje
 
 double RefineSolexaGenes_getRejectIntronCutoff(RefineSolexaGenes *rsg) {
   return rsg->rejectIntronCutoff;
+}
+
+void RefineSolexaGenes_setConsLim(RefineSolexaGenes *rsg, double consLim) {
+  rsg->consLim = consLim;
+}
+
+double RefineSolexaGenes_getConsLim(RefineSolexaGenes *rsg) {
+  return rsg->consLim;
+}
+
+void RefineSolexaGenes_setNonConsLim(RefineSolexaGenes *rsg, double nonConsLim) {
+  rsg->nonConsLim = nonConsLim;
+}
+
+double RefineSolexaGenes_getNonConsLim(RefineSolexaGenes *rsg) {
+  return rsg->nonConsLim;
 }
 
 void RefineSolexaGenes_setDb(RefineSolexaGenes *rsg, DBAdaptor *db) {

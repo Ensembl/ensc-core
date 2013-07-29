@@ -84,6 +84,8 @@ typedef struct RefineSolexaGenesStruct {
   double filterOnOverlapThreshold;
   double rejectIntronCutoff;
   double retainedIntronPenalty;
+  double consLim;
+  double nonConsLim;
 
   StringHash *adaptorAliasHash;
 
@@ -216,6 +218,11 @@ double RefineSolexaGenes_getRejectIntronCutoff(RefineSolexaGenes *rsg);
 
 void RefineSolexaGenes_setLongestIntronLength(RefineSolexaGenes *rsg, long maxLength);
 long RefineSolexaGenes_getLongestIntronLength(RefineSolexaGenes *rsg);
+
+void RefineSolexaGenes_setConsLim(RefineSolexaGenes *rsg, double consLim);
+double RefineSolexaGenes_getConsLim(RefineSolexaGenes *rsg);
+void RefineSolexaGenes_setNonConsLim(RefineSolexaGenes *rsg, double nonConsLim);
+double RefineSolexaGenes_getNonConsLim(RefineSolexaGenes *rsg);
 
 
 // To move
