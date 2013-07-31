@@ -913,15 +913,16 @@ void Exon_freeImpl(Exon *exon) {
   //printf("Exon_free not implemented\n");
   Object_decRefCount(exon);
 
-//  fprintf(stderr,"Exon_free called refCount after dec = %d\n", Object_getRefCount(exon));
+  //fprintf(stderr,"Exon_free called refCount after dec = %d\n", Object_getRefCount(exon));
   if (Object_getRefCount(exon) > 0) {
+    //fprintf(stderr,"Exon_free called BUT refCount after dec = %d so not freeing\n", Object_getRefCount(exon));
     return;
   } else if (Object_getRefCount(exon) < 0) {
     //fprintf(stderr,"Error: Negative reference count for Exon\n"
     //               "       Freeing it anyway\n");
   }
 
-//  fprintf(stderr, "freeing exon %p %s nsupport = %d\n", exon, Exon_getStableId(exon), exon->supportingFeatures? Vector_getNumElement(exon->supportingFeatures) : 0);
+  //fprintf(stderr, "freeing exon %p %s nsupport = %d\n", exon, Exon_getStableId(exon), exon->supportingFeatures? Vector_getNumElement(exon->supportingFeatures) : 0);
   StableIdInfo_freePtrs(&(exon->si));
   if (Exon_getSeqCacheString(exon)!=NULL) {
     free(Exon_getSeqCacheString(exon));

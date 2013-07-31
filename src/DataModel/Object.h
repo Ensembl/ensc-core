@@ -38,8 +38,10 @@ struct ObjectStruct {
 
 void Object_freeImpl(Object *obj);
 
-#define Object_incRefCount(obj) (obj)->referenceCount++
-#define Object_decRefCount(obj) (obj)->referenceCount--
+//#define Object_incRefCount(obj) (obj)->referenceCount++
+void Object_incRefCount(Object *obj);
+//#define Object_decRefCount(obj) (obj)->referenceCount--
+void Object_decRefCount(Object *obj);
 
 #define Object_getRefCount(obj) (obj)->referenceCount
 

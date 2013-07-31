@@ -242,6 +242,7 @@ Vector *SupportingFeatureAdaptor_fetchAllByExonList(SupportingFeatureAdaptor *sf
       }
       free(idArray);
       Vector_free(idVec);
+      Vector_free(features);
     }
   }
 

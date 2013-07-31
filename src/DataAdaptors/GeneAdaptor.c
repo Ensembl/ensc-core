@@ -792,6 +792,7 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
   SupportingFeatureAdaptor *sfa = DBAdaptor_getSupportingFeatureAdaptor(ga->dba);
   Vector *tmpVec = SupportingFeatureAdaptor_fetchAllByExonList(sfa, exons, slice);
   Vector_free(tmpVec);
+  Vector_free(exons);
 
   return genes;
 }

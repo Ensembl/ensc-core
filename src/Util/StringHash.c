@@ -315,6 +315,10 @@ int StringHash_remove(StringHash *stringHash, char *key, void freeFunc()) {
       freeFunc(toRemoveVal);
     }
     free(toRemoveKey);
+    if (!stringHash->bucketCounts[bucketNum]) {
+       free(stringHash->buckets[bucketNum]);
+       stringHash->buckets[bucketNum] = NULL;
+    }
   }
 
   stringHash->nValue--;

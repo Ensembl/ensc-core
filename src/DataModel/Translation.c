@@ -261,7 +261,8 @@ void Translation_free(Translation *translation) {
                    "       Freeing it anyway\n");
   }
 
-  printf("Translation_free not implemented\n");
+  
+  free(translation);
 }
 
 /*

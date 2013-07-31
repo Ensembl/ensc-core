@@ -1418,16 +1418,16 @@ void Transcript_free(Transcript *trans) {
 
   // fprintf(stderr,"Transcript_free called for transcript %p\n", trans);
   if (Object_getRefCount(trans) > 0) {
-    fprintf(stderr,"  TRANSCRIPT REF COUNT GREATER THAN ZERO (%d) - NOT FREEING!!!!!!!!!!!!!!!!\n", Object_getRefCount(trans));
+    //fprintf(stderr,"  TRANSCRIPT REF COUNT GREATER THAN ZERO (%d) - NOT FREEING!!!!!!!!!!!!!!!!\n", Object_getRefCount(trans));
     return;
   } else if (Object_getRefCount(trans) < 0) {
     fprintf(stderr,"Error: Negative reference count for Transcript\n"
                    "       Freeing it anyway\n");
   }
 
-  // fprintf(stderr,"Actually freeing transcript\n");
+  //fprintf(stderr,"Actually freeing transcript\n");
   int i;
-  // fprintf(stderr,"Freeing exon vector with %d elements\n", Transcript_getExonCount(trans));
+  //fprintf(stderr,"Freeing exon vector with %d elements\n", Transcript_getExonCount(trans));
   for (i=0; i<Transcript_getExonCount(trans); i++) {
     Exon *exon = Transcript_getExonAt(trans, i);
     if (exon != NULL) {
@@ -1441,6 +1441,7 @@ void Transcript_free(Transcript *trans) {
     Vector_free(trans->iseVector);
   }
 
+  if (trans->translation) Translation_free(trans->translation);
+
   free(trans);
-//  printf("Transcript_free not implemented\n");
 }

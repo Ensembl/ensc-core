@@ -106,6 +106,8 @@ SequenceAdaptor *SequenceAdaptor_new(DBAdaptor *dba) {
 
   if (count) {
     sa->rnaEditsCache = edits;
+  } else {
+    IDHash_free(edits, NULL);
   }
   
   return sa;

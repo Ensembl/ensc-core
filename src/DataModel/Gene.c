@@ -493,20 +493,23 @@ void Gene_free(Gene *gene) {
 //  fprintf(stderr,"Gene_free called\n");
 
   if (Object_getRefCount(gene) > 0) {
+    //fprintf(stderr,"Not freeing gene with ref count = %d\n", Object_getRefCount(gene));
     return;
   } else if (Object_getRefCount(gene) < 0) {
     fprintf(stderr,"Error: Negative reference count for Gene\n"
                    "       Freeing it anyway\n");
   }
 
-//  fprintf(stderr,"  Freeing gene %p %s\n", gene, Gene_getStableId(gene));
+  //fprintf(stderr,"  Freeing gene %p %s\n", gene, Gene_getStableId(gene));
   int i;
   for (i=0; i<Gene_getTranscriptCount(gene); i++) {
     Transcript *trans = Gene_getTranscriptAt(gene, i);
     Transcript_free(trans);
   }
+
+  Vector_free(gene->transcripts);
+
   free(gene);
-//  printf("Gene_free not implemented\n");
 }
 
 /*

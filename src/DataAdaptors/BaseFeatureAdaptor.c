@@ -520,6 +520,7 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Sl
   // NIY: I need to free ProjectionSegments
   Vector_setFreeFunc(projVec, ProjectionSegment_free);
   Vector_free(projVec);
+  free(bounds);
 
   // Will only use feature_cache when set attribute no_cache in DBAdaptor
   // Condition looks slightly odd, but key will have only been set to something if
@@ -782,9 +783,8 @@ long *BaseFeatureAdaptor_generateFeatureBounds(BaseFeatureAdaptor *bfa, Slice *s
     ProjectionSegment *seg = Vector_getElementAt(entProj, i);
     bounds[i-1] = ProjectionSegment_getFromStart(seg) - Slice_getStart(slice) + 1;
 
-    // Take the opportunity to free seg
-    ProjectionSegment_free(seg);
   }
+  Vector_setFreeFunc(entProj, ProjectionSegment_free);
   Vector_free(entProj);
   Slice_free(entSlice);
 
@@ -850,6 +850,10 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
     Vector_addElement(featureCoordSystems, Slice_getCoordSystem(slice));
   } else {
     featureCoordSystems = MetaCoordContainer_fetchAllCoordSystemsByFeatureType(metaCoordContainer, tableName);
+  }
+  if (metaValues) {
+    Vector_setFreeFunc(metaValues, free);
+    Vector_free(metaValues);
   }
   
   AssemblyMapperAdaptor *ama = DBAdaptor_getAssemblyMapperAdaptor(bfa->dba);
@@ -1080,6 +1084,7 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
 
     mapper = NULL;
   }
+  Vector_free(featureCoordSystems);
 
   return panCoordFeatures;
 }

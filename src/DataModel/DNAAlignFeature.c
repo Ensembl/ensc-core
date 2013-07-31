@@ -50,8 +50,8 @@ void DNAAlignFeature_freeImpl(DNAAlignFeature *daf) {
 //    printf("return\n");
     return;
   } else if (Object_getRefCount(daf) < 0) {
-    fprintf(stderr,"Error: Negative reference count for DNAAlignFeature\n"
-                   "       Freeing it anyway\n");
+//    fprintf(stderr,"Error: Negative reference count for DNAAlignFeature\n"
+//                   "       Freeing it anyway\n");
   }
 
   //BaseAlignFeature_freePtrs((BaseAlignFeature *)daf);

@@ -200,6 +200,8 @@ TranscriptExtraData *TranscriptExtraData_new() {
 }
 
 void TranscriptExtraData_free(TranscriptExtraData *ted) {
+  Vector_free(ted->introns);
+  free(ted->exonUse);
   free(ted);
 }
 
@@ -291,7 +293,10 @@ void ModelCluster_free(ModelCluster *mc) {
     int i;
     for (i=0; i<Vector_getNumElement(mc->finalModels); i++) {
       Gene *g = Vector_getElementAt(mc->finalModels, i);
+      Transcript *t = Gene_getTranscriptAt(g, 0);
+
       if (!(g->flags & RSGGENE_KEEP)) {
+        if (t->extraData) TranscriptExtraData_free(t->extraData);
         Gene_free(g);
       }
     }
@@ -359,7 +364,7 @@ int main(int argc, char *argv[]) {
 
   RefineSolexaGenes_setOtherNum(rsg, 10);
   RefineSolexaGenes_setMaxNum(rsg, 1000);
-  RefineSolexaGenes_setMaxRecursions(rsg, 100000);
+  RefineSolexaGenes_setMaxRecursions(rsg, 10000);
   RefineSolexaGenes_setMinSingleExonLength(rsg, 1000);
   RefineSolexaGenes_setMinSingleExonCDSLength(rsg, 66);
   RefineSolexaGenes_setStrictInternalSpliceSites(rsg, 1);
@@ -383,9 +388,9 @@ int main(int argc, char *argv[]) {
 
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:300000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:3000000:1");
-//  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:30000000:1");
+  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:30000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1100000000:1");
-  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:150000000:1");
+//  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:150000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:1:1:250000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:11710000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:280000000:1");
@@ -395,12 +400,14 @@ int main(int argc, char *argv[]) {
 
   double consLims[]    = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0 };
   double nonConsLims[] = { 5.0, 10.0, 15.0, 20.0 };
+//  double consLims[]    = { 1.0 };
+//  double nonConsLims[] = { 5.0 };
 
   int i;
-  for (i=0; i<10; i++) {
+  for (i=0; i<sizeof(consLims)/sizeof(double); i++) {
     RefineSolexaGenes_setConsLim(rsg, consLims[i]);
     int j;
-    for (j=0; j<4; j++) {
+    for (j=0; j<sizeof(nonConsLims)/sizeof(double); j++) {
       RefineSolexaGenes_setNonConsLim(rsg, nonConsLims[j]);
 
       char typeName[1024];
@@ -417,17 +424,28 @@ int main(int argc, char *argv[]) {
 
       //  RefineSolexaGenes_dumpOutput(rsg);
       fprintf(stderr, "cons lim %f non cons lim %f\n", consLims[i], nonConsLims[j]);
-      dumpGenes(RefineSolexaGenes_getOutput(rsg), 1);
+      //dumpGenes(RefineSolexaGenes_getOutput(rsg), 1);
       //RefineSolexaGenes_writeOutput(rsg);
-      //tc_malloc_stats();
+      tc_malloc_stats();
       ProcUtil_timeInfo("end of main");
       fprintf(stderr,"Number of exon clone calls = %d\n",nExonClone);
 
+      int k;
+      for (k=0;k<Vector_getNumElement(rsg->output);k++) {
+        Gene *g = Vector_getElementAt(rsg->output, k);
+        Transcript *t = Gene_getTranscriptAt(g, 0);
+        if (t->extraData) {
+          TranscriptExtraData_free(t->extraData);
+        }
+      }
+      fprintf(stderr,"Started Freeing output!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
       Vector_setFreeFunc(rsg->output, Gene_free);
       Vector_free(rsg->output);
+      fprintf(stderr,"Done Freeing output!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
       rsg->output = NULL;
     }
   }
+  tc_malloc_stats();
 }
 #endif
 
@@ -601,52 +619,54 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
 
   // we want to fetch and store all the rough transcripts at the beginning - speeds things up
   // also we want to take out tiny introns - merge them into longer structures
-  Vector *genes;
-  char *modelLogicName = RefineSolexaGenes_getModelLogicName(rsg);
-  if (modelLogicName != NULL) {
-    genes = Slice_getAllGenes(geneSlice, NULL, modelLogicName, 1, NULL, NULL);
-    fprintf(stderr,"Got %d genes with logic name %s\n", Vector_getNumElement(genes), modelLogicName);
-  } else {
-    genes = Slice_getAllGenes(geneSlice, NULL, NULL, 1, NULL, NULL);
-    fprintf(stderr, "Got %d genes\n",Vector_getNumElement(genes)); 
-  }
-
-  Vector *prelimGenes = Vector_new();
-  int i;
-  for (i=0; i<Vector_getNumElement(genes); i++) {
-    Gene *gene = Vector_getElementAt(genes, i);
-
-    // put them on the chromosome
-    gene = Gene_transfer(gene, chrSlice);
-
-    // reject genes that are from a different slice that overlap our slice at the start or end
-    // say the models has to be > 10% on the slice
-    long os = Slice_getStart(slice);
-    if (Gene_getStart(gene) > Slice_getStart(slice)) {
-      os = Gene_getStart(gene);
+  if (RefineSolexaGenes_getPrelimGenes(rsg) == NULL) {
+    Vector *genes;
+    char *modelLogicName = RefineSolexaGenes_getModelLogicName(rsg);
+    if (modelLogicName != NULL) {
+      genes = Slice_getAllGenes(geneSlice, NULL, modelLogicName, 1, NULL, NULL);
+      fprintf(stderr,"Got %d genes with logic name %s\n", Vector_getNumElement(genes), modelLogicName);
+    } else {
+      genes = Slice_getAllGenes(geneSlice, NULL, NULL, 1, NULL, NULL);
+      fprintf(stderr, "Got %d genes\n",Vector_getNumElement(genes)); 
     }
-    long oe = Slice_getEnd(slice);
-    if (Gene_getEnd(gene) < Slice_getEnd(slice)) {
-      oe = Gene_getEnd(gene);
+  
+    Vector *prelimGenes = Vector_new();
+    int i;
+    for (i=0; i<Vector_getNumElement(genes); i++) {
+      Gene *gene = Vector_getElementAt(genes, i);
+  
+      // put them on the chromosome
+      gene = Gene_transfer(gene, chrSlice);
+  
+      // reject genes that are from a different slice that overlap our slice at the start or end
+      // say the models has to be > 10% on the slice
+      long os = Slice_getStart(slice);
+      if (Gene_getStart(gene) > Slice_getStart(slice)) {
+        os = Gene_getStart(gene);
+      }
+      long oe = Slice_getEnd(slice);
+      if (Gene_getEnd(gene) < Slice_getEnd(slice)) {
+        oe = Gene_getEnd(gene);
+      }
+  
+      long overlap = oe - os + 1;
+      
+      double gc = ((double)overlap / (double)Gene_getLength(gene) * 1000.0) / 10.0;
+      double sc =  ((double)overlap / (double)Slice_getLength(slice) * 1000.0) /10.0;
+      fprintf(logfp, "Gene (start %ld end %ld) has %lf %% overlap with the slice\n"
+             "Slice (%s) has %lf %% overlap with the gene\n", 
+             Gene_getStart(gene), Gene_getEnd(gene), gc, Slice_getName(slice), sc);
+      if ( gc <= 10 && sc <= 10) {
+        fprintf(logfp, "Rejecting\n");
+        continue;
+      } 
+      Vector_addElement(prelimGenes, gene);
     }
-
-    long overlap = oe - os + 1;
-    
-    double gc = ((double)overlap / (double)Gene_getLength(gene) * 1000.0) / 10.0;
-    double sc =  ((double)overlap / (double)Slice_getLength(slice) * 1000.0) /10.0;
-    fprintf(logfp, "Gene (start %ld end %ld) has %lf %% overlap with the slice\n"
-           "Slice (%s) has %lf %% overlap with the gene\n", 
-           Gene_getStart(gene), Gene_getEnd(gene), gc, Slice_getName(slice), sc);
-    if ( gc <= 10 && sc <= 10) {
-      fprintf(logfp, "Rejecting\n");
-      continue;
-    } 
-    Vector_addElement(prelimGenes, gene);
+    fprintf(stderr, "Got %d genes after filtering boundary overlaps\n", Vector_getNumElement(prelimGenes)); 
+  
+    // determine strandedness ( including splitting merged genes )
+    RefineSolexaGenes_setPrelimGenes(rsg, prelimGenes);
   }
-  fprintf(stderr, "Got %d genes after filtering boundary overlaps\n", Vector_getNumElement(prelimGenes)); 
-
-  // determine strandedness ( including splitting merged genes )
-  RefineSolexaGenes_setPrelimGenes(rsg, prelimGenes);
 
   Vector *intronBamFiles = RefineSolexaGenes_getIntronBamFiles(rsg);
 
@@ -798,6 +818,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
       for (j=0; j<exonCount; j++) {
         Exon *origExon = Vector_getElementAt(exons, j);
         Exon *exon = ExonUtils_cloneExon(origExon);
+        int exonUsed = 0; // Has this cloned exon been added to exons (used for memory management)
  
         int retainedIntron;
         int leftIntrons = 0;
@@ -1067,6 +1088,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
         if (Vector_getNumElement(retainedIntrons) > 0) {
           //#print STDERR "Dealing with " . scalar( @retained_introns ) . " retained introns \n";
           Vector *newExons = Vector_new();
+          exonUsed = 1;
           Vector_addElement(newExons, exon);
 
           // sort first by start then by end where start is the same
@@ -1147,12 +1169,16 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
                   if (!StringHash_contains(knownExons, keKey)) {
                     Vector_addElement(newExons, newExon1);
                     StringHash_add(knownExons, keKey, &trueVal);
+                  } else {
+                    Exon_freeImpl(newExon1);
                   }
   
                   sprintf(keKey,"%ld-%ld-%d",Exon_getStart(newExon2), Exon_getEnd(newExon2), Exon_getStrand(newExon2));
                   if (!StringHash_contains(knownExons, keKey)) {
                     Vector_addElement(newExons, newExon2);
                     StringHash_add(knownExons, keKey, &trueVal);
+                  } else {
+                    Exon_freeImpl(newExon2);
                   }
                 }
               }
@@ -1172,11 +1198,13 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
             }
             
             //splice( @exons,$i,1,@new_exons);
-            Vector_removeElementAt(exons, j);
+            Exon *removedExon = Vector_removeElementAt(exons, j);
+            //Exon_freeImpl(removedExon);
+            //fprintf(stderr,"Removing exon %p %ld %ld at %d\n", removedExon, Exon_getStart(removedExon), Exon_getEnd(removedExon), j);
             for (k=0; k<Vector_getNumElement(newExons); k++) {
               Exon *ex = Vector_getElementAt(newExons, k);
               Vector_insertElementAt(exons, j+k, ex);
-              //fprintf(stderr,"Adding exon %ld %ld at %d\n", Exon_getStart(ex), Exon_getEnd(ex), j+k);
+              //fprintf(stderr,"Adding exon %p %ld %ld at %d\n", ex, Exon_getStart(ex), Exon_getEnd(ex), j+k);
             }
 /*  Doesn't seem to do anything
             for ( my $i = 0 ; $i<= $#exons ; $i++ ) {
@@ -1203,6 +1231,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
         Vector_free(rightNonConsIntrons);
         Vector_free(filteredIntrons);
         Vector_free(retainedIntrons);
+        if (!exonUsed) Exon_freeImpl(exon);
       }
       StringHash_free(knownExons, NULL);
       
@@ -1365,7 +1394,10 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
           fprintf(stderr, "Now have %d models\n", Vector_getNumElement(models));
         }
 
-        if (paths) StringHash_free(paths, NULL);
+        if (paths) {
+          StringHash_free(paths, NULL);
+          fprintf(stderr,"Freeing paths %p\n",paths);
+        }
       }
 
 // NIY: Things to free
@@ -1399,13 +1431,19 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
         while (Vector_getNumElement(newClusters)) {
           Vector_append(cleanClusters, clusteredModels);
           Vector_free(clusteredModels);
+          Vector *oldNewClusters = newClusters;
           clusteredModels = RefineSolexaGenes_reclusterModels(rsg, newClusters, &newClusters);
+          Vector_free(oldNewClusters);
           fprintf(stderr, "Now have %d new clusters after reclustering\n", Vector_getNumElement(newClusters));
         }
+        Vector_free(newClusters);
+      } else if (newClusters != NULL) {
+        Vector_free(newClusters);
       }
   
       if (clusteredModels != NULL && Vector_getNumElement(clusteredModels)) {
         Vector_append(cleanClusters, clusteredModels);
+        Vector_free(clusteredModels);
       }
       
       // filter to identify 'best', 'other' and 'bad' models
@@ -1554,7 +1592,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
 //    }
     //fprintf(stderr,"Number of final models in all clusters = %d\n", nFinal);
     Vector_free(models);
-    //MallocExtension_ReleaseFreeMemory();
+    MallocExtension_ReleaseFreeMemory();
   }
 }
 
@@ -1734,12 +1772,15 @@ Vector *RefineSolexaGenes_reclusterModels(RefineSolexaGenes *rsg, Vector *cluste
         Vector_addElement(finalClusters, RefineSolexaGenes_recalculateCluster(rsg, genes));
         Vector_addElement(newClusters,   RefineSolexaGenes_recalculateCluster(rsg, otherGenes));
 // NIY: Free strandedCluster???
+        //if (strandedCluster) ModelCluster_free(strandedCluster);
       } else {
         // keep it as it was
+        Vector_free(genes);
+        Vector_free(otherGenes);
+        
         Vector_addElement(finalClusters, strandedCluster);
       }
-// NIY: Free stuff???
-
+// NIY: Free stuff??? - not sure this is the right place to do this!
     }
   }
 
@@ -2095,6 +2136,7 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
       }
     }
   }
+  Vector_free(models);
 }
 
 
@@ -2195,6 +2237,7 @@ Vector *RefineSolexaGenes_makeModels(RefineSolexaGenes *rsg, StringHash *paths, 
   // and return the clusters arranged by score
 
   Vector *modelClusters = RefineSolexaGenes_makeModelClusters(rsg, models, strand);
+  Vector_free(models);
   
   fprintf(logfp, "Starting gene cycle\n");
   // Now we cycle through all the models and turn them into genes
@@ -2575,6 +2618,7 @@ Vector *RefineSolexaGenes_makeModels(RefineSolexaGenes *rsg, StringHash *paths, 
       Gene_setStableId(newGene, stableId);
       Vector_addElement(cluster->finalModels, newGene);
     }
+    Vector_free(trans);
   }
 
   fprintf(logfp, "Done gene cycle\n");
@@ -2687,6 +2731,7 @@ Gene *RefineSolexaGenes_pruneUTR(RefineSolexaGenes *rsg, Gene *gene) {
     fprintf(stderr,"Something is wrong we have wrong number of introns compared to exons"
                    " - have %d introns, %d exons and %d features in combined vector\n", 
             Vector_getNumElement(introns), Vector_getNumElement(exons), Vector_getNumElement(features));
+    exit(1);
   }
   double averageIntron = 0;
   int intronCount = 0;
@@ -2696,12 +2741,27 @@ Gene *RefineSolexaGenes_pruneUTR(RefineSolexaGenes *rsg, Gene *gene) {
     // lets strip the UTR
 // NIY: Probably a leak here
     fprintf(stderr, "Single exon transcript\n");
-    Transcript *trimmedTran = RefineSolexaGenes_modifyTranscript(rsg, transcript, Transcript_getAllTranslateableExons(transcript));
+    Vector *translateableExons = Transcript_getAllTranslateableExons(transcript);
+
+    Vector *newExons = Vector_new();
+    Vector_addElement(newExons, ExonUtils_cloneExon(Vector_getElementAt(translateableExons, 0)));
+
+    Transcript_freeAdjustedTranslateableExons(transcript, translateableExons);
+    Vector_free(translateableExons);
+
+    Transcript *trimmedTran = RefineSolexaGenes_modifyTranscript(rsg, transcript, newExons);
+
+    Vector_free(newExons);
 
     // The naughty bit!
 // NIY: Definitely a leak here
+    Vector_free(gene->transcripts);
+
     gene->transcripts = Vector_new();
     Gene_addTranscript(gene, trimmedTran);
+
+    Vector_free(features);
+    Vector_free(exons);
     return gene;
   }
 
@@ -2729,6 +2789,8 @@ Gene *RefineSolexaGenes_pruneUTR(RefineSolexaGenes *rsg, Gene *gene) {
     exit(1);
   }
   fprintf(logfp, "Average intron depth = %lf\n", averageIntron);
+
+  Vector_free(exons);
   
   Vector *fiveP  = Vector_new();
   Vector *threeP = Vector_new();
@@ -3024,6 +3086,8 @@ Gene *RefineSolexaGenes_pruneUTR(RefineSolexaGenes *rsg, Gene *gene) {
 
   // The naughty bit!
 // NIY: Definitely a leak here
+  Vector_free(gene->transcripts);
+
   gene->transcripts = Vector_new();
   Gene_addTranscript(gene, trimmedTran);
 
@@ -3130,6 +3194,7 @@ Transcript *RefineSolexaGenes_modifyTranscript(RefineSolexaGenes *rsg, Transcrip
 // NIY: free translation strings??
   free(tranTranslationSeq);
   free(tTranslationSeq);
+  if (tran->extraData) TranscriptExtraData_free(tran->extraData);
   Transcript_free(tran);
   return t;
 }
@@ -3276,7 +3341,8 @@ int RefineSolexaGenes_processTree(RefineSolexaGenes *rsg, StringHash *hashref, c
     StrUtil_copyString(&savedSoFar, soFar, 0);
 
     int i;
-    for (i=0; i<nNode; i++) {
+    int failed = 0;
+    for (i=0; i<nNode && !failed; i++) {
       char *child = node[i];
 
       limit++;
@@ -3289,7 +3355,8 @@ int RefineSolexaGenes_processTree(RefineSolexaGenes *rsg, StringHash *hashref, c
       if (result == PT_ERROR) {
         limit = 0;
         (*recLev)--;
-        return PT_ERROR; 
+        failed = 1;
+        //return PT_ERROR; 
       }
     }
     free(savedSoFar);
@@ -3297,6 +3364,8 @@ int RefineSolexaGenes_processTree(RefineSolexaGenes *rsg, StringHash *hashref, c
       free(node[i]);
     }
     free(node);
+// Moved failed return to here so freeing of temporary data happens
+    if (failed) return PT_ERROR;
   }
   if (nNode == 0) {
     //fprintf(stderr, "path key when nNode = 0 is %s\n", soFar);
@@ -3464,6 +3533,7 @@ StringHash *RefineSolexaGenes_processPaths(RefineSolexaGenes *rsg, Vector *exons
     } else {
       fprintf(stderr,"Giving up on EXON 0: %ld - %ld - %d\n",
               Exon_getStart(firstExon), Exon_getEnd(firstExon), Exon_getStrand(firstExon));
+      StringHash_free(variants, StringHash_freeNoValFree);
 //!!!!!!!!!!! NIY What to return
       *giveUpFlag = 1;
       return NULL;
@@ -3473,6 +3543,7 @@ StringHash *RefineSolexaGenes_processPaths(RefineSolexaGenes *rsg, Vector *exons
   // work out all the possible paths given the features we have
   int result = 0;
   StringHash *paths = StringHash_new(STRINGHASH_LARGE);
+  fprintf(stderr,"making paths %p\n",paths);
   char soFar[1000000];
   for (i=0; i<Vector_getNumElement(exons) && result != PT_ERROR; i++) {
     limit = 0;
@@ -3485,6 +3556,7 @@ StringHash *RefineSolexaGenes_processPaths(RefineSolexaGenes *rsg, Vector *exons
 
     if (result == PT_ERROR) {
       fprintf(stderr, "Could not process cluster %d trying again with simpler cluster\n", i);
+      fprintf(stderr,"Freeing paths %p\n", paths);
       StringHash_free(paths, NULL);
       StringHash_free(variants, StringHash_freeNoValFree);
       return NULL;
@@ -4236,13 +4308,15 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
       if (DNAAlignFeature_getScore(f) > RefineSolexaGenes_getNonConsLim(rsg) && DNAAlignFeature_getLength(f) < 50000) {
         Vector_addElement(tmp, f);
       } else {
-        fprintf(stderr, "Rejected non_canonical feature with score %f\n", DNAAlignFeature_getScore(f));
+        //fprintf(stderr, "Rejected non_canonical feature with score %f\n", DNAAlignFeature_getScore(f));
+        DNAAlignFeature_free(f);
       }
     } else {
       if (DNAAlignFeature_getScore(f) > RefineSolexaGenes_getConsLim(rsg) && DNAAlignFeature_getLength(f) < 150000) {
         Vector_addElement(tmp, f);
       } else {
-        fprintf(stderr, "Rejected CANONICAL feature with score %f\n", DNAAlignFeature_getScore(f));
+        //fprintf(stderr, "Rejected CANONICAL feature with score %f\n", DNAAlignFeature_getScore(f));
+        DNAAlignFeature_free(f);
       }
     }
   }
@@ -5009,7 +5083,7 @@ Exon *RefineSolexaGenes_makeExon(RefineSolexaGenes *rsg, long start, long end, d
   Vector *tmpVec = Vector_new();
   Vector_addElement(tmpVec, feat);
   Exon_addSupportingFeatures(paddedExon, tmpVec);
-  free(tmpVec);
+  Vector_free(tmpVec);
 
   return paddedExon;
 }

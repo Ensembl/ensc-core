@@ -82,6 +82,11 @@ CoordSystemAdaptor *CoordSystemAdaptor_new(DBAdaptor *dba) {
           fprintf(stderr,"Unknown attrib type %s in CoordSystemAdaptor\n",attrib);
         }
       }
+
+      for (i=0; i<ntok; i++) {
+        free(tokens[i]);
+      }
+      free(tokens);
     }
 
     CoordSystem *cs = CoordSystem_new( name, version, rank, dbID, csa, seqLvl, defaultVer, 0 /*toplevel*/ );
@@ -278,7 +283,8 @@ void CoordSystemAdaptor_cacheMappingPaths(CoordSystemAdaptor *csa) {
     StringHash_add(mappingPaths, keypair, coordSystems);
   }
 
-  free(mappingStrings);
+  Vector_setFreeFunc(mappingStrings, free);
+  Vector_free(mappingStrings);
 
   // Create the pseudo coord system 'toplevel' and cache it so that only
   // one of these is created for each database.

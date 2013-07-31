@@ -241,7 +241,7 @@ void Vector_free(Vector *v) {
 
   //printf("Vector free called\n");
   if (v->isSpecial) {
-    printf(" - special vector so returning\n");
+    //printf(" - special vector so returning\n");
     return;
   }
 

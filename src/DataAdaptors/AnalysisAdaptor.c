@@ -17,7 +17,9 @@ AnalysisAdaptor *AnalysisAdaptor_new(DBAdaptor *dba) {
   aa->analCache = IDHash_new(IDHASH_SMALL);
   aa->logicNameCache = StringHash_new(STRINGHASH_SMALL);
   
-  AnalysisAdaptor_fetchAll(aa);
+// Just populating caches, so free returned array
+  Analysis **all = AnalysisAdaptor_fetchAll(aa);
+  free(all);
 
   return aa;
 }

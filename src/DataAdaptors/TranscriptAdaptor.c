@@ -577,7 +577,10 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
   TranslationAdaptor *tla = DBAdaptor_getTranslationAdaptor(ta->dba);
 
   // load all of the translations at once
-  TranslationAdaptor_fetchAllByTranscriptList(tla, transcripts);
+  Vector *tmp = TranslationAdaptor_fetchAllByTranscriptList(tla, transcripts);
+
+  // don't actually want this Vector so free (work was done in fetchAllByTranscriptList)
+  Vector_free(tmp);
   //fprintf(stderr,"Translation fetching not yet implemented in transcript adaptor\n");
 
   // Free stuff
@@ -2003,6 +2006,7 @@ Vector *TranscriptAdaptor_objectsFromStatementHandle(TranscriptAdaptor *ta,
     // Not sure what this one is????      'external_display_name' => $external_db_name,
     //  Doesn't seem to match anything in transcript object - there's external_db_name but that's not used in constructor
   }
+  IDHash_free(sliceHash, NULL);
 
   return transcripts;
 }
