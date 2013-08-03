@@ -757,11 +757,19 @@ char  *Exon_getSeqStringImpl(Exon *exon) {
     if (Exon_getStrand(exon) == -1){
 //      SeqUtil_reverseComplement(seq,strlen(seq));
       
-      //fprintf(stderr,"rev comping exon length %d\n", Exon_getLength(exon));
-      char tmpSeq[600000];
-      rev_comp(seq, tmpSeq, Exon_getLength(exon));
-      //fprintf(stderr,"after rev comping exon tmpSeq = %s\n", tmpSeq);
-      strcpy(seq,tmpSeq);
+      if (Exon_getLength(exon) > 1000000) {
+        char *tmpSeq;
+        if ((tmpSeq = (char *)calloc(Exon_getLength(exon) + 3, sizeof(char))) == NULL) {
+          fprintf(stderr, "Failed allocating temporary buffer for exon rev comp seq string\n");
+          exit(1);
+        }
+        rev_comp(seq, tmpSeq, Exon_getLength(exon));
+        strcpy(seq,tmpSeq);
+      } else {
+        char tmpSeq[1000002];
+        rev_comp(seq, tmpSeq, Exon_getLength(exon));
+        strcpy(seq,tmpSeq);
+      }
     }
   }
   Exon_setSeqCacheString(exon, seq);

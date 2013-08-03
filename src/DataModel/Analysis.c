@@ -26,11 +26,11 @@ Analysis *Analysis_new() {
   str2 = func((b)); \
   \
   if (str1 && !str2) { \
-    retVal = 1; \
+    return 1; \
   } else if (!str1 && str2) { \
     return -1; \
   } else if (str1 && str2) { \
-    if (strcmp(str1,str2)) return -1; \
+    if (strcmp(str1,str2)) { return -1; } \
   }
 
 #define COMPARE_INTS(func,a,b) \
@@ -38,15 +38,14 @@ Analysis *Analysis_new() {
   i2 = func((b)); \
   \
   if (i1 && !i2) { \
-    retVal = 1; \
+    return 1; \
   } else if (!i1 && i2) { \
     return -1; \
   } else if (i1 && i2) { \
-    if (i1 != i2) return -1; \
+    if (i1 != i2) { return -1; } \
   }
 
 int Analysis_compare(Analysis *a, Analysis *b) {
-  int retVal = 0;
   char *str1,*str2;
   int i1,i2;
 
@@ -63,7 +62,7 @@ int Analysis_compare(Analysis *a, Analysis *b) {
   COMPARE_INTS(Analysis_getModuleVersion,a,b);
   COMPARE_STRINGS(Analysis_getParameters,a,b);
   
-  return retVal;
+  return 0;
 }
 
 void Analysis_free(Analysis *anal) {

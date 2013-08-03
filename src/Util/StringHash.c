@@ -79,7 +79,7 @@ char **StringHash_getKeys(StringHash *stringHash) {
   }
   if (keyCnt != stringHash->nValue) {
     fprintf(stderr,"ERROR: Internal StringHash error - keyCnt != stringHash->nValue\n");
-    ProcUtil_showBacktrace(EnsC_progName);
+    //ProcUtil_showBacktrace(EnsC_progName);
   }
   return keys;
 }
@@ -109,7 +109,7 @@ char **StringHash_getKeysNoCopy(StringHash *stringHash) {
   }
   if (keyCnt != stringHash->nValue) {
     fprintf(stderr,"ERROR: Internal StringHash error - keyCnt != stringHash->nValue\n");
-    ProcUtil_showBacktrace(EnsC_progName);
+    //ProcUtil_showBacktrace(EnsC_progName);
   }
   return keys;
 }

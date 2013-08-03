@@ -314,25 +314,27 @@ int main(int argc, char *argv[]) {
 
   initEnsC(argc, argv);
 
+    
+
   logfp = stderr;
 
   rsg->adaptorAliasHash = StringHash_new(STRINGHASH_SMALL);
 
-  DBAdaptor *refDb = //DBAdaptor_new("genebuild1", "ensadmin", "ensembl", "th3_sheep_core", 3306, NULL);
+  DBAdaptor *refDb = DBAdaptor_new("genebuild1", "ensadmin", "ensembl", "th3_sheep_core", 3306, NULL);
                      //DBAdaptor_new("genebuild2", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL);
                      //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_ref", 13382, NULL);
-                     DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL);
+                     //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL);
   StringHash_add(rsg->adaptorAliasHash, "REFERENCE_DB", refDb);
   StringHash_add(rsg->adaptorAliasHash, "REFINED_DB", 
-                 //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_sheep_refine", 3306, refDb));
+                 DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_sheep_refine3", 3306, refDb));
                  //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
                  //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_refined", 13386, refDb));
-                 DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
+                 //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
   StringHash_add(rsg->adaptorAliasHash, "ROUGH_DB", 
-                 //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "th3_sheep_rough", 3306, refDb));
+                 DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "th3_sheep_rough", 3306, refDb));
                  //DBAdaptor_new("genebuild5", "ensadmin", "ensembl", "db8_rabbit_rough", 3306, refDb));
                  //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_rough", 13385, refDb));
-                 DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_rough", 3306, refDb));
+                 //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_rough", 3306, refDb));
 
   // Create a DBAdaptor hash
   // Not used with Bam files  RefineSolexaGenes_setIntronDb(rsg, char *intronDb);
@@ -343,10 +345,11 @@ int main(int argc, char *argv[]) {
   // Create a Vector of bam files
   Vector *intronBamFiles = Vector_new();
   
-  // Note depth 10 here
-  //Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns.bam", 0, 10, NULL));
+  // Note can change min depth here (args are file, mixedBam flag, depth, groupNames) 
+  Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns.bam", 0, 0, NULL));
   //Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns.bam", 0, 0, NULL));
-  Vector_addElement(intronBamFiles, IntronBamConfig_new("/Users/searle/rabbit/introns.bam", 0, 0, NULL));
+  //Vector_addElement(intronBamFiles, IntronBamConfig_new("/Users/searle/rabbit/introns.bam", 0, 0, NULL));
+  //Vector_addElement(intronBamFiles, IntronBamConfig_new("/nfs/ensembl/db8/rabbit_bam/introns.bam", 0, 0, NULL));
   RefineSolexaGenes_setIntronBamFiles(rsg, intronBamFiles);
 
   RefineSolexaGenes_setLogicNames(rsg, NULL);
@@ -364,8 +367,8 @@ int main(int argc, char *argv[]) {
 
   RefineSolexaGenes_setOtherNum(rsg, 10);
   RefineSolexaGenes_setMaxNum(rsg, 1000);
-  RefineSolexaGenes_setMaxRecursions(rsg, 10000);
-  RefineSolexaGenes_setMinSingleExonLength(rsg, 1000);
+  RefineSolexaGenes_setMaxRecursions(rsg, 1000000);
+  RefineSolexaGenes_setMinSingleExonLength(rsg, 750);
   RefineSolexaGenes_setMinSingleExonCDSLength(rsg, 66);
   RefineSolexaGenes_setStrictInternalSpliceSites(rsg, 1);
   RefineSolexaGenes_setStrictInternalEndSpliceSites(rsg, 1);
@@ -386,22 +389,31 @@ int main(int argc, char *argv[]) {
   Analysis *analysis = AnalysisAdaptor_fetchByLogicName(refAa, "refine_all");
   RefineSolexaGenes_setAnalysis(rsg, analysis);
 
+  if (argc > 1) {
+    RefineSolexaGenes_setInputId(rsg, argv[1]);
+  } else {
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:300000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:3000000:1");
-  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:30000000:1");
+//  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:30000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1100000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:150000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:1:1:250000000:1");
+  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:300000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:11710000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:280000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:100000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:100000000:120000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:170000000:190000000:1");
+  }
 
-  double consLims[]    = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0 };
-  double nonConsLims[] = { 5.0, 10.0, 15.0, 20.0 };
+//  double consLims[]    = { 3.0 };
+//  double nonConsLims[] = { 15.0, 20.0 };
+//  double consLims[]    = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 15.0, 20.0 };
+//  double nonConsLims[] = { 5.0, 10.0, 15.0, 20.0, 50.0 };
 //  double consLims[]    = { 1.0 };
 //  double nonConsLims[] = { 5.0 };
+  double consLims[]    = { 5.0 };
+  double nonConsLims[] = { 5.0 };
 
   int i;
   for (i=0; i<sizeof(consLims)/sizeof(double); i++) {
@@ -417,6 +429,9 @@ int main(int argc, char *argv[]) {
       sprintf(typeName, "single_exon_c%d_nc%d", (int)consLims[i], (int)nonConsLims[j]);
       RefineSolexaGenes_setSingleExonModelType(rsg, typeName);
 
+      sprintf(typeName, "refine_all_c%d_nc%d", (int)consLims[i], (int)nonConsLims[j]);
+      RefineSolexaGenes_setAnalysis(rsg, RefineSolexaGenes_createAnalysisObject(rsg, typeName));
+
       RefineSolexaGenes_fetchInput(rsg);
       RefineSolexaGenes_run(rsg);
     
@@ -424,10 +439,10 @@ int main(int argc, char *argv[]) {
 
       //  RefineSolexaGenes_dumpOutput(rsg);
       fprintf(stderr, "cons lim %f non cons lim %f\n", consLims[i], nonConsLims[j]);
-      //dumpGenes(RefineSolexaGenes_getOutput(rsg), 1);
+      dumpGenes(RefineSolexaGenes_getOutput(rsg), 1);
       //RefineSolexaGenes_writeOutput(rsg);
       tc_malloc_stats();
-      ProcUtil_timeInfo("end of main");
+      ProcUtil_timeInfo("end of loop iter");
       fprintf(stderr,"Number of exon clone calls = %d\n",nExonClone);
 
       int k;
@@ -438,14 +453,13 @@ int main(int argc, char *argv[]) {
           TranscriptExtraData_free(t->extraData);
         }
       }
-      fprintf(stderr,"Started Freeing output!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
       Vector_setFreeFunc(rsg->output, Gene_free);
       Vector_free(rsg->output);
-      fprintf(stderr,"Done Freeing output!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
       rsg->output = NULL;
     }
   }
   tc_malloc_stats();
+  return 0;
 }
 #endif
 
@@ -580,7 +594,7 @@ DBAdaptor *RefineSolexaGenes_getDbAdaptor(RefineSolexaGenes *rsg, char *alias) {
 */
 void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
   fprintf(stderr, "Fetch input\n");
-  char *logic = Analysis_getLogicName(RefineSolexaGenes_getAnalysis(rsg));
+ // Not used?? char *logic = Analysis_getLogicName(RefineSolexaGenes_getAnalysis(rsg));
   // fetch adaptors and store them for use later
   // explicitly attach the ref db
 
@@ -597,29 +611,35 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
 
   // want a slice and a full chromsome to keep everything on in the same coords
   Slice *slice = RefineSolexaGenes_fetchSequence(rsg, RefineSolexaGenes_getInputId(rsg), NULL, NULL, 0);
-  Slice *geneSlice =  SliceAdaptor_fetchByRegion(RefineSolexaGenes_getGeneSliceAdaptor(rsg),
-                                                 "toplevel",
+
+  Slice *chrSlice = NULL;
+  if (RefineSolexaGenes_getChrSlice(rsg) == NULL) {
+    chrSlice = SliceAdaptor_fetchByRegion(DBAdaptor_getSliceAdaptor(db), 
+                                                 "toplevel", 
                                                  Slice_getSeqRegionName(slice),
-                                                 Slice_getStart(slice),
-                                                 Slice_getEnd(slice),
+                                                 POS_UNDEF,
+                                                 POS_UNDEF,
                                                  1,
                                                  NULL,
                                                  0);
-
-  Slice *chrSlice = SliceAdaptor_fetchByRegion(DBAdaptor_getSliceAdaptor(db), 
-                                               "toplevel", 
-                                               Slice_getSeqRegionName(slice),
-                                               POS_UNDEF,
-                                               POS_UNDEF,
-                                               1,
-                                               NULL,
-                                               0);
-
-  RefineSolexaGenes_setChrSlice(rsg, chrSlice);
+  
+    RefineSolexaGenes_setChrSlice(rsg, chrSlice);
+  } else {
+    chrSlice = RefineSolexaGenes_getChrSlice(rsg);
+  }
 
   // we want to fetch and store all the rough transcripts at the beginning - speeds things up
   // also we want to take out tiny introns - merge them into longer structures
   if (RefineSolexaGenes_getPrelimGenes(rsg) == NULL) {
+  //if (1) {
+    Slice *geneSlice =  SliceAdaptor_fetchByRegion(RefineSolexaGenes_getGeneSliceAdaptor(rsg),
+                                                   "toplevel",
+                                                   Slice_getSeqRegionName(slice),
+                                                   Slice_getStart(slice),
+                                                   Slice_getEnd(slice),
+                                                   1,
+                                                   NULL,
+                                                   0);
     Vector *genes;
     char *modelLogicName = RefineSolexaGenes_getModelLogicName(rsg);
     if (modelLogicName != NULL) {
@@ -789,7 +809,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
       int mostRealIntrons = 0;
       double highestScore = 0;
 
-      fprintf(stderr, "%s : %ld %ld:\n", Gene_getStableId(gene), Gene_getStart(gene), Gene_getEnd(gene));
+      fprintf(stderr, "Gene %s : %ld %ld:\n", Gene_getStableId(gene), Gene_getStart(gene), Gene_getEnd(gene));
 
       Vector *exons = RefineSolexaGenes_mergeExons(rsg, gene, strand);
       Vector_sort(exons, SeqFeature_startCompFunc);
@@ -1625,11 +1645,14 @@ Analysis *RefineSolexaGenes_createAnalysisObject(RefineSolexaGenes *rsg, char *l
   Analysis *analysis = AnalysisAdaptor_fetchByLogicName(aa, logicName);
 
   if (analysis != NULL) {
+     //fprintf(stderr,"RETURNING existing analysis %p with logicName %s\n", analysis, logicName);
      return analysis;
   }
   // need to create analysis object first
   analysis = Analysis_new();
-  Analysis_setLogicName(analysis, logicName);
+  char *chP;
+  Analysis_setLogicName(analysis, StrUtil_copyString(&chP, logicName, 0)); 
+  //fprintf(stderr,"MADE NEW analysis %p with logicName %s\n", analysis, logicName);
 
   return analysis;
 }
@@ -2529,9 +2552,13 @@ Vector *RefineSolexaGenes_makeModels(RefineSolexaGenes *rsg, StringHash *paths, 
           Exon *ce = Transcript_getExonAt(tran, k);
           if (! (Exon_getPhase(ce) == -1 || Exon_getEndPhase(ce) == -1)) {
             Vector *support = Exon_getAllSupportingFeatures(ce);
-            DNAAlignFeature *daf = Vector_getElementAt(support, 0);
-
-            codingBonus += DNAAlignFeature_getScore(daf);
+            if (Vector_getNumElement(support) > 0) {
+              DNAAlignFeature *daf = Vector_getElementAt(support, 0);
+  
+              codingBonus += DNAAlignFeature_getScore(daf);
+            } else {
+              fprintf(stderr, "ERROR ERROR ERROR: Have an exon with no support: Exon %p\n", ce);
+            }
             codingExons++;
 // NIY: Free support?
           }
@@ -3218,6 +3245,8 @@ void RefineSolexaGenes_writeOutput(RefineSolexaGenes *rsg) {
 
     Gene_setAnalysis(gene, anal);
     Gene_setSource(gene, Analysis_getLogicName(anal));
+    
+    //fprintf(stderr,"Analysis set to %s\n", Analysis_getLogicName(Gene_getAnalysis(gene)));
 
     int j;
     for (j=0; j<Gene_getTranscriptCount(gene); j++) {
@@ -3427,7 +3456,7 @@ StringHash *RefineSolexaGenes_processPaths(RefineSolexaGenes *rsg, Vector *exons
           for (j=0; j<Vector_getNumElement(exInti); j++) {
             DNAAlignFeature *intron = Vector_getElementAt(exInti, j);
   
-            if (strstr(DNAAlignFeature_getHitSeqName(intron), "REMOVED")) {
+            if (strstr(DNAAlignFeature_getHitSeqName(intron), "REMOVED") == NULL) {
               Vector_addElement(intronGroup, intron);
             }
           }
@@ -3543,7 +3572,6 @@ StringHash *RefineSolexaGenes_processPaths(RefineSolexaGenes *rsg, Vector *exons
   // work out all the possible paths given the features we have
   int result = 0;
   StringHash *paths = StringHash_new(STRINGHASH_LARGE);
-  fprintf(stderr,"making paths %p\n",paths);
   char soFar[1000000];
   for (i=0; i<Vector_getNumElement(exons) && result != PT_ERROR; i++) {
     limit = 0;
@@ -3680,6 +3708,7 @@ Vector *RefineSolexaGenes_mergeExons(RefineSolexaGenes *rsg, Gene *gene, int str
   int ec = Vector_getNumElement(exons);
 
   StringHash *extraExons = RefineSolexaGenes_getExtraExons(rsg);
+// For testing!!  StringHash *extraExons = StringHash_new(STRINGHASH_SMALL);
 
   // the extra exon is a list of start end coords of the spliced intron sections
   // ie: end:start:end:start where the 1st and last coords are anchors to tie it 
@@ -4300,20 +4329,24 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
           RefineSolexaGenes_getConsLim(rsg), RefineSolexaGenes_getNonConsLim(rsg));
 
 // NIY: Need to free stuff here!!!!!
+  int nCanon = 0;
+  int nNonCanon = 0;
   Vector *tmp = Vector_new();
   for (i=0; i<Vector_getNumElement(ifs); i++) {
     DNAAlignFeature *f = Vector_getElementAt(ifs, i);
 
     if (DNAAlignFeature_getFlags(f) & RSGINTRON_NONCANON) {
-      if (DNAAlignFeature_getScore(f) > RefineSolexaGenes_getNonConsLim(rsg) && DNAAlignFeature_getLength(f) < 50000) {
+      if (DNAAlignFeature_getScore(f) >= RefineSolexaGenes_getNonConsLim(rsg) && DNAAlignFeature_getLength(f) < 50000) {
         Vector_addElement(tmp, f);
+        nNonCanon++;
       } else {
         //fprintf(stderr, "Rejected non_canonical feature with score %f\n", DNAAlignFeature_getScore(f));
         DNAAlignFeature_free(f);
       }
     } else {
-      if (DNAAlignFeature_getScore(f) > RefineSolexaGenes_getConsLim(rsg) && DNAAlignFeature_getLength(f) < 150000) {
+      if (DNAAlignFeature_getScore(f) >= RefineSolexaGenes_getConsLim(rsg) && DNAAlignFeature_getLength(f) < 200000) {
         Vector_addElement(tmp, f);
+        nCanon++;
       } else {
         //fprintf(stderr, "Rejected CANONICAL feature with score %f\n", DNAAlignFeature_getScore(f));
         DNAAlignFeature_free(f);
@@ -4323,6 +4356,7 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
   Vector_free(ifs);
   ifs = tmp;
 
+  fprintf(stderr,"Got %d canonical introns and %d non canonical introns after filtering\n", nCanon, nNonCanon);
   RefineSolexaGenes_setIntronFeatures(rsg, ifs);
 
 // Do I need this - we fetch it at the start of the function and have been adding things to it, so it shouldn't need to be set
@@ -5885,14 +5919,20 @@ int dumpGenes(Vector *genes, int withSupport) {
   int failed = 0;
   for (i=0;i<Vector_getNumElement(genes) && !failed;i++) {
     Gene *g = Vector_getElementAt(genes,i);
-    fprintf(fp,"Gene %s (%s) coords: %ld %ld %d\n",Gene_getStableId(g),(Gene_getDisplayXref(g) ? DBEntry_getDisplayId(Gene_getDisplayXref(g)) : ""),Gene_getStart(g),Gene_getEnd(g),Gene_getStrand(g));
+    fprintf(fp,"Gene %s (%s) type %s logicname %s coords: %ld %ld %d\n",Gene_getStableId(g),(Gene_getDisplayXref(g) ? DBEntry_getDisplayId(Gene_getDisplayXref(g)) : ""),Gene_getBiotype(g), Analysis_getLogicName(Gene_getAnalysis(g)), Gene_getStart(g),Gene_getEnd(g),Gene_getStrand(g));
 
     int j;
     for (j=0;j<Gene_getTranscriptCount(g);j++) {
       Transcript *t = Gene_getTranscriptAt(g,j);
       int k;
      
-      fprintf(fp," Trans %s coords: %ld %ld %d biotype: %s\n",Transcript_getStableId(t), Transcript_getStart(t),Transcript_getEnd(t),Transcript_getStrand(t),Transcript_getBiotype(t));
+      fprintf(fp," Trans %s coords: %ld %ld %d biotype: %s logicname: %s\n",
+              Transcript_getStableId(t), 
+              Transcript_getStart(t),
+              Transcript_getEnd(t),
+              Transcript_getStrand(t),
+              Transcript_getBiotype(t), 
+              Transcript_getAnalysis(t) ? Analysis_getLogicName(Transcript_getAnalysis(t)) : " NO ANALYSIS!");
       if (withSupport) {
         Vector *support = Transcript_getAllSupportingFeatures(t);
         if (support) {
@@ -5907,7 +5947,12 @@ int dumpGenes(Vector *genes, int withSupport) {
         if (intronSupport) {
           for (k=0; k<Vector_getNumElement(intronSupport); k++) {
             IntronSupportingEvidence *ise = Vector_getElementAt(intronSupport, k);
-            fprintf(fp,"   intron support %s coords: %ld %ld %d\n", IntronSupportingEvidence_getHitName(ise), IntronSupportingEvidence_getStart(ise), IntronSupportingEvidence_getEnd(ise), IntronSupportingEvidence_getStrand(ise));
+            fprintf(fp,"   intron support %s type %s coords: %ld %ld %d\n", 
+                    IntronSupportingEvidence_getHitName(ise), 
+                    Analysis_getLogicName(IntronSupportingEvidence_getAnalysis(ise)), 
+                    IntronSupportingEvidence_getStart(ise), 
+                    IntronSupportingEvidence_getEnd(ise), 
+                    IntronSupportingEvidence_getStrand(ise));
           }
         } else {
           fprintf(fp,"   no intron support\n");

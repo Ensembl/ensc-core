@@ -1354,6 +1354,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
 
   // store the analysis if it has not been stored yet
   if (!Analysis_isStored(analysis, db)) {
+    fprintf(stderr, "STORING ANALYSIS %s\n", Analysis_getLogicName(analysis));
     AnalysisAdaptor_store(analysisAdaptor, analysis);
   }
   IDType analysisId = Analysis_getDbID(analysis);

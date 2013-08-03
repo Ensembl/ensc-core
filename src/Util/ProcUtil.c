@@ -12,7 +12,7 @@
 
 #ifdef linux
 #define UNW_LOCAL_ONLY
-#include "libunwind.h"
+//#include "libunwind.h"
 #endif
 
 #ifdef __APPLE__
@@ -50,15 +50,15 @@ int ProcUtil_timeInfo(char *routine) {
 
   times(&t);
 
-  Stream_fprintf(OutStream,"----------------------------------\n");
+  Stream_fprintf(ErrStream,"----------------------------------\n");
   if (strlen(routine)) {
-    Stream_fprintf(OutStream,"Timing information %s\n",routine);
+    Stream_fprintf(ErrStream,"Timing information %s\n",routine);
   }
-  Stream_fprintf(OutStream,"User time      : %f s\n",(float)t.tms_utime/(float)CLOK_TCK);
-  Stream_fprintf(OutStream,"System time    : %f s\n",(float)t.tms_stime/(float)CLOK_TCK);
-  Stream_fprintf(OutStream,"User children  : %f s\n",(float)t.tms_cutime/(float)CLOK_TCK);
-  Stream_fprintf(OutStream,"System children: %f s\n",(float)t.tms_cstime/(float)CLOK_TCK);
-  Stream_fprintf(OutStream,"----------------------------------\n");
+  Stream_fprintf(ErrStream,"User time      : %f s\n",(float)t.tms_utime/(float)CLOK_TCK);
+  Stream_fprintf(ErrStream,"System time    : %f s\n",(float)t.tms_stime/(float)CLOK_TCK);
+  Stream_fprintf(ErrStream,"User children  : %f s\n",(float)t.tms_cutime/(float)CLOK_TCK);
+  Stream_fprintf(ErrStream,"System children: %f s\n",(float)t.tms_cstime/(float)CLOK_TCK);
+  Stream_fprintf(ErrStream,"----------------------------------\n");
 #endif
 
   return 1;
@@ -116,6 +116,7 @@ void ProcUtil_mallInfo() {
 #endif
 }
 
+#if 0
 int ProcUtil_getFileAndLine(char *prog, unw_word_t addr, char *file, size_t flen, int *line);
 
 // Adapted from code from http://blog.bigpixel.ro/2010/09/stack-unwinding-stack-trace-with-gcc/
@@ -248,3 +249,4 @@ int ProcUtil_getFileAndLine(char *prog, unw_word_t addr, char *file, size_t flen
   fprintf(stderr, "getFileAndLine not supported on this platform\n");
 #endif
 }
+#endif

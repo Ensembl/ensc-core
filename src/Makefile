@@ -1,6 +1,7 @@
 # EnsC makefile
 
-CC = cc
+#CC = /software/gcc-4.8.1/bin/gcc
+CC = gcc
 
 MYSQLCFLAGS=${shell mysql_config --cflags}
 MYSQLLIBS=${shell mysql_config --libs}
@@ -8,10 +9,16 @@ MYSQLLIBS=${shell mysql_config --libs}
 #SAMDIR=/Users/searle/progs/ensc-dependencies/bin/samtools_parallel
 #SAMDIR=/nfs/users/nfs_s/searle/src/samtools_parallel
 #SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools-0.1.18
-SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools_parallel
-ZLIBDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/include
+#SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools_parallel
+#ZLIBDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/include
+#SAMDIR=/software/ensembl/central/bin/samtools-0.1.18
+SAMDIR=/nfs/ensembl/searle/progs/production_code/ensembl-trunk_0713/samtools_parallel
+ZLIBDIR=/software/ensembl/central/include
 
 CFLAGS =  -Ofast -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
+#CFLAGS =  -Ofast -fprofile-arcs -ftest-coverage -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
+#CFLAGS =  -Ofast -fbranch-probabilities -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
+
 #LDFLAGS = $(MYSQLLIBS) -L/usr/lib/system -lSystem -L/Users/searle/progs/ensc-dependencies/lib -ltcmalloc
 LDFLAGS = $(MYSQLLIBS) -lunwind
 #CPPFLAGS = -I/Users/searle/progs/ensc-dependencies/include
@@ -254,7 +261,7 @@ Programs/moveperl: \
 Programs/RefineSolexaGenes: \
 	libensc.a \
 	Programs/RefineSolexaGenes.c
-	$(CC) $(CFLAGS) -I$(SAMDIR) -I$(ZLIBDIR) -D_PBGZF_USE -o Programs/RefineSolexaGenes Programs/RefineSolexaGenes.c -L. -lensc  -L$(SAMDIR) -lbam $(LDFLAGS)
+	$(CC) $(CFLAGS) -I$(SAMDIR) -I$(ZLIBDIR) -D_PBGZF_USE -o Programs/RefineSolexaGenes Programs/RefineSolexaGenes.c Util/translate.c -L. -lensc  -L$(SAMDIR) -lbam $(LDFLAGS)
 
 Tests/AssemblyMapperTest: \
 	libensc.a \
