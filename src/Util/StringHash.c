@@ -36,6 +36,9 @@ StringHash *StringHash_new(StringHashSizes size) {
     case STRINGHASH_LARGE:
       stringHash->size = 104711; 
       break;
+    case STRINGHASH_HUGE:
+      stringHash->size = 1000039; 
+      break;
     case STRINGHASH_MEDIUM:
     default:
       stringHash->size = 32353; 
@@ -144,6 +147,35 @@ void *StringHash_getValues(StringHash *stringHash) {
     fprintf(stderr,"ERROR: Internal StringHash error - valCnt != stringHash->nValue\n");
   }
   return values;
+}
+
+void StringHash_printHashStats(StringHash *stringHash, char *hashDesc) {
+  int nOccupiedBuckets = 0;
+  int nMultipleOccupied = 0;
+  int maxInBucket = 0;
+  int nValues = 0;
+
+  int i;
+  for (i=0; i<stringHash->size; i++) {
+    if (stringHash->bucketCounts[i]) {
+      nOccupiedBuckets++;
+      if (stringHash->bucketCounts[i] > 1) {
+        nMultipleOccupied++;
+      }
+      if (stringHash->bucketCounts[i] > maxInBucket) {
+        maxInBucket = stringHash->bucketCounts[i];
+      }
+      nValues += stringHash->bucketCounts[i];
+    }
+  }
+
+  fprintf(stderr, "\nString Hash statistics for %s hash\n", hashDesc);
+  fprintf(stderr, "   Size of hash (number of buckets)    = %d\n", stringHash->size);
+  fprintf(stderr, "   Number of values stored             = %d\n", nValues);
+  fprintf(stderr, "   Load factor                         = %f\n", (float)nValues/(float)stringHash->size);
+  fprintf(stderr, "   Number of buckets used              = %d\n", nOccupiedBuckets);
+  fprintf(stderr, "   Number of multiply occupied buckets = %d\n", nMultipleOccupied);
+  fprintf(stderr, "   Max num value in a single bucket    = %d\n\n", maxInBucket);
 }
 
 void *StringHash_getValue(StringHash *stringHash, char *key) {

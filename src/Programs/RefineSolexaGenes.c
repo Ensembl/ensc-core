@@ -314,8 +314,6 @@ int main(int argc, char *argv[]) {
 
   initEnsC(argc, argv);
 
-    
-
   logfp = stderr;
 
   rsg->adaptorAliasHash = StringHash_new(STRINGHASH_SMALL);
@@ -326,7 +324,7 @@ int main(int argc, char *argv[]) {
                      //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL);
   StringHash_add(rsg->adaptorAliasHash, "REFERENCE_DB", refDb);
   StringHash_add(rsg->adaptorAliasHash, "REFINED_DB", 
-                 DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_sheep_refine3", 3306, refDb));
+                 DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_sheep_refine5", 3306, refDb));
                  //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
                  //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_refined", 13386, refDb));
                  //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
@@ -346,7 +344,8 @@ int main(int argc, char *argv[]) {
   Vector *intronBamFiles = Vector_new();
   
   // Note can change min depth here (args are file, mixedBam flag, depth, groupNames) 
-  Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns.bam", 0, 0, NULL));
+  //Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns.bam", 0, 0, NULL));
+  Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns_ch7.bam", 0, 0, NULL));
   //Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns.bam", 0, 0, NULL));
   //Vector_addElement(intronBamFiles, IntronBamConfig_new("/Users/searle/rabbit/introns.bam", 0, 0, NULL));
   //Vector_addElement(intronBamFiles, IntronBamConfig_new("/nfs/ensembl/db8/rabbit_bam/introns.bam", 0, 0, NULL));
@@ -368,7 +367,7 @@ int main(int argc, char *argv[]) {
   RefineSolexaGenes_setOtherNum(rsg, 10);
   RefineSolexaGenes_setMaxNum(rsg, 1000);
   RefineSolexaGenes_setMaxRecursions(rsg, 1000000);
-  RefineSolexaGenes_setMinSingleExonLength(rsg, 750);
+  RefineSolexaGenes_setMinSingleExonLength(rsg, 1000);
   RefineSolexaGenes_setMinSingleExonCDSLength(rsg, 66);
   RefineSolexaGenes_setStrictInternalSpliceSites(rsg, 1);
   RefineSolexaGenes_setStrictInternalEndSpliceSites(rsg, 1);
@@ -398,8 +397,8 @@ int main(int argc, char *argv[]) {
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1100000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:150000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:1:1:250000000:1");
-  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:300000:1");
-//  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:11710000:1");
+//  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:300000:1");
+  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:11710000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:280000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:100000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:100000000:120000000:1");
@@ -408,12 +407,15 @@ int main(int argc, char *argv[]) {
 
 //  double consLims[]    = { 3.0 };
 //  double nonConsLims[] = { 15.0, 20.0 };
-//  double consLims[]    = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 15.0, 20.0 };
-//  double nonConsLims[] = { 5.0, 10.0, 15.0, 20.0, 50.0 };
+  double consLims[]    = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 20.0 };
+  double nonConsLims[] = { 5.0, 10.0, 15.0, 20.0, 50.0 };
 //  double consLims[]    = { 1.0 };
 //  double nonConsLims[] = { 5.0 };
-  double consLims[]    = { 5.0 };
-  double nonConsLims[] = { 5.0 };
+//  double consLims[]    = { 5.0 };
+//  double nonConsLims[] = { 5.0 };
+//  double consLims[]    = { 10.0 };
+//  double nonConsLims[] = { 20.0, 50.0 };
+//  double nonConsLims[] = { 5.0, 10.0, 15.0, 20.0, 50.0 };
 
   int i;
   for (i=0; i<sizeof(consLims)/sizeof(double); i++) {
@@ -440,7 +442,7 @@ int main(int argc, char *argv[]) {
       //  RefineSolexaGenes_dumpOutput(rsg);
       fprintf(stderr, "cons lim %f non cons lim %f\n", consLims[i], nonConsLims[j]);
       dumpGenes(RefineSolexaGenes_getOutput(rsg), 1);
-      //RefineSolexaGenes_writeOutput(rsg);
+      RefineSolexaGenes_writeOutput(rsg);
       tc_malloc_stats();
       ProcUtil_timeInfo("end of loop iter");
       fprintf(stderr,"Number of exon clone calls = %d\n",nExonClone);
@@ -908,8 +910,9 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
             // left and right in order to determine whether to put in 
             // a non consensus intron
             if (DNAAlignFeature_getEnd(intron) <= Exon_getEnd(exon)) {
-              if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) {
-                if (Intron_getScore(intron) > 1) {
+              //if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) {
+              if (DNAAlignFeature_getFlags(intron) & RSGINTRON_NONCANON) {
+                if (DNAAlignFeature_getScore(intron) > 1) {
                   Vector_addElement(leftNonConsIntrons, intron);
                 }
               } else {
@@ -917,8 +920,9 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
               }
             }
             if (DNAAlignFeature_getStart(intron) >= Exon_getStart(exon)) {
-              if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) {
-                if (Intron_getScore(intron) > 1) {
+              //if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) {
+              if (DNAAlignFeature_getFlags(intron) & RSGINTRON_NONCANON) {
+                if (DNAAlignFeature_getScore(intron) > 1) {
                   Vector_addElement(rightNonConsIntrons, intron);
                 }
               } else {
@@ -1160,7 +1164,8 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
                 //fprintf(stderr, "RETAINED INTRON PENALTY for %s before %f", DNAAlignFeature_getHitSeqName(intron), DNAAlignFeature_getScore(intron));
                 rejectScore = DNAAlignFeature_getScore(intron) - RefineSolexaGenes_getRetainedIntronPenalty(rsg);
                 // intron penalty is doubled for nc introns 
-                if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) {
+                //if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) {
+                if (DNAAlignFeature_getFlags(intron) & RSGINTRON_NONCANON) {
                   rejectScore = rejectScore - RefineSolexaGenes_getRetainedIntronPenalty(rsg);
                 }
                 //fprintf(stderr, " after %f\n",rejectScore);
@@ -2364,7 +2369,8 @@ Vector *RefineSolexaGenes_makeModels(RefineSolexaGenes *rsg, StringHash *paths, 
 
           intronCount++;
           intronScore += DNAAlignFeature_getScore(intron);
-          if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) {
+          if (DNAAlignFeature_getFlags(intron) & RSGINTRON_NONCANON) {
+          //if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) {
             nonConIntrons++;
           }
 
@@ -2383,8 +2389,9 @@ Vector *RefineSolexaGenes_makeModels(RefineSolexaGenes *rsg, StringHash *paths, 
           IntronSupportingEvidence_setScore(ise, DNAAlignFeature_getScore(intron));
           IntronSupportingEvidence_setScoreType(ise, "DEPTH");
           Intron_free(intronFeat);
-
-          if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) {
+    
+          if (DNAAlignFeature_getFlags(intron) & RSGINTRON_NONCANON) {
+          //if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) {
             IntronSupportingEvidence_setIsSpliceCanonical(ise, 0);
           } else {
             IntronSupportingEvidence_setIsSpliceCanonical(ise, 1);
@@ -3920,7 +3927,8 @@ Vector *RefineSolexaGenes_mergeExons(RefineSolexaGenes *rsg, Gene *gene, int str
  //#     print "INTRON " . $intron->start . " " . $intron->end . " " , $intron->strand ." " , $intron->score ."\n";
 
       //# ignore non consensus introns at this point
-      if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) continue;
+      if (DNAAlignFeature_getFlags(intron) & RSGINTRON_NONCANON) continue;
+      //if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) continue;
 
       if (DNAAlignFeature_getStart(intron) > Exon_getStart(prevExon) &&
           DNAAlignFeature_getEnd(intron) <  Exon_getEnd(exon) && 
@@ -4152,6 +4160,9 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
   char sliceName[2048];
   strcpy(sliceName, StrUtil_strReplChr(Slice_getName(chrSlice), '.', '*'));
 
+  char sliceRegName[2048];
+  strcpy(sliceRegName, StrUtil_strReplChr(Slice_getSeqRegionName(chrSlice), '.', '*'));
+
   Analysis *analysis = RefineSolexaGenes_getAnalysis(rsg);
   CachingSequenceAdaptor *cachingSeqAdaptor = DBAdaptor_getCachingSequenceAdaptor(Slice_getAdaptor(chrSlice)->dba);
 
@@ -4169,7 +4180,8 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
 
     char name[2048];
     if (length > 0) {
-      sprintf(name,"%s:%ld:%ld:%d:", sliceName,
+      //sprintf(name,"%s:%ld:%ld:%d:", sliceName,
+      sprintf(name,"%s:%ld:%ld:%d:", sliceRegName,
                                      ic->prevExonEnd+1,
                                      ic->nextExonStart-1,
                                      ic->strand);
@@ -4736,6 +4748,9 @@ Vector *RefineSolexaGenes_dnaToExtraExons(RefineSolexaGenes *rsg, long start, lo
 
 =cut
 */
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// Note NOTE Note: This code is not currently in use and probably needs some fixing up to match the Bam reading code
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void RefineSolexaGenes_dnaToIntronFeatures(RefineSolexaGenes *rsg, long start, long end) {
 // Unused  my $rough_genes = $self->prelim_genes;
   SliceAdaptor *intronSliceAdaptor = RefineSolexaGenes_getIntronSliceAdaptor(rsg);
@@ -4831,6 +4846,9 @@ void RefineSolexaGenes_dnaToIntronFeatures(RefineSolexaGenes *rsg, long start, l
   char sliceName[2048];
   strcpy(sliceName, StrUtil_strReplChr(Slice_getName(chrSlice), '.', '*'));
 
+  char sliceRegName[2048];
+  strcpy(sliceRegName, StrUtil_strReplChr(Slice_getSeqRegionName(chrSlice), '.', '*'));
+
   IntronCoords **icArray = StringHash_getValues(idList);
 
   for (i=0; i<StringHash_getNumValues(idList); i++) {
@@ -4839,7 +4857,7 @@ void RefineSolexaGenes_dnaToIntronFeatures(RefineSolexaGenes *rsg, long start, l
 
     char name[2048];
     if (length > 0) {
-      sprintf(name,"%s:%ld:%ld:%d:%s", sliceName, 
+      sprintf(name,"%s:%ld:%ld:%d:%s", sliceRegName, 
                                        ic->prevExonEnd+1, 
                                        ic->nextExonStart-1, 
                                        ic->strand, 
@@ -4860,6 +4878,10 @@ void RefineSolexaGenes_dnaToIntronFeatures(RefineSolexaGenes *rsg, long start, l
       char cigStr[256];
       sprintf(cigStr, "%ldM", length);
       DNAAlignFeature_setCigarString(intFeat, cigStr);
+
+      if (ic->isCanonical == 0) {
+        DNAAlignFeature_addFlag(intFeat, RSGINTRON_NONCANON);
+      }
 
       Vector_addElement(intFeats, intFeat);
     }

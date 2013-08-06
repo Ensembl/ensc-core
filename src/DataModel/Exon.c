@@ -765,6 +765,7 @@ char  *Exon_getSeqStringImpl(Exon *exon) {
         }
         rev_comp(seq, tmpSeq, Exon_getLength(exon));
         strcpy(seq,tmpSeq);
+        free(tmpSeq);
       } else {
         char tmpSeq[1000002];
         rev_comp(seq, tmpSeq, Exon_getLength(exon));

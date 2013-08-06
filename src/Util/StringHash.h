@@ -6,7 +6,8 @@
 typedef enum StringHashSizesEnum {
   STRINGHASH_SMALL,
   STRINGHASH_MEDIUM,
-  STRINGHASH_LARGE
+  STRINGHASH_LARGE,
+  STRINGHASH_HUGE
 } StringHashSizes;
 
 typedef struct KeyValuePairStruct {
@@ -23,6 +24,7 @@ typedef struct StringHashStruct {
 } StringHash;
 
 
+void StringHash_printHashStats(StringHash *stringHash, char *hashDesc);
 StringHash *StringHash_new(StringHashSizes size);
 int     StringHash_add(StringHash *stringHash, char *string, void *val);
 int     StringHash_contains(StringHash *stringHash, char *string);

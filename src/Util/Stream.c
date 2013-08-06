@@ -249,10 +249,10 @@ int Stream_setDefaults(int HistFlag) {
 /* Error to stdout */
   ErrStream->Type = UNIXSTREAM;
   ErrStream->Mode = INTERACTIVE;
-  strcpy(ErrStream->Fname, "stdout");
-  ErrStream->File = stdout;
+  strcpy(ErrStream->Fname, "stderr");
+  ErrStream->File = stderr;
   ErrStream->TeeFile = NULL;
-  ErrStream->FilNo=fileno(stdout);
+  ErrStream->FilNo=fileno(stderr);
 
 /* History to temporary history file */
   HistStream->Type = UNIXSTREAM;
