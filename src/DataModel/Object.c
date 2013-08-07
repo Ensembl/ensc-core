@@ -17,6 +17,7 @@ void Object_errorUnimplementedMethod(Object *obj, char *methodName) {
   exit(1);
 }
 
+/* For debugging
 void Object_incRefCount(Object *obj) {
   if (obj->referenceCount > 0 && obj->objectType == CLASS_EXON) {
     fprintf(stderr,"INCREMEMTING REFERENCE COUNT FOR OBJECT %p to %d\n", obj, obj->referenceCount+1);
@@ -30,3 +31,4 @@ void Object_decRefCount(Object *obj) {
   }
   obj->referenceCount--;
 }
+*/

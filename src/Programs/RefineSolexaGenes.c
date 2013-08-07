@@ -407,13 +407,14 @@ int main(int argc, char *argv[]) {
 
 //  double consLims[]    = { 3.0 };
 //  double nonConsLims[] = { 15.0, 20.0 };
-  double consLims[]    = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 20.0 };
-  double nonConsLims[] = { 5.0, 10.0, 15.0, 20.0, 50.0 };
+//  double consLims[]    = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 20.0 };
+//  double nonConsLims[] = { 5.0, 10.0, 15.0, 20.0, 50.0 };
 //  double consLims[]    = { 1.0 };
 //  double nonConsLims[] = { 5.0 };
 //  double consLims[]    = { 5.0 };
 //  double nonConsLims[] = { 5.0 };
-//  double consLims[]    = { 10.0 };
+  double consLims[]    = { 10.0 };
+  double nonConsLims[] = { 10.0 };
 //  double nonConsLims[] = { 20.0, 50.0 };
 //  double nonConsLims[] = { 5.0, 10.0, 15.0, 20.0, 50.0 };
 
@@ -442,7 +443,7 @@ int main(int argc, char *argv[]) {
       //  RefineSolexaGenes_dumpOutput(rsg);
       fprintf(stderr, "cons lim %f non cons lim %f\n", consLims[i], nonConsLims[j]);
       dumpGenes(RefineSolexaGenes_getOutput(rsg), 1);
-      RefineSolexaGenes_writeOutput(rsg);
+      //RefineSolexaGenes_writeOutput(rsg);
       tc_malloc_stats();
       ProcUtil_timeInfo("end of loop iter");
       fprintf(stderr,"Number of exon clone calls = %d\n",nExonClone);
@@ -1919,15 +1920,39 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
       // they proably need to be rejected on the basis of coding overlap
       if (( fc->start >= rc->start && fc->end <= rc->end) || 
           ( rc->start >= fc->start && rc->end <= fc->end))  {
-        fprintf(stderr, "Overlapping clusters on two strands fwd one = %ld %ld rev one = %ld %ld\n", fc->start, fc->end, rc->start, rc->end);
         
         // do they have coding overlap?
         Vector *fgs = fc->finalModels;
         Vector *rgs = rc->finalModels;
 
+        fprintf(stderr, "Overlapping clusters on two strands fwd one = %ld %ld (%d members) rev one = %ld %ld (%d members)\n", 
+                fc->start, fc->end, Vector_getNumElement(fgs), rc->start, rc->end, Vector_getNumElement(rgs));
+
+// Optimisation - precalculate translation lengths and translataebale exons for reverse genes so don't do millions of translate and translateable exon calls in loop!
+        long *revLengths;
+        if ((revLengths = (long *)calloc(Vector_getNumElement(rgs), sizeof(long))) == NULL) {
+          fprintf(stderr, "Failed allocating array for reverse gene lengths\n");
+          exit(1);
+        }
+        Vector *revTranslateable = Vector_new();
+        int k;
+        for (k=0; k<Vector_getNumElement(rgs); k++) {
+          Gene *rg = Vector_getElementAt(rgs, k);
+          Transcript *rt = Gene_getTranscriptAt(rg, 0);
+
+          if (!Transcript_getTranslation(rt)) {
+            continue;
+          }
+
+          char *revTranslatedSeq = Transcript_translate(rt);
+          revLengths[k] = strlen(revTranslatedSeq);
+          free(revTranslatedSeq);
+
+          Vector_addElement(revTranslateable, Transcript_getAllTranslateableExons(rt));
+        }
+
         // do they have coding overlap?
 //      FG: 
-        int k;
         for (k=0; k<Vector_getNumElement(fgs); k++) {
           Gene *fg = Vector_getElementAt(fgs, k);
           Transcript *ft = Gene_getTranscriptAt(fg, 0);
@@ -1941,40 +1966,40 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
           char *fwdTranslatedSeq = Transcript_translate(ft);
           int lenFwdTranslation = strlen(fwdTranslatedSeq);
           free(fwdTranslatedSeq);
-          //if (Translation_getLength(Transcript_getTranslation(ft)) <= 100) 
+
           if (lenFwdTranslation <= 100) {
             Gene_setBiotype(fg, "bad");
             // Do an else instead next FG;
           } else {
-
-            int m;
-// Maybe leak here - translateableExons can be allocated
             Vector *ftTranslateableExons = Transcript_getAllTranslateableExons(ft);
-            for (m=0; m<Vector_getNumElement(ftTranslateableExons) && !done; m++) {
-              Exon *fe = Vector_getElementAt(ftTranslateableExons,  m);
-
 //            RG: 
-              int n;
-              for (n=0; n<Vector_getNumElement(rgs) && !done; n++) {
-                Gene *rg = Vector_getElementAt(rgs, n);
-                Transcript *rt = Gene_getTranscriptAt(rg, 0);
+            int n;
+            for (n=0; n<Vector_getNumElement(rgs) && !done; n++) {
+              if (revLengths[n] == -1) {
+                // Already set to bad - skip
+                continue;
+              }
+              Gene *rg = Vector_getElementAt(rgs, n);
+              Transcript *rt = Gene_getTranscriptAt(rg, 0);
 
 // Next what?????
-                if (!Transcript_getTranslation(rt)) {
-                  continue;
-                }
+              if (!Transcript_getTranslation(rt)) {
+                continue;
+              }
 
-                char *revTranslatedSeq = Transcript_translate(rt);
-                int lenRevTranslation = strlen(revTranslatedSeq);
-                free(revTranslatedSeq);
+              int lenRevTranslation = revLengths[n];
 
-//                if (Translation_getLength(Transcript_getTranslation(rt)) <=  100 ) 
-                if (lenRevTranslation <= 100) {
-                  Gene_setBiotype(rg, "bad");
+              if (lenRevTranslation <= 100) {
+                Gene_setBiotype(rg, "bad");
+                // Naughty - set revLengths to -1 to indicate we've flagged it as bad
+                revLengths[n] = -1;
                   // Do an else instead next RG;
-                } else {
+              } else {
+                int m;
+                for (m=0; m<Vector_getNumElement(ftTranslateableExons) && !done; m++) {
+                  Exon *fe = Vector_getElementAt(ftTranslateableExons,  m);
                   int p;
-                  Vector *rtTranslateableExons = Transcript_getAllTranslateableExons(rt);
+                  Vector *rtTranslateableExons = Vector_getElementAt(revTranslateable, n);
                   for (p=0; p<Vector_getNumElement(rtTranslateableExons) && !done; p++) {
                     Exon *re = Vector_getElementAt(rtTranslateableExons, p);
 
@@ -1998,8 +2023,9 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
                       done = 1;
                     }
                   }
-                  Transcript_freeAdjustedTranslateableExons(rt, rtTranslateableExons);
-                  Vector_free(rtTranslateableExons);
+                  // Now Done after loop
+                  //Transcript_freeAdjustedTranslateableExons(rt, rtTranslateableExons);
+                  //Vector_free(rtTranslateableExons);
                 }
               }
             }
@@ -2007,6 +2033,19 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
             Vector_free(ftTranslateableExons);
           }
         }
+        for (k=0; k<Vector_getNumElement(rgs); k++) {
+          Gene *rg = Vector_getElementAt(rgs, k);
+          Transcript *rt = Gene_getTranscriptAt(rg, 0);
+
+          if (!Transcript_getTranslation(rt)) {
+            continue;
+          }
+          Vector *rtTranslateableExons = Vector_getElementAt(revTranslateable, k);
+          Transcript_freeAdjustedTranslateableExons(rt, rtTranslateableExons);
+          Vector_free(rtTranslateableExons);
+        }
+        Vector_free(revTranslateable);
+        free(revLengths);
       }
     }
   }
@@ -2449,7 +2488,7 @@ Vector *RefineSolexaGenes_makeModels(RefineSolexaGenes *rsg, StringHash *paths, 
         Vector_free(newExons);
         Vector_free(introns);
 // NIY: Free stuff??
-        fprintf(stderr,"TOOSHORT 1 continue\n");
+        //fprintf(stderr,"TOOSHORT 1 continue\n");
         continue;
       }
       
@@ -3901,8 +3940,6 @@ Vector *RefineSolexaGenes_mergeExons(RefineSolexaGenes *rsg, Gene *gene, int str
 // NIY: Free removed exon??
       Exon_free(toRemove);
 
-      
-
       i--;
 //#      @exons =  sort { $a->start <=> $b->start } @exons;
     }
@@ -5144,6 +5181,52 @@ Exon *RefineSolexaGenes_makeExon(RefineSolexaGenes *rsg, long start, long end, d
   return paddedExon;
 }
 
+// Take the set of rough transcripts, and merge all that overlap with each other, to simplify
+// the set, and hopefully make it easier to generate longer models
+/*
+Vector *RefineSolexaGenes_collapseTranscripts(RefineSolexaGenes *rsg, Vector *transcripts) {
+  Vector *collapsedTranscripts = Vector_new();
+
+// Make clusters
+  int i;
+  for (i=0; i<; i++) {
+  }
+  
+    
+// for each cluster
+  for (i=0; i<; i++) {
+// AIM: Make a single new transcripts which contains the collapsed exon ranges from all the others in the cluster
+//   Make a range registry and add all the exon ranges from all the transcripts in to it
+    RangeRegistry *reg = RangeRegistry_new();
+
+    int j;
+    for (j=0; j<; j++) {
+      Transcript *trans = Gene_getTranscriptAt(gene, 0);
+      int k;
+      for (k=0;k<Transcript_getExonCount(trans); k++) {
+        RangeRegistry_checkAndRegister(reg, (IDType)cluster, Exon_getStart(exon), Exon_getEnd(exon), 
+                                       Exon_getStart(exon), Exon_getEnd(exon), 1);
+      }
+    }
+
+//   Read out the ranges and make them into exons
+    Vector *ranges = RangeRegistry_getRanges(reg, cluster);
+    for (j=0; j<Vector_getNumElement(ranges); j++) {
+      CoordPair *range = Vector_getElementAt(ranges, j);
+      Exon *newEx = Exon_new();
+      Exon_setStart(newEx, 
+//   Add exons into new transcript
+
+//   Add support??
+//   Add into new Transcripts vector
+    RangeRegistry_free(reg);
+// Done cluster
+  }
+
+// Return new transcripts vector
+  return collapsedTranscripts;
+}
+*/
  
 //##################################################################
 //# Containers
