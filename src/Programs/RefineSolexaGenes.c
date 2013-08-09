@@ -324,7 +324,7 @@ int main(int argc, char *argv[]) {
                      //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL);
   StringHash_add(rsg->adaptorAliasHash, "REFERENCE_DB", refDb);
   StringHash_add(rsg->adaptorAliasHash, "REFINED_DB", 
-                 DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_sheep_refine5", 3306, refDb));
+                 DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_sheep_refine6", 3306, refDb));
                  //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
                  //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_refined", 13386, refDb));
                  //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
@@ -398,9 +398,10 @@ int main(int argc, char *argv[]) {
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:150000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:1:1:250000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:300000:1");
-  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:11710000:1");
+//  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:11710000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:280000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:100000000:1");
+  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:17");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:100000000:120000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:170000000:190000000:1");
   }
@@ -413,8 +414,10 @@ int main(int argc, char *argv[]) {
 //  double nonConsLims[] = { 5.0 };
 //  double consLims[]    = { 5.0 };
 //  double nonConsLims[] = { 5.0 };
-  double consLims[]    = { 10.0 };
-  double nonConsLims[] = { 10.0 };
+//  double consLims[]    = { 10.0 };
+//  double nonConsLims[] = { 10.0 };
+  double consLims[]    = { 5.0 };
+  double nonConsLims[] = { 20.0 };
 //  double nonConsLims[] = { 20.0, 50.0 };
 //  double nonConsLims[] = { 5.0, 10.0, 15.0, 20.0, 50.0 };
 
@@ -1929,7 +1932,7 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
                 fc->start, fc->end, Vector_getNumElement(fgs), rc->start, rc->end, Vector_getNumElement(rgs));
 
 // Optimisation - precalculate translation lengths and translataebale exons for reverse genes so don't do millions of translate and translateable exon calls in loop!
-        long *revLengths;
+        long *revLengths = NULL;
         if ((revLengths = (long *)calloc(Vector_getNumElement(rgs), sizeof(long))) == NULL) {
           fprintf(stderr, "Failed allocating array for reverse gene lengths\n");
           exit(1);
@@ -1944,11 +1947,19 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
             continue;
           }
 
+/* Do length by summing lengths of translateable exons - much quicker
           char *revTranslatedSeq = Transcript_translate(rt);
           revLengths[k] = strlen(revTranslatedSeq);
           free(revTranslatedSeq);
-
-          Vector_addElement(revTranslateable, Transcript_getAllTranslateableExons(rt));
+*/
+          Vector *revTranslateableExons = Transcript_getAllTranslateableExons(rt);
+          Vector_setElementAt(revTranslateable, k, revTranslateableExons);
+          int m;
+          for (m=0;m<Vector_getNumElement(revTranslateableExons);m++) {
+            Exon *e = Vector_getElementAt(revTranslateableExons, m);
+            revLengths[k] += Exon_getLength(e);
+          }
+          revLengths[k] /= 3;
         }
 
         // do they have coding overlap?
@@ -1963,15 +1974,25 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
             continue;
           }
 
+/*
           char *fwdTranslatedSeq = Transcript_translate(ft);
           int lenFwdTranslation = strlen(fwdTranslatedSeq);
           free(fwdTranslatedSeq);
+*/
+
+          Vector *ftTranslateableExons = Transcript_getAllTranslateableExons(ft);
+          int lenFwdTranslation = 0;
+          int m;
+          for (m=0;m<Vector_getNumElement(ftTranslateableExons);m++) {
+            Exon *e = Vector_getElementAt(ftTranslateableExons, m);
+            lenFwdTranslation += Exon_getLength(e);
+          }
+          lenFwdTranslation /= 3;
 
           if (lenFwdTranslation <= 100) {
             Gene_setBiotype(fg, "bad");
             // Do an else instead next FG;
           } else {
-            Vector *ftTranslateableExons = Transcript_getAllTranslateableExons(ft);
 //            RG: 
             int n;
             for (n=0; n<Vector_getNumElement(rgs) && !done; n++) {
@@ -1995,7 +2016,6 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
                 revLengths[n] = -1;
                   // Do an else instead next RG;
               } else {
-                int m;
                 for (m=0; m<Vector_getNumElement(ftTranslateableExons) && !done; m++) {
                   Exon *fe = Vector_getElementAt(ftTranslateableExons,  m);
                   int p;
@@ -2029,9 +2049,9 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
                 }
               }
             }
-            Transcript_freeAdjustedTranslateableExons(ft, ftTranslateableExons);
-            Vector_free(ftTranslateableExons);
           }
+          Transcript_freeAdjustedTranslateableExons(ft, ftTranslateableExons);
+          Vector_free(ftTranslateableExons);
         }
         for (k=0; k<Vector_getNumElement(rgs); k++) {
           Gene *rg = Vector_getElementAt(rgs, k);
@@ -2041,8 +2061,13 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
             continue;
           }
           Vector *rtTranslateableExons = Vector_getElementAt(revTranslateable, k);
-          Transcript_freeAdjustedTranslateableExons(rt, rtTranslateableExons);
-          Vector_free(rtTranslateableExons);
+          if (rtTranslateableExons != NULL) {
+            Transcript_freeAdjustedTranslateableExons(rt, rtTranslateableExons);
+            Vector_free(rtTranslateableExons);
+          } else {
+        //    fprintf(stderr,"NULL rtTranslateableExons\n");
+        //    exit(1);
+          }
         }
         Vector_free(revTranslateable);
         free(revLengths);
@@ -4406,6 +4431,7 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
   ifs = tmp;
 
   fprintf(stderr,"Got %d canonical introns and %d non canonical introns after filtering\n", nCanon, nNonCanon);
+
   RefineSolexaGenes_setIntronFeatures(rsg, ifs);
 
 // Do I need this - we fetch it at the start of the function and have been adding things to it, so it shouldn't need to be set
@@ -5757,6 +5783,132 @@ void ORFRange_free(ORFRange *orfRange) {
   free(orfRange);
 }
 
+// Attempt at version of generateORFRanges which does nonMet and Met in one go
+Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMet, int minLength, int allowReverse) {
+  long len;
+  int frame;
+  long start;
+  long end;
+  char *orf;
+  char *metOrf;
+  int i;
+  Vector *metOrfRanges = Vector_new();
+  Vector *otherOrfRanges = Vector_new();
+
+
+  int   lengths[6];
+  char *aaSeq[6];
+  char *endAaSeq[6];
+
+  char *mRNA = Transcript_getSplicedSeq(transcript);
+
+  int lenmRNA = strlen(mRNA);
+  
+  for (i=0;i<6;i++) {
+    aaSeq[i] = (char *)malloc(lenmRNA/3 + 2);
+  }
+
+  long codonTableId = 1;
+
+  //fprintf(stderr, "translateable seq = %s\n",mRNA);
+  translate(mRNA, aaSeq, lengths, codonTableId, lenmRNA);
+
+  for (i=0;i<6;i++) {
+    endAaSeq[i] = aaSeq[i] + lengths[i];
+    //fprintf(stderr,"aaSeq[%d] = %s\n",i,aaSeq[i]);
+  }
+
+  free(mRNA);
+
+  for (frame = 0; frame < 6; frame++) {
+    if (!allowReverse && frame > 2) continue;
+
+    orf = strtok(aaSeq[frame], "*");
+    while (orf != NULL && *orf != '\0') {
+      metOrf = orf;
+      while (*metOrf != 'M' && *metOrf != '\0') metOrf++;
+
+      if (*orf != '\0') {
+        // If have an other ORF which doesn't start at the same place as the met ORF then store that one separately to the met on
+        if (metOrf != orf) {
+          len = strlen(orf);
+          if (len > minLength) {
+            start = (orf - aaSeq[frame]) * 3 + 1;
+            if (frame < 3) {
+              start += frame;
+            } else {
+              start -= frame-3;
+            }
+  
+            if (frame < 3) {
+              end = start + len * 3 - 1;
+            } else {
+              start = -1 * (start - lenmRNA - 1);
+              end = start - len * 3 + 1;
+            }
+  
+            if (orf + len != endAaSeq[frame]) { // happens when the strtok found a '*' - add 3 to end to include it in translation range
+              Vector_addElement(otherOrfRanges, ORFRange_new(len, start, end+3));
+              //fprintf(stderr,"orf range (* ended) frame %d length %ld start %ld end %ld lenseq = %d\n", frame, len, start, end+3, lengths[frame]);
+            } else {  // should be no '*' (at end of aaSeq string - this should be the last token)
+              Vector_addElement(otherOrfRanges, ORFRange_new(len, start, end));
+              //fprintf(stderr,"orf range (NOT * ended) frame %d length %ld start %ld end %ld lenseq = %d\n", frame, len, start, end, lengths[frame]);
+            }
+          }
+        }
+        if (*metOrf != '\0') {
+          len = strlen(metOrf);
+          if (len > minLength) {
+            start = (metOrf - aaSeq[frame]) * 3 + 1;
+            if (frame < 3) {
+              start += frame;
+            } else {
+              start -= frame-3;
+            }
+  
+            if (frame < 3) {
+              end = start + len * 3 - 1;
+            } else {
+              start = -1 * (start - lenmRNA - 1);
+              end = start - len * 3 + 1;
+            }
+  
+            if (metOrf + len != endAaSeq[frame]) { // happens when the strtok found a '*' - add 3 to end to include it in translation range
+              Vector_addElement(metOrfRanges, ORFRange_new(len, start, end+3));
+              //fprintf(stderr,"orf range (* ended) frame %d length %ld start %ld end %ld lenseq = %d\n", frame, len, start, end+3, lengths[frame]);
+            } else {  // should be no '*' (at end of aaSeq string - this should be the last token)
+              Vector_addElement(metOrfRanges, ORFRange_new(len, start, end));
+              //fprintf(stderr,"orf range (NOT * ended) frame %d length %ld start %ld end %ld lenseq = %d\n", frame, len, start, end, lengths[frame]);
+            }
+          }
+        }
+      }
+      orf = strtok(NULL, "*");
+    }
+  }
+
+// Free ORF strings
+  for (i=0;i<6;i++) {
+    free(aaSeq[i]);
+  }
+
+// Sort by length
+  Vector_sort(metOrfRanges, ORFRange_reverseLengthCompFunc);
+  Vector_sort(otherOrfRanges, ORFRange_reverseLengthCompFunc);
+
+  //fprintf(stderr,"Sorted orf ranges:\n");
+  //for (i=0;i<Vector_getNumElement(orfRanges); i++) {
+  //  ORFRange *orf = Vector_getElementAt(orfRanges, i);
+  //  fprintf(stderr," %ld %ld %ld\n",orf->length, orf->start, orf->end);
+  //}
+
+  Vector *orfRanges = Vector_new();
+  Vector_addElement(orfRanges, metOrfRanges);
+  Vector_addElement(orfRanges, otherOrfRanges);
+
+  return orfRanges;
+}
+/* Original
 Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMet, int minLength, int allowReverse) {
   long len;
   int frame;
@@ -5846,11 +5998,18 @@ Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMe
 
   return orfRanges;
 }
+*/
 
 Transcript *TranslationUtils_computeTranslation(Transcript *transcript) {
-  Vector *metPredictions   = TranslationUtils_generateORFRanges(transcript, 1, 20, 0);
-  Vector *noMetPredictions = TranslationUtils_generateORFRanges(transcript, 0, 20, 0);
+  //Vector *metPredictions   = TranslationUtils_generateORFRanges(transcript, 1, 20, 0);
+  //Vector *noMetPredictions = TranslationUtils_generateORFRanges(transcript, 0, 20, 0);
 
+  Vector *predictions   = TranslationUtils_generateORFRanges(transcript, 2, 99, 0);
+  Vector *metPredictions = Vector_getElementAt(predictions, 0);
+  Vector *noMetPredictions = Vector_getElementAt(predictions, 1);
+  Vector_free(predictions);
+
+  //Vector *noMetPredictions = TranslationUtils_generateORFRanges(transcript, 0, 20, 0);
   // choosing the best ORF
   ORFRange *orf = NULL;
 
