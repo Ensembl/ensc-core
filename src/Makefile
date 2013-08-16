@@ -5,6 +5,10 @@ CC = gcc
 
 MYSQLCFLAGS=${shell mysql_config --cflags}
 MYSQLLIBS=${shell mysql_config --libs}
+
+LIBCONFIGCFLAGS=${shell ( export PKG_CONFIG_PATH=/software/ensembl/central/lib/pkgconfig; pkg-config --cflags libconfig ) }
+LIBCONFIGLIBS=${shell ( export PKG_CONFIG_PATH=/software/ensembl/central/lib/pkgconfig; pkg-config --libs libconfig ) }
+
 #SAMDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/bin/samtools-0.1.18
 #SAMDIR=/Users/searle/progs/ensc-dependencies/bin/samtools_parallel
 #SAMDIR=/nfs/users/nfs_s/searle/src/samtools_parallel
@@ -15,12 +19,12 @@ MYSQLLIBS=${shell mysql_config --libs}
 SAMDIR=/nfs/ensembl/searle/progs/production_code/ensembl-trunk_0713/samtools_parallel
 ZLIBDIR=/software/ensembl/central/include
 
-CFLAGS =  -Ofast -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
+CFLAGS =  -Ofast -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS) $(LIBCONFIGCFLAGS)
 #CFLAGS =  -Ofast -fprofile-arcs -ftest-coverage -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
 #CFLAGS =  -Ofast -fbranch-probabilities -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
 
 #LDFLAGS = $(MYSQLLIBS) -L/usr/lib/system -lSystem -L/Users/searle/progs/ensc-dependencies/lib -ltcmalloc
-LDFLAGS = $(MYSQLLIBS) -lunwind
+LDFLAGS = $(MYSQLLIBS) $(LIBCONFIGLIBS) -lunwind
 #CPPFLAGS = -I/Users/searle/progs/ensc-dependencies/include
 
 BINDIR=../bin

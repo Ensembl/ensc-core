@@ -22,6 +22,8 @@
 #include "translate.h"
 #include "Attribute.h"
 
+#include "libconfig.h"
+
 #include "sam.h"
 #include "bam.h"
 /*
@@ -307,6 +309,26 @@ void ModelCluster_free(ModelCluster *mc) {
   free(mc);
 }
 
+SetFuncData *SetFuncData_new(void *func, int type) {
+  SetFuncData *sfd;
+
+  if ((sfd = (SetFuncData *)calloc(1,sizeof(SetFuncData))) == NULL) {
+    fprintf(stderr,"Failed allocating SetFuncData\n");
+    exit(1);
+  }
+  sfd->setFunc.setIntValue = func;
+  sfd->type = type;
+
+  return sfd;
+}
+
+
+void SetFuncData_free(SetFuncData *sfd) {
+  free(sfd);
+}
+
+
+
 #define RSG_DRIVER
 #ifdef RSG_DRIVER
 int main(int argc, char *argv[]) {
@@ -324,7 +346,9 @@ int main(int argc, char *argv[]) {
                      //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL);
   StringHash_add(rsg->adaptorAliasHash, "REFERENCE_DB", refDb);
   StringHash_add(rsg->adaptorAliasHash, "REFINED_DB", 
-                 DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_sheep_refine6", 3306, refDb));
+                 //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_sheep_refine7", 3306, refDb));
+                 //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_kid_mus_bi_refine", 3306, refDb));
+                 DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_mus_bi_refine", 3306, refDb));
                  //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
                  //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_refined", 13386, refDb));
                  //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
@@ -345,7 +369,15 @@ int main(int argc, char *argv[]) {
   
   // Note can change min depth here (args are file, mixedBam flag, depth, groupNames) 
   //Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns.bam", 0, 0, NULL));
-  Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns_ch7.bam", 0, 0, NULL));
+  //Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns_ch7.bam", 0, 0, NULL));
+
+  Vector *groupNames = Vector_new();
+  char *tmp;
+  Vector_addElement(groupNames, StrUtil_copyString(&tmp, "kid_muscle_biceps", 0));
+  Vector_addElement(groupNames, StrUtil_copyString(&tmp, "mum_muscle_biceps", 0));
+  Vector_addElement(groupNames, StrUtil_copyString(&tmp, "dad_muscle_biceps", 0));
+  Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns_ch7.bam", 0, 0, groupNames));
+
   //Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns.bam", 0, 0, NULL));
   //Vector_addElement(intronBamFiles, IntronBamConfig_new("/Users/searle/rabbit/introns.bam", 0, 0, NULL));
   //Vector_addElement(intronBamFiles, IntronBamConfig_new("/nfs/ensembl/db8/rabbit_bam/introns.bam", 0, 0, NULL));
@@ -368,7 +400,7 @@ int main(int argc, char *argv[]) {
   RefineSolexaGenes_setMaxNum(rsg, 1000);
   RefineSolexaGenes_setMaxRecursions(rsg, 1000000);
   RefineSolexaGenes_setMinSingleExonLength(rsg, 1000);
-  RefineSolexaGenes_setMinSingleExonCDSLength(rsg, 66);
+  RefineSolexaGenes_setMinSingleExonCDSPercLength(rsg, 66);
   RefineSolexaGenes_setStrictInternalSpliceSites(rsg, 1);
   RefineSolexaGenes_setStrictInternalEndSpliceSites(rsg, 1);
   RefineSolexaGenes_setWriteIntrons(rsg, 1);
@@ -408,18 +440,21 @@ int main(int argc, char *argv[]) {
 
 //  double consLims[]    = { 3.0 };
 //  double nonConsLims[] = { 15.0, 20.0 };
-//  double consLims[]    = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 20.0 };
-//  double nonConsLims[] = { 5.0, 10.0, 15.0, 20.0, 50.0 };
+  double consLims[]    = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 20.0, 50.0 };
+  double nonConsLims[] = { 1.0, 5.0, 10.0, 15.0, 20.0, 50.0 };
 //  double consLims[]    = { 1.0 };
 //  double nonConsLims[] = { 5.0 };
 //  double consLims[]    = { 5.0 };
 //  double nonConsLims[] = { 5.0 };
 //  double consLims[]    = { 10.0 };
 //  double nonConsLims[] = { 10.0 };
-  double consLims[]    = { 5.0 };
-  double nonConsLims[] = { 20.0 };
+//  double consLims[]    = { 5.0 };
+//  double nonConsLims[] = { 20.0 };
+//  double consLims[]    = { 0.0 };
+//  double nonConsLims[] = { 0.0 };
 //  double nonConsLims[] = { 20.0, 50.0 };
 //  double nonConsLims[] = { 5.0, 10.0, 15.0, 20.0, 50.0 };
+
 
   int i;
   for (i=0; i<sizeof(consLims)/sizeof(double); i++) {
@@ -429,6 +464,8 @@ int main(int argc, char *argv[]) {
       RefineSolexaGenes_setNonConsLim(rsg, nonConsLims[j]);
 
       char typeName[1024];
+      char *typePref = "mb_";
+/* 
       sprintf(typeName, "best_c%d_nc%d", (int)consLims[i], (int)nonConsLims[j]);
       RefineSolexaGenes_setBestScoreType(rsg, typeName);
 
@@ -437,30 +474,41 @@ int main(int argc, char *argv[]) {
 
       sprintf(typeName, "refine_all_c%d_nc%d", (int)consLims[i], (int)nonConsLims[j]);
       RefineSolexaGenes_setAnalysis(rsg, RefineSolexaGenes_createAnalysisObject(rsg, typeName));
+*/
+      sprintf(typeName, "best_%sc%d_nc%d", typePref, (int)consLims[i], (int)nonConsLims[j]);
+      RefineSolexaGenes_setBestScoreType(rsg, typeName);
+
+      sprintf(typeName, "single_exon_%sc%d_nc%d", typePref, (int)consLims[i], (int)nonConsLims[j]);
+      RefineSolexaGenes_setSingleExonModelType(rsg, typeName);
+
+      sprintf(typeName, "refine_%sc%d_nc%d", typePref, (int)consLims[i], (int)nonConsLims[j]);
+      RefineSolexaGenes_setAnalysis(rsg, RefineSolexaGenes_createAnalysisObject(rsg, typeName));
 
       RefineSolexaGenes_fetchInput(rsg);
       RefineSolexaGenes_run(rsg);
     
-      fprintf(stderr,"Ended up with %d models to write\n", Vector_getNumElement(RefineSolexaGenes_getOutput(rsg)));
+      fprintf(stderr,"Ended up with %d models to write\n", (RefineSolexaGenes_getOutput(rsg) ? Vector_getNumElement(RefineSolexaGenes_getOutput(rsg)) : 0) );
 
       //  RefineSolexaGenes_dumpOutput(rsg);
       fprintf(stderr, "cons lim %f non cons lim %f\n", consLims[i], nonConsLims[j]);
-      dumpGenes(RefineSolexaGenes_getOutput(rsg), 1);
-      //RefineSolexaGenes_writeOutput(rsg);
-      tc_malloc_stats();
-      ProcUtil_timeInfo("end of loop iter");
-      fprintf(stderr,"Number of exon clone calls = %d\n",nExonClone);
-
-      int k;
-      for (k=0;k<Vector_getNumElement(rsg->output);k++) {
-        Gene *g = Vector_getElementAt(rsg->output, k);
-        Transcript *t = Gene_getTranscriptAt(g, 0);
-        if (t->extraData) {
-          TranscriptExtraData_free(t->extraData);
+      if (RefineSolexaGenes_getOutput(rsg)) {
+        dumpGenes(RefineSolexaGenes_getOutput(rsg), 1);
+        RefineSolexaGenes_writeOutput(rsg);
+        tc_malloc_stats();
+        ProcUtil_timeInfo("end of loop iter");
+        fprintf(stderr,"Number of exon clone calls = %d\n",nExonClone);
+  
+        int k;
+        for (k=0;k<Vector_getNumElement(rsg->output);k++) {
+          Gene *g = Vector_getElementAt(rsg->output, k);
+          Transcript *t = Gene_getTranscriptAt(g, 0);
+          if (t->extraData) {
+            TranscriptExtraData_free(t->extraData);
+          }
         }
+        Vector_setFreeFunc(rsg->output, Gene_free);
+        Vector_free(rsg->output);
       }
-      Vector_setFreeFunc(rsg->output, Gene_free);
-      Vector_free(rsg->output);
       rsg->output = NULL;
     }
   }
@@ -492,6 +540,46 @@ int RefineSolexaGenes_dumpOutput(RefineSolexaGenes *rsg) {
   }
 }
 
+void RefineSolexaGenes_initSetFuncs(RefineSolexaGenes *rsg) {
+  rsg->funcHash = StringHash_new(STRINGHASH_SMALL);
+
+  StringHash_add(rsg->funcHash, "OUTPUT_DB", SetFuncData_new(RefineSolexaGenes_setOutputDb, CONFIG_TYPE_STRING));
+  StringHash_add(rsg->funcHash, "INTRON_DB", SetFuncData_new(RefineSolexaGenes_setIntronDb, CONFIG_TYPE_STRING));
+  StringHash_add(rsg->funcHash, "MODEL_DB", SetFuncData_new(RefineSolexaGenes_setModelDb, CONFIG_TYPE_STRING));
+  StringHash_add(rsg->funcHash, "WRITE_INTRONS", SetFuncData_new(RefineSolexaGenes_setWriteIntrons, CONFIG_TYPE_BOOL));
+  StringHash_add(rsg->funcHash, "MAX_RECURSIONS", SetFuncData_new(RefineSolexaGenes_setMaxRecursions, CONFIG_TYPE_INT));
+
+  SetFuncData *logicNameFuncData = SetFuncData_new(RefineSolexaGenes_setLogicNames, CONFIG_TYPE_ARRAY);
+  logicNameFuncData->subType = CONFIG_TYPE_STRING;
+  StringHash_add(rsg->funcHash, "LOGICNAME", logicNameFuncData);
+  
+  SetFuncData *intronBamFilesFuncData = SetFuncData_new(RefineSolexaGenes_setIntronBamFiles, CONFIG_TYPE_LIST);
+  intronBamFilesFuncData->subType = CONFIG_TYPE_GROUP;
+  intronBamFilesFuncData->subFunc = RefineSolexaGenes_parseIntronBamFilesConfig;
+  StringHash_add(rsg->funcHash, "INTRON_BAM_FILES", intronBamFilesFuncData);
+
+  StringHash_add(rsg->funcHash, "MODEL_LN", SetFuncData_new(RefineSolexaGenes_setModelLogicName, CONFIG_TYPE_STRING));
+  StringHash_add(rsg->funcHash, "RETAINED_INTRON_PENALTY", SetFuncData_new(RefineSolexaGenes_setRetainedIntronPenalty, CONFIG_TYPE_FLOAT));
+  StringHash_add(rsg->funcHash, "MIN_INTRON_SIZE", SetFuncData_new(RefineSolexaGenes_setMinIntronSize, CONFIG_TYPE_INT));
+  StringHash_add(rsg->funcHash, "MAX_INTRON_SIZE", SetFuncData_new(RefineSolexaGenes_setMaxIntronSize, CONFIG_TYPE_INT));
+  StringHash_add(rsg->funcHash, "SINGLE_EXON_MODEL", SetFuncData_new(RefineSolexaGenes_setSingleExonModelType, CONFIG_TYPE_STRING));
+  StringHash_add(rsg->funcHash, "MIN_SINGLE_EXON", SetFuncData_new(RefineSolexaGenes_setMinSingleExonLength, CONFIG_TYPE_INT));
+  StringHash_add(rsg->funcHash, "SINGLE_EXON_CDS", SetFuncData_new(RefineSolexaGenes_setMinSingleExonCDSPercLength, CONFIG_TYPE_FLOAT));
+  StringHash_add(rsg->funcHash, "STRICT_INTERNAL_SPLICE_SITES", SetFuncData_new(RefineSolexaGenes_setStrictInternalSpliceSites, CONFIG_TYPE_BOOL));
+  StringHash_add(rsg->funcHash, "STRICT_INTERNAL_END_EXON_SPLICE_SITES", SetFuncData_new(RefineSolexaGenes_setStrictInternalEndSpliceSites, CONFIG_TYPE_BOOL));
+  StringHash_add(rsg->funcHash, "BEST_SCORE", SetFuncData_new(RefineSolexaGenes_setBestScoreType, CONFIG_TYPE_STRING));
+  StringHash_add(rsg->funcHash, "OTHER_ISOFORMS", SetFuncData_new(RefineSolexaGenes_setOtherIsoformsType, CONFIG_TYPE_STRING));
+  StringHash_add(rsg->funcHash, "OTHER_NUM", SetFuncData_new(RefineSolexaGenes_setOtherNum, CONFIG_TYPE_INT));
+  StringHash_add(rsg->funcHash, "MAX_NUM", SetFuncData_new(RefineSolexaGenes_setMaxNum, CONFIG_TYPE_INT));
+  StringHash_add(rsg->funcHash, "BAD_MODELS", SetFuncData_new(RefineSolexaGenes_setBadModelsType, CONFIG_TYPE_STRING));
+  StringHash_add(rsg->funcHash, "TRIM_UTR", SetFuncData_new(RefineSolexaGenes_setTrimUTR, CONFIG_TYPE_BOOL));
+  StringHash_add(rsg->funcHash, "MAX_3PRIME_EXONS", SetFuncData_new(RefineSolexaGenes_setMax3PrimeExons, CONFIG_TYPE_INT));
+  StringHash_add(rsg->funcHash, "MAX_3PRIME_LENGTH", SetFuncData_new(RefineSolexaGenes_setMax3PrimeLength, CONFIG_TYPE_INT));
+  StringHash_add(rsg->funcHash, "MAX_5PRIME_EXONS", SetFuncData_new(RefineSolexaGenes_setMax5PrimeExons, CONFIG_TYPE_INT));
+  StringHash_add(rsg->funcHash, "MAX_5PRIME_LENGTH", SetFuncData_new(RefineSolexaGenes_setMax5PrimeLength, CONFIG_TYPE_INT));
+  StringHash_add(rsg->funcHash, "REJECT_INTRON_CUTOFF", SetFuncData_new(RefineSolexaGenes_setRejectIntronCutoff, CONFIG_TYPE_INT));
+}
+
 RefineSolexaGenes *RefineSolexaGenes_new(char *configFile) {
   RefineSolexaGenes *rsg;
   
@@ -500,11 +588,13 @@ RefineSolexaGenes *RefineSolexaGenes_new(char *configFile) {
     exit(1);
   }
 
+  RefineSolexaGenes_initSetFuncs(rsg);
+
 // Hack for now to allow me to run without configuration 
   if (configFile) {
     fprintf(stderr, "Error: Config file specified but config reading not implemented - bye!\n");
     exit(1);
-    //RunnableDB_readAndCheckConfig(rsg, configFile);
+    RunnableDB_readAndCheckConfig(rsg, configFile, "Config.REFINESOLEXAGENES_CONFIG_BY_LOGIC");
   } else {
     fprintf(stderr, "WARNING: Running without reading config (config reading not implemented)\n");
   }
@@ -521,6 +611,28 @@ RefineSolexaGenes *RefineSolexaGenes_new(char *configFile) {
   //$self->feature_cash(\%feature_hash);
 
   return rsg;
+}
+
+void RunnableDB_readAndCheckConfig(RefineSolexaGenes *rsg, char *configFile, char *blockName) {
+  config_t cfg;
+  config_setting_t *cfgBlock;
+
+  config_init(&cfg);
+
+  /* Read the file. If there is an error, report it and exit. */
+  if (!config_read_file(&cfg, configFile)) {
+    fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg),
+            config_error_line(&cfg), config_error_text(&cfg));
+    config_destroy(&cfg);
+    exit(1);
+  }
+
+
+  cfgBlock = config_lookup(&cfg, blockName);
+  if (cfgBlock == NULL) {
+    fprintf(stderr,"Missing config block %s\n", blockName);
+  }
+  Utilities_parseConfig(rsg, cfgBlock, Analysis_getLogicName(RefineSolexaGenes_getAnalysis(rsg)), 0 /*ignoreThrow*/);
 }
 
 /*
@@ -689,6 +801,54 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
       Vector_addElement(prelimGenes, gene);
     }
     fprintf(stderr, "Got %d genes after filtering boundary overlaps\n", Vector_getNumElement(prelimGenes)); 
+
+    // Fake up a single exon gene for the entire region as test for improving models where rough models are very bitty
+/* Test - didn't seem to work
+    Transcript *trans = Transcript_new();
+    Transcript_setSlice(trans, chrSlice);
+    Transcript_setStableId(trans,"fake_trans");
+
+    int j;
+    for (j=Slice_getSeqRegionStart(slice); j<Slice_getSeqRegionEnd(slice); j+=10000) {
+      Exon *exon = Exon_new();
+      //Exon_setStart(exon, Slice_getSeqRegionStart(slice));
+      //Exon_setEnd(exon, Slice_getSeqRegionEnd(slice));
+      Exon_setStart(exon, j);
+      Exon_setEnd(exon, j+9999);
+      Exon_setPhase(exon, -1);
+      Exon_setEndPhase(exon, -1);
+      Exon_setStrand(exon, -1);
+      Exon_setSlice(exon, chrSlice);
+      Exon_setStableId(exon, "fake_exon");
+  
+      DNAAlignFeature *support = DNAAlignFeature_new();
+      DNAAlignFeature_setStart(support, Exon_getStart(exon));
+      DNAAlignFeature_setEnd(support, Exon_getEnd(exon));
+      DNAAlignFeature_setStrand(support, Exon_getStrand(exon));
+      DNAAlignFeature_setHitStrand(support, 1);
+      DNAAlignFeature_setScore(support, 100.0);
+      char tmpStr[1024];
+      sprintf(tmpStr,"%ldM", Exon_getLength(exon));
+      DNAAlignFeature_setCigarString(support, tmpStr);
+      DNAAlignFeature_setSlice(support, chrSlice);
+      DNAAlignFeature_setHitSeqName(support, "fake_support");
+  
+      Exon_addSupportingFeature(exon, support);
+  
+      Transcript_addExon(trans, exon, 0);
+    }
+
+    Gene *regGene = Gene_new();
+    Gene_addTranscript(regGene, trans);
+    Gene_setSlice(regGene, chrSlice);
+    Gene_setStableId(regGene,"fake");
+
+    fprintf(stderr,"Fake gene start %ld end %ld strand %d, trans start %ld end %ld strand %d\n",
+            Gene_getStart(regGene), Gene_getEnd(regGene), Gene_getStrand(regGene),
+            Transcript_getStart(trans), Transcript_getEnd(trans), Transcript_getStrand(trans));
+
+    Vector_addElement(prelimGenes, regGene);
+*/
   
     // determine strandedness ( including splitting merged genes )
     RefineSolexaGenes_setPrelimGenes(rsg, prelimGenes);
@@ -715,6 +875,7 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
         fprintf(stderr, "Bam file %s not found\n", intronFile);
         exit(1);
       }
+      fprintf(stderr,"Opened bam file %s\n", intronFile);
 
       bam_index_t *idx;
       idx = bam_index_load(intronFile); // load BAM index
@@ -722,12 +883,14 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
         fprintf(stderr, "BAM index file is not available.\n");
         exit(1);
       }
+      fprintf(stderr,"Opened bam index for %s\n", intronFile);
 
       long long count = 0;
       sprintf(region,"%s:%ld-%ld", Slice_getSeqRegionName(slice),
                                    Slice_getSeqRegionStart(slice),
                                    Slice_getSeqRegionEnd(slice));
       bam_parse_region(sam->header, region, &ref, &begRange, &endRange);
+      fprintf(stderr,"Parsed region for region %s\n", region);
       if (ref < 0) {
         fprintf(stderr, "Invalid region %s %ld %ld\n", Slice_getSeqRegionName(slice),
                                                        Slice_getSeqRegionStart(slice),
@@ -739,7 +902,9 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
       RefineSolexaGenes_bamToIntronFeatures(rsg, intronBamConf, sam, idx, ref, begRange, endRange);
 
       bam_index_destroy(idx);
+      fprintf(stderr,"after index destroy\n");
       samclose(sam);
+      fprintf(stderr,"after sam close\n");
     }
   } else {
     // pre fetch all the intron features
@@ -1425,7 +1590,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
 
         if (paths) {
           StringHash_free(paths, NULL);
-          fprintf(stderr,"Freeing paths %p\n",paths);
+          //fprintf(stderr,"Freeing paths %p\n",paths);
         }
       }
 
@@ -1560,7 +1725,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
     
           //fprintf(stderr, "REV t length %ld\n", revTLen);
           if ( Transcript_getTranslation(fwdTran) &&  
-               ( (double)fwdTLen / (double)Transcript_getLength(fwdTran)* 100.0 >= RefineSolexaGenes_getMinSingleExonCDSLength(rsg) &&
+               ( (double)fwdTLen / (double)Transcript_getLength(fwdTran)* 100.0 >= RefineSolexaGenes_getMinSingleExonCDSPercLength(rsg) &&
                fwdTLen >  revTLen )) {
             // keep this one
             singleExonModel =  fwdTran;
@@ -1570,7 +1735,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
           }
     
           if ( !singleExonModel && Transcript_getTranslation(revTran) &&  
-               ( (double)revTLen / (double)Transcript_getLength(revTran)* 100.0 >= RefineSolexaGenes_getMinSingleExonCDSLength(rsg) &&
+               ( (double)revTLen / (double)Transcript_getLength(revTran)* 100.0 >= RefineSolexaGenes_getMinSingleExonCDSPercLength(rsg) &&
                revTLen >  fwdTLen )) {
             // keep this one
             singleExonModel =  revTran;
@@ -4173,6 +4338,7 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
     if (firstRead == 1) {
       strcpy(name, sam->header->target_name[read->core.tid]);
       StrUtil_strReplChr(name, '.', '*');
+      //fprintf(stderr,"got target name %s\n", name);
       firstRead = 0;
     }
 
@@ -4206,6 +4372,8 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
 //    Vector_setFreeFunc(mates, CigarBlock_free);
 //    Vector_free(mates);
   }
+
+  if (readGroups != NULL) StringHash_free(readGroups, NULL);
 
 /* SMJS These are for testing
   // For param testing store introns with different anal to results
@@ -5542,12 +5710,12 @@ int RefineSolexaGenes_getMinSingleExonLength(RefineSolexaGenes *rsg) {
   return rsg->minSingleExonLength;
 }
 
-void RefineSolexaGenes_setMinSingleExonCDSLength(RefineSolexaGenes *rsg, int minSingleExonCDSLength) {
-  rsg->minSingleExonCDSLength = minSingleExonCDSLength;
+void RefineSolexaGenes_setMinSingleExonCDSPercLength(RefineSolexaGenes *rsg, double minSingleExonCDSPercLength) {
+  rsg->minSingleExonCDSPercLength = minSingleExonCDSPercLength;
 }
 
-int RefineSolexaGenes_getMinSingleExonCDSLength(RefineSolexaGenes *rsg) {
-  return rsg->minSingleExonCDSLength;
+double RefineSolexaGenes_getMinSingleExonCDSPercLength(RefineSolexaGenes *rsg) {
+  return rsg->minSingleExonCDSPercLength;
 }
 
 void RefineSolexaGenes_setSingleExonModelType(RefineSolexaGenes *rsg, char *singleExonModelType) {
@@ -5795,7 +5963,6 @@ Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMe
   Vector *metOrfRanges = Vector_new();
   Vector *otherOrfRanges = Vector_new();
 
-
   int   lengths[6];
   char *aaSeq[6];
   char *endAaSeq[6];
@@ -5820,6 +5987,12 @@ Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMe
 
   free(mRNA);
 
+  int bestMetLen = 0;
+  int bestOtherLen = 0;
+
+  ORFRange *bestMetORF = NULL;
+  ORFRange *bestOtherORF = NULL;
+
   for (frame = 0; frame < 6; frame++) {
     if (!allowReverse && frame > 2) continue;
 
@@ -5830,9 +6003,11 @@ Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMe
 
       if (*orf != '\0') {
         // If have an other ORF which doesn't start at the same place as the met ORF then store that one separately to the met on
+        len = -1;
         if (metOrf != orf) {
           len = strlen(orf);
-          if (len > minLength) {
+          if (len > minLength && len > bestOtherLen) {
+            bestOtherLen = len;
             start = (orf - aaSeq[frame]) * 3 + 1;
             if (frame < 3) {
               start += frame;
@@ -5848,17 +6023,40 @@ Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMe
             }
   
             if (orf + len != endAaSeq[frame]) { // happens when the strtok found a '*' - add 3 to end to include it in translation range
-              Vector_addElement(otherOrfRanges, ORFRange_new(len, start, end+3));
+              //Vector_addElement(otherOrfRanges, ORFRange_new(len, start, end+3));
+              if (!bestOtherORF) {
+                bestOtherORF = ORFRange_new(len, start, end+3);
+              } else {
+                bestOtherORF->length = len;
+                bestOtherORF->start  = start;
+                bestOtherORF->end    = end+3;
+              }
               //fprintf(stderr,"orf range (* ended) frame %d length %ld start %ld end %ld lenseq = %d\n", frame, len, start, end+3, lengths[frame]);
             } else {  // should be no '*' (at end of aaSeq string - this should be the last token)
-              Vector_addElement(otherOrfRanges, ORFRange_new(len, start, end));
+              //Vector_addElement(otherOrfRanges, ORFRange_new(len, start, end));
+              if (!bestOtherORF) {
+                bestOtherORF = ORFRange_new(len, start, end);
+              } else {
+                bestOtherORF->length = len;
+                bestOtherORF->start  = start;
+                bestOtherORF->end    = end;
+              }
               //fprintf(stderr,"orf range (NOT * ended) frame %d length %ld start %ld end %ld lenseq = %d\n", frame, len, start, end, lengths[frame]);
             }
           }
         }
+
         if (*metOrf != '\0') {
+/* Doesn't seem to speed it up much
+          if (len == -1) { 
+            len = strlen(metOrf);
+          } else {
+            len = len - (metOrf-orf);
+          }
+*/
           len = strlen(metOrf);
-          if (len > minLength) {
+          if (len > minLength && len > bestMetLen) {
+            bestMetLen = len;
             start = (metOrf - aaSeq[frame]) * 3 + 1;
             if (frame < 3) {
               start += frame;
@@ -5874,10 +6072,24 @@ Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMe
             }
   
             if (metOrf + len != endAaSeq[frame]) { // happens when the strtok found a '*' - add 3 to end to include it in translation range
-              Vector_addElement(metOrfRanges, ORFRange_new(len, start, end+3));
+              //Vector_addElement(metOrfRanges, ORFRange_new(len, start, end+3));
+              if (!bestMetORF) {
+                bestMetORF = ORFRange_new(len, start, end+3);
+              } else {
+                bestMetORF->length = len;
+                bestMetORF->start  = start;
+                bestMetORF->end    = end+3;
+              }
               //fprintf(stderr,"orf range (* ended) frame %d length %ld start %ld end %ld lenseq = %d\n", frame, len, start, end+3, lengths[frame]);
             } else {  // should be no '*' (at end of aaSeq string - this should be the last token)
-              Vector_addElement(metOrfRanges, ORFRange_new(len, start, end));
+              //Vector_addElement(metOrfRanges, ORFRange_new(len, start, end));
+              if (!bestMetORF) {
+                bestMetORF = ORFRange_new(len, start, end);
+              } else {
+                bestMetORF->length = len;
+                bestMetORF->start  = start;
+                bestMetORF->end    = end;
+              }
               //fprintf(stderr,"orf range (NOT * ended) frame %d length %ld start %ld end %ld lenseq = %d\n", frame, len, start, end, lengths[frame]);
             }
           }
@@ -5887,14 +6099,17 @@ Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMe
     }
   }
 
+
 // Free ORF strings
-  for (i=0;i<6;i++) {
+  for (i=0; i<6; i++) {
     free(aaSeq[i]);
   }
 
 // Sort by length
-  Vector_sort(metOrfRanges, ORFRange_reverseLengthCompFunc);
-  Vector_sort(otherOrfRanges, ORFRange_reverseLengthCompFunc);
+//  Vector_sort(metOrfRanges, ORFRange_reverseLengthCompFunc);
+//  Vector_sort(otherOrfRanges, ORFRange_reverseLengthCompFunc);
+  if (bestMetORF) Vector_addElement(metOrfRanges, bestMetORF);
+  if (bestOtherORF) Vector_addElement(otherOrfRanges, bestOtherORF);
 
   //fprintf(stderr,"Sorted orf ranges:\n");
   //for (i=0;i<Vector_getNumElement(orfRanges); i++) {
@@ -5908,6 +6123,7 @@ Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMe
 
   return orfRanges;
 }
+
 /* Original
 Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMet, int minLength, int allowReverse) {
   long len;
@@ -6004,7 +6220,7 @@ Transcript *TranslationUtils_computeTranslation(Transcript *transcript) {
   //Vector *metPredictions   = TranslationUtils_generateORFRanges(transcript, 1, 20, 0);
   //Vector *noMetPredictions = TranslationUtils_generateORFRanges(transcript, 0, 20, 0);
 
-  Vector *predictions   = TranslationUtils_generateORFRanges(transcript, 2, 99, 0);
+  Vector *predictions   = TranslationUtils_generateORFRanges(transcript, 2, 20, 0);
   Vector *metPredictions = Vector_getElementAt(predictions, 0);
   Vector *noMetPredictions = Vector_getElementAt(predictions, 1);
   Vector_free(predictions);
@@ -6263,10 +6479,9 @@ int dumpGenes(Vector *genes, int withSupport) {
   return failed;
 }
 
-#if 0
 // First arg should eventually be RunnableDB type I think - need a method to get the configvar -> setting function hash
 Utilities_parseConfig(RefineSolexaGenes *rsg, config_setting_t *cfgBlock, char *label, int ignoreThrow) {
-  char *DEFAULT_ENTRY_KEY = "DEFAULT"';
+  char *DEFAULT_ENTRY_KEY = "DEFAULT";
 
   //my ($obj, $var_hash, $label, $ignore_throw) = @_;
 
@@ -6286,7 +6501,7 @@ Utilities_parseConfig(RefineSolexaGenes *rsg, config_setting_t *cfgBlock, char *
     config_setting_t *setting = config_setting_get_elem(cfgBlock, i);
 
     strcpy(ucKey, config_setting_name(setting));
-    strupr(ucKey);
+    StrUtil_strupr(ucKey);
 
     if (StringHash_contains(keyCheckHash, ucKey)) {
       fprintf(stderr, "You have two entries in your config with the same name (ignoring case) for name %s\n", ucKey);
@@ -6308,7 +6523,7 @@ Utilities_parseConfig(RefineSolexaGenes *rsg, config_setting_t *cfgBlock, char *
   }
 */
 
-  config_setting_t *analSection = StringHash_getValue(keyCheckHash, DEFAULT_ENTRY_KEY);
+  config_setting_t *defaultSection = StringHash_getValue(keyCheckHash, DEFAULT_ENTRY_KEY);
 
   //config_setting_t *defaultSection = config_setting_get_member(cfgBlock, DEFAULT_ENTRY_KEY);
 
@@ -6322,16 +6537,15 @@ Utilities_parseConfig(RefineSolexaGenes *rsg, config_setting_t *cfgBlock, char *
 
   count = config_setting_length(defaultSection);
 
-  int i;
   for(i = 0; i < count; ++i) {
     config_setting_t *setting = config_setting_get_elem(defaultSection, i);
 
-    if (!StringHash_contains(funcHash, config_setting_name(setting))) {
-      fprintf(stderr, "Error: no method defined in Utilities for config variable '%s'\n", onfig_setting_name(setting));
+    if (!StringHash_contains(rsg->funcHash, config_setting_name(setting))) {
+      fprintf(stderr, "Error: no method defined in Utilities for config variable '%s'\n", config_setting_name(setting));
       exit(1);
     }
   
-    SetFuncData *setFuncData = StringHash_getValue(funcHash, config_setting_name(setting);
+    SetFuncData *setFuncData = StringHash_getValue(rsg->funcHash, config_setting_name(setting));
 
     ConfigConverter_wrapSetCall(rsg, setFuncData, setting);
   }
@@ -6342,7 +6556,7 @@ Utilities_parseConfig(RefineSolexaGenes *rsg, config_setting_t *cfgBlock, char *
   //#########################################################
   char ucLogic[2048];
   strcpy(ucLogic, label);
-  strupr(ucLogic);
+  StrUtil_strupr(ucLogic);
   
   config_setting_t *analSection = StringHash_getValue(keyCheckHash, ucLogic);
 
@@ -6356,28 +6570,65 @@ Utilities_parseConfig(RefineSolexaGenes *rsg, config_setting_t *cfgBlock, char *
     for(i = 0; i < count; ++i) {
       config_setting_t *setting = config_setting_get_elem(analSection, i);
   
-      if (!StringHash_contains(funcHash, config_setting_name(setting))) {
-        fprintf(stderr, "Error: no method defined in Utilities for config variable '%s'\n", onfig_setting_name(setting));
+      if (!StringHash_contains(rsg->funcHash, config_setting_name(setting))) {
+        fprintf(stderr, "Error: no method defined in Utilities for config variable '%s'\n", config_setting_name(setting));
         exit(1);
       }
     
-      SetFuncData *setFuncData = StringHash_getValue(funcHash, config_setting_name(setting);
+      SetFuncData *setFuncData = StringHash_getValue(rsg->funcHash, config_setting_name(setting));
   
       ConfigConverter_wrapSetCall(rsg, setFuncData, setting);
     }
 
   } else {
     if (ignoreThrow == 1 ) {
-      fprintf(stderr,"Warning: Your logic_name %s doesn't appear in your config file hash - using default settings\n".  ucLogic);
+      fprintf(stderr,"Warning: Your logic_name %s doesn't appear in your config file hash - using default settings\n",  ucLogic);
     } else {
-      fprintf(stderr,"Error: Your logic_name %s doesn't appear in your config file hash - using default settings\n".  ucLogic);
+      fprintf(stderr,"Error: Your logic_name %s doesn't appear in your config file hash - using default settings\n",  ucLogic);
       exit(1);
     }
   }
 }
 
-typedef struct SetFuncDataStruct {
-} SetFuncData;
+char *ConfigConverter_typeCodeToString(int code) {
+  switch (code) {
+    case CONFIG_TYPE_INT:
+      return "INT";
+      break;
+
+    case CONFIG_TYPE_INT64:
+      return "INT64";
+      break;
+
+    case CONFIG_TYPE_FLOAT:
+      return "FLOAT";
+      break;
+
+    case CONFIG_TYPE_STRING:
+      return "STRING";
+      break;
+
+    case CONFIG_TYPE_BOOL:
+      return "BOOL";
+      break;
+
+    case CONFIG_TYPE_ARRAY:
+      return "ARRAY";
+      break;
+
+    case CONFIG_TYPE_LIST:
+      return "LIST";
+      break;
+
+    case CONFIG_TYPE_GROUP:
+      return "GROUP";
+      break;
+
+    default:
+      fprintf(stderr,"Error: Unknown type in ConfigConverter_typeCodeToString - code = %d\n", code);
+      exit(1);
+  }
+}
 
 void ConfigConverter_wrapSetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncData, config_setting_t *setting) {
   switch (config_setting_type(setting)) {
@@ -6396,7 +6647,7 @@ void ConfigConverter_wrapSetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncDat
     case CONFIG_TYPE_INT64:
       if (setFuncData->type != CONFIG_TYPE_INT64) {
         fprintf(stderr,"Error: Inconsistency between expected config arg type and actual arg type "
-                       "for %s (value = %ld), type is %s expected type is %s (config type code)\n", 
+                       "for %s (value = "IDFMTSTR"), type is %s expected type is %s (config type code)\n", 
                 config_setting_name(setting), config_setting_get_int64(setting),
                 ConfigConverter_typeCodeToString(config_setting_type(setting)), 
                 ConfigConverter_typeCodeToString(setFuncData->type));
@@ -6417,7 +6668,7 @@ void ConfigConverter_wrapSetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncDat
       setFuncData->setFunc.setFloatValue(rsg, config_setting_get_float(setting));
       break;
 
-    case CONFIG_TYPE_ STRING:
+    case CONFIG_TYPE_STRING:
       if (setFuncData->type != CONFIG_TYPE_STRING) {
         fprintf(stderr,"Error: Inconsistency between expected config arg type and actual arg type "
                        "for %s (value = %s), type is %s expected type is %s (config type code)\n", 
@@ -6450,7 +6701,7 @@ void ConfigConverter_wrapSetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncDat
                 ConfigConverter_typeCodeToString(setFuncData->type));
         exit(1);
       }
-      ConfigConverter_wrapArraySetCall(rsg, setFuncData, config_setting);
+      ConfigConverter_wrapArraySetCall(rsg, setFuncData, setting);
       break;
 
     case CONFIG_TYPE_LIST:
@@ -6462,7 +6713,7 @@ void ConfigConverter_wrapSetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncDat
                 ConfigConverter_typeCodeToString(setFuncData->type));
         exit(1);
       }
-      ConfigConverter_wrapListSetCall(rsg, setFuncData, config_setting);
+      ConfigConverter_wrapListSetCall(rsg, setFuncData, setting);
       break;
 
     case CONFIG_TYPE_GROUP:
@@ -6474,53 +6725,88 @@ void ConfigConverter_wrapSetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncDat
                 ConfigConverter_typeCodeToString(setFuncData->type));
         exit(1);
       }
-      ConfigConverter_wrapGroupSetCall(rsg, setFuncData, config_setting);
+      ConfigConverter_wrapGroupSetCall(rsg, setFuncData, setting);
       break;
     
     default:
       fprintf(stderr,"Error: Unknown type in config type switch for %s, type is %d expected type is %d (config type code)\n", 
-              config_setting_name(setting), config_setting_get_int64(setting), config_setting_type(setting), setFuncData->type);
+              config_setting_name(setting), config_setting_type(setting), setFuncData->type);
       exit(1);
   }
 }
 
-char *ConfigConverter_typeCodeToString(int code) {
-  switch (code) {
-    case CONFIG_TYPE_INT:
-      return "INT";
-      break;
+void ConfigConverter_wrapGroupSetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncData, config_setting_t *setting) {
+  fprintf(stderr,"NIY: Don't know how to handle Group config with name %s\n", config_setting_name(setting));
+  exit(1);
+}
 
-    case CONFIG_TYPE_INT64:
-      return "INT64";
-      break;
-
-    case CONFIG_TYPE_FLOAT:
-      return "FLOAT";
-      break;
-
-    case CONFIG_TYPE_ STRING:
-      return "STRING";
-      break;
-
-    case CONFIG_TYPE_BOOL:
-      return "BOOL";
-      break;
-
-    case CONFIG_TYPE_ARRAY:
-      return "ARRAY";
-      break;
-
-    case CONFIG_TYPE_LIST:
-      return "LIST";
-      break;
-
-    case CONFIG_TYPE_GROUP:
-      return "GROUP";
-      break;
-
-    default:
-      fprintf(stderr,"Error: Unknown type in ConfigConverter_typeCodeToString - code = %d\n", code);
-      exit(1);
+void ConfigConverter_wrapListSetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncData, config_setting_t *setting) {
+  if (setFuncData->subFunc) {
+    setFuncData->subFunc(rsg, setting);
+  } else {
+    fprintf(stderr,"Don't know how to handle List config with name %s\n", config_setting_name(setting));
+    exit(1);
   }
 }
-#endif
+
+void ConfigConverter_wrapArraySetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncData, config_setting_t *setting) {
+  Vector *results = Vector_new();
+  if (setFuncData->subType == CONFIG_TYPE_STRING) {
+    char *tmp;
+    int i;
+    for (i=0; i<config_setting_length(setting); i++) {
+      const char *val = config_setting_get_string_elem(setting, i);
+      Vector_addElement(results, StrUtil_copyString(&tmp, val, 0));
+    }
+  } else {
+    fprintf(stderr,"Array type other than string not implemented yet\n");
+    exit(1);
+  }
+  setFuncData->setFunc.setVectorValue(rsg, results);
+}
+
+void RefineSolexaGenes_parseIntronBamFilesConfig(RefineSolexaGenes *rsg, config_setting_t *setting) {
+  Vector *intronBamFiles = Vector_new(); 
+
+  int i;
+  for (i=0; i<config_setting_length(setting); i++) {
+    config_setting_t *section = config_setting_get_elem(setting, i);
+
+    if (config_setting_type(setting) != CONFIG_TYPE_GROUP) {
+      fprintf(stderr,"Error: Expected a CONFIG_TYPE_GROUP setting within the IntronBamFiles block\n");
+      exit(1);
+    }
+
+    char *file;
+    int mixedBam;
+    int depth;
+    char *tmp;
+    if (!(config_setting_lookup_string(section, "FILE", &file) &&
+          config_setting_lookup_int(section, "MIXED_BAM", &mixedBam) &&
+          config_setting_lookup_int(section, "DEPTH", &depth))) {
+      fprintf(stderr,"Error: Missing at least one required arg (FILE, MIXED_BAM or DEPTH) in INTRON_BAM_FILES config block\n");
+      exit(1);
+    }
+
+    Vector *groupNames = NULL;
+    config_setting_t *groupNameSetting = config_setting_get_member(section, "GROUPNAME");
+    if (!groupNameSetting) {
+      fprintf(stderr,"Error: Missing GROUPNAME required arg in INTRON_BAM_FILES config block\n");
+      exit(1);
+    }
+    
+    int nGroup = config_setting_length(groupNameSetting);
+    if (nGroup) {
+      groupNames = Vector_new();
+      
+      int j;
+      for (j=0; j<config_setting_length(groupNameSetting); j++) {
+        const char *val = config_setting_get_string_elem(groupNameSetting, j);
+        Vector_addElement(groupNames, StrUtil_copyString(&tmp, val, 0));
+      }
+    }
+    Vector_addElement(intronBamFiles, IntronBamConfig_new(file, mixedBam, depth, groupNames));
+  }
+
+  RefineSolexaGenes_setIntronBamFiles(rsg, intronBamFiles);
+}

@@ -12,6 +12,8 @@
 #include "sam.h"
 #include "bam.h"
 
+#include "libconfig.h"
+
 #define RSGEXON_RETAINED 1<<1
 #define RSGEXON_EXTRA    1<<2
 
@@ -55,7 +57,7 @@ typedef struct RefineSolexaGenesStruct {
   int maxNum;
   int maxRecursions;
   int minIntronSize;
-  int minSingleExonCDSLength;
+  int minSingleExonCDSPercLength;
   int minSingleExonLength;
   int otherNum;
   int recursiveLimit;
@@ -70,6 +72,7 @@ typedef struct RefineSolexaGenesStruct {
   Slice *chrSlice;
 
   StringHash *extraExons;
+  StringHash *funcHash;
 
   char ** extraExonsKeys;
 
@@ -189,8 +192,8 @@ void RefineSolexaGenes_setMaxRecursions(RefineSolexaGenes *rsg, int maxRecursion
 int RefineSolexaGenes_getMaxRecursions(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setMinSingleExonLength(RefineSolexaGenes *rsg, int minSingleExonLength);
 int RefineSolexaGenes_getMinSingleExonLength(RefineSolexaGenes *rsg);
-void RefineSolexaGenes_setMinSingleExonCDSLength(RefineSolexaGenes *rsg, int minSingleExonCDSLength);
-int RefineSolexaGenes_getMinSingleExonCDSLength(RefineSolexaGenes *rsg);
+void RefineSolexaGenes_setMinSingleExonCDSPercLength(RefineSolexaGenes *rsg, double minSingleExonCDSPercLength);
+double RefineSolexaGenes_getMinSingleExonCDSPercLength(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setSingleExonModelType(RefineSolexaGenes *rsg, char *singleExonModelType);
 char *RefineSolexaGenes_getSingleExonModelType(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setStrictInternalSpliceSites(RefineSolexaGenes *rsg, int strictInternalSpliceSites);
@@ -244,4 +247,36 @@ double RefineSolexaGenes_getNonConsLim(RefineSolexaGenes *rsg);
   void RefineSolexaGenes_setAnalysis(RefineSolexaGenes *rsg, Analysis *analysis);
   Analysis *RefineSolexaGenes_getAnalysis(RefineSolexaGenes *rsg);
 
+
+  typedef (*IntSetFunc)(RefineSolexaGenes *rsg, int val);
+  typedef (*Int64SetFunc)(RefineSolexaGenes *rsg, long val);
+  typedef (*FloatSetFunc)(RefineSolexaGenes *rsg, float val);
+  typedef (*StringSetFunc)(RefineSolexaGenes *rsg, const char *val);
+  typedef (*BoolSetFunc)(RefineSolexaGenes *rsg, int val);
+  typedef (*VectorSetFunc)(RefineSolexaGenes *rsg, Vector *val);
+  typedef union {
+    IntSetFunc setIntValue;
+    Int64SetFunc setInt64Value;
+    FloatSetFunc setFloatValue;
+    StringSetFunc setStringValue;
+    BoolSetFunc setBoolValue;
+    VectorSetFunc setVectorValue;
+  } SetFunc;
+  
+  typedef (*SetSubFunc)(RefineSolexaGenes *rsg, config_setting_t *subSetting);
+  typedef struct SetFuncDataStruct {
+    int type;
+    int subType;
+    SetSubFunc subFunc;
+    SetFunc setFunc;
+  } SetFuncData;
+
+  void RefineSolexaGenes_parseIntronBamFilesConfig(RefineSolexaGenes *rsg, config_setting_t *setting);
+  void Utilities_parseConfig(RefineSolexaGenes *rsg, config_setting_t *cfgBlock, char *label, int ignoreThrow);
+  char *ConfigConverter_typeCodeToString(int code);
+  void ConfigConverter_wrapSetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncData, config_setting_t *setting);
+  void ConfigConverter_wrapGroupSetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncData, config_setting_t *setting);
+  void ConfigConverter_wrapArraySetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncData, config_setting_t *setting);
+  void ConfigConverter_wrapListSetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncData, config_setting_t *setting);
+  void RunnableDB_readAndCheckConfig(RefineSolexaGenes *rsg, char *configFile, char *blockName);
 #endif

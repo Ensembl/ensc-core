@@ -117,9 +117,11 @@ char **StringHash_getKeysNoCopy(StringHash *stringHash) {
   return keys;
 }
 
+/*
 int StringHash_getNumValues(StringHash *stringHash) {
   return stringHash->nValue;
 }
+*/
 
 void *StringHash_getValues(StringHash *stringHash) {
   int i;

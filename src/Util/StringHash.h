@@ -30,7 +30,9 @@ int     StringHash_add(StringHash *stringHash, char *string, void *val);
 int     StringHash_contains(StringHash *stringHash, char *string);
 void    StringHash_free(StringHash *stringHash, void freeFunc());
 void StringHash_freeNoValFree(StringHash *stringHash);
-int     StringHash_getNumValues(StringHash *stringHash);
+//int     StringHash_getNumValues(StringHash *stringHash);
+#define StringHash_getNumValues(stringHash) stringHash->nValue
+
 void *  StringHash_getValue(StringHash *stringHash, char *string);
 void *  StringHash_getValues(StringHash *stringHash);
 char ** StringHash_getKeys(StringHash *stringHash);
