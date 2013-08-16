@@ -57,7 +57,6 @@ typedef struct RefineSolexaGenesStruct {
   int maxNum;
   int maxRecursions;
   int minIntronSize;
-  int minSingleExonCDSPercLength;
   int minSingleExonLength;
   int otherNum;
   int recursiveLimit;
@@ -85,6 +84,7 @@ typedef struct RefineSolexaGenesStruct {
   Vector *prelimGenes;
   
   double filterOnOverlapThreshold;
+  double minSingleExonCDSPercLength;
   double rejectIntronCutoff;
   double retainedIntronPenalty;
   double consLim;
@@ -123,7 +123,7 @@ typedef struct ORFRangeStruct {
 
 
 
-RefineSolexaGenes *RefineSolexaGenes_new(char *configFile);
+RefineSolexaGenes *RefineSolexaGenes_new(char *configFile, char *logicName);
 DBAdaptor *RefineSolexaGenes_getDbAdaptor(RefineSolexaGenes *rsg, char *alias);
 void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg);
 void  RefineSolexaGenes_run(RefineSolexaGenes *rsg);
@@ -250,7 +250,7 @@ double RefineSolexaGenes_getNonConsLim(RefineSolexaGenes *rsg);
 
   typedef (*IntSetFunc)(RefineSolexaGenes *rsg, int val);
   typedef (*Int64SetFunc)(RefineSolexaGenes *rsg, long val);
-  typedef (*FloatSetFunc)(RefineSolexaGenes *rsg, float val);
+  typedef (*FloatSetFunc)(RefineSolexaGenes *rsg, double val);
   typedef (*StringSetFunc)(RefineSolexaGenes *rsg, const char *val);
   typedef (*BoolSetFunc)(RefineSolexaGenes *rsg, int val);
   typedef (*VectorSetFunc)(RefineSolexaGenes *rsg, Vector *val);
@@ -278,5 +278,5 @@ double RefineSolexaGenes_getNonConsLim(RefineSolexaGenes *rsg);
   void ConfigConverter_wrapGroupSetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncData, config_setting_t *setting);
   void ConfigConverter_wrapArraySetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncData, config_setting_t *setting);
   void ConfigConverter_wrapListSetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncData, config_setting_t *setting);
-  void RunnableDB_readAndCheckConfig(RefineSolexaGenes *rsg, char *configFile, char *blockName);
+  void RunnableDB_readAndCheckConfig(RefineSolexaGenes *rsg, char *configFile, char *blockName, char *logicName);
 #endif

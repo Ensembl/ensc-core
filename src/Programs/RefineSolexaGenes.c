@@ -332,7 +332,8 @@ void SetFuncData_free(SetFuncData *sfd) {
 #define RSG_DRIVER
 #ifdef RSG_DRIVER
 int main(int argc, char *argv[]) {
-  RefineSolexaGenes *rsg = RefineSolexaGenes_new(NULL);
+  RefineSolexaGenes *rsg = RefineSolexaGenes_new("/nfs/users/nfs_s/searle/RefineSolexaGenes_rabbit.cfg", "refine_Oc_ZyR_blood");
+  exit(1);
 
   initEnsC(argc, argv);
 
@@ -546,7 +547,7 @@ void RefineSolexaGenes_initSetFuncs(RefineSolexaGenes *rsg) {
   StringHash_add(rsg->funcHash, "OUTPUT_DB", SetFuncData_new(RefineSolexaGenes_setOutputDb, CONFIG_TYPE_STRING));
   StringHash_add(rsg->funcHash, "INTRON_DB", SetFuncData_new(RefineSolexaGenes_setIntronDb, CONFIG_TYPE_STRING));
   StringHash_add(rsg->funcHash, "MODEL_DB", SetFuncData_new(RefineSolexaGenes_setModelDb, CONFIG_TYPE_STRING));
-  StringHash_add(rsg->funcHash, "WRITE_INTRONS", SetFuncData_new(RefineSolexaGenes_setWriteIntrons, CONFIG_TYPE_BOOL));
+  StringHash_add(rsg->funcHash, "WRITE_INTRONS", SetFuncData_new(RefineSolexaGenes_setWriteIntrons, CONFIG_TYPE_INT));
   StringHash_add(rsg->funcHash, "MAX_RECURSIONS", SetFuncData_new(RefineSolexaGenes_setMaxRecursions, CONFIG_TYPE_INT));
 
   SetFuncData *logicNameFuncData = SetFuncData_new(RefineSolexaGenes_setLogicNames, CONFIG_TYPE_ARRAY);
@@ -565,22 +566,91 @@ void RefineSolexaGenes_initSetFuncs(RefineSolexaGenes *rsg) {
   StringHash_add(rsg->funcHash, "SINGLE_EXON_MODEL", SetFuncData_new(RefineSolexaGenes_setSingleExonModelType, CONFIG_TYPE_STRING));
   StringHash_add(rsg->funcHash, "MIN_SINGLE_EXON", SetFuncData_new(RefineSolexaGenes_setMinSingleExonLength, CONFIG_TYPE_INT));
   StringHash_add(rsg->funcHash, "SINGLE_EXON_CDS", SetFuncData_new(RefineSolexaGenes_setMinSingleExonCDSPercLength, CONFIG_TYPE_FLOAT));
-  StringHash_add(rsg->funcHash, "STRICT_INTERNAL_SPLICE_SITES", SetFuncData_new(RefineSolexaGenes_setStrictInternalSpliceSites, CONFIG_TYPE_BOOL));
-  StringHash_add(rsg->funcHash, "STRICT_INTERNAL_END_EXON_SPLICE_SITES", SetFuncData_new(RefineSolexaGenes_setStrictInternalEndSpliceSites, CONFIG_TYPE_BOOL));
+  StringHash_add(rsg->funcHash, "STRICT_INTERNAL_SPLICE_SITES", SetFuncData_new(RefineSolexaGenes_setStrictInternalSpliceSites, CONFIG_TYPE_INT));
+  StringHash_add(rsg->funcHash, "STRICT_INTERNAL_END_EXON_SPLICE_SITES", SetFuncData_new(RefineSolexaGenes_setStrictInternalEndSpliceSites, CONFIG_TYPE_INT));
   StringHash_add(rsg->funcHash, "BEST_SCORE", SetFuncData_new(RefineSolexaGenes_setBestScoreType, CONFIG_TYPE_STRING));
   StringHash_add(rsg->funcHash, "OTHER_ISOFORMS", SetFuncData_new(RefineSolexaGenes_setOtherIsoformsType, CONFIG_TYPE_STRING));
   StringHash_add(rsg->funcHash, "OTHER_NUM", SetFuncData_new(RefineSolexaGenes_setOtherNum, CONFIG_TYPE_INT));
   StringHash_add(rsg->funcHash, "MAX_NUM", SetFuncData_new(RefineSolexaGenes_setMaxNum, CONFIG_TYPE_INT));
   StringHash_add(rsg->funcHash, "BAD_MODELS", SetFuncData_new(RefineSolexaGenes_setBadModelsType, CONFIG_TYPE_STRING));
-  StringHash_add(rsg->funcHash, "TRIM_UTR", SetFuncData_new(RefineSolexaGenes_setTrimUTR, CONFIG_TYPE_BOOL));
+  StringHash_add(rsg->funcHash, "TRIM_UTR", SetFuncData_new(RefineSolexaGenes_setTrimUTR, CONFIG_TYPE_INT));
   StringHash_add(rsg->funcHash, "MAX_3PRIME_EXONS", SetFuncData_new(RefineSolexaGenes_setMax3PrimeExons, CONFIG_TYPE_INT));
   StringHash_add(rsg->funcHash, "MAX_3PRIME_LENGTH", SetFuncData_new(RefineSolexaGenes_setMax3PrimeLength, CONFIG_TYPE_INT));
   StringHash_add(rsg->funcHash, "MAX_5PRIME_EXONS", SetFuncData_new(RefineSolexaGenes_setMax5PrimeExons, CONFIG_TYPE_INT));
   StringHash_add(rsg->funcHash, "MAX_5PRIME_LENGTH", SetFuncData_new(RefineSolexaGenes_setMax5PrimeLength, CONFIG_TYPE_INT));
-  StringHash_add(rsg->funcHash, "REJECT_INTRON_CUTOFF", SetFuncData_new(RefineSolexaGenes_setRejectIntronCutoff, CONFIG_TYPE_INT));
+  StringHash_add(rsg->funcHash, "REJECT_INTRON_CUTOFF", SetFuncData_new(RefineSolexaGenes_setRejectIntronCutoff, CONFIG_TYPE_FLOAT));
 }
 
-RefineSolexaGenes *RefineSolexaGenes_new(char *configFile) {
+void RefineSolexaGenes_dumpConfig(RefineSolexaGenes *rsg) {
+  fprintf(stderr, "OUTPUT_DB\t\t%s\n", RefineSolexaGenes_getOutputDb(rsg));
+  fprintf(stderr, "INTRON_DB\t\t%s\n", RefineSolexaGenes_getIntronDb(rsg));
+  fprintf(stderr, "MODEL_DB\t\t%s\n", RefineSolexaGenes_getModelDb(rsg));
+  fprintf(stderr, "WRITE_INTRONS\t\t%d\n", RefineSolexaGenes_writeIntrons(rsg));
+  fprintf(stderr, "MAX_RECURSIONS\t\t%d\n", RefineSolexaGenes_getMaxRecursions(rsg));
+
+  fprintf(stderr,"LOGICNAME\t\t["); 
+  Vector *logicNames = RefineSolexaGenes_getLogicNames(rsg);
+  if (logicNames) {
+    int i;
+    for (i=0; i<Vector_getNumElement(logicNames); i++) {
+      char *lName = Vector_getElementAt(logicNames, i);
+      if (i) fprintf(stderr,", ");
+      fprintf(stderr,"'%s'",lName);
+    }
+  }
+  fprintf(stderr,"]\n"); 
+  
+  fprintf(stderr,"INTRON_BAM_FILES {\n"); 
+  Vector *intronBamFiles = RefineSolexaGenes_getIntronBamFiles(rsg);
+  if (intronBamFiles) {
+    int i;
+    for (i=0; i<Vector_getNumElement(intronBamFiles); i++) {
+      IntronBamConfig *ibc = Vector_getElementAt(intronBamFiles, i);
+      fprintf(stderr," (\n  FILE %s\n  MIXED_BAM %d\n  DEPTH %d\n",ibc->fileName, ibc->mixedBam, ibc->depth);
+      fprintf(stderr,"  GROUPNAME [ ");
+      if (ibc->groupNames) {
+        int j;
+        for (j=0; j<Vector_getNumElement(ibc->groupNames); j++) {
+          char *gName = Vector_getElementAt(ibc->groupNames, j);
+          if (j) fprintf(stderr,", ");
+          fprintf(stderr,"'%s'", gName);
+        }
+      }
+      fprintf(stderr," ]\n");
+      fprintf(stderr," )\n");
+    }
+  }
+  fprintf(stderr,"}\n"); 
+/*
+  SetFuncData *intronBamFilesFuncData = SetFuncData_new(RefineSolexaGenes_setIntronBamFiles, CONFIG_TYPE_LIST);
+  intronBamFilesFuncData->subType = CONFIG_TYPE_GROUP;
+  intronBamFilesFuncData->subFunc = RefineSolexaGenes_parseIntronBamFilesConfig;
+  "INTRON_BAM_FILES", intronBamFilesFuncData);
+*/
+
+  fprintf(stderr, "MODEL_LN\t\t%s\n", RefineSolexaGenes_getModelLogicName(rsg));
+  fprintf(stderr, "RETAINED_INTRON_PENALTY\t%lf\n", RefineSolexaGenes_getRetainedIntronPenalty(rsg));
+  fprintf(stderr, "MIN_INTRON_SIZE\t\t%d\n", RefineSolexaGenes_getMinIntronSize(rsg));
+  fprintf(stderr, "MAX_INTRON_SIZE\t\t%d\n", RefineSolexaGenes_getMaxIntronSize(rsg));
+  fprintf(stderr, "SINGLE_EXON_MODEL\t\t%s\n", RefineSolexaGenes_getSingleExonModelType(rsg));
+  fprintf(stderr, "MIN_SINGLE_EXON\t\t%d\n", RefineSolexaGenes_getMinSingleExonLength(rsg));
+  fprintf(stderr, "SINGLE_EXON_CDS\t\t%lf\n", RefineSolexaGenes_getMinSingleExonCDSPercLength(rsg));
+  fprintf(stderr, "STRICT_INTERNAL_SPLICE_SITES\t%d\n", RefineSolexaGenes_strictInternalSpliceSites(rsg));
+  fprintf(stderr, "STRICT_INTERNAL_END_EXON_SPLICE_SITES\t%d\n", RefineSolexaGenes_strictInternalEndSpliceSites(rsg));
+  fprintf(stderr, "BEST_SCORE\t\t%s\n", RefineSolexaGenes_getBestScoreType(rsg));
+  fprintf(stderr, "OTHER_ISOFORMS\t\t%s\n", RefineSolexaGenes_getOtherIsoformsType(rsg));
+  fprintf(stderr, "OTHER_NUM\t\t%d\n", RefineSolexaGenes_getOtherNum(rsg));
+  fprintf(stderr, "MAX_NUM\t\t%d\n", RefineSolexaGenes_getMaxNum(rsg));
+  fprintf(stderr, "BAD_MODELS\t\t%s\n", RefineSolexaGenes_getBadModelsType(rsg));
+  fprintf(stderr, "TRIM_UTR\t\t%d\n", RefineSolexaGenes_trimUTR(rsg));
+  fprintf(stderr, "MAX_3PRIME_EXONS\t\t%d\n", RefineSolexaGenes_getMax3PrimeExons(rsg));
+  fprintf(stderr, "MAX_3PRIME_LENGTH\t\t%d\n", RefineSolexaGenes_getMax3PrimeLength(rsg));
+  fprintf(stderr, "MAX_5PRIME_EXONS\t\t%d\n", RefineSolexaGenes_getMax5PrimeExons(rsg));
+  fprintf(stderr, "MAX_5PRIME_LENGTH\t\t%d\n", RefineSolexaGenes_getMax5PrimeLength(rsg));
+  fprintf(stderr, "REJECT_INTRON_CUTOFF\t\t%lf\n", RefineSolexaGenes_getRejectIntronCutoff(rsg));
+}
+
+RefineSolexaGenes *RefineSolexaGenes_new(char *configFile, char *logicName) {
   RefineSolexaGenes *rsg;
   
   if ((rsg = calloc(1,sizeof(RefineSolexaGenes))) == NULL) {
@@ -592,9 +662,11 @@ RefineSolexaGenes *RefineSolexaGenes_new(char *configFile) {
 
 // Hack for now to allow me to run without configuration 
   if (configFile) {
-    fprintf(stderr, "Error: Config file specified but config reading not implemented - bye!\n");
-    exit(1);
-    RunnableDB_readAndCheckConfig(rsg, configFile, "Config.REFINESOLEXAGENES_CONFIG_BY_LOGIC");
+//    fprintf(stderr, "Error: Config file specified but config reading not implemented - bye!\n");
+//    exit(1);
+// HACK: For now pass in a logicName rather than doing through analysis
+    RunnableDB_readAndCheckConfig(rsg, configFile, "Config.REFINESOLEXAGENES_CONFIG_BY_LOGIC", logicName);
+    RefineSolexaGenes_dumpConfig(rsg);
   } else {
     fprintf(stderr, "WARNING: Running without reading config (config reading not implemented)\n");
   }
@@ -613,7 +685,7 @@ RefineSolexaGenes *RefineSolexaGenes_new(char *configFile) {
   return rsg;
 }
 
-void RunnableDB_readAndCheckConfig(RefineSolexaGenes *rsg, char *configFile, char *blockName) {
+void RunnableDB_readAndCheckConfig(RefineSolexaGenes *rsg, char *configFile, char *blockName, char *logicName) {
   config_t cfg;
   config_setting_t *cfgBlock;
 
@@ -632,7 +704,9 @@ void RunnableDB_readAndCheckConfig(RefineSolexaGenes *rsg, char *configFile, cha
   if (cfgBlock == NULL) {
     fprintf(stderr,"Missing config block %s\n", blockName);
   }
-  Utilities_parseConfig(rsg, cfgBlock, Analysis_getLogicName(RefineSolexaGenes_getAnalysis(rsg)), 0 /*ignoreThrow*/);
+// HACK: For now use passed in logicName rather than doing through analysis
+//  Utilities_parseConfig(rsg, cfgBlock, Analysis_getLogicName(RefineSolexaGenes_getAnalysis(rsg)), 0 /*ignoreThrow*/);
+  Utilities_parseConfig(rsg, cfgBlock, logicName, 0 /*ignoreThrow*/);
 }
 
 /*
@@ -6772,7 +6846,7 @@ void RefineSolexaGenes_parseIntronBamFilesConfig(RefineSolexaGenes *rsg, config_
   for (i=0; i<config_setting_length(setting); i++) {
     config_setting_t *section = config_setting_get_elem(setting, i);
 
-    if (config_setting_type(setting) != CONFIG_TYPE_GROUP) {
+    if (config_setting_type(section) != CONFIG_TYPE_GROUP) {
       fprintf(stderr,"Error: Expected a CONFIG_TYPE_GROUP setting within the IntronBamFiles block\n");
       exit(1);
     }
