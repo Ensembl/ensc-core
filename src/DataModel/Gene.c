@@ -509,6 +509,8 @@ void Gene_free(Gene *gene) {
 
   Vector_free(gene->transcripts);
 
+  StableIdInfo_freePtrs(&gene->si);
+
   free(gene);
 }
 

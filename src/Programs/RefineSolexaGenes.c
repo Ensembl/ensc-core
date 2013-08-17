@@ -343,36 +343,37 @@ int main(int argc, char *argv[]) {
   } else {
     logicName = defaultLogicName;
   }
-  RefineSolexaGenes *rsg = RefineSolexaGenes_new("RefineSolexaGenes_sheep.cfg", logicName);
+//  RefineSolexaGenes *rsg = RefineSolexaGenes_new("RefineSolexaGenes_sheep.cfg", logicName);
+  RefineSolexaGenes *rsg = RefineSolexaGenes_new("/Users/searle/RefineSolexaGenes_rabbit.cfg", logicName);
 
   
 
   rsg->adaptorAliasHash = StringHash_new(STRINGHASH_SMALL);
 
-  DBAdaptor *refDb = DBAdaptor_new("genebuild1", "ensadmin", "ensembl", "th3_sheep_core", 3306, NULL);
+  DBAdaptor *refDb = //DBAdaptor_new("genebuild1", "ensadmin", "ensembl", "th3_sheep_core", 3306, NULL);
                      //DBAdaptor_new("genebuild2", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL);
                      //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_ref", 13382, NULL);
-                     //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL);
+                     DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL);
   StringHash_add(rsg->adaptorAliasHash, "REFERENCE_DB", refDb);
   StringHash_add(rsg->adaptorAliasHash, "REFINED_DB", 
                  //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_sheep_refine7", 3306, refDb));
                  //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_kid_mus_bi_refine", 3306, refDb));
-                 DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_mus_bi_refine", 3306, refDb));
+                 //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_mus_bi_refine", 3306, refDb));
                  //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
                  //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_refined", 13386, refDb));
-                 //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
+                 DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
   StringHash_add(rsg->adaptorAliasHash, "REFINED_TISSUES_5_DB", 
                  //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_sheep_refine7", 3306, refDb));
                  //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_kid_mus_bi_refine", 3306, refDb));
-                 DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_tissue_5_refine", 3306, refDb));
+                 //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_tissue_5_refine", 3306, refDb));
                  //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
                  //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_refined", 13386, refDb));
-                 //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
+                 DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
   StringHash_add(rsg->adaptorAliasHash, "ROUGH_DB", 
-                 DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "th3_sheep_rough", 3306, refDb));
+                 //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "th3_sheep_rough", 3306, refDb));
                  //DBAdaptor_new("genebuild5", "ensadmin", "ensembl", "db8_rabbit_rough", 3306, refDb));
                  //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_rough", 13385, refDb));
-                 //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_rough", 3306, refDb));
+                 DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_rough", 3306, refDb));
 
   // Create a DBAdaptor hash
   // Not used with Bam files  RefineSolexaGenes_setIntronDb(rsg, char *intronDb);
@@ -450,7 +451,7 @@ int main(int argc, char *argv[]) {
   } else {
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:300000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:3000000:1");
-//  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:30000000:1");
+  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:30000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1100000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:150000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:1:1:250000000:1");
@@ -458,7 +459,7 @@ int main(int argc, char *argv[]) {
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:11710000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:280000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:100000000:1");
-  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:17");
+//  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:17");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:100000000:120000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:170000000:190000000:1");
   }
@@ -518,8 +519,8 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "cons lim %f non cons lim %f\n", consLims[i], nonConsLims[j]);
       if (RefineSolexaGenes_getOutput(rsg)) {
         dumpGenes(RefineSolexaGenes_getOutput(rsg), 1);
-        RefineSolexaGenes_writeOutput(rsg);
-        tc_malloc_stats();
+        //RefineSolexaGenes_writeOutput(rsg);
+        //tc_malloc_stats();
         ProcUtil_timeInfo("end of loop iter");
         fprintf(stderr,"Number of exon clone calls = %d\n",nExonClone);
   
@@ -537,7 +538,7 @@ int main(int argc, char *argv[]) {
       rsg->output = NULL;
     }
   }
-  tc_malloc_stats();
+  //tc_malloc_stats();
   return 0;
 }
 #endif
@@ -1729,8 +1730,10 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
         Vector_free(newClusters);
       }
   
-      if (clusteredModels != NULL && Vector_getNumElement(clusteredModels)) {
-        Vector_append(cleanClusters, clusteredModels);
+      if (clusteredModels != NULL) {
+        if (Vector_getNumElement(clusteredModels)) {
+          Vector_append(cleanClusters, clusteredModels);
+        }
         Vector_free(clusteredModels);
       }
       
@@ -1864,6 +1867,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
             //push @{$self->output} , $new_gene;
             RefineSolexaGenes_addToOutput(rsg, newGene);
           }
+          Exon_free(exon);
         }
       }
     }
@@ -1880,7 +1884,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
 //    }
     //fprintf(stderr,"Number of final models in all clusters = %d\n", nFinal);
     Vector_free(models);
-    MallocExtension_ReleaseFreeMemory();
+    //MallocExtension_ReleaseFreeMemory();
   }
 }
 
@@ -2063,7 +2067,11 @@ Vector *RefineSolexaGenes_reclusterModels(RefineSolexaGenes *rsg, Vector *cluste
         Vector_addElement(finalClusters, RefineSolexaGenes_recalculateCluster(rsg, genes));
         Vector_addElement(newClusters,   RefineSolexaGenes_recalculateCluster(rsg, otherGenes));
 // NIY: Free strandedCluster???
-        //if (strandedCluster) ModelCluster_free(strandedCluster);
+// Try just the vectors
+        //if (strandedCluster) {
+           //Vector_free(strandedCluster->models);
+           //Vector_free(strandedCluster->finalModels);
+        //}
       } else {
         // keep it as it was
         Vector_free(genes);
@@ -6595,11 +6603,10 @@ int dumpGenes(Vector *genes, int withSupport) {
 }
 
 // First arg should eventually be RunnableDB type I think - need a method to get the configvar -> setting function hash
-Utilities_parseConfig(RefineSolexaGenes *rsg, config_setting_t *cfgBlock, char *label, int ignoreThrow) {
+void Utilities_parseConfig(RefineSolexaGenes *rsg, config_setting_t *cfgBlock, char *label, int ignoreThrow) {
   char *DEFAULT_ENTRY_KEY = "DEFAULT";
 
   //my ($obj, $var_hash, $label, $ignore_throw) = @_;
-
   if (label == NULL) {
     fprintf(stderr, "Can't parse the config hash for object if we are give no label\n");
     exit(1);
@@ -6607,7 +6614,6 @@ Utilities_parseConfig(RefineSolexaGenes *rsg, config_setting_t *cfgBlock, char *
 
   StringHash *keyCheckHash = StringHash_new(STRINGHASH_SMALL);
 
-  
   int count = config_setting_length(cfgBlock);
   
   int i;
@@ -6624,8 +6630,6 @@ Utilities_parseConfig(RefineSolexaGenes *rsg, config_setting_t *cfgBlock, char *
     }
     StringHash_add(keyCheckHash, ucKey, setting);
   }
-
-  
 
   // replace entries in config has with upper (perl said lower but I think its upper) case versions.
 /* Don't do this modifying of the config hash - instead use the keyCheckHash to return the required section (its key is upcased already
