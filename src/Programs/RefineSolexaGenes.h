@@ -48,6 +48,7 @@ typedef struct RefineSolexaGenesStruct {
   char *outputDb;
   char *otherIsoformsType;
   char *singleExonModelType;
+  char *typePrefix;
 
   int max3PrimeExons;
   int max5PrimeExons;
@@ -238,6 +239,8 @@ double RefineSolexaGenes_getNonConsLim(RefineSolexaGenes *rsg);
   Slice *RefineSolexaGenes_fetchSequence(RefineSolexaGenes *rsg, char *name, DBAdaptor *db, Vector *repeatMaskTypes, int softMask);
   void RefineSolexaGenes_setInputId(RefineSolexaGenes *rsg, char *inputId);
   char *RefineSolexaGenes_getInputId(RefineSolexaGenes *rsg);
+  void RefineSolexaGenes_setTypePrefix(RefineSolexaGenes *rsg, char *typePrefix);
+  char *RefineSolexaGenes_getTypePrefix(RefineSolexaGenes *rsg);
   Vector *RefineSolexaGenes_getOutput(RefineSolexaGenes *rsg);
   void RefineSolexaGenes_addToOutput(RefineSolexaGenes *rsg, Gene *gene);
   void RefineSolexaGenes_setDb(RefineSolexaGenes *rsg, DBAdaptor *db);

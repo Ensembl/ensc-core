@@ -332,12 +332,20 @@ void SetFuncData_free(SetFuncData *sfd) {
 #define RSG_DRIVER
 #ifdef RSG_DRIVER
 int main(int argc, char *argv[]) {
-  RefineSolexaGenes *rsg = RefineSolexaGenes_new("/nfs/users/nfs_s/searle/RefineSolexaGenes_rabbit.cfg", "refine_Oc_ZyR_blood");
-  exit(1);
-
   initEnsC(argc, argv);
 
   logfp = stderr;
+
+  char *defaultLogicName = "refine_all";
+  char *logicName;
+  if (argc > 2) {
+    logicName = argv[2];
+  } else {
+    logicName = defaultLogicName;
+  }
+  RefineSolexaGenes *rsg = RefineSolexaGenes_new("RefineSolexaGenes_sheep.cfg", logicName);
+
+  
 
   rsg->adaptorAliasHash = StringHash_new(STRINGHASH_SMALL);
 
@@ -353,6 +361,13 @@ int main(int argc, char *argv[]) {
                  //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
                  //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_refined", 13386, refDb));
                  //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
+  StringHash_add(rsg->adaptorAliasHash, "REFINED_TISSUES_5_DB", 
+                 //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_sheep_refine7", 3306, refDb));
+                 //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_kid_mus_bi_refine", 3306, refDb));
+                 DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_tissue_5_refine", 3306, refDb));
+                 //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
+                 //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_refined", 13386, refDb));
+                 //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
   StringHash_add(rsg->adaptorAliasHash, "ROUGH_DB", 
                  DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "th3_sheep_rough", 3306, refDb));
                  //DBAdaptor_new("genebuild5", "ensadmin", "ensembl", "db8_rabbit_rough", 3306, refDb));
@@ -362,6 +377,7 @@ int main(int argc, char *argv[]) {
   // Create a DBAdaptor hash
   // Not used with Bam files  RefineSolexaGenes_setIntronDb(rsg, char *intronDb);
 
+/*
   RefineSolexaGenes_setOutputDb(rsg, "REFINED_DB");
   RefineSolexaGenes_setModelDb(rsg, "ROUGH_DB");
 
@@ -412,8 +428,16 @@ int main(int argc, char *argv[]) {
   RefineSolexaGenes_setMax5PrimeLength(rsg, 1000);
   RefineSolexaGenes_setRejectIntronCutoff(rsg, 5);
 
+*/
 /* Wasn't set in perl config???
   RefineSolexaGenes_setFilterOnOverlapThreshold(rsg, int filterOnOverlapThreshold);
+*/
+
+  // Other isoforms type needs to be set even if empty string 
+/*
+  if (RefineSolexaGenes_getOtherIsoformsType(rsg) == NULL) {
+    RefineSolexaGenes_setOtherIsoformsType(rsg, "");
+  }
 */
 
   // Get analysis from reference db
@@ -465,7 +489,7 @@ int main(int argc, char *argv[]) {
       RefineSolexaGenes_setNonConsLim(rsg, nonConsLims[j]);
 
       char typeName[1024];
-      char *typePref = "mb_";
+      char *typePref = RefineSolexaGenes_getTypePrefix(rsg);
 /* 
       sprintf(typeName, "best_c%d_nc%d", (int)consLims[i], (int)nonConsLims[j]);
       RefineSolexaGenes_setBestScoreType(rsg, typeName);
@@ -579,6 +603,7 @@ void RefineSolexaGenes_initSetFuncs(RefineSolexaGenes *rsg) {
   StringHash_add(rsg->funcHash, "MAX_5PRIME_EXONS", SetFuncData_new(RefineSolexaGenes_setMax5PrimeExons, CONFIG_TYPE_INT));
   StringHash_add(rsg->funcHash, "MAX_5PRIME_LENGTH", SetFuncData_new(RefineSolexaGenes_setMax5PrimeLength, CONFIG_TYPE_INT));
   StringHash_add(rsg->funcHash, "REJECT_INTRON_CUTOFF", SetFuncData_new(RefineSolexaGenes_setRejectIntronCutoff, CONFIG_TYPE_FLOAT));
+  StringHash_add(rsg->funcHash, "TYPE_PREFIX", SetFuncData_new(RefineSolexaGenes_setTypePrefix, CONFIG_TYPE_STRING));
 }
 
 void RefineSolexaGenes_dumpConfig(RefineSolexaGenes *rsg) {
@@ -621,12 +646,6 @@ void RefineSolexaGenes_dumpConfig(RefineSolexaGenes *rsg) {
     }
   }
   fprintf(stderr,"}\n"); 
-/*
-  SetFuncData *intronBamFilesFuncData = SetFuncData_new(RefineSolexaGenes_setIntronBamFiles, CONFIG_TYPE_LIST);
-  intronBamFilesFuncData->subType = CONFIG_TYPE_GROUP;
-  intronBamFilesFuncData->subFunc = RefineSolexaGenes_parseIntronBamFilesConfig;
-  "INTRON_BAM_FILES", intronBamFilesFuncData);
-*/
 
   fprintf(stderr, "MODEL_LN\t\t%s\n", RefineSolexaGenes_getModelLogicName(rsg));
   fprintf(stderr, "RETAINED_INTRON_PENALTY\t%lf\n", RefineSolexaGenes_getRetainedIntronPenalty(rsg));
@@ -648,6 +667,7 @@ void RefineSolexaGenes_dumpConfig(RefineSolexaGenes *rsg) {
   fprintf(stderr, "MAX_5PRIME_EXONS\t\t%d\n", RefineSolexaGenes_getMax5PrimeExons(rsg));
   fprintf(stderr, "MAX_5PRIME_LENGTH\t\t%d\n", RefineSolexaGenes_getMax5PrimeLength(rsg));
   fprintf(stderr, "REJECT_INTRON_CUTOFF\t\t%lf\n", RefineSolexaGenes_getRejectIntronCutoff(rsg));
+  fprintf(stderr, "TYPE_PREFIX\t\t%s\n", RefineSolexaGenes_getTypePrefix(rsg));
 }
 
 RefineSolexaGenes *RefineSolexaGenes_new(char *configFile, char *logicName) {
@@ -794,7 +814,7 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
 
   DBAdaptor *db = RefineSolexaGenes_getDb(rsg);
 
-  if (RefineSolexaGenes_getIntronDb(rsg)) {
+  if (RefineSolexaGenes_getIntronDb(rsg) && RefineSolexaGenes_getIntronDb(rsg)[0] != '\0') {
     RefineSolexaGenes_setIntronSliceAdaptor(rsg, DBAdaptor_getSliceAdaptor(RefineSolexaGenes_getDbAdaptor(rsg, RefineSolexaGenes_getIntronDb(rsg))));
   }
 // Unused  $self->repeat_feature_adaptor($self->db->get_RepeatFeatureAdaptor);
@@ -835,7 +855,7 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
     Vector *genes;
     char *modelLogicName = RefineSolexaGenes_getModelLogicName(rsg);
     if (modelLogicName != NULL) {
-      genes = Slice_getAllGenes(geneSlice, NULL, modelLogicName, 1, NULL, NULL);
+      genes = Slice_getAllGenes(geneSlice, modelLogicName, NULL, 1, NULL, NULL);
       fprintf(stderr,"Got %d genes with logic name %s\n", Vector_getNumElement(genes), modelLogicName);
     } else {
       genes = Slice_getAllGenes(geneSlice, NULL, NULL, 1, NULL, NULL);
@@ -5665,7 +5685,9 @@ ExtraExonData **RefineSolexaGenes_getExtraExonsValues(RefineSolexaGenes *rsg) {
 //####################################
 
 void RefineSolexaGenes_setIntronDb(RefineSolexaGenes *rsg, char *intronDb) {
-  rsg->intronDb = StrUtil_copyString(&rsg->intronDb, intronDb, 0);
+  if (intronDb[0] != '\0') {
+    rsg->intronDb = StrUtil_copyString(&rsg->intronDb, intronDb, 0);
+  }
 }
 
 char *RefineSolexaGenes_getIntronDb(RefineSolexaGenes *rsg) {
@@ -5673,7 +5695,9 @@ char *RefineSolexaGenes_getIntronDb(RefineSolexaGenes *rsg) {
 }
 
 void RefineSolexaGenes_setOutputDb(RefineSolexaGenes *rsg, char *outputDb) {
-  rsg->outputDb = StrUtil_copyString(&rsg->outputDb, outputDb, 0);
+  if (outputDb[0] != '\0') {
+    rsg->outputDb = StrUtil_copyString(&rsg->outputDb, outputDb, 0);
+  }
 }
 
 char *RefineSolexaGenes_getOutputDb(RefineSolexaGenes *rsg) {
@@ -5681,7 +5705,9 @@ char *RefineSolexaGenes_getOutputDb(RefineSolexaGenes *rsg) {
 }
 
 void RefineSolexaGenes_setModelDb(RefineSolexaGenes *rsg, char *modelDb) {
-  rsg->modelDb = StrUtil_copyString(&rsg->modelDb, modelDb, 0);
+  if (modelDb[0] != '\0') {
+    rsg->modelDb = StrUtil_copyString(&rsg->modelDb, modelDb, 0);
+  }
 }
 
 char *RefineSolexaGenes_getModelDb(RefineSolexaGenes *rsg) {
@@ -5721,7 +5747,9 @@ int RefineSolexaGenes_getMaxIntronSize(RefineSolexaGenes *rsg) {
 }
 
 void RefineSolexaGenes_setBestScoreType(RefineSolexaGenes *rsg, char *bestScoreType) {
-  rsg->bestScoreType = StrUtil_copyString(&rsg->bestScoreType, bestScoreType, 0);
+  if (bestScoreType[0] != '\0') {
+    rsg->bestScoreType = StrUtil_copyString(&rsg->bestScoreType, bestScoreType, 0);
+  }
 }
 
 char *RefineSolexaGenes_getBestScoreType(RefineSolexaGenes *rsg) {
@@ -5745,7 +5773,9 @@ char *RefineSolexaGenes_getOtherIsoformsType(RefineSolexaGenes *rsg) {
 }
 
 void RefineSolexaGenes_setModelLogicName(RefineSolexaGenes *rsg, char *modelLN) {
-  rsg->modelLogicName = StrUtil_copyString(&rsg->modelLogicName, modelLN, 0);
+  if (modelLN[0] != '\0') {
+    rsg->modelLogicName = StrUtil_copyString(&rsg->modelLogicName, modelLN, 0);
+  }
 }
 
 char *RefineSolexaGenes_getModelLogicName(RefineSolexaGenes *rsg) {
@@ -5753,7 +5783,9 @@ char *RefineSolexaGenes_getModelLogicName(RefineSolexaGenes *rsg) {
 }
 
 void RefineSolexaGenes_setBadModelsType(RefineSolexaGenes *rsg, char *badModelsType) {
-  rsg->badModelsType = StrUtil_copyString(&rsg->badModelsType, badModelsType, 0);
+  if (badModelsType[0] != '\0') {
+    rsg->badModelsType = StrUtil_copyString(&rsg->badModelsType, badModelsType, 0);
+  }
 }
 
 char *RefineSolexaGenes_getBadModelsType(RefineSolexaGenes *rsg) {
@@ -5793,7 +5825,9 @@ double RefineSolexaGenes_getMinSingleExonCDSPercLength(RefineSolexaGenes *rsg) {
 }
 
 void RefineSolexaGenes_setSingleExonModelType(RefineSolexaGenes *rsg, char *singleExonModelType) {
-  rsg->singleExonModelType = StrUtil_copyString(&rsg->singleExonModelType, singleExonModelType, 0);
+  if (singleExonModelType[0] != '\0') {
+    rsg->singleExonModelType = StrUtil_copyString(&rsg->singleExonModelType, singleExonModelType, 0);
+  }
 }
 
 char *RefineSolexaGenes_getSingleExonModelType(RefineSolexaGenes *rsg) {
@@ -5920,6 +5954,13 @@ char *RefineSolexaGenes_getInputId(RefineSolexaGenes *rsg) {
   return rsg->inputId;
 }
 
+void RefineSolexaGenes_setTypePrefix(RefineSolexaGenes *rsg, char *typePrefix) {
+  rsg->typePrefix = StrUtil_copyString(&rsg->typePrefix, typePrefix, 0);
+}
+
+char *RefineSolexaGenes_getTypePrefix(RefineSolexaGenes *rsg) {
+  return rsg->typePrefix;
+}
 
 Exon *ExonUtils_cloneExon(Exon *exon) {
   Vector *supportingFeatures = NULL;
@@ -6751,7 +6792,9 @@ void ConfigConverter_wrapSetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncDat
                 ConfigConverter_typeCodeToString(setFuncData->type));
         exit(1);
       }
-      setFuncData->setFunc.setStringValue(rsg, config_setting_get_string(setting));
+      //if (config_setting_get_string(setting)[0] != '\0') {
+        setFuncData->setFunc.setStringValue(rsg, config_setting_get_string(setting));
+     // }
       break;
 
     case CONFIG_TYPE_BOOL:
