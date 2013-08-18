@@ -489,6 +489,7 @@ IDType IntronSupportingEvidenceAdaptor_store(IntronSupportingEvidenceAdaptor *is
       ResultRow *row = sth->fetchRow(sth);
       sfId = row->getLongLongAt(row, 0);
     }
+    sth->finish(sth);
   }
   
   IntronSupportingEvidence_setAdaptor(sf, isea);

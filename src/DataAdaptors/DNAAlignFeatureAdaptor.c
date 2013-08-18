@@ -142,22 +142,36 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
   DBAdaptor *db                    = bfa->dba;
   AnalysisAdaptor *analysisAdaptor = DBAdaptor_getAnalysisAdaptor(db);
 
+// Not very happy with this way of doing this - the undef values cause this to be ugly. Maybe should use bind parameters for storing
   char qStr[1024];
   sprintf(qStr,
-    "INSERT INTO %s (seq_region_id, seq_region_start,"
-                    "seq_region_end, seq_region_strand,"
-                    "hit_start, hit_end, hit_strand, hit_name,"
-                    "cigar_line, analysis_id, score, evalue,"
-                    "perc_ident, external_db_id, hcoverage,"
+    "INSERT INTO %s (seq_region_id,"
+                    "seq_region_start,"
+                    "seq_region_end,"
+                    "seq_region_strand,"
+                    "hit_start,"
+                    "hit_end,"
+                    "hit_strand,"
+                    "hit_name,"
+                    "cigar_line,"
+                    "analysis_id,"
+                    "score,"
+                    "evalue,"
+                    "perc_ident,"
+                    "external_db_id,"
+                    "hcoverage,"
                     "pair_dna_align_feature_id) "
-                    "VALUES (%" IDFMTSTR ",%%d,%%d,%%d,%%d,%%d,%%d,'%%s','%%s',%"
-                                IDFMTSTR ",%%f,%%f,%%f,%" IDFMTSTR ",%%f,%" IDFMTSTR ")", tableName);
+                    "VALUES (%" IDFMTSTR ",%%d,%%d,%%d,%%d,%%d,%%d,'%%s','%%s',%"IDFMTSTR
+                             ",%%s,%%s,%%s,%%s,%%s,%%s)", tableName);
+                            // changed to strings to allow for nulls ",%%f,%%f,%%f,%" IDFMTSTR ",%%f,%" IDFMTSTR ")", tableName);
 
   StatementHandle *sth = bfa->prepare((BaseAdaptor *)bfa, qStr,strlen(qStr));
 
   int i;
   for (i=0; i<Vector_getNumElement(features); i++) {
     char fixedCigar[1024];
+
+    char qStr[2048];
 
     DNAAlignFeature *feat = Vector_getElementAt(features, i);
 
@@ -212,7 +226,26 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
     // ( $feat, $seq_region_id ) = $self->_pre_store($feat);
     IDType seqRegionId = BaseFeatureAdaptor_preStore(bfa, feat);
 
+    char scoreString[1024];
+    DNAAlignFeature_getScore(feat) != FLOAT_UNDEF ? sprintf(scoreString,"%f",DNAAlignFeature_getScore(feat)) : sprintf(scoreString,"NULL");
+
+    char pValueString[1024];
+    DNAAlignFeature_getpValue(feat) != FLOAT_UNDEF ? sprintf(pValueString,"%f",DNAAlignFeature_getpValue(feat)) : sprintf(pValueString,"NULL");
+
+    char percIdString[1024];
+    DNAAlignFeature_getPercId(feat) != FLOAT_UNDEF ? sprintf(percIdString,"%f",DNAAlignFeature_getPercId(feat)) : sprintf(percIdString,"NULL");
+
+    char hCoverageString[1024];
+    DNAAlignFeature_gethCoverage(feat) != FLOAT_UNDEF ? sprintf(hCoverageString,"%f",DNAAlignFeature_gethCoverage(feat)) : sprintf(hCoverageString,"NULL");
+
+    char externalDbIDString[1024];
+    DNAAlignFeature_getExternalDbID(feat) != 0 ? sprintf(externalDbIDString,IDFMTSTR,DNAAlignFeature_getExternalDbID(feat)) : sprintf(externalDbIDString,"NULL");
+
+    char pairDNAAlignIDString[1024];
+    DNAAlignFeature_getPairDNAAlignFeatureId(feat) != 0 ? sprintf(pairDNAAlignIDString,IDFMTSTR,DNAAlignFeature_getPairDNAAlignFeatureId(feat)) : sprintf(pairDNAAlignIDString,"NULL");
+
 // Note using SeqRegionStart etc here rather than Start - should have same effect as perl's transfer
+    
     sth->execute(sth, (IDType)seqRegionId,
                       DNAAlignFeature_getSeqRegionStart(feat),
                       DNAAlignFeature_getSeqRegionEnd(feat),
@@ -223,12 +256,21 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
                       DNAAlignFeature_getHitSeqName(feat),
                       cigarString,
                       (IDType)Analysis_getDbID(analysis),
+                      scoreString,
+                      pValueString,
+                      percIdString,
+                      externalDbIDString,
+                      hCoverageString,
+                      pairDNAAlignIDString);
+       
+/*
                       DNAAlignFeature_getScore(feat),
                       DNAAlignFeature_getpValue(feat),
                       DNAAlignFeature_getPercId(feat),
                       (IDType)DNAAlignFeature_getExternalDbID(feat),
                       DNAAlignFeature_gethCoverage(feat),
                       (IDType)DNAAlignFeature_getPairDNAAlignFeatureId(feat));
+*/
 
 
     DNAAlignFeature_setDbID(feat,sth->getInsertId(sth));

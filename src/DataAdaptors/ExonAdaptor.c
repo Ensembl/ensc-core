@@ -367,6 +367,7 @@ IDType ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
   sth->execute(sth);
 
   exonId = sth->getInsertId(sth);
+  sth->finish(sth);
 
   // Now the supporting evidence
   SupportingFeatureAdaptor *esfAdaptor = DBAdaptor_getSupportingFeatureAdaptor(db);

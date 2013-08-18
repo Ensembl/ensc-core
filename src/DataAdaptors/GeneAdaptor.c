@@ -1441,8 +1441,6 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
 
   sprintf(qStr, fmtStr, descQStr, sourceQStr, statusQStr, canAnnQStr);
 
-
-
   if (Gene_getStableId(gene)) {
 /* Use FROM_UNIXTIME for now
     my $created  = $self->db->dbc->from_seconds_to_date($gene->created_date());
@@ -1580,7 +1578,9 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
 
   // store gene attributes if there are any
   AttributeAdaptor *attrAdaptor = DBAdaptor_getAttributeAdaptor(db);
-  AttributeAdaptor_storeOnGeneId(attrAdaptor, geneId, Gene_getAllAttributes(gene, NULL));
+  Vector *attribs = Gene_getAllAttributes(gene, NULL);
+  AttributeAdaptor_storeOnGeneId(attrAdaptor, geneId, attribs);
+  Vector_free(attribs);
 
   // store unconventional transcript associations if there are any
 /* NIY - and probably never will be implemented, not used anywhere that I know of

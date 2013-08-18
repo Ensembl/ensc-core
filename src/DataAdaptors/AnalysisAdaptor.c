@@ -104,7 +104,6 @@ Analysis *AnalysisAdaptor_fetchByLogicName(AnalysisAdaptor *aa, char *logicName)
 
   if (StringHash_contains(aa->logicNameCache, logicName)) {
     anal = (Analysis *)StringHash_getValue(aa->logicNameCache, logicName);
-    printf("Using logicName cache\n");
 
   } else {
     sprintf(qStr,

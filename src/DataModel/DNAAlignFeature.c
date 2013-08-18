@@ -18,6 +18,11 @@ DNAAlignFeature *DNAAlignFeature_new() {
 
   daf->funcs = &dnaAlignFeatureFuncs;
 
+// Not very happy with this way of signifying values not set, but for now can't think of a better way which is efficient
+  DNAAlignFeature_setpValue(daf, FLOAT_UNDEF);
+  DNAAlignFeature_setPercId(daf, FLOAT_UNDEF);
+  DNAAlignFeature_sethCoverage(daf, FLOAT_UNDEF);
+
   return daf;
 }
 
@@ -30,7 +35,7 @@ int DNAAlignFeature_getQueryUnit(void) {
 }
 
 ECOSTRING DNAAlignFeature_setExtraData(DNAAlignFeature *daf, char *extraData) {
-  EcoString_copyStr(ecoSTable, &(daf->extraData),extraData,0);
+  EcoString_copyStr(ecoSTable, &(daf->extraData), extraData,0);
 
   if (daf->extraData == NULL) {
     fprintf(stderr,"ERROR: Failed allocating space for extraData\n");
@@ -54,7 +59,7 @@ void DNAAlignFeature_freeImpl(DNAAlignFeature *daf) {
 //                   "       Freeing it anyway\n");
   }
 
-  //BaseAlignFeature_freePtrs((BaseAlignFeature *)daf);
+  BaseAlignFeature_freePtrs((BaseAlignFeature *)daf);
 //  fprintf(stderr," freeing daf\n");
   
   free(daf);
@@ -73,7 +78,7 @@ DNAAlignFeature *DNAAlignFeature_deepCopyImpl(DNAAlignFeature *daf) {
 
   memcpy(newDNAAlignFeature,daf,sizeof(DNAAlignFeature));
 
-  //BaseAlignFeature_copyData(newDNAAlignFeature, daf);
+  BaseAlignFeature_copyData(newDNAAlignFeature, daf);
   
 
   newDNAAlignFeature->referenceCount = 0;

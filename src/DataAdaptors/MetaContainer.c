@@ -105,7 +105,7 @@ char *MetaContainer_getDefaultAssembly(MetaContainer *mc) {
   char *assStr;
 
   if (row) {
-    assStr = row->getStringAt(row,0);
+    assStr = row->getStringCopyAt(row,0);
     sth->finish(sth);
     return assStr;
   } else {

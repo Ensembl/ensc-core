@@ -12,6 +12,7 @@
 #include "BaseAdaptor.h"
 #include "Vector.h"
 #include "Slice.h"
+#include "Species.h"
 #include "StrUtil.h"
 #include "DNAAlignFeature.h"
 #include "DNAPepAlignFeature.h"
@@ -21,6 +22,7 @@
 #include "Transcript.h"
 #include "translate.h"
 #include "Attribute.h"
+#include "MetaContainer.h"
 
 #include "libconfig.h"
 
@@ -343,37 +345,39 @@ int main(int argc, char *argv[]) {
   } else {
     logicName = defaultLogicName;
   }
-//  RefineSolexaGenes *rsg = RefineSolexaGenes_new("RefineSolexaGenes_sheep.cfg", logicName);
-  RefineSolexaGenes *rsg = RefineSolexaGenes_new("/Users/searle/RefineSolexaGenes_rabbit.cfg", logicName);
+  RefineSolexaGenes *rsg = RefineSolexaGenes_new("RefineSolexaGenes_sheep.cfg", logicName);
+//  RefineSolexaGenes *rsg = RefineSolexaGenes_new("/Users/searle/RefineSolexaGenes_rabbit.cfg", logicName);
 
   
 
-  rsg->adaptorAliasHash = StringHash_new(STRINGHASH_SMALL);
 
-  DBAdaptor *refDb = //DBAdaptor_new("genebuild1", "ensadmin", "ensembl", "th3_sheep_core", 3306, NULL);
+/*
+  DBAdaptor *refDb = DBAdaptor_new("genebuild1", "ensadmin", "ensembl", "th3_sheep_core", 3306, NULL);
                      //DBAdaptor_new("genebuild2", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL);
                      //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_ref", 13382, NULL);
-                     DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL);
+                     //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL);
   StringHash_add(rsg->adaptorAliasHash, "REFERENCE_DB", refDb);
   StringHash_add(rsg->adaptorAliasHash, "REFINED_DB", 
                  //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_sheep_refine7", 3306, refDb));
                  //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_kid_mus_bi_refine", 3306, refDb));
-                 //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_mus_bi_refine", 3306, refDb));
+                 DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_mus_bi_refine", 3306, refDb));
                  //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
                  //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_refined", 13386, refDb));
-                 DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
+                 //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
   StringHash_add(rsg->adaptorAliasHash, "REFINED_TISSUES_5_DB", 
                  //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_sheep_refine7", 3306, refDb));
                  //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_kid_mus_bi_refine", 3306, refDb));
-                 //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_tissue_5_refine", 3306, refDb));
+                 DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_tissue_5_refine", 3306, refDb));
                  //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
                  //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_refined", 13386, refDb));
-                 DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
+                 //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
   StringHash_add(rsg->adaptorAliasHash, "ROUGH_DB", 
                  //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "th3_sheep_rough", 3306, refDb));
+                 DBAdaptor_new("genebuild4", "ensadmin", "ensembl", "steve_sheep_rough", 3306, refDb));
                  //DBAdaptor_new("genebuild5", "ensadmin", "ensembl", "db8_rabbit_rough", 3306, refDb));
                  //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_rough", 13385, refDb));
-                 DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_rough", 3306, refDb));
+                 //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_rough", 3306, refDb));
+*/
 
   // Create a DBAdaptor hash
   // Not used with Bam files  RefineSolexaGenes_setIntronDb(rsg, char *intronDb);
@@ -442,7 +446,8 @@ int main(int argc, char *argv[]) {
 */
 
   // Get analysis from reference db
-  AnalysisAdaptor *refAa = DBAdaptor_getAnalysisAdaptor((DBAdaptor *)StringHash_getValue(rsg->adaptorAliasHash, "REFERENCE_DB"));
+//  AnalysisAdaptor *refAa = DBAdaptor_getAnalysisAdaptor((DBAdaptor *)StringHash_getValue(rsg->adaptorAliasHash, "REFERENCE_DB"));
+  AnalysisAdaptor *refAa = DBAdaptor_getAnalysisAdaptor(BaseGeneBuild_getDbAdaptor(rsg, "REFERENCE_DB", 0, 0));
   Analysis *analysis = AnalysisAdaptor_fetchByLogicName(refAa, "refine_all");
   RefineSolexaGenes_setAnalysis(rsg, analysis);
 
@@ -451,7 +456,7 @@ int main(int argc, char *argv[]) {
   } else {
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:300000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:3000000:1");
-  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:30000000:1");
+//  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:30000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1100000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:150000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:1:1:250000000:1");
@@ -459,7 +464,7 @@ int main(int argc, char *argv[]) {
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:11710000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:280000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:100000000:1");
-//  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:17");
+  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:17");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:100000000:120000000:1");
 //  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:170000000:190000000:1");
   }
@@ -519,8 +524,10 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "cons lim %f non cons lim %f\n", consLims[i], nonConsLims[j]);
       if (RefineSolexaGenes_getOutput(rsg)) {
         dumpGenes(RefineSolexaGenes_getOutput(rsg), 1);
-        //RefineSolexaGenes_writeOutput(rsg);
+        //fprintf(stderr,"malloc stats before write\n");
         //tc_malloc_stats();
+        //RefineSolexaGenes_writeOutput(rsg);
+        tc_malloc_stats();
         ProcUtil_timeInfo("end of loop iter");
         fprintf(stderr,"Number of exon clone calls = %d\n",nExonClone);
   
@@ -538,7 +545,7 @@ int main(int argc, char *argv[]) {
       rsg->output = NULL;
     }
   }
-  //tc_malloc_stats();
+  tc_malloc_stats();
   return 0;
 }
 #endif
@@ -681,6 +688,8 @@ RefineSolexaGenes *RefineSolexaGenes_new(char *configFile, char *logicName) {
 
   RefineSolexaGenes_initSetFuncs(rsg);
 
+  rsg->adaptorAliasHash = StringHash_new(STRINGHASH_SMALL);
+
 // Hack for now to allow me to run without configuration 
   if (configFile) {
 //    fprintf(stderr, "Error: Config file specified but config reading not implemented - bye!\n");
@@ -720,14 +729,27 @@ void RunnableDB_readAndCheckConfig(RefineSolexaGenes *rsg, char *configFile, cha
     exit(1);
   }
 
+  // For now specify location of Databases config in config file and read it here
+  config_setting_t *databasesFileSetting = config_lookup(&cfg, "Config.DATABASES_FILE");
+  if (databasesFileSetting == NULL) {
+    fprintf(stderr,"Missing config setting DATABASES_FILE\n");
+    exit(1);
+  }
+  const char *databasesFile = config_setting_get_string(databasesFileSetting);
+  RunnableDB_readDatabaseConfig(rsg, databasesFile); 
 
   cfgBlock = config_lookup(&cfg, blockName);
   if (cfgBlock == NULL) {
     fprintf(stderr,"Missing config block %s\n", blockName);
+    exit(1);
   }
+
+  
 // HACK: For now use passed in logicName rather than doing through analysis
 //  Utilities_parseConfig(rsg, cfgBlock, Analysis_getLogicName(RefineSolexaGenes_getAnalysis(rsg)), 0 /*ignoreThrow*/);
   Utilities_parseConfig(rsg, cfgBlock, logicName, 0 /*ignoreThrow*/);
+
+  
 }
 
 /*
@@ -778,23 +800,6 @@ Slice *RefineSolexaGenes_fetchSequence(RefineSolexaGenes *rsg, char *name, DBAda
   return slice;
 }
 
-
-
-// Hacky method for getting DbAdaptor given a string
-DBAdaptor *RefineSolexaGenes_getDbAdaptor(RefineSolexaGenes *rsg, char *alias) {
-  if (rsg->adaptorAliasHash == NULL) {
-    fprintf(stderr, "Error: adaptorAliasHash is NULL - no adaptor aliases set up - bye\n");
-    exit(1);
-  }
-  if (StringHash_contains(rsg->adaptorAliasHash, alias)) {
-// Not sure if this is what I need 
-    return StringHash_getValue(rsg->adaptorAliasHash, alias);
-  } else {
-    fprintf(stderr,"Error: No database with alias %s\n", alias);
-    exit(1);
-  }
-}
-
 /*
 =head2 fetch_input
 
@@ -811,16 +816,16 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
   // fetch adaptors and store them for use later
   // explicitly attach the ref db
 
-  RefineSolexaGenes_setDb(rsg, RefineSolexaGenes_getDbAdaptor(rsg, "REFERENCE_DB"));
+  RefineSolexaGenes_setDb(rsg, BaseGeneBuild_getDbAdaptor(rsg, "REFERENCE_DB", 0, 0));
 
   DBAdaptor *db = RefineSolexaGenes_getDb(rsg);
 
   if (RefineSolexaGenes_getIntronDb(rsg) && RefineSolexaGenes_getIntronDb(rsg)[0] != '\0') {
-    RefineSolexaGenes_setIntronSliceAdaptor(rsg, DBAdaptor_getSliceAdaptor(RefineSolexaGenes_getDbAdaptor(rsg, RefineSolexaGenes_getIntronDb(rsg))));
+    RefineSolexaGenes_setIntronSliceAdaptor(rsg, DBAdaptor_getSliceAdaptor(BaseGeneBuild_getDbAdaptor(rsg, RefineSolexaGenes_getIntronDb(rsg), 0, 0)));
   }
 // Unused  $self->repeat_feature_adaptor($self->db->get_RepeatFeatureAdaptor);
 
-  RefineSolexaGenes_setGeneSliceAdaptor(rsg, DBAdaptor_getSliceAdaptor(RefineSolexaGenes_getDbAdaptor(rsg, RefineSolexaGenes_getModelDb(rsg))));
+  RefineSolexaGenes_setGeneSliceAdaptor(rsg, DBAdaptor_getSliceAdaptor(BaseGeneBuild_getDbAdaptor(rsg, RefineSolexaGenes_getModelDb(rsg), 0, 0)));
 
   // want a slice and a full chromsome to keep everything on in the same coords
   Slice *slice = RefineSolexaGenes_fetchSequence(rsg, RefineSolexaGenes_getInputId(rsg), NULL, NULL, 0);
@@ -1763,7 +1768,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
         fprintf(stderr, " Single exon = %d\n", singleExon);
     
         if (Exon_getLength(exon) + 40 >= RefineSolexaGenes_getMinSingleExonLength(rsg)) {
-          fprintf(stderr, "Passed length filter - exon length %d\n", Exon_getLength(exon));
+          fprintf(stderr, "Passed length filter - exon length %ld\n", Exon_getLength(exon));
           // trim padding 
     // ?? Is padding always 20 ??
           Exon_setStart(exon,  Exon_getStart(exon) + 20);
@@ -1884,7 +1889,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
 //    }
     //fprintf(stderr,"Number of final models in all clusters = %d\n", nFinal);
     Vector_free(models);
-    //MallocExtension_ReleaseFreeMemory();
+    MallocExtension_ReleaseFreeMemory();
   }
 }
 
@@ -1911,7 +1916,7 @@ Analysis *RefineSolexaGenes_getAnalysis(RefineSolexaGenes *rsg) {
 }
 
 Analysis *RefineSolexaGenes_createAnalysisObject(RefineSolexaGenes *rsg, char *logicName) {
-  DBAdaptor *outDb = RefineSolexaGenes_getDbAdaptor(rsg, RefineSolexaGenes_getOutputDb(rsg));
+  DBAdaptor *outDb = BaseGeneBuild_getDbAdaptor(rsg, RefineSolexaGenes_getOutputDb(rsg), 0, 0);
 
   AnalysisAdaptor *aa = DBAdaptor_getAnalysisAdaptor(outDb);
   Analysis *analysis = AnalysisAdaptor_fetchByLogicName(aa, logicName);
@@ -3565,7 +3570,7 @@ Transcript *RefineSolexaGenes_modifyTranscript(RefineSolexaGenes *rsg, Transcrip
 }
 
 void RefineSolexaGenes_writeOutput(RefineSolexaGenes *rsg) {
-  DBAdaptor *outdb = RefineSolexaGenes_getDbAdaptor(rsg, RefineSolexaGenes_getOutputDb(rsg));
+  DBAdaptor *outdb = BaseGeneBuild_getDbAdaptor(rsg, RefineSolexaGenes_getOutputDb(rsg), 0, 0);
 
   GeneAdaptor *geneAdaptor = DBAdaptor_getGeneAdaptor(outdb);
 // NIY:
@@ -3643,14 +3648,14 @@ void RefineSolexaGenes_writeOutput(RefineSolexaGenes *rsg) {
     DNAAlignFeatureAdaptor_store(intronAdaptor, tmpVec);
     Vector_free(tmpVec);
 //    };
-/*
-    if ($@){
-      warning("Unable to store DnaAlignFeature!!\n$@");
-      $fails++;
-    }
-*/
+
+//    if ($@){
+//      warning("Unable to store DnaAlignFeature!!\n$@");
+//      $fails++;
+//    }
     total++;
   }
+
   if (fails > 0) {
     fprintf(stderr, "Not all introns could be written successfully (%d fails out of %d)\n", fails, total);
   }
@@ -6898,7 +6903,7 @@ void RefineSolexaGenes_parseIntronBamFilesConfig(RefineSolexaGenes *rsg, config_
       exit(1);
     }
 
-    char *file;
+    const char *file;
     int mixedBam;
     int depth;
     char *tmp;
@@ -6931,3 +6936,277 @@ void RefineSolexaGenes_parseIntronBamFilesConfig(RefineSolexaGenes *rsg, config_
 
   RefineSolexaGenes_setIntronBamFiles(rsg, intronBamFiles);
 }
+
+
+/*
+=head2 select_random_db 
+
+  Arg       : String - HashKey pointing to an entry in Databases.pm - 
+              Either this key points to a key in the hash %DATABASES or in %DISTRIBUTED_DBS 
+
+  Fuction   : The fuction reads the 2 hashes %DATABASES and %DISTRIBUTED_DBS which are exported by 
+              Databases.pm. If the Argument is found in  %DATABASES, the name is returned. 
+              if the Argument points to an entry in %DISTRIBUTED_DBS and %DISTRIBUTED_DBS{$arg} is 
+              an array reference, an element is randomly picked out of this array and returned. 
+
+              This function is basically used to spread the load over different db servers randomly. 
+              with the $DISTRIBUTED_DBS array in Databases.pm 
+ 
+  Returntype: String 
+
+=cut
+*/
+/* NIY
+char * select_random_db {  
+  my ( $name ) = @_; 
+ 
+  my $tmp;    
+  if (exists $DATABASES->{$name} && ref($DATABASES->{$name}) =~m/AREF/  ) { 
+    $tmp = $DATABASES ; 
+  } elsif ( exists  $DISTRIBUTED_DBS->{$name} && ref($DISTRIBUTED_DBS->{$name}) =~m/ARRAY/   ) {  
+    $tmp = $DISTRIBUTED_DBS; 
+  } 
+  if ( defined $tmp ) { 
+     my @array = @{ $tmp->{$name} };   
+     my $randomIndex = rand(@array);  
+     $name = $array[$randomIndex]; 
+     print "Random database selected : $name \n"; 
+  }
+  return $name ; 
+}
+*/
+
+/*
+=head2 get_dbadaptor
+
+  Arg [0]   : Bio::EnsEMBL::Analysis::RunnableDB
+  Arg [1]   : String - key of database hash
+  Arg [2]   : return a non-standard adaptor [ valie values : 'pipeline' 'compara' 'functgenomics' or undef ] 
+  Arg [3]   : flag to attch dna_db nor not 
+
+  Function  : Returns a Bio::EnsEMBL::DBSQL::DBAdaptor for a given hash key.
+              or a Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor if requested
+              Requires proper configuration of
+              Bio::EnsEMBL::Analysis::Config::Databases
+
+  Returntype: Bio::EnsEMBL:DBSQL::DBAdaptor or Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor
+              Returns undef if an entry for the database is found but is empty.
+  Exceptions: throw if key can't be found in Databases.pm
+
+=cut
+*/
+
+// Hacky method for getting DbAdaptor given a string
+#if 0
+DBAdaptor *RefineSolexaGenes_getDbAdaptor(RefineSolexaGenes *rsg, char *alias) {
+  if (rsg->adaptorAliasHash == NULL) {
+    fprintf(stderr, "Error: adaptorAliasHash is NULL - no adaptor aliases set up - bye\n");
+    exit(1);
+  }
+  if (StringHash_contains(rsg->adaptorAliasHash, alias)) {
+// Not sure if this is what I need 
+    return StringHash_getValue(rsg->adaptorAliasHash, alias);
+  } else {
+    fprintf(stderr,"Error: No database with alias %s\n", alias);
+    exit(1);
+  }
+}
+#endif
+
+void RefineSolexaGenes_setDatabaseConfig(RefineSolexaGenes *rsg, config_setting_t *setting) {
+  rsg->databaseConfig = setting;
+}
+
+config_setting_t *RefineSolexaGenes_getDatabaseConfig(RefineSolexaGenes *rsg) {
+  return rsg->databaseConfig;
+}
+
+DBAdaptor *BaseGeneBuild_getDbAdaptor(RefineSolexaGenes *rsg, char *alias, int isNonStandard, int dontUseDnaDb) {
+  //my ( $self, $name, $non_standard_db_adaptor, $not_use_dna_database ) = @_;
+  DBAdaptor *db = NULL;
+  int tryToAttachDnaDb = 0;
+
+  config_setting_t *setting = RefineSolexaGenes_getDatabaseConfig(rsg);
+
+  config_setting_t *databases = config_setting_get_member(setting, "DATABASES");
+
+  const char *DNA_DBNAME;
+  config_setting_lookup_string(setting, "DNA_DBNAME", &DNA_DBNAME);
+
+  // NIY $alias = select_random_db($alias);  
+  if (rsg->adaptorAliasHash == NULL) {
+    fprintf(stderr, "Error: adaptorAliasHash is NULL - no adaptor aliases set up - bye\n");
+    exit(1);
+  }
+
+  StringHash *hash = rsg->adaptorAliasHash;
+
+  if (!StringHash_contains(hash, alias)) { // if we don't already have an entry for this ...
+    config_setting_t *section = config_setting_get_member(databases, alias);
+    if (section != NULL) { 
+/*
+      my $constructor_args = $DATABASES->{$name};
+
+      if ( scalar( keys( %{$constructor_args} ) ) == 0 ) {
+        // The entry is empty.  Warn about this, but don't throw.
+        // Return undef.
+        warning(
+             sprintf( "Empty entry for database '%s' in Databases.pm\n",
+                      $name ) );
+        return undef;
+      }
+*/
+
+      // check if we got all arguments
+      const char *user;
+      const char *host;
+      const char *dbName;
+      int   port;
+      if (!(config_setting_lookup_string(section, "user", &user) &&
+            config_setting_lookup_string(section, "dbname", &dbName) &&
+            config_setting_lookup_string(section, "host", &host) &&
+            config_setting_lookup_int(section, "port", &port))) {
+        fprintf(stderr,"Error: Missing at least one required arg (user, dbname, host or port) in DATABASES config block for %s\n", alias);
+        exit(1);
+      }
+
+/* NIY
+      if ( defined $non_standard_db_adaptor ) { // value of 
+        if (    $non_standard_db_adaptor =~ m/1/ || $non_standard_db_adaptor eq "pipeline" ) {
+          require Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor;
+          $db = Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor->new( %$constructor_args );
+
+        } elsif ( $non_standard_db_adaptor =~ m/compara/ ) {
+          require Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+          unless ( $$constructor_args{'-species'} ) {
+            throw("need species !\n");
+          }
+          $db =
+            Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( %$constructor_args );
+
+        } elsif (    $non_standard_db_adaptor =~ m/functgenomics/i
+                  || $non_standard_db_adaptor =~ m/funcgen/i )
+        {
+          require Bio::EnsEMBL::Funcgen::DBSQL::DBAdaptor;
+          # funcgen adaptor needs species
+          if ( $$constructor_args{'-species'} ) {
+            $db = Bio::EnsEMBL::Funcgen::DBSQL::DBAdaptor->new(
+                                                        %$constructor_args, );
+          } else {
+            throw( "if you require a Bio::EnsEMBL::Funcgen::DBSQL::DBAdaptor "
+                   . "you need to provide a -speices flag.\n" );
+          }
+        }
+      } else {
+*/
+        const char *pass;
+        config_setting_lookup_string(section, "pass", &pass);
+        db = DBAdaptor_new(host, user,  pass, dbName, port, NULL);
+       // $db = Bio::EnsEMBL::DBSQL::DBAdaptor->new(%$constructor_args);
+        // it's a core db so try to attach dna_db
+        tryToAttachDnaDb = 1;
+//      }
+
+      // this bit is attaching a dna_db .
+      if (DNA_DBNAME != NULL && strcmp(alias, DNA_DBNAME) && tryToAttachDnaDb) {
+
+        if (dontUseDnaDb) {
+          fprintf(stderr,"\nNot attaching a DNA_DB to %s\n.", alias);
+          // if two different species are considered, the
+          // not_use_dna_database is set to 1 to avoid adding the second species to
+          // the first one
+
+        } else {
+          // there's a little danger if we have multiple diffeent
+          // species in our "Databases.pm" file. We need to avoid that the wrong
+          // dna db is attached, ie a mouse core with a human dna db.
+
+          fprintf(stderr,"\nAttaching DNA_DB %s to %s...\n", DNA_DBNAME, alias); 
+          if (DNA_DBNAME[0] == '\0') {  
+            fprintf(stderr, "You're using an empty string as dna_dbname in your Databases.pm config"); 
+            exit(1);
+          } 
+          DBAdaptor *dnaDb = BaseGeneBuild_getDbAdaptor(rsg, DNA_DBNAME, 0, 0);
+
+          // try to get default asm+ species name for OTHER db - does not work
+          // for comapra database
+          MetaContainer *coreMC = DBAdaptor_getMetaContainer(db);
+
+          char *coreDbAsm     = MetaContainer_getDefaultAssembly(coreMC);
+          Species *coreDbSpecies = MetaContainer_getSpecies(coreMC);
+
+          // get the same for dna-db
+          MetaContainer *dnaMC = DBAdaptor_getMetaContainer(dnaDb);
+
+          char *dnaDbAsm     = MetaContainer_getDefaultAssembly(dnaMC);
+          Species *dnaDbSpecies = MetaContainer_getSpecies(dnaMC);
+
+          int dbsAreCompatible = 1;
+
+          if (strcmp(coreDbAsm, dnaDbAsm)) { // assemblies differ
+            fprintf(stderr, "You're trying to add a DNA_DB with assembly %s to "
+                            "a core/cdna/otherfeatures DB with assembly %s ...\n\t"
+                            "that's incompatbile. I will not add dna_database "
+                            "%s to core %s\n", dnaDbAsm, coreDbAsm, DBConnection_getDbName(dnaDb->dbc), DBConnection_getDbName(db->dbc));
+
+            dbsAreCompatible = 0;
+          }
+
+          if (strcmp(Species_getCommonName(coreDbSpecies), Species_getCommonName(dnaDbSpecies))) {  // species are different
+            fprintf(stderr, "You're trying to add a DNA_DB with species %s to "
+                            "a core database with speices: %s - this does not work\n"
+                            "try to not use any DNA_DATABASE name in Analysis/Config/Databases.pm\n", 
+                    Species_getCommonName(dnaDbSpecies), Species_getCommonName(coreDbSpecies));
+            dbsAreCompatible = 0;
+          }
+          Species_free(dnaDbSpecies);
+          Species_free(coreDbSpecies);
+          free(coreDbAsm);
+          free(dnaDbAsm);
+
+          if (dbsAreCompatible) {
+            DBAdaptor_setDNADBAdaptor(db, dnaDb);
+            fprintf(stderr,"\nAttaching DNA_DB %s to %s\n", DBConnection_getDbName(dnaDb->dbc), DBConnection_getDbName(db->dbc));
+          }
+        }
+      } else {
+        if ( !strcmp(alias, DNA_DBNAME)) {
+          fprintf(stderr, "\nNot attaching DNA_DB to %s which has DNA_DBNAME...\n", alias); 
+        } else {
+          fprintf(stderr, "You haven't defined a DNA_DBNAME in Config/Databases.pm ");
+        }
+      }
+    } else {
+      fprintf(stderr, "No entry in Config/Databases.pm hash for %s", alias);
+      exit(1);
+    }
+
+    StringHash_add(hash, alias, db);
+  } else {
+    db = StringHash_getValue(hash, alias);
+  }
+
+  return db;
+}
+
+void RunnableDB_readDatabaseConfig(RefineSolexaGenes *rsg, char *configFile) {
+  config_t cfg;
+
+  config_init(&cfg);
+
+  /* Read the file. If there is an error, report it and exit. */
+  if (!config_read_file(&cfg, configFile)) {
+    fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg),
+            config_error_line(&cfg), config_error_text(&cfg));
+    config_destroy(&cfg);
+    exit(1);
+  }
+
+  config_setting_t *cfgBlock = config_lookup(&cfg, "Config");
+  if (cfgBlock == NULL) {
+    fprintf(stderr,"Missing config block 'Config'\n");
+  }
+
+  RefineSolexaGenes_setDatabaseConfig(rsg, cfgBlock);
+}
+

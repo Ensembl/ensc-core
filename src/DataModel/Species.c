@@ -47,5 +47,6 @@ char *Species_getBinomialName(Species *species) {
 }
 
 void Species_free(Species *species) {
-  fprintf(stderr,"Warning: Species_free NIY\n");
+  if (species->commonName) free(species->commonName);
+  if (species->binomialName) free(species->binomialName);
 }

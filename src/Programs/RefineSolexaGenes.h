@@ -98,6 +98,8 @@ typedef struct RefineSolexaGenesStruct {
   DBAdaptor *db;
 
   long longestIntronLength;
+
+  config_setting_t *databaseConfig;
 } RefineSolexaGenes;
 
 typedef struct ModelClusterStruct {
@@ -228,6 +230,9 @@ double RefineSolexaGenes_getConsLim(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setNonConsLim(RefineSolexaGenes *rsg, double nonConsLim);
 double RefineSolexaGenes_getNonConsLim(RefineSolexaGenes *rsg);
 
+void RefineSolexaGenes_setDatabaseConfig(RefineSolexaGenes *rsg, config_setting_t *setting);
+config_setting_t *RefineSolexaGenes_getDatabaseConfig(RefineSolexaGenes *rsg);
+
 
 // To move
   Transcript *TranslationUtils_addORFToTranscript(ORFRange *orf, Transcript *transcript);
@@ -282,4 +287,7 @@ double RefineSolexaGenes_getNonConsLim(RefineSolexaGenes *rsg);
   void ConfigConverter_wrapArraySetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncData, config_setting_t *setting);
   void ConfigConverter_wrapListSetCall(RefineSolexaGenes *rsg, SetFuncData *setFuncData, config_setting_t *setting);
   void RunnableDB_readAndCheckConfig(RefineSolexaGenes *rsg, char *configFile, char *blockName, char *logicName);
+
+  DBAdaptor *BaseGeneBuild_getDbAdaptor(RefineSolexaGenes *rsg, char *alias, int isNonStandard, int dontUseDnaDb);
+  void RunnableDB_readDatabaseConfig(RefineSolexaGenes *rsg, char *configFile);
 #endif

@@ -1282,7 +1282,9 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
 
   // store transcript attributes if there are any
   AttributeAdaptor *attrAdaptor = DBAdaptor_getAttributeAdaptor(db);
-  AttributeAdaptor_storeOnTranscriptId(attrAdaptor, transcDbID, Transcript_getAllAttributes(transcript, NULL) );
+  Vector *attribs = Transcript_getAllAttributes(transcript, NULL);
+  AttributeAdaptor_storeOnTranscriptId(attrAdaptor, transcDbID, attribs);
+  Vector_free(attribs);
 
   // store the IntronSupportingEvidence features
   IntronSupportingEvidenceAdaptor *iseAdaptor = DBAdaptor_getIntronSupportingEvidenceAdaptor(db);

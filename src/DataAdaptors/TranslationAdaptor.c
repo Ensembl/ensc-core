@@ -394,6 +394,8 @@ IDType TranslationAdaptor_store(TranslationAdaptor *tlna, Translation *translati
  
   IDType translDbID = sth->getInsertId(sth);
 
+  sth->finish(sth);
+
   //
   // store object xref mappings to translations
   //

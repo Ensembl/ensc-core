@@ -57,10 +57,10 @@ ECOSTRING BaseAlignFeature_setDbName(BaseAlignFeature *fp, char *dbName);
 ECOSTRING BaseAlignFeature_setDbDisplayName(BaseAlignFeature *fp, char *dbDisplayName);
 #define BaseAlignFeature_getDbDisplayName(fp)  (fp)->dbDisplayName
 
-#define BaseAlignFeature_setExternalDbID(fp, id)  (fp)->externalDbID = (id);
+#define BaseAlignFeature_setExternalDbID(fp, id)  (fp)->externalDbID = (id)
 #define BaseAlignFeature_getExternalDbID(fp)  (fp)->externalDbID
 
-#define BaseAlignFeature_sethCoverage(fp, cov)  (fp)->hCoverage = (cov);
+#define BaseAlignFeature_sethCoverage(fp, cov)  (fp)->hCoverage = (cov)
 #define BaseAlignFeature_gethCoverage(fp)  (fp)->hCoverage
 
 #define BaseAlignFeature_getHitSeqName(fp)  FeaturePair_getHitSeqName((fp))
