@@ -89,8 +89,14 @@ unsigned long long MysqlStatementHandle_execute(StatementHandle *sth, ...) {
 
   if (mysql_real_query (m_sth->dbc->mysql, statement, qlen) != 0) {    /* the query failed */
     fprintf(stderr, "Could not execute query %s\n\n", statement);
-    fprintf(stderr, "Stack trace:\n");
+    //fprintf(stderr, "Stack trace:\n");
     //ProcUtil_showBacktrace(EnsC_progName);
+    fprintf(stderr, "Database %s host %s user %s pass %s port %d\n", 
+            DBConnection_getDbName(m_sth->dbc),
+            DBConnection_getHost(m_sth->dbc),
+            DBConnection_getUser(m_sth->dbc),
+            DBConnection_getPass(m_sth->dbc),
+            DBConnection_getPort(m_sth->dbc));
     
     return 0;
   }

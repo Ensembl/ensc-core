@@ -34,6 +34,8 @@ void DBConnection_fromDateToSeconds(DBConnection *dbc, char *column, char *wrapp
 #define DBConnection_getHost(dbc) (dbc)->host
 #define DBConnection_getPort(dbc) (dbc)->port
 #define DBConnection_getDbName(dbc) (dbc)->dbName
+#define DBConnection_getPass(dbc) (dbc)->pass
+#define DBConnection_getUser(dbc) (dbc)->user
 
 
 #endif

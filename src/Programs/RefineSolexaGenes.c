@@ -266,6 +266,13 @@ IntronCoords *IntronCoords_new(long prevExonEnd, long nextExonStart, int strand,
   return ic;
 }
 
+int IntronCoords_intronStartCompFunc(const void *a, const void *b) {
+  IntronCoords *ic1 = *((IntronCoords **)a);
+  IntronCoords *ic2 = *((IntronCoords **)b);
+
+  return ic1->prevExonEnd - ic2->prevExonEnd;
+}
+
 void IntronCoords_free(IntronCoords *ic) {
   free(ic);
 }
@@ -526,10 +533,18 @@ int main(int argc, char *argv[]) {
         dumpGenes(RefineSolexaGenes_getOutput(rsg), 1);
         //fprintf(stderr,"malloc stats before write\n");
         //tc_malloc_stats();
-        //RefineSolexaGenes_writeOutput(rsg);
+        RefineSolexaGenes_writeOutput(rsg);
         tc_malloc_stats();
         ProcUtil_timeInfo("end of loop iter");
         fprintf(stderr,"Number of exon clone calls = %d\n",nExonClone);
+
+        // HACK HACK HACK
+        // For now only write introns for first iteration by setting WriteIntrons to 0 after it.
+        // This reduces database load. We could load them in later if needed (they are just the 
+        // set which is loaded from the BAM file and filtered using the cons and noncons filter params),
+        // so its not a lot of compute to generate them, just a lot of database load and potentially
+        // very large dna_align_feature tables.
+        RefineSolexaGenes_setWriteIntrons(rsg, 0);
   
         int k;
         for (k=0;k<Vector_getNumElement(rsg->output);k++) {
@@ -748,8 +763,6 @@ void RunnableDB_readAndCheckConfig(RefineSolexaGenes *rsg, char *configFile, cha
 // HACK: For now use passed in logicName rather than doing through analysis
 //  Utilities_parseConfig(rsg, cfgBlock, Analysis_getLogicName(RefineSolexaGenes_getAnalysis(rsg)), 0 /*ignoreThrow*/);
   Utilities_parseConfig(rsg, cfgBlock, logicName, 0 /*ignoreThrow*/);
-
-  
 }
 
 /*
@@ -1929,6 +1942,7 @@ Analysis *RefineSolexaGenes_createAnalysisObject(RefineSolexaGenes *rsg, char *l
   analysis = Analysis_new();
   char *chP;
   Analysis_setLogicName(analysis, StrUtil_copyString(&chP, logicName, 0)); 
+  Analysis_setModule(analysis, StrUtil_copyString(&chP, "RefineSolexaGenes", 0));
   //fprintf(stderr,"MADE NEW analysis %p with logicName %s\n", analysis, logicName);
 
   return analysis;
@@ -3629,35 +3643,44 @@ void RefineSolexaGenes_writeOutput(RefineSolexaGenes *rsg) {
     fprintf(stderr, "Not all genes could be written successfully (%d fails out of %d)\n", fails, total);
   }
 
-  DNAAlignFeatureAdaptor *intronAdaptor = DBAdaptor_getDNAAlignFeatureAdaptor(outdb);
-  fails = 0;
-  total = 0;
- 
-  Vector *intronFeatures = RefineSolexaGenes_getIntronFeatures(rsg);
-
-  for (i=0; i<Vector_getNumElement(intronFeatures); i++) {
-    DNAAlignFeature *intron = Vector_getElementAt(intronFeatures, i);
-
-//# SMJS For now leave as exon end and exon start so that it edge matches in apollo
-//#    $intron->start($intron->start+1);
-//#    $intron->end($intron->end-1);
-//    eval {
-// tmpVec is just so can use _store method which takes a vector not a feature
-    Vector *tmpVec = Vector_new();
-    Vector_addElement(tmpVec, intron);
-    DNAAlignFeatureAdaptor_store(intronAdaptor, tmpVec);
-    Vector_free(tmpVec);
-//    };
-
-//    if ($@){
-//      warning("Unable to store DnaAlignFeature!!\n$@");
-//      $fails++;
-//    }
-    total++;
-  }
-
-  if (fails > 0) {
-    fprintf(stderr, "Not all introns could be written successfully (%d fails out of %d)\n", fails, total);
+  if (RefineSolexaGenes_writeIntrons(rsg)) {
+    DNAAlignFeatureAdaptor *intronAdaptor = DBAdaptor_getDNAAlignFeatureAdaptor(outdb);
+    fails = 0;
+    total = 0;
+   
+    Vector *intronFeatures = RefineSolexaGenes_getIntronFeatures(rsg);
+  
+    for (i=0; i<Vector_getNumElement(intronFeatures); i++) {
+      DNAAlignFeature *intron = Vector_getElementAt(intronFeatures, i);
+  
+  // SMJS If want to edge match in apollo comment out these two lines
+      DNAAlignFeature_setStart(intron, DNAAlignFeature_getStart(intron) + 1);
+      DNAAlignFeature_setEnd(intron, DNAAlignFeature_getEnd(intron) - 1);
+  //    eval {
+  // tmpVec is just so can use _store method which takes a vector not a feature
+  /* SMJS Perl did one at a time - I'm going to do all in one go after loop, so I don't have to make these temporary vectors
+      Vector *tmpVec = Vector_new();
+      Vector_addElement(tmpVec, intron);
+      DNAAlignFeatureAdaptor_store(intronAdaptor, tmpVec);
+      Vector_free(tmpVec);
+  */
+  //    };
+  
+  //    if ($@){
+  //      warning("Unable to store DnaAlignFeature!!\n$@");
+  //      $fails++;
+  //    }
+      total++;
+    }
+  
+  // SMJS Moved from within loop - store all features in intronFeatures in one call
+    DNAAlignFeatureAdaptor_store(intronAdaptor, intronFeatures);
+  
+    if (fails > 0) {
+      fprintf(stderr, "Not all introns could be written successfully (%d fails out of %d)\n", fails, total);
+    }
+  } else {
+    fprintf(stderr, "NOTE: Not writing DNAAlignFeatures for introns\n");
   }
 }
 
@@ -4493,6 +4516,10 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
   //# collapse them down and make them into simple features
   IntronCoords **icArray = StringHash_getValues(idList);
 
+  // May help smooth access to sequence to sort these - shouldn't be too costly to do the sort
+  // May remove need for ifs sort below, but for now leave that
+  qsort(icArray, StringHash_getNumValues(idList), sizeof(IntronCoords *), IntronCoords_intronStartCompFunc);
+
   Slice *chrSlice = RefineSolexaGenes_getChrSlice(rsg);
   char sliceName[2048];
   strcpy(sliceName, StrUtil_strReplChr(Slice_getName(chrSlice), '.', '*'));
@@ -5272,7 +5299,8 @@ int RefineSolexaGenes_binSearchIntrons(RefineSolexaGenes *rsg, Vector *introns, 
 
     if (pos > DNAAlignFeature_getStart(daf)) {
       iMin = iMid + 1;
-    } else if (pos <= DNAAlignFeature_getStart(daf)) {
+// Was <= but don't think it should be, so switched to <
+    } else if (pos < DNAAlignFeature_getStart(daf)) {
       iMax = iMid - 1;
     } else {
       break;
@@ -5366,7 +5394,7 @@ Vector *RefineSolexaGenes_fetchIntronFeatures(RefineSolexaGenes *rsg, long start
             DNAAlignFeature_getHitSeqName(intron));
 */
 
-//    if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) {
+//    if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical"))
     if (DNAAlignFeature_getFlags(intron) & RSGINTRON_NONCANON) {
       // check it has no overlap with any consensus introns
       // unless it out scores a consensus intron
@@ -5375,9 +5403,11 @@ Vector *RefineSolexaGenes_fetchIntronFeatures(RefineSolexaGenes *rsg, long start
       for (j=startCompInd; j<Vector_getNumElement(chosenSf) && !done; j++) {
         DNAAlignFeature *compIntron = Vector_getElementAt(chosenSf, j);
 
-        //if (DNAAlignFeature_getEnd(intron) < DNAAlignFeature_getStart(compIntron)) break;
+        // Optimisation - break out of loop once there can no longer be overlap (start of compIntron > end of intron) - remember introns are sorted
+        // Doesn't seem to help performance much in tests but I think maybe in extreme cases it will help so leave for now
+        if (DNAAlignFeature_getEnd(intron) < DNAAlignFeature_getStart(compIntron)) break;
 
-        //if (strstr(DNAAlignFeature_getHitSeqName(compIntron), "non canonical") == NULL) {
+        //if (strstr(DNAAlignFeature_getHitSeqName(compIntron), "non canonical") == NULL) 
         if (!(DNAAlignFeature_getFlags(compIntron) & RSGINTRON_NONCANON)) {
           if (DNAAlignFeature_getStrand(intron) == DNAAlignFeature_getStrand(compIntron) &&
               DNAAlignFeature_getEnd(intron)    >  DNAAlignFeature_getStart(compIntron) && 
@@ -6997,6 +7027,7 @@ char * select_random_db {
 */
 
 // Hacky method for getting DbAdaptor given a string
+// Now replaced with more complete version
 #if 0
 DBAdaptor *RefineSolexaGenes_getDbAdaptor(RefineSolexaGenes *rsg, char *alias) {
   if (rsg->adaptorAliasHash == NULL) {
@@ -7022,7 +7053,6 @@ config_setting_t *RefineSolexaGenes_getDatabaseConfig(RefineSolexaGenes *rsg) {
 }
 
 DBAdaptor *BaseGeneBuild_getDbAdaptor(RefineSolexaGenes *rsg, char *alias, int isNonStandard, int dontUseDnaDb) {
-  //my ( $self, $name, $non_standard_db_adaptor, $not_use_dna_database ) = @_;
   DBAdaptor *db = NULL;
   int tryToAttachDnaDb = 0;
 
@@ -7035,7 +7065,7 @@ DBAdaptor *BaseGeneBuild_getDbAdaptor(RefineSolexaGenes *rsg, char *alias, int i
 
   // NIY $alias = select_random_db($alias);  
   if (rsg->adaptorAliasHash == NULL) {
-    fprintf(stderr, "Error: adaptorAliasHash is NULL - no adaptor aliases set up - bye\n");
+    fprintf(stderr, "Error: adaptorAliasHash is NULL - should have been allocated by now - bye\n");
     exit(1);
   }
 
@@ -7123,7 +7153,7 @@ DBAdaptor *BaseGeneBuild_getDbAdaptor(RefineSolexaGenes *rsg, char *alias, int i
 
           fprintf(stderr,"\nAttaching DNA_DB %s to %s...\n", DNA_DBNAME, alias); 
           if (DNA_DBNAME[0] == '\0') {  
-            fprintf(stderr, "You're using an empty string as dna_dbname in your Databases.pm config"); 
+            fprintf(stderr, "You're using an empty string as dna_dbname in your Databases config file\n"); 
             exit(1);
           } 
           DBAdaptor *dnaDb = BaseGeneBuild_getDbAdaptor(rsg, DNA_DBNAME, 0, 0);
@@ -7155,7 +7185,7 @@ DBAdaptor *BaseGeneBuild_getDbAdaptor(RefineSolexaGenes *rsg, char *alias, int i
           if (strcmp(Species_getCommonName(coreDbSpecies), Species_getCommonName(dnaDbSpecies))) {  // species are different
             fprintf(stderr, "You're trying to add a DNA_DB with species %s to "
                             "a core database with speices: %s - this does not work\n"
-                            "try to not use any DNA_DATABASE name in Analysis/Config/Databases.pm\n", 
+                            "try to not use any DNA_DATABASE name in your Databases config file\n", 
                     Species_getCommonName(dnaDbSpecies), Species_getCommonName(coreDbSpecies));
             dbsAreCompatible = 0;
           }
@@ -7173,11 +7203,11 @@ DBAdaptor *BaseGeneBuild_getDbAdaptor(RefineSolexaGenes *rsg, char *alias, int i
         if ( !strcmp(alias, DNA_DBNAME)) {
           fprintf(stderr, "\nNot attaching DNA_DB to %s which has DNA_DBNAME...\n", alias); 
         } else {
-          fprintf(stderr, "You haven't defined a DNA_DBNAME in Config/Databases.pm ");
+          fprintf(stderr, "You haven't defined a DNA_DBNAME in your Databases config file\n");
         }
       }
     } else {
-      fprintf(stderr, "No entry in Config/Databases.pm hash for %s", alias);
+      fprintf(stderr, "No entry in Databases config file hash for %s\n", alias);
       exit(1);
     }
 
