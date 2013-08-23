@@ -33,6 +33,16 @@ long *long_new(long val) {
   return longP;
 }
 
+double *double_new(double val) {
+  double *doubleP;
+  if ((doubleP = (double *)calloc(1,sizeof(double))) == NULL) {
+    fprintf(stderr,"ERROR: Failed allocating space for double\n");
+    return NULL;
+  }
+  *doubleP = val;
+  return doubleP;
+}
+
 IDType *IDType_new(IDType val) {
   IDType *IDTypeP;
   if ((IDTypeP = (IDType *)calloc(1,sizeof(IDType))) == NULL) {

@@ -83,6 +83,11 @@ typedef struct RefineSolexaGenesStruct {
   Vector *logicNames;
   Vector *output;
   Vector *prelimGenes;
+
+  Vector *consLims;
+  Vector *nonConsLims;
+  double restartNonConsLim;
+
   
   double filterOnOverlapThreshold;
   double minSingleExonCDSPercLength;
@@ -233,6 +238,13 @@ double RefineSolexaGenes_getNonConsLim(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setDatabaseConfig(RefineSolexaGenes *rsg, config_setting_t *setting);
 config_setting_t *RefineSolexaGenes_getDatabaseConfig(RefineSolexaGenes *rsg);
 
+void RefineSolexaGenes_setConsLims(RefineSolexaGenes *rsg, Vector *consLims);
+Vector *RefineSolexaGenes_getConsLims(RefineSolexaGenes *rsg);
+void RefineSolexaGenes_setNonConsLims(RefineSolexaGenes *rsg, Vector *nonConsLims);
+Vector *RefineSolexaGenes_getNonConsLims(RefineSolexaGenes *rsg);
+void RefineSolexaGenes_setRestartNonConsLim(RefineSolexaGenes *rsg, double restartNonConsLim);
+double RefineSolexaGenes_getRestartNonConsLim(RefineSolexaGenes *rsg);
+
 
 // To move
   Transcript *TranslationUtils_addORFToTranscript(ORFRange *orf, Transcript *transcript);
@@ -254,6 +266,7 @@ config_setting_t *RefineSolexaGenes_getDatabaseConfig(RefineSolexaGenes *rsg);
 
   void RefineSolexaGenes_setAnalysis(RefineSolexaGenes *rsg, Analysis *analysis);
   Analysis *RefineSolexaGenes_getAnalysis(RefineSolexaGenes *rsg);
+
 
 
   typedef (*IntSetFunc)(RefineSolexaGenes *rsg, int val);
