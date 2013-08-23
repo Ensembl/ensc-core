@@ -50,6 +50,7 @@ typedef struct RefineSolexaGenesStruct {
   char *singleExonModelType;
   char *typePrefix;
 
+  int dryRun;
   int max3PrimeExons;
   int max5PrimeExons;
   int max3PrimeLength;
@@ -244,6 +245,11 @@ void RefineSolexaGenes_setNonConsLims(RefineSolexaGenes *rsg, Vector *nonConsLim
 Vector *RefineSolexaGenes_getNonConsLims(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setRestartNonConsLim(RefineSolexaGenes *rsg, double restartNonConsLim);
 double RefineSolexaGenes_getRestartNonConsLim(RefineSolexaGenes *rsg);
+
+void RefineSolexaGenes_setDryRun(RefineSolexaGenes *rsg, int dryRun);
+int RefineSolexaGenes_isDryRun(RefineSolexaGenes *rsg);
+
+void RefineSolexaGenes_usage();
 
 
 // To move

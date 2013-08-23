@@ -340,11 +340,28 @@ void SetFuncData_free(SetFuncData *sfd) {
 
 #define RSG_DRIVER
 #ifdef RSG_DRIVER
+
+void RefineSolexaGenes_usage() {
+  printf("RefineSolexaGenes \n"
+         "  -c --config_file RefineSolexaGenes configuration file to read from\n"
+         "  -i --input_id    Input id (slice name) to run on eg. chromosome:Oar_v3.1:17\n"
+         "  -l --logic_name  Logic name for analysis block to run from configuration file\n"
+         "  -d --dry_run     If specified, don't write to output db\n"
+         "  -v --verbosity   Verbosity level (int)\n"
+         "\n"
+//         "Notes:\n"
+//         "  -v Default verbosity level is 1. You can make it quieter by setting this to 0, or noisier by setting it > 1.\n"
+         );
+  exit(1);
+}
+
 int main(int argc, char *argv[]) {
   initEnsC(argc, argv);
 
   logfp = stderr;
 
+
+/*
   char *defaultLogicName = "refine_all";
   char *logicName;
   if (argc > 2) {
@@ -352,11 +369,53 @@ int main(int argc, char *argv[]) {
   } else {
     logicName = defaultLogicName;
   }
-  RefineSolexaGenes *rsg = RefineSolexaGenes_new("RefineSolexaGenes_sheep.cfg", logicName);
+*/
+
+  char *logicName  = "refine_all";
+  char *configFile = "RefineSolexaGenes_sheep.cfg";
+  char *inputId    = "chromosome:Oar_v3.1:17";
+  int   dryRun     = 0;
+  int   verbosity  = 0;
+
+  int argNum = 1;
+  while (argNum < argc) {
+    char *arg = argv[argNum];
+    char *val;
+
+// Ones without a val go here
+   if (!strcmp(arg, "-d") || !strcmp(arg,"--dry_run")) {
+      dryRun = 1;
+    } else {
+// Ones with a val go in this block
+      if (argNum == argc-1) {
+        fprintf(stderr, "Error: Expected a value after last command line argument\n");
+        RefineSolexaGenes_usage();
+      }
+
+      val = argv[++argNum];
+  //    printf("%s %s\n",arg,val);
+
+      if (!strcmp(arg, "-c") || !strcmp(arg,"--config_file")) {
+        StrUtil_copyString(&configFile,val,0);
+      } else if (!strcmp(arg, "-i") || !strcmp(arg,"--input_id")) {
+        StrUtil_copyString(&inputId,val,0);
+      } else if (!strcmp(arg, "-l") || !strcmp(arg,"--logic_name")) {
+        StrUtil_copyString(&logicName,val,0);
+      } else if (!strcmp(arg, "-v") || !strcmp(arg,"--verbosity")) {
+        verbosity = atoi(val);
+      } else {
+        fprintf(stderr,"Error in command line at %s\n\n",arg);
+        RefineSolexaGenes_usage();
+      }
+    }
+
+    argNum++;
+  }
+
+  RefineSolexaGenes *rsg = RefineSolexaGenes_new(configFile, logicName);
+  RefineSolexaGenes_setInputId(rsg, inputId);
+  RefineSolexaGenes_setDryRun(rsg, dryRun);
 //  RefineSolexaGenes *rsg = RefineSolexaGenes_new("/Users/searle/RefineSolexaGenes_rabbit.cfg", logicName);
-
-  
-
 
 /*
   DBAdaptor *refDb = DBAdaptor_new("genebuild1", "ensadmin", "ensembl", "th3_sheep_core", 3306, NULL);
@@ -458,44 +517,37 @@ int main(int argc, char *argv[]) {
   Analysis *analysis = AnalysisAdaptor_fetchByLogicName(refAa, "refine_all");
   RefineSolexaGenes_setAnalysis(rsg, analysis);
 
+/*
   if (argc > 1) {
     RefineSolexaGenes_setInputId(rsg, argv[1]);
   } else {
-//  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:300000:1");
-//  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:3000000:1");
-//  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:30000000:1");
-//  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1100000000:1");
-//  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:150000000:1");
-//  RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:1:1:250000000:1");
-//  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:300000:1");
-//  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:11710000:1");
-//  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:280000000:1");
-//  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:100000000:1");
-  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:17");
-//  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:100000000:120000000:1");
-//  RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:170000000:190000000:1");
+//    RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:300000:1");
+//    RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:3000000:1");
+//    RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:30000000:1");
+//    RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1100000000:1");
+//    RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:150000000:1");
+//    RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:1:1:250000000:1");
+//    RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:300000:1");
+//    RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:11710000:1");
+//    RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:280000000:1");
+//    RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:100000000:1");
+    RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:17");
+//    RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:100000000:120000000:1");
+//    RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:170000000:190000000:1");
   }
+*/
 
-//  double consLims[]    = { 3.0 };
-//  double nonConsLims[] = { 15.0, 20.0 };
 //  double consLims[]    = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 20.0, 50.0 };
 //  double nonConsLims[] = { 1.0, 5.0, 10.0, 15.0, 20.0, 50.0 };
 //  double consLims[]    = { 1.0 };
 //  double nonConsLims[] = { 5.0 };
 //  double consLims[]    = { 5.0 };
 //  double nonConsLims[] = { 5.0 };
-//  double consLims[]    = { 10.0 };
-//  double nonConsLims[] = { 10.0 };
-//  double consLims[]    = { 5.0 };
-//  double nonConsLims[] = { 20.0 };
-//  double consLims[]    = { 0.0 };
-//  double nonConsLims[] = { 0.0 };
-//  double nonConsLims[] = { 20.0, 50.0 };
-//  double nonConsLims[] = { 5.0, 10.0, 15.0, 20.0, 50.0 };
 
   Vector *consLims = RefineSolexaGenes_getConsLims(rsg);
   Vector *nonConsLims = RefineSolexaGenes_getNonConsLims(rsg);
   double restartNonConsLim = RefineSolexaGenes_getRestartNonConsLim(rsg);
+
   // Check its a valid non cons lim to restart from (one that exists in nonConsLims)
   if (restartNonConsLim > -0.1) {
     int found = 0;
@@ -536,16 +588,7 @@ int main(int argc, char *argv[]) {
 
       char typeName[1024];
       char *typePref = RefineSolexaGenes_getTypePrefix(rsg);
-/* 
-      sprintf(typeName, "best_c%d_nc%d", (int)consLims[i], (int)nonConsLims[j]);
-      RefineSolexaGenes_setBestScoreType(rsg, typeName);
 
-      sprintf(typeName, "single_exon_c%d_nc%d", (int)consLims[i], (int)nonConsLims[j]);
-      RefineSolexaGenes_setSingleExonModelType(rsg, typeName);
-
-      sprintf(typeName, "refine_all_c%d_nc%d", (int)consLims[i], (int)nonConsLims[j]);
-      RefineSolexaGenes_setAnalysis(rsg, RefineSolexaGenes_createAnalysisObject(rsg, typeName));
-*/
       sprintf(typeName, "best_%sc%d_nc%d", typePref, (int)consLim, (int)nonConsLim);
       RefineSolexaGenes_setBestScoreType(rsg, typeName);
 
@@ -560,13 +603,16 @@ int main(int argc, char *argv[]) {
     
       fprintf(stderr,"Ended up with %d models to write\n", (RefineSolexaGenes_getOutput(rsg) ? Vector_getNumElement(RefineSolexaGenes_getOutput(rsg)) : 0) );
 
-      //  RefineSolexaGenes_dumpOutput(rsg);
       fprintf(stderr, "cons lim %f non cons lim %f\n", consLim, nonConsLim);
       if (RefineSolexaGenes_getOutput(rsg)) {
         dumpGenes(RefineSolexaGenes_getOutput(rsg), 1);
         //fprintf(stderr,"malloc stats before write\n");
         //tc_malloc_stats();
-        RefineSolexaGenes_writeOutput(rsg);
+        if ( ! RefineSolexaGenes_isDryRun(rsg)) {
+        //  RefineSolexaGenes_writeOutput(rsg);
+        } else {
+          fprintf(stderr,"DRY RUN mode - NOT writing genes to output db\n");
+        }
         tc_malloc_stats();
         ProcUtil_timeInfo("end of loop iter");
         fprintf(stderr,"Number of exon clone calls = %d\n",nExonClone);
@@ -6007,6 +6053,14 @@ void RefineSolexaGenes_setTrimUTR(RefineSolexaGenes *rsg, int trimUtr) {
 
 int RefineSolexaGenes_trimUTR(RefineSolexaGenes *rsg) {
   return rsg->trimUtr;
+}
+
+void RefineSolexaGenes_setDryRun(RefineSolexaGenes *rsg, int dryRun) {
+  rsg->dryRun = dryRun;
+}
+
+int RefineSolexaGenes_isDryRun(RefineSolexaGenes *rsg) {
+  return rsg->dryRun;
 }
 
 void RefineSolexaGenes_setMax3PrimeExons(RefineSolexaGenes *rsg, int max3PrimeExons) {
