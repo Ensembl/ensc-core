@@ -285,7 +285,7 @@ long Exon_getCodingRegionStart(Exon *exon, Transcript *transcript) {
     return $self->{coding_region_start}->{$id};
   }
 */
-  fprintf(stderr, "Caching of Exon_codingRegionStart not implemented yet\n");
+  //fprintf(stderr, "Caching of Exon_codingRegionStart not implemented yet\n");
 
   long codingRegionStart;
   long transcriptCodingStart = Transcript_getCodingRegionStart(transcript);
@@ -360,7 +360,7 @@ long Exon_getCodingRegionEnd(Exon *exon, Transcript *transcript) {
     return $self->{coding_region_end}->{$id};
   }
 */
-  fprintf(stderr, "Caching of Exon_codingRegionStart not implemented yet\n");
+  //fprintf(stderr, "Caching of Exon_codingRegionEnd not implemented yet\n");
 
   long codingRegionEnd;
   long transcriptCodingEnd = Transcript_getCodingRegionEnd(transcript);

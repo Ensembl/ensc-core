@@ -65,6 +65,7 @@ typedef struct RefineSolexaGenesStruct {
   int strictInternalSpliceSites;
   int strictInternalEndSpliceSites;
   int trimUtr;
+  int verbosity;
   int writeIntrons;
 
   SliceAdaptor *geneSliceAdaptor;
@@ -248,6 +249,9 @@ double RefineSolexaGenes_getRestartNonConsLim(RefineSolexaGenes *rsg);
 
 void RefineSolexaGenes_setDryRun(RefineSolexaGenes *rsg, int dryRun);
 int RefineSolexaGenes_isDryRun(RefineSolexaGenes *rsg);
+
+void RefineSolexaGenes_setVerbosity(RefineSolexaGenes *rsg, int verbosity);
+int RefineSolexaGenes_getVerbosity(RefineSolexaGenes *rsg);
 
 void RefineSolexaGenes_usage();
 
