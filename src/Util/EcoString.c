@@ -375,9 +375,11 @@ int EcoString_getInfo(ECOSTRTABLE *EcoSTabP) {
   int TotalUsed = 0;
   int TotalSaved = 0;
   int Len;
+  int nElem = 0;
 
   for (i=0;i<EcoSTabP->CHashTab->NElement;i++) {
     if (EcoSTabP->CHashTab->Strings[i]) {
+      nElem++;
       Len=strlen(EcoSTabP->CHashTab->Strings[i])+1;
       TotalUsed+=Len;
       if (EcoSTabP->UseCount[i]>1) {
@@ -390,9 +392,10 @@ int EcoString_getInfo(ECOSTRTABLE *EcoSTabP) {
       TotalSaved-=(sizeof(char *)+sizeof(int)+sizeof(int));
     }
   }
-  printf("Number of strings in EcoS Table:  %10d\n",EcoSTabP->CHashTab->NElement);
-  printf("Total bytes used to hold strings: %10d\n",TotalUsed);
-  printf("Total bytes SAVED in using table: %10d\n",TotalSaved);
+  // Note NElement is currently not necessarily number of strings because of removals printf("Number of strings in EcoS Table:  %10d\n",EcoSTabP->CHashTab->NElement);
+  printf("Number of strings in EcoS Table:  %10d\n", nElem);
+  printf("Total bytes used to hold strings: %10d\n", TotalUsed);
+  printf("Total bytes SAVED in using table: %10d\n", TotalSaved);
 
 /* Return success */
   return 1;

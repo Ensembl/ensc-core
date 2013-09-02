@@ -1216,6 +1216,7 @@ char *Transcript_translate(Transcript *trans) {
         !strcmp(lastCodon,"TGA") ||
         !strcmp(lastCodon,"TAA")) {
       *lastCodon = '\0';
+      lenmRNA-=3;
     }
   }
   // the above lines will remove the final stop codon from the mRNA

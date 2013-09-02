@@ -247,6 +247,7 @@ Exon *Exon_transfer(Exon *exon, Slice *slice) {
   #dont want to share the same sequence cache
   delete $new_exon->{'_seq_cache'};
 */
+  newExon->seqCacheString = NULL;
 
   return newExon;
 }
@@ -608,6 +609,7 @@ Exon *Exon_adjustStartEndImpl(Exon *exon, int startAdjust, int endAdjust) {
 
   // invalidate the sequence cache
   // NIY delete $new_exon->{'_seq_cache'};
+  newExon->seqCacheString = NULL;
 
 /*
   fprintf(stderr,"adjustStartEndImpl with exon %ld-%ld:%d adjustStart %d adjustEnd %d\n", 
@@ -780,6 +782,12 @@ char  *Exon_getSeqStringImpl(Exon *exon) {
 void Exon_setSeqCacheString(Exon *exon, char *seq) {
   //fprintf(stderr,"Setting seq cache string for exon %p %s to %p\n", exon, Exon_getStableId(exon), seq);
   exon->seqCacheString = seq;
+}
+
+void Exon_clearSeqCacheString(Exon *exon) {
+  if (exon->seqCacheString) free(exon->seqCacheString);
+
+  exon->seqCacheString = NULL;
 }
 
 Exon *Exon_transformSliceToRawContigImpl(Exon *exon) {

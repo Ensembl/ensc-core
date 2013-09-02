@@ -117,6 +117,7 @@ void Exon_addSupportingFeaturesImpl(Exon *exon, Vector *features);
 void Exon_addSupportingFeature(Exon *exon, SeqFeature *sf);
 
 void Exon_setSeqCacheString(Exon *exon, char *seq);
+void Exon_clearSeqCacheString(Exon *exon);
 
 
 #define Exon_setContig(exon,c) AnnotatedSeqFeature_setContig((exon),(c))

@@ -568,9 +568,9 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
     DNAAlignFeature_setHitEnd(daf, hitEnd);
     DNAAlignFeature_setHitStrand(daf, hitStrand);
 
-    DNAAlignFeature_setScore(daf, score);
-    DNAAlignFeature_setpValue(daf, eValue);
-    DNAAlignFeature_setPercId(daf, percIdent);
+    if (row->col(row, 11) != NULL) DNAAlignFeature_setpValue(daf, eValue);
+    if (row->col(row, 12) != NULL) DNAAlignFeature_setPercId(daf, percIdent);
+    if (row->col(row, 13) != NULL) DNAAlignFeature_setScore(daf, score);
 
     DNAAlignFeature_setCigarString(daf, cigarLine);
 
@@ -579,7 +579,7 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
     DNAAlignFeature_setDbID(daf, dnaAlignFeatureId);
 
     DNAAlignFeature_setExternalDbID(daf, externalDbId);
-    DNAAlignFeature_sethCoverage(daf, hCoverage);
+    if (row->col(row, 15) != NULL) DNAAlignFeature_sethCoverage(daf, hCoverage);
     // Unevaled in C           'extra_data'     => $evalled_extra_data,
     DNAAlignFeature_setExtraData(daf, extraData);
     DNAAlignFeature_setDbName(daf, externalDbName);

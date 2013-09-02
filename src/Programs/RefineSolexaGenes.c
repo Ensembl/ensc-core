@@ -5884,7 +5884,7 @@ Vector *RefineSolexaGenes_getIntronFeatures(RefineSolexaGenes *rsg) {
 // The perl implemenetation (see below) allowed appending to the array, but I don't think that was used so I've not implemented it
 void RefineSolexaGenes_setIntronFeatures(RefineSolexaGenes *rsg, Vector *features) {
   if (rsg->intronFeatures != NULL) {
-    fprintf(stderr, "Trying to set intronFeatures when its already set - may want append behaviour which isn't implemented - exiting\n");
+    fprintf(stderr, "Trying to set intronFeatures when its already set - may want append behaviour which isn't implemented - assuming you want replace, so freeing old set\n");
 //    exit(1);
     Vector_setFreeFunc(rsg->intronFeatures, DNAAlignFeature_freeImpl);
     Vector_free(rsg->intronFeatures);

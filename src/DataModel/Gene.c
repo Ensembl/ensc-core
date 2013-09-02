@@ -29,6 +29,9 @@ Gene *Gene_new() {
 
   gene->funcs = &geneFuncs;
 
+  // Default gene biotype to protein_coding (what perl does)
+  Gene_setBiotype(gene, "protein_coding");
+
   return gene;
 }
 
