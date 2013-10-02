@@ -137,58 +137,68 @@ Vector *SupportingFeatureAdaptor_fetchAllByExonList(SupportingFeatureAdaptor *sf
   }
 
   IDType *uniqueIds = IDHash_getKeys(exHash);
+  int nUniqueId = IDHash_getNumValues(exHash);
+  
 
   char tmpStr[1024];
   char qStr[655500];
   int lenNum;
-  int endPoint = sprintf(qStr, "SELECT sf.feature_type, sf.feature_id, sf.exon_id FROM supporting_feature sf WHERE sf.exon_id IN (" );
-  for (i=0; i<IDHash_getNumValues(exHash); i++) {
-    if (i!=0) {
-      qStr[endPoint++] = ',';
-      qStr[endPoint++] = ' ';
-    }
-    lenNum = sprintf(tmpStr,IDFMTSTR,uniqueIds[i]);
-    memcpy(&(qStr[endPoint]), tmpStr, lenNum);
-    endPoint+=lenNum;
-  }
-  qStr[endPoint++] = ')';
-  qStr[endPoint] = '\0';
-
-  free(uniqueIds);
-
-  StatementHandle *sth = sfa->prepare((BaseAdaptor *)sfa,qStr,strlen(qStr));
-  sth->execute(sth);
+  int maxSize = 16384;
 
   IDHash *dnaFeatIdToExHash  = IDHash_new(IDHASH_MEDIUM);
   IDHash *protFeatIdToExHash = IDHash_new(IDHASH_MEDIUM);
   IDHash *idToEx;
-  ResultRow *row;
-  while ((row = sth->fetchRow(sth))) {
-    char * type = row->getStringAt(row,0);
-    IDType sfId = row->getLongLongAt(row,1);
-    IDType exId = row->getLongLongAt(row,2);
 
-    if (type[0] == 'd') {
-      idToEx = dnaFeatIdToExHash;
-    } else {
-      idToEx = protFeatIdToExHash;
-    }
-    if (!IDHash_contains(exHash, exId)) {
-      fprintf(stderr, "Warning: exon not in exhash for supporting feature [type = %s id = "IDFMTSTR" exon_id "IDFMTSTR"]\n", type, sfId, exId);
-    } else {
-      Vector *exVec = IDHash_getValue(idToEx, sfId);
-      if (!exVec) {
-        exVec = Vector_new();
-        IDHash_add(idToEx, sfId, exVec);
+  for (i=0; i<nUniqueId; i+=maxSize) {
+    int endPoint = sprintf(qStr, "SELECT sf.feature_type, sf.feature_id, sf.exon_id FROM supporting_feature sf WHERE sf.exon_id IN (" );
+
+    int j;
+    for (j=0; j<maxSize && j+i<nUniqueId; j++) {
+      if (j!=0) {
+        qStr[endPoint++] = ',';
+        qStr[endPoint++] = ' ';
       }
-      //Vector_addElement(exVec, IDHash_getValue(exHash, exId));
-      Vector_append(exVec, IDHash_getValue(exHash, exId));
+      lenNum = sprintf(tmpStr,IDFMTSTR,uniqueIds[i+j]);
+      memcpy(&(qStr[endPoint]), tmpStr, lenNum);
+      endPoint+=lenNum;
     }
+    qStr[endPoint++] = ')';
+    qStr[endPoint] = '\0';
+  
+  
+    StatementHandle *sth = sfa->prepare((BaseAdaptor *)sfa,qStr,strlen(qStr));
+    sth->execute(sth);
+  
+    ResultRow *row;
+    while ((row = sth->fetchRow(sth))) {
+      char * type = row->getStringAt(row,0);
+      IDType sfId = row->getLongLongAt(row,1);
+      IDType exId = row->getLongLongAt(row,2);
+  
+      if (type[0] == 'd') {
+        idToEx = dnaFeatIdToExHash;
+      } else {
+        idToEx = protFeatIdToExHash;
+      }
+      if (!IDHash_contains(exHash, exId)) {
+        fprintf(stderr, "Warning: exon not in exhash for supporting feature [type = %s id = "IDFMTSTR" exon_id "IDFMTSTR"]\n", type, sfId, exId);
+      } else {
+        Vector *exVec = IDHash_getValue(idToEx, sfId);
+        if (!exVec) {
+          exVec = Vector_new();
+          IDHash_add(idToEx, sfId, exVec);
+        }
+        Vector_append(exVec, IDHash_getValue(exHash, exId));
+      }
+    }
+  
+    sth->finish(sth);
   }
 
-  sth->finish(sth);
+  free(uniqueIds);
 
   Vector *out = Vector_new();
+
   for (i=0; i<2;i++) {
     char *type;
     BaseAdaptor *ba;

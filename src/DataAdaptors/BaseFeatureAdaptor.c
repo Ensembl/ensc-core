@@ -527,7 +527,9 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Sl
   // the code entered the noCache controlled condition above
   if (key[0]) {
 // Was null free func
-    Vector_setFreeFunc(result, Object_freeImpl);
+// Make null free func again for now
+    //Vector_setFreeFunc(result, Object_freeImpl);
+    Vector_setFreeFunc(result, NULL);
     Cache_addElement(bfa->sliceFeatureCache, key, result, Object_freeImpl);
   }
 

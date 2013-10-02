@@ -196,6 +196,7 @@ sub _bind_param_generic_fetch {
 */
 Vector *BaseAdaptor_genericFetch(BaseAdaptor *ba, char *constraint, AssemblyMapper *mapper, Slice *slice) {
   char qStr[655500];
+//  char *qStr = calloc(5655500, sizeof(char));
   qStr[0] = '\0';
 
   BaseAdaptor_generateSql(ba, constraint, NULL, qStr);
@@ -207,6 +208,7 @@ Vector *BaseAdaptor_genericFetch(BaseAdaptor *ba, char *constraint, AssemblyMapp
   Vector *res = ba->objectsFromStatementHandle(ba, sth, mapper, slice);
   sth->finish(sth);
 
+  //free(qStr);
   return res;
 }
 

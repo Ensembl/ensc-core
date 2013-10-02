@@ -467,93 +467,115 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
   }
 
   IDType *uniqueIds = IDHash_getKeys(trHash);
+  int nUniqueId = IDHash_getNumValues(trHash);
 
-//  char *qStr;
-//  qStr = calloc(1655500,sizeof(char));
+  int maxSize = 16384;
+
   char tmpStr[1024];
   char qStr[655500];
   int lenNum;
+  IDHash *exTrHash = IDHash_new(IDHASH_LARGE);
+  int endPoint;
 //  bzero(qStr,655500);
-  int endPoint = sprintf(qStr, "SELECT transcript_id, exon_id, rank FROM exon_transcript WHERE transcript_id IN (" );
-  for (i=0; i<IDHash_getNumValues(trHash); i++) {
-    if (i!=0) {
-      qStr[endPoint++] = ',';
-      qStr[endPoint++] = ' ';
-//strcat(qStr, ", ");
+
+// Divide query if a lot of ids - Not done in perl
+  for (i=0; i<nUniqueId; i+=maxSize) {
+    //fprintf(stderr,"Transcript loop i = %d\n", i);
+    endPoint = sprintf(qStr, "SELECT transcript_id, exon_id, rank FROM exon_transcript WHERE transcript_id IN (" );
+    int j;
+    for (j=0; j<maxSize && j+i<nUniqueId; j++) {
+      if (j!=0) {
+        qStr[endPoint++] = ',';
+        qStr[endPoint++] = ' ';
+      }
+      lenNum = sprintf(tmpStr,IDFMTSTR,uniqueIds[i+j]);
+      memcpy(&(qStr[endPoint]), tmpStr, lenNum);
+      endPoint+=lenNum;
     }
-    lenNum = sprintf(tmpStr,IDFMTSTR,uniqueIds[i]);
-    memcpy(&(qStr[endPoint]), tmpStr, lenNum);
-    endPoint+=lenNum;
-    //endPoint=sprintf(qStr, "%s"IDFMTSTR, qStr, uniqueIds[i]);
+    qStr[endPoint++] = ')';
+    qStr[endPoint] = '\0';
+  
+    StatementHandle *sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
+    sth->execute(sth);
+  
+    ResultRow *row;
+    while ((row = sth->fetchRow(sth))) {
+      IDType trId = row->getLongLongAt(row,0);
+      IDType exId = row->getLongLongAt(row,1);
+      int    rank = row->getIntAt(row,2);
+  
+      if (! IDHash_contains(exTrHash, exId)) {
+        Vector *vec = Vector_new();
+        Vector_setFreeFunc(vec, TranscriptRankPair_free);
+        IDHash_add(exTrHash, exId, vec);
+      }
+      Vector *exVec = IDHash_getValue(exTrHash, exId);
+      TranscriptRankPair *trp = TranscriptRankPair_new(IDHash_getValue(trHash, trId), rank);
+      Vector_addElement(exVec, trp);
+    }
+
+    sth->finish(sth);
   }
-  qStr[endPoint++] = ')';
-  qStr[endPoint] = '\0';
-//  strcat(qStr,")");
 
   free(uniqueIds);
-
-  StatementHandle *sth = ta->prepare((BaseAdaptor *)ta,qStr,strlen(qStr));
-  sth->execute(sth);
-
-  IDHash *exTrHash = IDHash_new(IDHASH_MEDIUM);
-  ResultRow *row;
-  while ((row = sth->fetchRow(sth))) {
-    IDType trId = row->getLongLongAt(row,0);
-    IDType exId = row->getLongLongAt(row,1);
-    int    rank = row->getIntAt(row,2);
-
-    if (! IDHash_contains(exTrHash, exId)) {
-      Vector *vec = Vector_new();
-      Vector_setFreeFunc(vec, TranscriptRankPair_free);
-      IDHash_add(exTrHash, exId, vec);
-    }
-    Vector *exVec = IDHash_getValue(exTrHash, exId);
-    TranscriptRankPair *trp = TranscriptRankPair_new(IDHash_getValue(trHash, trId), rank);
-    Vector_addElement(exVec, trp);
-  }
-
   IDHash_free(trHash, NULL);
-
-  sth->finish(sth);
 
   //  sprintf( "e.exon_id IN (%s)",
   //    join( ',', sort { $a <=> $b } keys(%ex_tr_hash) ) ) );
   // Note this is a constraint rather than a complete query, but I'm using qStr to save stack space
   uniqueIds = IDHash_getKeys(exTrHash);
+  nUniqueId = IDHash_getNumValues(exTrHash);
 
   qsort(uniqueIds, IDHash_getNumValues(exTrHash), sizeof(IDType), idTypeCompFunc); 
 
+  Vector *exons = Vector_new();
+
 //  bzero(qStr,655500);
-  endPoint = sprintf(qStr, "e.exon_id IN (");
-  for (i=0; i<IDHash_getNumValues(exTrHash); i++) {
-    if (i!=0) {
-      qStr[endPoint++] = ',';
-      qStr[endPoint++] = ' ';
-      //strcat(qStr, ", ");
+  // Divide query if a lot of ids - Not done in perl
+  for (i=0; i<nUniqueId; i+=maxSize) {
+    //fprintf(stderr,"Exon loop i = %d\n", i);
+    endPoint = sprintf(qStr, "e.exon_id IN (");
+    int j;
+    for (j=0; j<maxSize && j+i<nUniqueId; j++) {
+      if (j!=0) {
+        qStr[endPoint++] = ',';
+        qStr[endPoint++] = ' ';
+      }
+      
+      lenNum = sprintf(tmpStr,IDFMTSTR,uniqueIds[j+i]);
+      memcpy(&(qStr[endPoint]), tmpStr, lenNum);
+      endPoint+=lenNum;
     }
+    qStr[endPoint++] = ')';
+    qStr[endPoint] = '\0';
+
+    //fprintf(stderr, "qStr = %s\n", qStr);
+  
+    // Interaction with slice feature fetch cache can be horrid - it frees the oldest cached features vector (and the features!) after cachce fills
+   
+    ExonAdaptor *ea = DBAdaptor_getExonAdaptor(ta->dba);
+    Vector *tmpVec = ExonAdaptor_fetchAllBySliceConstraint(ea, extSlice, qStr, NULL);  
     
-    lenNum = sprintf(tmpStr,IDFMTSTR,uniqueIds[i]);
-    memcpy(&(qStr[endPoint]), tmpStr, lenNum);
-    endPoint+=lenNum;
-   // endPoint = sprintf(qStr, "%s"IDFMTSTR, qStr, uniqueIds[i]);
+    //fprintf(stderr,"Adding %d elements from tmpVec to exons. Num in exons before = %d\n", Vector_getNumElement(tmpVec), Vector_getNumElement(exons));
+    
+    Vector_append(exons, tmpVec);
+    //fprintf(stderr,"Num in exons after = %d\n", Vector_getNumElement(exons));
+
+    // Interaction with slice feature fetch caching is nasty - don't try to free this vector
+      //Vector_setFreeFunc(tmpVec, NULL);
+      //Vector_free(tmpVec);
   }
-  qStr[endPoint++] = ')';
-  qStr[endPoint] = '\0';
-  //strcat(qStr,")");
 
-  free(uniqueIds);
-
-  ExonAdaptor *ea = DBAdaptor_getExonAdaptor(ta->dba);
-  Vector *exons = ExonAdaptor_fetchAllBySliceConstraint(ea, extSlice, qStr, NULL);  
-
-
-  // move exons onto transcript slice, and add them to transcripts
+    // move exons onto transcript slice, and add them to transcripts
   for (i=0; i<Vector_getNumElement(exons); i++) {
     Exon *ex = Vector_getElementAt(exons, i);
-
-  // Perl didn't have this line - it was in GeneAdaptor version so I think I'm going to keep it
-    if (!IDHash_contains(exTrHash, Exon_getDbID(ex))) continue;
-
+  
+    // Perl didn't have this line - it was in GeneAdaptor version so I think I'm going to keep it
+    if (!IDHash_contains(exTrHash, Exon_getDbID(ex))) {
+      //fprintf(stderr,"Exon " IDFMTSTR " not found in exTrHash\n", Exon_getDbID(ex));
+      continue;
+    }
+  
     Exon *newEx;
     if (slice != extSlice) {
       newEx = Exon_transfer(ex, slice);
@@ -564,15 +586,19 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
     } else {
       newEx = ex;
     }
-
+  
     Vector *exVec = IDHash_getValue(exTrHash, Exon_getDbID(newEx));
     int j;
     for (j=0; j<Vector_getNumElement(exVec); j++) {
       TranscriptRankPair *trp = Vector_getElementAt(exVec, j);
-      //fprintf(stderr,"Adding exon at rank %d to transcript %p\n", trp->rank, trp->transcript);
+      //fprintf(stderr,"Adding exon "IDFMTSTR" at rank %d to transcript %p\n", Exon_getDbID(newEx), trp->rank, trp->transcript);
       Transcript_addExon(trp->transcript, newEx, trp->rank);
     }
   }
+
+  Vector_free(exons);
+
+  free(uniqueIds);
 
   TranslationAdaptor *tla = DBAdaptor_getTranslationAdaptor(ta->dba);
 
@@ -585,6 +611,9 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
 
   // Free stuff
   IDHash_free(exTrHash, Vector_free);
+
+  //free(qStr);
+
 
   return transcripts;
 }

@@ -81,7 +81,7 @@ unsigned long long MysqlStatementHandle_execute(StatementHandle *sth, ...) {
   va_end(args);
 
   if (qlen < 0 || qlen > 655500) {
-    fprintf(stderr, "ERROR: vsnprintf call failed during statement execution\n");
+    fprintf(stderr, "ERROR: vsnprintf call failed during statement execution (qlen = %d)\n", qlen);
     exit(1);
   }
 
@@ -89,6 +89,7 @@ unsigned long long MysqlStatementHandle_execute(StatementHandle *sth, ...) {
 
   if (mysql_real_query (m_sth->dbc->mysql, statement, qlen) != 0) {    /* the query failed */
     fprintf(stderr, "Could not execute query %s\n\n", statement);
+    fprintf(stderr, "Query length is %d\n\n", strlen(statement));
     //fprintf(stderr, "Stack trace:\n");
     //ProcUtil_showBacktrace(EnsC_progName);
     fprintf(stderr, "Database %s host %s user %s pass %s port %d\n", 
