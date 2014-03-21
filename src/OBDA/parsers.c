@@ -257,3 +257,20 @@ char *swallMultiParser(char *header, char **retPos) {
   }
   return id;
 }
+
+char *BTMultiParser(char *header, char **retPos) {
+  static char *terminators[] = {};
+  char *chP;
+  char *id;
+
+  if (*retPos == NULL) {
+/* first call */
+    id = multiTokenParser(header," \t\n",1,terminators,0,
+                          "BTMultiParser",retPos);
+  } else {
+/* subsequent calls */
+    id = multiTokenParser(header," \t\n",0,terminators,0,
+                          "BTMultiParser",retPos);
+  }
+  return id;
+}

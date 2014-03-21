@@ -64,6 +64,7 @@ char *wormParser(char *header);
 char *wormIDParser(char *header);
 char *refseqProt2RNAParser(char *header);
 char *swallMultiParser(char *header, char **retPos);
+char *BTMultiParser(char *header, char **retPos);
 
 typedef char * (*ParserFunc)(char *);
 
@@ -99,7 +100,8 @@ static ParserName parserArray[] = {
   { wormParser, "wormParser" },
   { wormIDParser, "wormIDParser" },
   { refseqProt2RNAParser, "refseqProt2RNAParser" },
-  { swallMultiParser, "swallMultiParser" }, // Multi parser takes an extra argument when called, gives a compiler warning
+  { swallMultiParser, "swallMultiParser" },
+  { BTMultiParser, "BTMultiParser" },
   { uniprotIDParser, "uniprotIDParser" },
   { NULL, NULL }
 };
