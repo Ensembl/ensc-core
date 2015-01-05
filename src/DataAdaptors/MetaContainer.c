@@ -114,18 +114,24 @@ Species *MetaContainer_getSpecies(MetaContainer *mc) {
 }
 
 char *MetaContainer_getDefaultAssembly(MetaContainer *mc) {
+  char *result = NULL;
   char *qStr = "SELECT meta_value from meta where meta_key = 'assembly.default'";
   StatementHandle *sth = mc->prepare((BaseAdaptor *)mc,qStr,strlen(qStr));
-  sth->execute(sth);
-  ResultRow *row = sth->fetchRow(sth);
-  char *assStr;
 
-  if (row) {
-    assStr = row->getStringCopyAt(row,0);
-    sth->finish(sth);
-    return assStr;
-  } else {
-    sth->finish(sth);
-    return NULL;
+  if (sth) {
+    sth->execute(sth);
+    ResultRow *row = sth->fetchRow(sth);
+    char *assStr;
+
+    if (row) {
+      assStr = row->getStringCopyAt(row,0);
+      sth->finish(sth);
+      result = assStr;
+    } else {
+      sth->finish(sth);
+      result = NULL;
+    }
   }
+
+  return result;
 }

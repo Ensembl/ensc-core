@@ -38,7 +38,12 @@ void BaseAdaptor_init(BaseAdaptor *ba, DBAdaptor *dba, int adaptorType) {
 
 StatementHandle *BaseAdaptor_prepare(BaseAdaptor *ba, char *qStr, size_t len) {
   /*printf("Query = %s len = %d\n",qStr,len);*/
-  return DBAdaptor_prepare(ba->dba,qStr,len);
+  StatementHandle* result = NULL;
+
+  if (ba && ba->dba && ba->dba->dbc)
+    result = DBAdaptor_prepare(ba->dba,qStr,len);
+
+  return result;
 }
 
 
