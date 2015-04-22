@@ -211,12 +211,12 @@ Slice *SliceAdaptor_fetchByRegion(SliceAdaptor *sa, char *coordSystemName, char 
     if (cs == NULL ) {
       fprintf(stderr, "Unknown coordinate system:\nname='%s' version='%s'\n",
                       coordSystemName, version==NULL ? "" : version );
-    }
-
-    // fetching by toplevel is same as fetching w/o name or version
-    if ( CoordSystem_getIsTopLevel(cs) ) {
-      cs      = NULL;
-      version = NULL;
+    } else {
+      // fetching by toplevel is same as fetching w/o name or version
+      if ( CoordSystem_getIsTopLevel(cs) ) {
+        cs      = NULL;
+        version = NULL;
+      }
     }
   } 
 
