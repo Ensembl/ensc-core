@@ -440,7 +440,7 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Sl
   allConstraint[0] = '\0';
   key[0] = '\0';
 
-  if (constraint != NULL and *constraint != '\0') {
+  if (constraint != NULL && *constraint != '\0') {
     strcpy(allConstraint, constraint);
   }
 
