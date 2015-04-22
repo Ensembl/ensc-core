@@ -142,7 +142,7 @@ SeqFeature *SeqFeature_new(void);
 #define SeqFeature_getAnalysis(sf) (sf)->analysis
 
 char *SeqFeature_setStableId(SeqFeature *sf, char *stableId);
-#define SeqFeature_getStableId(sf) (sf)->stableId
+#define SeqFeature_getStableId(sf) (sf)->si->stableId
 
 #define SeqFeature_setDbID(sf,dbID) Storable_setDbID(&((sf)->st),dbID)
 #define SeqFeature_getDbID(sf) Storable_getDbID(&((sf)->st))
