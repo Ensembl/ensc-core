@@ -285,10 +285,6 @@ Slice *SliceAdaptor_fetchByRegion(SliceAdaptor *sa, char *coordSystemName, char 
 
       synSqlSth->execute(synSqlSth);
 
-      char *newName;
-      char *newCoordSystemName;
-      char *newVersion;
-
       ResultRow *row;
       if ((row = synSqlSth->fetchRow(synSqlSth))) {
         char *newName        = row->getStringAt(row, 0);
@@ -638,7 +634,6 @@ void SliceAdaptor_parseLocationToValues(SliceAdaptor *sa, char *location, int no
   long start = POS_UNDEF;
   long end   = POS_UNDEF;
   int strand = 1;
-  int flags;
   int i;
 
   
@@ -1425,7 +1420,6 @@ Vector *SliceAdaptor_fetchAllKaryotype(SliceAdaptor *sa) {
 
   ResultRow *row;
   while ((row = sth->fetchRow(sth))) {
-    IDType seqRegionId = row->getLongLongAt(row,0);
     char * name        = row->getStringAt(row,1);
     long   length      = row->getLongAt(row,2);
     IDType csId        = row->getLongLongAt(row,3);
@@ -2104,7 +2098,6 @@ Vector *SliceAdaptor_fetchNormalizedSliceProjection(SliceAdaptor *sa, Slice *sli
 
     long len1 = Slice_getLength(seqRegSlice);
     long len2 = Slice_getLength(excSlice);
-    long maxLen = (len1 > len2) ? len1 : len2;
 
     while (count <= nSortHap && !last) { // Note goes one past end of sortHaps array 
       long chrEnd;
@@ -2156,7 +2149,6 @@ Vector *SliceAdaptor_fetchNormalizedSliceProjection(SliceAdaptor *sa, Slice *sli
   Vector_append(syms, pars);
 
   Mapper *mapper = Mapper_new( "sym", "org", NULL, NULL );
-  int count = 0;
   int i;
   for (i=0;i<Vector_getNumElement(syms);i++) {
     AssemblyExceptionUnit *sym = Vector_getElementAt(syms, i);
@@ -2634,7 +2626,6 @@ void SliceAdaptor_cacheTopLevelSeqMappings(SliceAdaptor *sa) {
   sth->execute(sth);
 
 // csn in perl is now csName
-  char *csName;
   while ((row = sth->fetchRow(sth))) {
     char *csName = row->getStringAt(row,0);
 

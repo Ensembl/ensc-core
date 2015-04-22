@@ -45,7 +45,7 @@ PredictionExonAdaptor *PredictionExonAdaptor_new(DBAdaptor *dba) {
   pea->getTables                  = PredictionExonAdaptor_getTables;
   pea->getColumns                 = PredictionExonAdaptor_getColumns;
   pea->store                      = PredictionExonAdaptor_store;
-  pea->objectsFromStatementHandle = PredictionExonAdaptor_objectsFromStatementHandle;
+  pea->objectsFromStatementHandle = (BaseAdaptor_ObjectsFromStatementHandleFunc)PredictionExonAdaptor_objectsFromStatementHandle;
   pea->finalClause                = PredictionExonAdaptor_finalClause;
 
   return pea;
@@ -153,7 +153,7 @@ Vector *PredictionExonAdaptor_fetchAllByPredictionTranscript(PredictionExonAdapt
     int i;
     for (i=0; i<Vector_getNumElement(exons); i++) {
       PredictionExon *ex = Vector_getElementAt(exons, i);
-      Vector_addElement(out, PredictionExon_transfer(ex, tSlice));
+      Vector_addElement(out, PredictionExon_transfer((SeqFeature*)ex, tSlice));
     }
 // NIY Do I need to set a free func here - probably???
     Vector_free(exons);

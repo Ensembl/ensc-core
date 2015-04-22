@@ -67,8 +67,6 @@ Vector *BaseAdaptor_listDbIDs(BaseAdaptor *ba, char *table, char *pk, int ordere
   char qStr[1024];
   sprintf(qStr,"SELECT `%s` FROM `%s`", colName, table );
 
-  int joinWithCs = 0;
-
   if ( BaseAdaptor_isMultiSpecies(BaseAdaptor *ba)
       // For now just the multi species because I don't have adaptors in the Class hierarchy
       // && $self->isa('Bio::EnsEMBL::DBSQL::BaseFeatureAdaptor')
@@ -270,11 +268,9 @@ int BaseAdaptor_genericCount(BaseAdaptor *ba, char *constraint) {
 
 void BaseAdaptor_generateSql(BaseAdaptor *ba, char *constraint, char **inputColumns, char *sql) {
   NameTableType *tables = ba->getTables();
-  int nTable = 0;
   char tmpStr[1024];
   char extraDefaultWhere[1024];
   int i;
-  NameTableType *tabs;
   int needCsTab = 0;
   int needSrTab = 0;
 
@@ -641,7 +637,6 @@ Vector *BaseAdaptor_uncachedFetchAllByDbIDList(BaseAdaptor *ba, Vector *idList, 
 
   Vector *out = Vector_new();
 
-  int endPoint;
   int lenNum;
   for (i=0; i<nUniqueId; i+=maxSize) {
     char constraint[655500];

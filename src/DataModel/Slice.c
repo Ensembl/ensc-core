@@ -3576,8 +3576,6 @@ Vector *Slice_projectToSlice(Slice *slice, Slice *toSlice) {
           continue;
         }
 
-        CoordSystem *coordCs = mc->coordSystem;
-
         // If the normalised projection just ended up mapping to the
         // same coordinate system we were already in then we should just
         // return the original region.  This can happen for example, if we

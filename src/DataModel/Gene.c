@@ -172,7 +172,7 @@ Gene *Gene_transform(Gene *gene, char *csName, char *csVersion, Slice *toSlice) 
 // New
 Gene *Gene_transfer(Gene *gene, Slice *slice) {
   // Call super transfer
-  Gene *newGene = SeqFeature_transfer(gene, slice);
+  Gene *newGene = SeqFeature_transfer((SeqFeature*)gene, slice);
 
   if (newGene == NULL) {
     return NULL;

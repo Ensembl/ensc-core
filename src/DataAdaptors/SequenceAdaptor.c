@@ -551,7 +551,7 @@ void SequenceAdaptor_rnaEdit(SequenceAdaptor *sa, Slice *slice, char **seqPP, in
 //       Edits may not be different length so is true
   long sEnd   = sStart + Slice_getLength(slice); // length($$seq);
 
-  long lenString = Slice_getLength(slice);
+  //long lenString = Slice_getLength(slice);
 
   Vector *editsVec = IDHash_getValue(sa->rnaEditsCache, Slice_getSeqRegionId(slice));
 

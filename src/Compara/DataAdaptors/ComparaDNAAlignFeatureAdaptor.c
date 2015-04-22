@@ -105,11 +105,11 @@ Vector *ComparaDNAAlignFeatureAdaptor_fetchAllBySpeciesRegion(ComparaDNAAlignFea
       // skip features which do not overlap the requested region
       // next if ($cstart > $end || $cend < $start); 
 
-      DNAAlignFeature_setSeqName(f, Slice_getChrName(slice));
+      DNAAlignFeature_setSeqName((SeqFeature*)f, Slice_getChrName(slice));
       DNAAlignFeature_setStart(f, cStart);
       DNAAlignFeature_setEnd(f, cEnd);
       DNAAlignFeature_setStrand(f, 1);
-      DNAAlignFeature_setSpecies(f, csSpecies);
+      DNAAlignFeature_setSpecies((FeaturePair*)f, csSpecies);
       DNAAlignFeature_setScore(f, GenomicAlign_getScore(ga));
       DNAAlignFeature_setPercId(f, GenomicAlign_getPercentId(ga));
 
@@ -117,7 +117,7 @@ Vector *ComparaDNAAlignFeatureAdaptor_fetchAllBySpeciesRegion(ComparaDNAAlignFea
       DNAAlignFeature_setHitEnd(f, DNAFrag_getStart(qdf) + GenomicAlign_getQueryEnd(ga) - 1);
       DNAAlignFeature_setHitStrand(f,  GenomicAlign_getQueryStrand(ga));
       DNAAlignFeature_setHitSeqName(f, Slice_getChrName(qSlice));
-      DNAAlignFeature_setHitSpecies(f, qySpecies);
+      DNAAlignFeature_setHitSpecies((FeaturePair*)f, qySpecies);
 
       Vector_addElement(out, f);
     }

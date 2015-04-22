@@ -818,7 +818,6 @@ Vector *TranslationAdaptor_fetchAllByTranscriptList(TranslationAdaptor *tlna, Ve
 // This avoids code duplication in several methods, when fetching translation data from the db
 Translation *TranslationAdaptor_translationFromResultRow(TranslationAdaptor *tlna, ResultRow *row, Transcript *transcript) {
 
-  IDType transcriptId  = row->getLongLongAt(row,0); 
   IDType translationId = row->getLongLongAt(row,1);
   IDType startExonId   = row->getLongLongAt(row,2);
   IDType endExonId     = row->getLongLongAt(row,3);

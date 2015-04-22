@@ -26,6 +26,7 @@ struct DNAFragAdaptorStruct {
   BASECOMPARAADAPTOR_DATA
 };
 
+DNAFragAdaptor *DNAFragAdaptor_new(ComparaDBAdaptor *dba);
 DNAFrag *DNAFragAdaptor_fetchByDbID(DNAFragAdaptor *dfa, IDType dbID);
 Vector *DNAFragAdaptor_fetchAllByGenomeDBRegion(DNAFragAdaptor *dfa, GenomeDB *genomeDB,
                       char *dnaFragType, char *name, int *startP, int *endP);

@@ -70,8 +70,6 @@ static void *xrealloc(void *ptr, int size) {
 static BioIndex_IndexFile *BioIndex_IndexFile_create(char *fname) {
   BioIndex_IndexFile *bif = xcalloc(sizeof(BioIndex_IndexFile),1);
   char header[1024];
-  int ntoread;
-  int i;
                       
   if ((bif->handle = fopen(fname,"r")) == NULL) {
     Error_write(EOBDA,"BioIndex_IndexFile_create",ERR_SEVERE,"Failed opening index file %s\n", fname);
@@ -101,7 +99,6 @@ static void BioIndex_IndexFile_destroy(BioIndex_IndexFile *bif) {
 
 static void BioIndex_open_indices(BioIndex *bi, char *path) {
   char *primary_fname = xcalloc(MAXPATHLEN+1,1);
-  char  line[1024];
   int   i;
   char  FName[MAXPATHLEN];
   char  FullFName[MAXPATHLEN];
@@ -171,9 +168,6 @@ int BioIndex_parse_primary_record(BioIndex *bi,
                                   BioIndex_Location *loc) {
   
   int  ntok;
-  char id[1024];
-  char tmp_string[1024];
-  char *ch_p = line;  
 
 /* 
   if (strlen(line) != bi->primary_index->rec_length) {
@@ -536,7 +530,6 @@ static void BioIndex_parse_config(BioIndex *bi, char *path) {
 }
 
 static void BioIndex_IndexFile_write_header(BioIndex_IndexFile *bif) {
-  int i;
   fprintf(bif->handle,"%4d",bif->rec_length);
 }
 
@@ -702,15 +695,11 @@ static void BioIndex_add_file(BioIndex *bi, char *fname,
   long        filePos;
   long        lastPos;
   long        newPos;
-  long        startPos;
   long        fileLen;
-  char        fileKey[MAXSTRLEN];
   int        first = 1;
   int        i;
   int        j;
   BioIndex_Index_Definition *sbid;
-  BioIndex_Index_Data *bid;
-  char       *value;
 
   printf("Match for %s is %s\n",currentPrefix,fname);
   if ((fpSeq = fopen(fname,"r"))  == NULL) {
@@ -828,8 +817,6 @@ BioIndex *BioIndex_generate_flat(char *path, char *seq_path,
                                  char *select, char *format,
                                  BioIndex_Index_Definition *primary_def,
                                  Vector *secondary_defs) {
-  char  fileName[1024];
-  FILE  *fp;
   struct dirent **FileNames; 
   int    NFile;
   char   FullFName[1024];  

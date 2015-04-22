@@ -234,14 +234,14 @@ void TranscriptSupportingFeatureAdaptor_store(TranscriptSupportingFeatureAdaptor
     
 // Note - moved the checkSth execute into the condition because I can't do the variable args
     if (f->objectType == CLASS_DNADNAALIGNFEATURE) {
-      adap     = dnaAdaptor;      
+      adap     = (BaseFeatureAdaptor*)dnaAdaptor;      
       type     = "dna_align_feature";
 
       checkSth = dnaCheckSth;
       checkSth->execute(checkSth, seqRegionId, 
-                                  BaseAlignFeature_getSeqRegionStart(f), 
-                                  BaseAlignFeature_getSeqRegionEnd(f), 
-                                  BaseAlignFeature_getSeqRegionStrand(f), 
+                        BaseAlignFeature_getSeqRegionStart((SeqFeature*)f), 
+                        BaseAlignFeature_getSeqRegionEnd((SeqFeature*)f), 
+                        BaseAlignFeature_getSeqRegionStrand((SeqFeature*)f), 
                                   BaseAlignFeature_getHitSeqName(f), 
                                   BaseAlignFeature_getHitStart(f), 
                                   BaseAlignFeature_getHitEnd(f), 
@@ -251,14 +251,14 @@ void TranscriptSupportingFeatureAdaptor_store(TranscriptSupportingFeatureAdaptor
                                   DNAAlignFeature_getHitStrand((DNAAlignFeature *)f));
 
     } else if (f->objectType == CLASS_DNAPEPALIGNFEATURE) {
-      adap     = pepAdaptor;
+      adap     = (BaseFeatureAdaptor*)pepAdaptor;
       type     = "protein_align_feature";
 
       checkSth = pepCheckSth;
       checkSth->execute(checkSth, seqRegionId, 
-                                  BaseAlignFeature_getSeqRegionStart(f), 
-                                  BaseAlignFeature_getSeqRegionEnd(f), 
-                                  BaseAlignFeature_getSeqRegionStrand(f), 
+                        BaseAlignFeature_getSeqRegionStart((SeqFeature*)f), 
+                        BaseAlignFeature_getSeqRegionEnd((SeqFeature*)f), 
+                        BaseAlignFeature_getSeqRegionStrand((SeqFeature*)f), 
                                   BaseAlignFeature_getHitSeqName(f), 
                                   BaseAlignFeature_getHitStart(f), 
                                   BaseAlignFeature_getHitEnd(f), 
@@ -282,7 +282,7 @@ void TranscriptSupportingFeatureAdaptor_store(TranscriptSupportingFeatureAdaptor
       Vector *vec = Vector_new();
       Vector_addElement(vec, f);
       //BaseFeatureAdaptor_store(adap, vec);
-      adap->store(adap, vec);
+      adap->store((BaseAdaptor*)adap, vec);
       Vector_free(vec);
      
       sfDbID = BaseAlignFeature_getDbID(f);

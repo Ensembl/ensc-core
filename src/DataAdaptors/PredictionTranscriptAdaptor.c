@@ -45,7 +45,7 @@ PredictionTranscriptAdaptor *PredictionTranscriptAdaptor_new(DBAdaptor *dba) {
   pta->getTables = PredictionTranscriptAdaptor_getTables;
   pta->getColumns = PredictionTranscriptAdaptor_getColumns;
   pta->store = PredictionTranscriptAdaptor_store;
-  pta->objectsFromStatementHandle = PredictionTranscriptAdaptor_objectsFromStatementHandle;
+  pta->objectsFromStatementHandle = (BaseAdaptor_ObjectsFromStatementHandleFunc)PredictionTranscriptAdaptor_objectsFromStatementHandle;
 
   return pta;
 }
@@ -201,11 +201,11 @@ Vector *PredictionTranscriptAdaptor_fetchAllBySlice(PredictionTranscriptAdaptor 
   int i;
   for (i=0; i<Vector_getNumElement(transcripts); i++) {
     PredictionTranscript *t  = Vector_getElementAt(transcripts, i);
-    if (PredictionTranscript_getSeqRegionStart(t) < minStart) {
-      minStart = PredictionTranscript_getSeqRegionStart(t);
+    if (PredictionTranscript_getSeqRegionStart((SeqFeature*)t) < minStart) {
+      minStart = PredictionTranscript_getSeqRegionStart((SeqFeature*)t);
     }
-    if (PredictionTranscript_getSeqRegionEnd(t) > maxEnd) {
-      maxEnd = PredictionTranscript_getSeqRegionEnd(t);
+    if (PredictionTranscript_getSeqRegionEnd((SeqFeature*)t) > maxEnd) {
+      maxEnd = PredictionTranscript_getSeqRegionEnd((SeqFeature*)t);
     }
   }
 
@@ -282,9 +282,9 @@ Vector *PredictionTranscriptAdaptor_fetchAllBySlice(PredictionTranscriptAdaptor 
   // Perl didn't have this line - it was in GeneAdaptor version so I think I'm going to keep it
     if (!IDHash_contains(exTrHash, PredictionExon_getDbID(ex))) continue;
 
-    Exon *newEx;
+    PredictionExon *newEx;
     if (slice != extSlice) {
-      newEx = PredictionExon_transfer(ex, slice);
+      newEx = (PredictionExon*)PredictionExon_transfer((SeqFeature*)ex, slice);
       if (newEx == NULL) {
         fprintf(stderr, "Unexpected. Exon could not be transferred onto PredictionTranscript slice.\n");
         exit(1);

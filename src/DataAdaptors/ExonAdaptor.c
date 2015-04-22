@@ -30,6 +30,7 @@
 #include "ChainedAssemblyMapper.h"
 #include "CoordSystemAdaptor.h"
 #include "MetaCoordContainer.h"
+#include "SupportingFeatureAdaptor.h"
 
 #include "ExonAdaptor.h"
 #include "TranscriptAdaptor.h"
@@ -67,8 +68,8 @@ ExonAdaptor *ExonAdaptor_new(DBAdaptor *dba) {
 
   ea->getTables                  = ExonAdaptor_getTables;
   ea->getColumns                 = ExonAdaptor_getColumns;
-  ea->store                      = ExonAdaptor_store;
-  ea->objectsFromStatementHandle = ExonAdaptor_objectsFromStatementHandle;
+  ea->store                      = (BaseAdaptor_StoreFunc)ExonAdaptor_store;
+  ea->objectsFromStatementHandle = (BaseAdaptor_ObjectsFromStatementHandleFunc)ExonAdaptor_objectsFromStatementHandle;
   ea->finalClause                = ExonAdaptor_finalClause;
 
   return ea;
@@ -336,7 +337,7 @@ IDType ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
   my $seq_region_id;
   ($exon, $seq_region_id) = $self->_pre_store($exon);
 */
-  IDType seqRegionId = BaseFeatureAdaptor_preStore((BaseFeatureAdaptor *)ea, exon);
+  IDType seqRegionId = BaseFeatureAdaptor_preStore((BaseFeatureAdaptor *)ea, (SeqFeature*)exon);
 
   char qStr[2048];
   strcpy(qStr,"INSERT into exon ( seq_region_id, seq_region_start, "
@@ -356,9 +357,9 @@ IDType ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
   sprintf(qStr, "%s) VALUES ("IDFMTSTR", %ld, %ld, %d, %d, %d, %d, %d",
           qStr,
           (IDType)seqRegionId,
-          Exon_getSeqRegionStart(exon),
-          Exon_getSeqRegionEnd(exon),
-          Exon_getSeqRegionStrand(exon),
+          Exon_getSeqRegionStart((SeqFeature*)exon),
+          Exon_getSeqRegionEnd((SeqFeature*)exon),
+          Exon_getSeqRegionStrand((SeqFeature*)exon),
           Exon_getPhase(exon),
           Exon_getEndPhase(exon),
           isCurrent,

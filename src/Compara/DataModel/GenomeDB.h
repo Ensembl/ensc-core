@@ -57,6 +57,9 @@ char *GenomeDB_setName(GenomeDB *gd, char *name);
 #define GenomeDB_setTaxonId(gd,t) (gd)->taxonId = (t)
 #define GenomeDB_getTaxonId(gd) (gd)->taxonId
 
+int GenomeDB_hasQuery(GenomeDB *gdb, GenomeDB *queryGdb, IDType methodLinkId);
+int GenomeDB_hasConsensus(GenomeDB *gdb, GenomeDB *conGdb, IDType methodLinkId);
+
 GenomeDB *GenomeDB_new();
 
 Vector *GenomeDB_linkedGenomesByMethodLinkId(GenomeDB *gdb, IDType methodLinkId);

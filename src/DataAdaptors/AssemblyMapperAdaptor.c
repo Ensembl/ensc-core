@@ -268,6 +268,8 @@ AssemblyMapper *AssemblyMapperAdaptor_fetchByCoordSystems(AssemblyMapperAdaptor 
                      Vector_getNumElement(mappingPath));
       exit(1);
   }
+
+  return NULL;
 }
 
 
@@ -1504,7 +1506,7 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
   Mapper *endMidMapper   = ChainedAssemblyMapper_getLastMiddleMapper(casmMapper);
   Mapper *combinedMapper = ChainedAssemblyMapper_getFirstLastMapper(casmMapper);
 
-  Vector *ranges;
+  Vector *ranges = NULL;
 
   char qStr[1024];
   sprintf(qStr,"SELECT "
@@ -1600,37 +1602,39 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
   ResultRow *row;
   while ((row = sth->fetchRow(sth))) {
     if (!CoordSystem_compare(asmCs,firstCs)) {
-      long midStart           = row->getLongAt(row,0);
-      long midEnd             = row->getLongAt(row,1);
-      IDType midSeqRegionId   = row->getLongLongAt(row,2);
-      char *midSeqRegion      = row->getStringAt(row,3);
-      long midLength          = row->getLongAt(row,4);
-      int  ori                = row->getIntAt(row,5);
-      long startStart         = row->getLongAt(row,6);
-      long startEnd           = row->getLongAt(row,7);
-      IDType startSeqRegionId = row->getLongLongAt(row,8);
-      char *startSeqRegion    = row->getStringAt(row,9);
-      long startLength        = row->getLongAt(row,10);
+      midStart           = row->getLongAt(row,0);
+      midEnd             = row->getLongAt(row,1);
+      midSeqRegionId   = row->getLongLongAt(row,2);
+      midSeqRegion      = row->getStringAt(row,3);
+      midLength          = row->getLongAt(row,4);
+      ori                = row->getIntAt(row,5);
+      startStart         = row->getLongAt(row,6);
+      startEnd           = row->getLongAt(row,7);
+      startSeqRegionId = row->getLongLongAt(row,8);
+      startSeqRegion    = row->getStringAt(row,9);
+      startLength        = row->getLongAt(row,10);
 
     } else {
-      long startStart         = row->getLongAt(row,0);
-      long startEnd           = row->getLongAt(row,1);
-      IDType startSeqRegionId = row->getLongLongAt(row,2);
-      char *startSeqRegion    = row->getStringAt(row,3);
-      long startLength        = row->getLongAt(row,4);
-      int  ori                = row->getIntAt(row,5);
-      long midStart           = row->getLongAt(row,6);
-      long midEnd             = row->getLongAt(row,7);
-      IDType midSeqRegionId   = row->getLongLongAt(row,8);
-      char *midSeqRegion      = row->getStringAt(row,9);
-      long midLength          = row->getLongAt(row,10);
+      startStart         = row->getLongAt(row,0);
+      startEnd           = row->getLongAt(row,1);
+      startSeqRegionId = row->getLongLongAt(row,2);
+      startSeqRegion    = row->getStringAt(row,3);
+      startLength        = row->getLongAt(row,4);
+      ori                = row->getIntAt(row,5);
+      midStart           = row->getLongAt(row,6);
+      midEnd             = row->getLongAt(row,7);
+      midSeqRegionId   = row->getLongLongAt(row,8);
+      midSeqRegion      = row->getStringAt(row,9);
+      midLength          = row->getLongAt(row,10);
     }
 
     Mapper_addMapCoordinates(mapper,
        startSeqRegionId, startStart, startEnd, ori,
        midSeqRegionId, midStart, midEnd);
 
-    AssemblyMapperAdaptor_addToRangeVector(ranges, startSeqRegionId, startStart, startEnd, NULL);  
+    /* gb10: ranges doesn't seem to get set so surely this can't work?! */
+    if (ranges)
+      AssemblyMapperAdaptor_addToRangeVector(ranges, startSeqRegionId, startStart, startEnd, NULL);  
 
     RangeRegistry_checkAndRegister(reg, startSeqRegionId, 1, startLength, 1, startLength, 0 );
 
@@ -1688,30 +1692,30 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
 
   while ((row = sth->fetchRow(sth))) {
     if (!CoordSystem_compare(asmCs,midCs)) {
-      long endStart         = row->getLongAt(row,0);
-      long endEnd           = row->getLongAt(row,1);
-      IDType endSeqRegionId = row->getLongLongAt(row,2);
-      char *endSeqRegion    = row->getStringAt(row,3);
-      long endLength        = row->getLongAt(row,4);
-      int  ori              = row->getIntAt(row,5);
-      long midStart         = row->getLongAt(row,6);
-      long midEnd           = row->getLongAt(row,7);
-      IDType midSeqRegionId = row->getLongLongAt(row,8);
-      char *midSeqRegion    = row->getStringAt(row,9);
-      long midLength        = row->getLongAt(row,10);
+      endStart         = row->getLongAt(row,0);
+      endEnd           = row->getLongAt(row,1);
+      endSeqRegionId = row->getLongLongAt(row,2);
+      endSeqRegion    = row->getStringAt(row,3);
+      endLength        = row->getLongAt(row,4);
+      ori              = row->getIntAt(row,5);
+      midStart         = row->getLongAt(row,6);
+      midEnd           = row->getLongAt(row,7);
+      midSeqRegionId = row->getLongLongAt(row,8);
+      midSeqRegion    = row->getStringAt(row,9);
+      midLength        = row->getLongAt(row,10);
 
     } else {
-      long midStart         = row->getLongAt(row,0);
-      long midEnd           = row->getLongAt(row,1);
-      IDType midSeqRegionId = row->getLongLongAt(row,2);
-      char *midSeqRegion    = row->getStringAt(row,3);
-      long midLength        = row->getLongAt(row,4);
-      int  ori              = row->getIntAt(row,5);
-      long endStart         = row->getLongAt(row,6);
-      long endEnd           = row->getLongAt(row,7);
-      IDType endSeqRegionId = row->getLongLongAt(row,8);
-      char *endSeqRegion    = row->getStringAt(row,9);
-      long endLength        = row->getLongAt(row,10);
+      midStart         = row->getLongAt(row,0);
+      midEnd           = row->getLongAt(row,1);
+      midSeqRegionId = row->getLongLongAt(row,2);
+      midSeqRegion    = row->getStringAt(row,3);
+      midLength        = row->getLongAt(row,4);
+      ori              = row->getIntAt(row,5);
+      endStart         = row->getLongAt(row,6);
+      endEnd           = row->getLongAt(row,7);
+      endSeqRegionId = row->getLongLongAt(row,8);
+      endSeqRegion    = row->getStringAt(row,9);
+      endLength        = row->getLongAt(row,10);
     }
 
     Mapper_addMapCoordinates(endMidMapper, 

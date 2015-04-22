@@ -18,6 +18,7 @@
 #include "GenomeDB.h"
 #undef __GENOMEDB_MAIN__
 #include "GenomeDBAdaptor.h"
+#include "StrUtil.h"
 
 GenomeDB *GenomeDB_new() {
   GenomeDB *gdb;

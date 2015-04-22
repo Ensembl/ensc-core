@@ -51,7 +51,7 @@ int DNAAlignFeature_getQueryUnit(void) {
 }
 
 ECOSTRING DNAAlignFeature_setExtraData(DNAAlignFeature *daf, char *extraData) {
-  EcoString_copyStr(ecoSTable, &(daf->extraData), extraData,0);
+  EcoString_copyStr(ecoSTable, (char**)(&(daf->extraData)), extraData,0);
 
   if (daf->extraData == NULL) {
     fprintf(stderr,"ERROR: Failed allocating space for extraData\n");
@@ -94,7 +94,7 @@ DNAAlignFeature *DNAAlignFeature_deepCopyImpl(DNAAlignFeature *daf) {
 
   memcpy(newDNAAlignFeature,daf,sizeof(DNAAlignFeature));
 
-  BaseAlignFeature_copyData(newDNAAlignFeature, daf);
+  BaseAlignFeature_copyData((BaseAlignFeature*)newDNAAlignFeature, (BaseAlignFeature*)daf);
   
 
   newDNAAlignFeature->referenceCount = 0;

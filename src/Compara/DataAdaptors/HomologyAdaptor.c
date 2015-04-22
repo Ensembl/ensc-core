@@ -261,7 +261,6 @@ Vector *HomologyAdaptor_getHomologues(HomologyAdaptor *ha, char *qStr) {
 int HomologyAdaptor_getRelationships(HomologyAdaptor *ha, char *qStr, IDType **idsP) {
   StatementHandle *sth;
   ResultRow *row;
-  Vector *genes;
   int nAlloced = 2;
   int nId = 0;
 

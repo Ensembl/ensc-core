@@ -58,7 +58,7 @@ IntronSupportingEvidenceAdaptor *IntronSupportingEvidenceAdaptor_new(DBAdaptor *
   isea->getTables                  = IntronSupportingEvidenceAdaptor_getTables;
   isea->getColumns                 = IntronSupportingEvidenceAdaptor_getColumns;
   isea->store                      = IntronSupportingEvidenceAdaptor_store;
-  isea->objectsFromStatementHandle = IntronSupportingEvidenceAdaptor_objectsFromStatementHandle;
+  isea->objectsFromStatementHandle = (BaseAdaptor_ObjectsFromStatementHandleFunc)IntronSupportingEvidenceAdaptor_objectsFromStatementHandle;
 
   return isea;
 }
@@ -461,7 +461,7 @@ IDType IntronSupportingEvidenceAdaptor_store(IntronSupportingEvidenceAdaptor *is
   ($sf, $seq_region_id) = $self->_pre_store($sf);
 */
 
-  IDType seqRegionId = BaseFeatureAdaptor_preStore((BaseFeatureAdaptor *)isea, sf);
+  IDType seqRegionId = BaseFeatureAdaptor_preStore((BaseFeatureAdaptor *)isea, (SeqFeature*)sf);
 
   char qStr[1024];
   sprintf(qStr, "INSERT IGNORE INTO intron_supporting_evidence "
@@ -469,9 +469,9 @@ IDType IntronSupportingEvidenceAdaptor_store(IntronSupportingEvidenceAdaptor *is
                 "VALUES ("IDFMTSTR","IDFMTSTR",%ld,%ld,%d,'%s',%f,'%s',%d)", 
                 analysisId,
                 seqRegionId,
-                IntronSupportingEvidence_getSeqRegionStart(sf),
-                IntronSupportingEvidence_getSeqRegionEnd(sf),
-                IntronSupportingEvidence_getSeqRegionStrand(sf),
+          IntronSupportingEvidence_getSeqRegionStart((SeqFeature*)sf),
+          IntronSupportingEvidence_getSeqRegionEnd((SeqFeature*)sf),
+          IntronSupportingEvidence_getSeqRegionStrand((SeqFeature*)sf),
                 IntronSupportingEvidence_getHitName(sf),
                 IntronSupportingEvidence_getScore(sf),
                 IntronSupportingEvidence_getScoreType(sf),
@@ -494,9 +494,9 @@ IDType IntronSupportingEvidenceAdaptor_store(IntronSupportingEvidenceAdaptor *is
                    " AND hit_name = '%s'",
                 analysisId,
                 seqRegionId,
-                IntronSupportingEvidence_getSeqRegionStart(sf),
-                IntronSupportingEvidence_getSeqRegionEnd(sf),
-                IntronSupportingEvidence_getSeqRegionStrand(sf),
+            IntronSupportingEvidence_getSeqRegionStart((SeqFeature*)sf),
+            IntronSupportingEvidence_getSeqRegionEnd((SeqFeature*)sf),
+            IntronSupportingEvidence_getSeqRegionStrand((SeqFeature*)sf),
                 IntronSupportingEvidence_getHitName(sf));
 
     sth = isea->prepare((BaseAdaptor *)isea,qStr,strlen(qStr));
@@ -508,7 +508,7 @@ IDType IntronSupportingEvidenceAdaptor_store(IntronSupportingEvidenceAdaptor *is
     sth->finish(sth);
   }
   
-  IntronSupportingEvidence_setAdaptor(sf, isea);
+  IntronSupportingEvidence_setAdaptor((SeqFeature*)sf, (BaseAdaptor*)isea);
   IntronSupportingEvidence_setDbID(sf, sfId);
 
   return IntronSupportingEvidence_getDbID(sf);

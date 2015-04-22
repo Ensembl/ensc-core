@@ -221,7 +221,6 @@ void CoordSystemAdaptor_cacheMappingPaths(CoordSystemAdaptor *csa) {
 
     char **csStrings = NULL;
     int nCsString;
-    int i;
 
     if (!StrUtil_tokenizeByDelim(&csStrings, &nCsString, mapPath, "|#")) {
       fprintf(stderr, "Failed tokenizing mapPath string %s\n", mapPath);
@@ -495,6 +494,7 @@ Vector *CoordSystemAdaptor_fetchAllByName(CoordSystemAdaptor *csa, char *name) {
 
   if (StringHash_contains(csa->nameCache,lcName)) {
     Vector *v = (Vector *)StringHash_getValue(csa->nameCache, lcName);
+    return v;
   } else {
     return emptyVector;
   }

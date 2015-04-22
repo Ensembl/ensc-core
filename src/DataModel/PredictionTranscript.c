@@ -377,13 +377,12 @@ char *PredictionTranscript_translate(PredictionTranscript *trans) {
 char *PredictionTranscript_getcDNA(PredictionTranscript *trans) {
   Vector *exons = PredictionTranscript_getAllExons(trans,0);
   char *cdna = StrUtil_copyString(&cdna, "", 0);
-  int lastPhase = 0;
+  //int lastPhase = 0;
   int i;
   int first = 1;
 
-  int cdnaStart, cdnaEnd;
-  int pepStart, pepEnd;
-  int newcdna, pepCount;
+  int cdnaStart;
+  int pepStart;
 
   cdnaStart = 1;
   pepStart = 1;
@@ -489,7 +488,7 @@ MapperRangeSet *PredictionTranscript_genomic2cDNA(PredictionTranscript *trans, i
       return MapperRangeSet_new();
     }
     firstExon = Vector_getElementAt(translateable, 0);
-    contig = PredictionExon_getSlice(firstExon);
+    contig = (BaseContig*)PredictionExon_getSlice(firstExon);
     Vector_free(translateable);
   }
 
@@ -528,8 +527,6 @@ Mapper *PredictionTranscript_getcDNACoordMapper(PredictionTranscript *trans) {
 }
 
 void PredictionTranscript_free(PredictionTranscript *trans) {
-  int i;
-
   Object_decRefCount(trans);
 
   if (Object_getRefCount(trans) > 0) {

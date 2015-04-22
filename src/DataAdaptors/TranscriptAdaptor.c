@@ -79,7 +79,7 @@ TranscriptAdaptor *TranscriptAdaptor_new(DBAdaptor *dba) {
   ta->getTables                  = TranscriptAdaptor_getTables;
   ta->getColumns                 = TranscriptAdaptor_getColumns;
   ta->store                      = TranscriptAdaptor_store;
-  ta->objectsFromStatementHandle = TranscriptAdaptor_objectsFromStatementHandle;
+  ta->objectsFromStatementHandle = (BaseAdaptor_ObjectsFromStatementHandleFunc)TranscriptAdaptor_objectsFromStatementHandle;
   ta->leftJoin                   = TranscriptAdaptor_leftJoin;
 
   return ta;
@@ -455,11 +455,11 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
   int i;
   for (i=0; i<Vector_getNumElement(transcripts); i++) {
     Transcript *t  = Vector_getElementAt(transcripts, i);
-    if (Transcript_getSeqRegionStart(t) < minStart) {
-      minStart = Transcript_getSeqRegionStart(t);
+    if (Transcript_getSeqRegionStart((SeqFeature*)t) < minStart) {
+      minStart = Transcript_getSeqRegionStart((SeqFeature*)t);
     }
-    if (Transcript_getSeqRegionEnd(t) > maxEnd) {
-      maxEnd = Transcript_getSeqRegionEnd(t);
+    if (Transcript_getSeqRegionEnd((SeqFeature*)t) > maxEnd) {
+      maxEnd = Transcript_getSeqRegionEnd((SeqFeature*)t);
     }
   }
 
@@ -1022,7 +1022,7 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
   my $seq_region_id;
   ( $transcript, $seq_region_id ) = $self->_pre_store($transcript);
 */
-  IDType seqRegionId = BaseFeatureAdaptor_preStore((BaseFeatureAdaptor *)ta, transcript);
+  IDType seqRegionId = BaseFeatureAdaptor_preStore((BaseFeatureAdaptor *)ta, (SeqFeature*)transcript);
 
   // First store the transcript without a display xref.  The display xref
   // needs to be set after xrefs are stored which needs to happen after
@@ -1051,9 +1051,9 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
          geneDbID,
          newAnalysisId,
          seqRegionId,
-         Transcript_getSeqRegionStart(transcript),
-         Transcript_getSeqRegionEnd(transcript),
-         Transcript_getSeqRegionStrand(transcript),
+         Transcript_getSeqRegionStart((SeqFeature*)transcript),
+          Transcript_getSeqRegionEnd((SeqFeature*)transcript),
+          Transcript_getSeqRegionStrand((SeqFeature*)transcript),
          //Transcript_getBiotype(transcript),
          //Transcript_getStatus(transcript),
          //Transcript_getDescription(transcript),
@@ -1801,7 +1801,6 @@ Vector *TranscriptAdaptor_objectsFromStatementHandle(TranscriptAdaptor *ta,
     long seqRegionEnd =      row->getLongAt(row,3);
     int seqRegionStrand =    row->getIntAt(row,4);
     IDType analysisId =      row->getLongLongAt(row,5);
-    IDType geneId =          row->getLongLongAt(row,6);
     int isCurrent =          row->getIntAt(row,7);
     char *stableId =         row->getStringAt(row,8);
     int version =            row->getIntAt(row,9);

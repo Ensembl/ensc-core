@@ -19,6 +19,8 @@
 #include "CigarStrUtil.h"
 #include "DNAFragAdaptor.h"
 #include "IDHash.h"
+#include "MetaContainer.h"
+#include "GenomeDB.h"
 
 void GenomicAlignAdaptor_nextCig(GenomicAlignAdaptor *gaa,
     Vector *cigList, int *cigListPos, int *cs, int *ce, int *qs, int *qe);
@@ -27,7 +29,6 @@ void GenomicAlignAdaptor_nextCig(GenomicAlignAdaptor *gaa,
 
 GenomicAlignAdaptor *GenomicAlignAdaptor_new(ComparaDBAdaptor *dba) {
   GenomicAlignAdaptor *gaa;
-  Vector *vals;
   int maxAlLen;
   MetaContainer *mc;
 
@@ -517,7 +518,7 @@ void GenomicAlignAdaptor_addDerivedAlignments(GenomicAlignAdaptor *gaa,
   // o, ov overlap j - jump_in_
   // r - result
 
-  int  qs, qe, lqs, lqe, cs, ce, lcs, lce,
+  int  qs, qe, lqs, lqe, cs, ce, lce,
        ocs, oce, oqs, oqe, jc, jq, ovs, ove,
        rcs, rce, rqs, rqe;
   int currentMatch = 0;

@@ -215,12 +215,9 @@ int Class_searchHierarchyForParentChildPair(ClassHierarchyNode *chn, ClassType p
 
 #define MAXCLASSTYPE 1024
 void Class_initHierarchy(ClassHierarchyNode *chn, char **chPP,int *depth) {
-  Class **addedClasses[MAXCLASSTYPE];
-  int nAdded = 0;
   char clsName[1024];
   int len=0;
   int curDepth;
-  int i;
   char *chP = *chPP;
 
   while (*chP != '\0') {

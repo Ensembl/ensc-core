@@ -148,7 +148,7 @@ char *CachingSequenceAdaptor_fetchBySliceStartEndStrand(CachingSequenceAdaptor *
   if ( Slice_getStrand(slice) != 1 ) {
     long tmp = rightExpand;
     rightExpand = leftExpand;
-    leftExpand = rightExpand;
+    leftExpand = tmp;
   }
 
   long seqRegStart = Slice_getStart(slice) - leftExpand;

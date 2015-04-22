@@ -103,13 +103,13 @@ SeqFeature *SeqFeatureFactory_newFeatureFromFeature(SeqFeature *sf) {
       feature = Exon_shallowCopy(sf); 
       break;
     case CLASS_TRANSCRIPT:
-      feature = Transcript_shallowCopy(sf); 
+      feature = Transcript_shallowCopy((Transcript*)sf); 
       break;
     case CLASS_PREDICTIONEXON:
       feature = PredictionExon_shallowCopy(sf); 
       break;
     case CLASS_GENE:
-      feature = Gene_shallowCopy(sf); 
+      feature = Gene_shallowCopy((Gene*)sf); 
       break;
     case CLASS_INTRONSUPPORTINGEVIDENCE:
       feature = IntronSupportingEvidence_shallowCopy(sf);

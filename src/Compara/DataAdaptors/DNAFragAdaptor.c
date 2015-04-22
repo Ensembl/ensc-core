@@ -160,7 +160,6 @@ Vector *DNAFragAdaptor_objectsFromStatementHandle(DNAFragAdaptor *dfa, Statement
 IDType DNAFragAdaptor_store(DNAFragAdaptor *dfa, DNAFrag *dnaFrag) {
   GenomeDB *gdb;
   IDType gid;
-  IDType dnaFragId = 0;
   char qStr[512];
   StatementHandle *sth;
 

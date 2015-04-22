@@ -116,6 +116,7 @@ ECOSTRING FeaturePair_setHitSpecies(FeaturePair *fp, char *str);
 #define FeaturePair_free(fp) SeqFeature_free((fp))
 
 void FeaturePair_freeImpl(FeaturePair *fp);
+void FeaturePair_freePtrs(FeaturePair *fp);
 
 #ifdef __FEATUREPAIR_MAIN__
   FeaturePairFuncs 

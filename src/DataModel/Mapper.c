@@ -253,7 +253,6 @@ MapperRangeSet *Mapper_mapCoordinates(Mapper *m, IDType id, long start, long end
     }
 
     long targetStart, targetEnd;
-    int targetOri;
 
     MapperRange *res;
 

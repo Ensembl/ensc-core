@@ -21,6 +21,12 @@
 #include "MetaContainer.h"
 #include "StrUtil.h"
 #include "FileUtil.h"
+#include "SyntenyAdaptor.h"
+#include "GenomeDBAdaptor.h"
+#include "DNAFragAdaptor.h"
+#include "GenomicAlignAdaptor.h"
+#include "HomologyAdaptor.h"
+#include "ComparaDNAAlignFeatureAdaptor.h"
 
 void ComparaDBAdaptor_readConfFile(ComparaDBAdaptor *cdba, char *fileName);
 
@@ -56,8 +62,6 @@ ComparaDBAdaptor *ComparaDBAdaptor_new(char *host, char *user, char *pass, char 
 */
 void ComparaDBAdaptor_readConfFile(ComparaDBAdaptor *cdba, char *fileName) {
   int inOuter = 0;
-  int inInner = 0;
-  int inHash = 0;
   FILE *confFP;
   char line[MAXSTRLEN];
   char *confStr;

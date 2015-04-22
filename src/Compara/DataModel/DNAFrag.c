@@ -59,9 +59,6 @@ BaseContig *DNAFrag_getContig(DNAFrag *df) {
        RawContigAdaptor *rca = DBAdaptor_getRawContigAdaptor(dba);
        df->contig = (BaseContig *)RawContigAdaptor_fetchByName(rca, DNAFrag_getName(df));
      } else if (!strcmp(DNAFrag_getType(df),"VirtualContig")) {
-       SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
-       char chrName[1024];
-       int start, end;
        fprintf(stderr, "VC type not implemented \n");
        exit(1);
        //my ($chr,$start,$end) = split /\./, $self->name;

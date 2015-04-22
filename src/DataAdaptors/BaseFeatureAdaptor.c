@@ -25,6 +25,7 @@
 #include "MetaContainer.h"
 #include "MetaCoordContainer.h"
 #include "Object.h"
+#include "Slice.h"
 
 #include "DNAAlignFeature.h"
 
@@ -546,7 +547,7 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Sl
 // Make null free func again for now
     //Vector_setFreeFunc(result, Object_freeImpl);
     Vector_setFreeFunc(result, NULL);
-    Cache_addElement(bfa->sliceFeatureCache, key, result, Object_freeImpl);
+    Cache_addElement(bfa->sliceFeatureCache, key, result, (Cache_FreeFunc)Object_freeImpl);
   }
 
   return result;
@@ -658,7 +659,6 @@ int BaseFeatureAdaptor_countBySliceConstraint(BaseFeatureAdaptor *bfa, Slice *sl
   //Table synonym
   NameTableType *tables = bfa->getTables();
   char **primTab = (*tables)[0];
-  char *tableName = primTab[NAME];
   char *tableSynonym = primTab[SYN];
   
   //Constraints

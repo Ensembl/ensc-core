@@ -32,7 +32,8 @@
 #include "DNAAlignFeature.h"
 #include "BaseAlignFeature.h"
 #include "Object.h"
-
+#include "translate.h"
+#include "StableIdInfo.h"
 
 Exon *Exon_new() {
   Exon *exon;
@@ -237,7 +238,7 @@ Exon *Exon_transfer(Exon *exon, Slice *slice) {
 
   // Call super transfer
   //my $new_exon = $self->SUPER::transfer( @_ );
-  Exon *newExon = SeqFeature_transfer(exon, slice);
+  Exon *newExon = (Exon*)SeqFeature_transfer((SeqFeature*)exon, slice);
 
   if (newExon == NULL) {
     return NULL;
@@ -295,7 +296,6 @@ Exon *Exon_transfer(Exon *exon, Slice *slice) {
 */
 // New
 long Exon_getCodingRegionStart(Exon *exon, Transcript *transcript) {
-  IDType id = Transcript_getDbID(transcript);
 
 /* NIY
   if (defined($id) && /exists $self->{coding_region_start}->{$id}) {
@@ -370,7 +370,6 @@ long Exon_getCodingRegionStart(Exon *exon, Transcript *transcript) {
 */
 // New
 long Exon_getCodingRegionEnd(Exon *exon, Transcript *transcript) {
-  IDType id = Transcript_getDbID(transcript);
 
 /* NIY
   if(defined $id && exists $self->{coding_region_end}->{$id}) {

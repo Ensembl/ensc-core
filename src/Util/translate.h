@@ -25,4 +25,6 @@
 
 #include "tplib.h"
 
+void rev_comp(char *in, char *out, int length);
+
 #endif

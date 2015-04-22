@@ -121,7 +121,6 @@ void *Vector_removeElementAt(Vector *v, int ind) {
 }
 
 void *Vector_insertElementAt(Vector *v, int ind, void *elem) {
-  void *removed;
   int i;
 
   if (ind < 0) {
@@ -183,9 +182,6 @@ void *Vector_addElement(Vector *v, void *elem) {
 }
 
 void Vector_setNumElement(Vector *v, int nElem) {
-  int i;
-  int nToAlloc;
-
   int batchSize = v->batchSize;
 
   if (v->nAlloced <= nElem) {
@@ -215,7 +211,6 @@ void Vector_setNumElement(Vector *v, int nElem) {
 }
 
 Vector *Vector_copy(Vector *v) {
-  int i;
   Vector *newV = Vector_new();
 
 

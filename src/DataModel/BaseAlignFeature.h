@@ -156,6 +156,7 @@ Vector *BaseAlignFeature_getUngappedFeatures(BaseAlignFeature *baf);
 void BaseAlignFeature_reverseComplementImpl(BaseAlignFeature *baf);
 
 void BaseAlignFeature_freeImpl(BaseAlignFeature *baf);
+void BaseAlignFeature_freePtrs(BaseAlignFeature *baf);
 
 #define BaseAlignFeature_getHitUnit() \
       ((baf)->funcs->getHitUnit == NULL ? \

@@ -50,8 +50,8 @@ DNAAlignFeatureAdaptor *DNAAlignFeatureAdaptor_new(DBAdaptor *dba) {
 
   dafa->getTables                  = DNAAlignFeatureAdaptor_getTables;
   dafa->getColumns                 = DNAAlignFeatureAdaptor_getColumns;
-  dafa->store                      = DNAAlignFeatureAdaptor_store;
-  dafa->objectsFromStatementHandle = DNAAlignFeatureAdaptor_objectsFromStatementHandle;
+  dafa->store                      = (BaseAdaptor_StoreFunc)DNAAlignFeatureAdaptor_store;
+  dafa->objectsFromStatementHandle = (BaseAdaptor_ObjectsFromStatementHandleFunc)DNAAlignFeatureAdaptor_objectsFromStatementHandle;
   dafa->leftJoin                   = DNAAlignFeatureAdaptor_leftJoin;
 
   return dafa;
@@ -187,8 +187,6 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
   for (i=0; i<Vector_getNumElement(features); i++) {
     char fixedCigar[1024];
 
-    char qStr[2048];
-
     DNAAlignFeature *feat = Vector_getElementAt(features, i);
 
     if (feat == NULL) {
@@ -240,7 +238,7 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
 // will cause all sorts of pain freeing up the temporary stuff
     //my $original = $feat;
     // ( $feat, $seq_region_id ) = $self->_pre_store($feat);
-    IDType seqRegionId = BaseFeatureAdaptor_preStore(bfa, feat);
+    IDType seqRegionId = BaseFeatureAdaptor_preStore(bfa, (SeqFeature*)feat);
 
     char scoreString[1024];
     DNAAlignFeature_getScore(feat) != FLOAT_UNDEF ? sprintf(scoreString,"%f",DNAAlignFeature_getScore(feat)) : sprintf(scoreString,"NULL");
@@ -263,9 +261,9 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
 // Note using SeqRegionStart etc here rather than Start - should have same effect as perl's transfer
     
     sth->execute(sth, (IDType)seqRegionId,
-                      DNAAlignFeature_getSeqRegionStart(feat),
-                      DNAAlignFeature_getSeqRegionEnd(feat),
-                      DNAAlignFeature_getSeqRegionStrand(feat),
+                 DNAAlignFeature_getSeqRegionStart((SeqFeature*)feat),
+                 DNAAlignFeature_getSeqRegionEnd((SeqFeature*)feat),
+                 DNAAlignFeature_getSeqRegionStrand((SeqFeature*)feat),
                       DNAAlignFeature_getHitStart(feat),
                       DNAAlignFeature_getHitEnd(feat),
                       DNAAlignFeature_getHitStrand(feat),

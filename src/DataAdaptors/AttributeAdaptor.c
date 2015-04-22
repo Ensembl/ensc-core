@@ -146,8 +146,6 @@ void AttributeAdaptor_storeOnSlice(AttributeAdaptor *ata, Slice *slice, Vector *
     exit(1);
   }
 
-  DBAdaptor *db = ata->dba;
-      
   char *type  = "seq_region";
   char *table = "seq_region";
   IDType id   = Slice_getSeqRegionId(slice);

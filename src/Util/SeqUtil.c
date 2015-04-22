@@ -137,7 +137,6 @@ int SeqUtil_readTransTab(char *fName, char TransTab[4][4][4]) {
   int   Inds[3];
   char  aa;
   char *ChP;
-  char  TmpName[MAXSTRLEN];
   char *headerStr = "Symbol   3-letter    Codons";
 
   if ((FpIn=FileUtil_open(fName,"r","ReadTransTab"))==NULL) {

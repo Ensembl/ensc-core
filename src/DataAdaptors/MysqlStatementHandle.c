@@ -27,6 +27,9 @@
 
 #include "ProcUtil.h"
 
+#include <string.h>
+
+
 StatementHandle *MysqlStatementHandle_new(DBConnection *dbc, char *query) {
   MysqlStatementHandle *sth;
 
@@ -105,7 +108,7 @@ unsigned long long MysqlStatementHandle_execute(StatementHandle *sth, ...) {
 
   if (mysql_real_query (m_sth->dbc->mysql, statement, qlen) != 0) {    /* the query failed */
     fprintf(stderr, "Could not execute query %s\n\n", statement);
-    fprintf(stderr, "Query length is %d\n\n", strlen(statement));
+    fprintf(stderr, "Query length is %d\n\n", (int)strlen(statement));
     //fprintf(stderr, "Stack trace:\n");
     //ProcUtil_showBacktrace(EnsC_progName);
     fprintf(stderr, "Database %s host %s user %s pass %s port %d\n", 

@@ -75,7 +75,7 @@ GeneAdaptor *GeneAdaptor_new(DBAdaptor *dba) {
   ga->getTables                  = GeneAdaptor_getTables;
   ga->getColumns                 = GeneAdaptor_getColumns;
   ga->store                      = GeneAdaptor_store;
-  ga->objectsFromStatementHandle = GeneAdaptor_objectsFromStatementHandle;
+  ga->objectsFromStatementHandle = (BaseAdaptor_ObjectsFromStatementHandleFunc)GeneAdaptor_objectsFromStatementHandle;
   ga->leftJoin                   = GeneAdaptor_leftJoin;
 
   return ga;
@@ -687,11 +687,11 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
   int i;
   for (i=0; i<Vector_getNumElement(genes); i++) {
     Gene *g  = Vector_getElementAt(genes, i);
-    if (Gene_getSeqRegionStart(g) < minStart) {
-      minStart = Gene_getSeqRegionStart(g);
+    if (Gene_getSeqRegionStart((SeqFeature*)g) < minStart) {
+      minStart = Gene_getSeqRegionStart((SeqFeature*)g);
     }
-    if (Gene_getSeqRegionEnd(g) > maxEnd) {
-      maxEnd = Gene_getSeqRegionEnd(g);
+    if (Gene_getSeqRegionEnd((SeqFeature*)g) > maxEnd) {
+      maxEnd = Gene_getSeqRegionEnd((SeqFeature*)g);
     }
   }
 
@@ -1406,7 +1406,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
   ($gene, $seq_region_id) = $self->_pre_store($gene);
 */
 
-  IDType seqRegionId = BaseFeatureAdaptor_preStore((BaseFeatureAdaptor *)ga, gene); 
+  IDType seqRegionId = BaseFeatureAdaptor_preStore((BaseFeatureAdaptor *)ga, (SeqFeature*)gene); 
 
   char fmtStr[1024];
   char qStr[1024];
@@ -1433,9 +1433,9 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
                "canonical_annotation = %%s", 
            analysisId, 
            seqRegionId, 
-           Gene_getSeqRegionStart(gene),
-           Gene_getSeqRegionEnd(gene),
-           Gene_getSeqRegionStrand(gene),
+          Gene_getSeqRegionStart((SeqFeature*)gene),
+          Gene_getSeqRegionEnd((SeqFeature*)gene),
+          Gene_getSeqRegionStrand((SeqFeature*)gene),
            type, 
            //Gene_getDescription(gene),
            //Gene_getSource(gene),
