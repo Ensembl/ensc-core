@@ -21,6 +21,7 @@
 #include "IDHash.h"
 #include "MetaContainer.h"
 #include "GenomeDB.h"
+#include "GenomicAlign.h"
 
 void GenomicAlignAdaptor_nextCig(GenomicAlignAdaptor *gaa,
     Vector *cigList, int *cigListPos, int *cs, int *ce, int *qs, int *qe);
@@ -465,7 +466,7 @@ Vector *GenomicAlignAdaptor_mergeAlignsets(GenomicAlignAdaptor *gaa, Vector *ali
     GenomicAlignListElem *gale  = Vector_getElementAt(bigList,i);
 
     GenomicAlign *align = gale->align;
-    IDType alignID      = GenomicAlign_GetDbID(align);
+    IDType alignID      = GenomicAlign_getDbID(align);
     int setNo           = gale->setNum;
 
     if (IDHash_contains(overlappingSets[setNo], alignID)) {
