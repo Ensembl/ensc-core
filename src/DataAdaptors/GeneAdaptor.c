@@ -716,7 +716,12 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
 
   IDType *uniqueIds = IDHash_getKeys(gHash);
 
-  char qStr[655500];
+  char *qStr = NULL;
+  if ((qStr = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating qStr\n");
+    return genes;
+  }
+
   strcpy(qStr, "SELECT gene_id, transcript_id FROM   transcript WHERE  gene_id IN (");
   for (i=0; i<IDHash_getNumValues(gHash); i++) {
     if (i!=0) {
@@ -809,6 +814,7 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
   Vector *tmpVec = SupportingFeatureAdaptor_fetchAllByExonList(sfa, exons, slice);
   Vector_free(tmpVec);
   Vector_free(exons);
+  free(qStr);
 
   return genes;
 }

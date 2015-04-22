@@ -435,8 +435,19 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceAndScore(BaseFeatureAdaptor *bfa, Slic
 
 Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice *slice, char *constraint, char *logicName) {
   Vector *result = Vector_new();
-  char allConstraint[655500];
-  char key[655500];
+  char *allConstraint = NULL;
+  char *key = NULL;
+
+  if ((allConstraint = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating allConstraint\n");
+    return result;
+  }
+
+  if ((key = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating key\n");
+    return result;
+  }
+
   allConstraint[0] = '\0';
   key[0] = '\0';
 
@@ -550,6 +561,9 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Sl
     Cache_addElement(bfa->sliceFeatureCache, key, result, (Cache_FreeFunc)Object_freeImpl);
   }
 
+  free(allConstraint);
+  free(key);
+
   return result;
 }
 
@@ -662,7 +676,12 @@ int BaseFeatureAdaptor_countBySliceConstraint(BaseFeatureAdaptor *bfa, Slice *sl
   char *tableSynonym = primTab[SYN];
   
   //Constraints
-  char allConstraint[655500];
+  char *allConstraint = NULL;
+  if ((allConstraint = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating allConstraint\n");
+    return 0;
+  }
+
   allConstraint[0] = '\0';
 
   if (constraint != NULL) {
@@ -733,6 +752,8 @@ int BaseFeatureAdaptor_countBySliceConstraint(BaseFeatureAdaptor *bfa, Slice *sl
       count += *cnt;
     }
   }
+
+  free(allConstraint);
   
   return count;
 }
@@ -859,7 +880,12 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
 
   Vector *featureCoordSystems;
 
-  char tmpStr[655500];
+  char *tmpStr = NULL;
+  if ((tmpStr = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating tmpStr\n");
+    return NULL;
+  }
+
   sprintf(tmpStr, "%sbuild.level", tableName);  
   Vector *metaValues = MetaContainer_listValueByKey(metaContainer, tmpStr);
 
@@ -1104,6 +1130,7 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
   }
   Vector_free(featureCoordSystems);
 
+  free(tmpStr);
   return panCoordFeatures;
 }
 /*

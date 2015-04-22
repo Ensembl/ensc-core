@@ -729,7 +729,13 @@ Vector *TranslationAdaptor_fetchAllByTranscriptList(TranslationAdaptor *tlna, Ve
   // Unused in perlmy %ex_hash;
 
   for (i=0; i<nUniqueId; i+=maxSize) {
-    char idStr[655500];
+    char *idStr = NULL;
+
+    if ((idStr = (char *)calloc(655500,sizeof(char))) == NULL) {
+      fprintf(stderr,"Failed allocating idStr\n");
+      return out;
+    }
+
     idStr[0] = '\0';
 
     // Special case for one remaining Id
@@ -755,7 +761,13 @@ Vector *TranslationAdaptor_fetchAllByTranscriptList(TranslationAdaptor *tlna, Ve
     //  -SQL => 'SELECT transcript_id, canonical_translation_id FROM transcript WHERE transcript_id '.$id_str
     //);
     
-    char qStr[655500];
+    char *qStr = NULL;
+
+    if ((qStr = (char *)calloc(655500,sizeof(char))) == NULL) {
+      fprintf(stderr,"Failed allocating qStr\n");
+      return out;
+    }
+
     sprintf(qStr,"SELECT transcript_id, canonical_translation_id FROM transcript WHERE transcript_id %s", idStr);
     StatementHandle *sth = tlna->prepare((BaseAdaptor *)tlna,qStr,strlen(qStr));
     sth->execute(sth);
@@ -807,6 +819,8 @@ Vector *TranslationAdaptor_fetchAllByTranscriptList(TranslationAdaptor *tlna, Ve
     }
     sth->finish(sth);
     IDHash_free(canonicalLookup, free);
+    free(idStr);
+    free(qStr);
   }
 
   free(uniqueIds);

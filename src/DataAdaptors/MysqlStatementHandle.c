@@ -77,17 +77,15 @@ void MysqlStatementHandle_execute(va_alist) {
  */
 unsigned long long MysqlStatementHandle_execute(StatementHandle *sth, ...) {
   va_list args;
-  char statement[655500];
+  char *statement = NULL;
   int qlen;
   MYSQL_RES *results;
   MysqlStatementHandle *m_sth;
 
-/*
   if ((statement = (char *)calloc(655500,sizeof(char))) == NULL) {
     fprintf(stderr,"Failed allocating statment\n");
-    exit(1);
+    return 0;
   }
-*/
 
   Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);
 
@@ -147,7 +145,8 @@ unsigned long long MysqlStatementHandle_execute(StatementHandle *sth, ...) {
       return 0;
     }
   }
-  //free(statement);
+
+  free(statement);
   return mysql_affected_rows(m_sth->dbc->mysql);
 }
 

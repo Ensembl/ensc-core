@@ -156,9 +156,14 @@ Vector *SupportingFeatureAdaptor_fetchAllByExonList(SupportingFeatureAdaptor *sf
   
 
   char tmpStr[1024];
-  char qStr[655500];
+  char *qStr = NULL;
   int lenNum;
   int maxSize = 16384;
+
+  if ((qStr = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating qStr\n");
+    return NULL;
+  }
 
   IDHash *dnaFeatIdToExHash  = IDHash_new(IDHASH_MEDIUM);
   IDHash *protFeatIdToExHash = IDHash_new(IDHASH_MEDIUM);
@@ -282,6 +287,7 @@ Vector *SupportingFeatureAdaptor_fetchAllByExonList(SupportingFeatureAdaptor *sf
     if (exon->supportingFeatures == NULL) exon->supportingFeatures = emptyVector;
   }
 
+  free(qStr);
   return out;
 }
 

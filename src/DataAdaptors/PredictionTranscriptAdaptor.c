@@ -231,7 +231,12 @@ Vector *PredictionTranscriptAdaptor_fetchAllBySlice(PredictionTranscriptAdaptor 
   IDType *uniqueIds = IDHash_getKeys(trHash);
 
   char tmpStr[1024];
-  char qStr[655500];
+  char *qStr = NULL;
+  if ((qStr = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating qStr\n");
+    return transcripts;
+  }
+
   int lenNum;
   int endPoint = sprintf(qStr, "SELECT prediction_transcript_id, prediction_exon_id, exon_rank FROM prediction_exon WHERE  prediction_transcript_id IN (");
   for (i=0; i<IDHash_getNumValues(trHash); i++) {
@@ -302,6 +307,7 @@ Vector *PredictionTranscriptAdaptor_fetchAllBySlice(PredictionTranscriptAdaptor 
   }
 
   IDHash_free(exTrHash, Vector_free);
+  free(qStr);
 
   return transcripts;
 }

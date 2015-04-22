@@ -419,7 +419,11 @@ void TranscriptRankPair_free(TranscriptRankPair *trp) {
 }
 
 Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, int loadExons, char *logicName, char *inputConstraint) {
-  char constraint[655500];
+  char *constraint = NULL;
+  if ((constraint = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating constraint\n");
+    return NULL;
+  }
 
   strcpy(constraint, "t.is_current = 1");
   //fprintf(stderr, "Length of input constraint = %ld\n", strlen(inputConstraint));
@@ -488,11 +492,17 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
   int maxSize = 16384;
 
   char tmpStr[1024];
-  char qStr[655500];
+  char *qStr = NULL;
   int lenNum;
   IDHash *exTrHash = IDHash_new(IDHASH_LARGE);
   int endPoint;
 //  bzero(qStr,655500);
+
+  if ((qStr = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating qStr\n");
+    return transcripts;
+  }
+
 
 // Divide query if a lot of ids - Not done in perl
   for (i=0; i<nUniqueId; i+=maxSize) {
@@ -628,9 +638,9 @@ Vector *TranscriptAdaptor_fetchAllBySlice(TranscriptAdaptor *ta, Slice *slice, i
   // Free stuff
   IDHash_free(exTrHash, Vector_free);
 
-  //free(qStr);
-
-
+  free(qStr);
+  free(constraint);
+  
   return transcripts;
 }
 

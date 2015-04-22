@@ -214,8 +214,14 @@ sub _bind_param_generic_fetch {
 =cut
 */
 Vector *BaseAdaptor_genericFetch(BaseAdaptor *ba, char *constraint, AssemblyMapper *mapper, Slice *slice) {
-  char qStr[655500];
-//  char *qStr = calloc(5655500, sizeof(char));
+  Vector *res = NULL;
+  char *qStr = NULL;
+
+  if ((qStr = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating qStr\n");
+    return res;
+  }
+
   qStr[0] = '\0';
 
   BaseAdaptor_generateSql(ba, constraint, NULL, qStr);
@@ -224,10 +230,10 @@ Vector *BaseAdaptor_genericFetch(BaseAdaptor *ba, char *constraint, AssemblyMapp
 
   sth->execute(sth);
 
-  Vector *res = ba->objectsFromStatementHandle(ba, sth, mapper, slice);
+  res = ba->objectsFromStatementHandle(ba, sth, mapper, slice);
   sth->finish(sth);
 
-  //free(qStr);
+  free(qStr);
   return res;
 }
 
@@ -248,7 +254,13 @@ Vector *BaseAdaptor_genericFetch(BaseAdaptor *ba, char *constraint, AssemblyMapp
 char *countCols[] = {"count(*)", NULL};
 
 int BaseAdaptor_genericCount(BaseAdaptor *ba, char *constraint) {
-  char qStr[655500];
+  char *qStr = NULL;
+
+  if ((qStr = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating qStr\n");
+    return 0;
+  }
+
   qStr[0] = '\0';
 
   BaseAdaptor_generateSql(ba, constraint, countCols, qStr);
@@ -263,6 +275,7 @@ int BaseAdaptor_genericCount(BaseAdaptor *ba, char *constraint) {
   ResultRow *row = sth->fetchRow(sth);
   int count = row->getLongAt(row, 0);
 
+  free(qStr);
   return count;
 }
 
@@ -639,7 +652,13 @@ Vector *BaseAdaptor_uncachedFetchAllByDbIDList(BaseAdaptor *ba, Vector *idList, 
 
   int lenNum;
   for (i=0; i<nUniqueId; i+=maxSize) {
-    char constraint[655500];
+    char *constraint = NULL;
+
+    if ((constraint = (char *)calloc(655500,sizeof(char))) == NULL) {
+      fprintf(stderr,"Failed allocating constraint\n");
+      return out;
+    }
+
     strcpy(constraint, constraintPref);
   
     // Special case for one remaining Id
@@ -667,6 +686,7 @@ Vector *BaseAdaptor_uncachedFetchAllByDbIDList(BaseAdaptor *ba, Vector *idList, 
     Vector_append(out, resChunk);
 
     Vector_free(resChunk);
+    free(constraint);
   }
   free(uniqueIds);
 

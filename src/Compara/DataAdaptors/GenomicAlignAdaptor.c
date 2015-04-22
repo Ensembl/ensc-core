@@ -58,8 +58,12 @@ void GenomicAlignAdaptor_store(GenomicAlignAdaptor *gaa, Vector *genomicAligns) 
   StatementHandle *sth;
   char commaStr[2] = {'\0','\0'};
   int i;
-  char tmpStr[65556];
+  char *tmpStr = NULL;
   
+  if ((tmpStr = (char *)calloc(65556,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating tmpStr\n");
+    return;
+  }
 
   StrUtil_copyString(&qStr, "INSERT INTO genomic_align_block"
              " (consensus_dnafrag_id, consensus_start, consensus_end,"
@@ -116,6 +120,7 @@ void GenomicAlignAdaptor_store(GenomicAlignAdaptor *gaa, Vector *genomicAligns) 
   sth->finish(sth);
 
   free(qStr);
+  free(tmpStr);
 }
      
 /*

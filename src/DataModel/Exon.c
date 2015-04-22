@@ -784,9 +784,17 @@ char  *Exon_getSeqStringImpl(Exon *exon) {
         strcpy(seq,tmpSeq);
         free(tmpSeq);
       } else {
-        char tmpSeq[1000002];
+        char *tmpSeq = NULL;
+
+        if ((tmpSeq = (char *)calloc(1000002,sizeof(char))) == NULL) {
+          fprintf(stderr,"Failed allocating tmpSeq\n");
+          return NULL;
+        }
+
         rev_comp(seq, tmpSeq, Exon_getLength(exon));
         strcpy(seq,tmpSeq);
+
+        free(tmpSeq);
       }
     }
   }
