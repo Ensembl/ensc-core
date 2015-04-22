@@ -48,3 +48,11 @@ void RepeatFeature_freeImpl(RepeatFeature *rf) {
   free(rf);
 }
 
+
+RepeatFeature *RepeatFeature_shallowCopyImpl(RepeatFeature *rf) {
+  RepeatFeature *newRepeatFeature = RepeatFeature_new();
+
+  memcpy(newRepeatFeature,rf,sizeof(RepeatFeature));
+
+  return newRepeatFeature;
+}

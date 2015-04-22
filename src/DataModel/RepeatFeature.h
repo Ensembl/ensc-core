@@ -88,10 +88,12 @@ struct RepeatFeatureStruct {
 #define RepeatFeature_transformToRawContig(repeat) SeqFeature_transformToRawContig((repeat))
 
 #define RepeatFeature_free(repeat) SeqFeature_free((repeat))
+#define RepeatFeature_shallowCopy(repeat) RepeatFeature_shallowCopyImpl((repeat))
 
 RepeatFeature *RepeatFeature_new();
 
 void RepeatFeature_freeImpl(RepeatFeature *repeat);
+RepeatFeature *RepeatFeature_shallowCopyImpl(RepeatFeature *repeat);
 
 #ifdef __REPEATFEATURE_MAIN__
  RepeatFeatureFuncs 
