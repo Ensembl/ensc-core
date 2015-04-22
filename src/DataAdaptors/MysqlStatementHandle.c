@@ -115,6 +115,8 @@ unsigned long long MysqlStatementHandle_execute(StatementHandle *sth, ...) {
             DBConnection_getUser(m_sth->dbc),
             DBConnection_getPass(m_sth->dbc),
             DBConnection_getPort(m_sth->dbc));
+    //if (m_sth->dbc->mysql->net && m_sth->dbc->mysql->net->last_error)
+    //  fprintf(stderr, "Mysql error: %s", m_sth->dbc->mysql->net->last_error);
     
     return 0;
   }

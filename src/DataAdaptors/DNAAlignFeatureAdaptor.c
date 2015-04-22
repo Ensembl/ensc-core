@@ -114,7 +114,7 @@ char *DNAAlign_cols[] = {
             "daf.external_db_id",
             "daf.hcoverage",
 	    "daf.external_data",
-	    "daf.pair_dna_align_feature_id",
+	    //"daf.pair_dna_align_feature_id",
 	    "exdb.db_name",
 	    "exdb.db_display_name",
             NULL };
@@ -175,8 +175,8 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
                     "evalue,"
                     "perc_ident,"
                     "external_db_id,"
-                    "hcoverage,"
-                    "pair_dna_align_feature_id) "
+                    "hcoverage) "
+          //"pair_dna_align_feature_id) "
                     "VALUES (%" IDFMTSTR ",%%d,%%d,%%d,%%d,%%d,%%d,'%%s','%%s',%"IDFMTSTR
                              ",%%s,%%s,%%s,%%s,%%s,%%s)", tableName);
                             // changed to strings to allow for nulls ",%%f,%%f,%%f,%" IDFMTSTR ",%%f,%" IDFMTSTR ")", tableName);
@@ -467,26 +467,27 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
 
   ResultRow *row;
   while ((row = sth->fetchRow(sth))) {
-    IDType dnaAlignFeatureId     = row->getLongLongAt(row,0);
-    IDType seqRegionId           = row->getLongLongAt(row,1);
-    IDType analysisId            = row->getLongLongAt(row,2);
-    long seqRegionStart          = row->getLongAt(row,3);
-    long seqRegionEnd            = row->getLongAt(row,4);
-    int seqRegionStrand          = row->getIntAt(row,5);
-    int hitStart                 = row->getIntAt(row,6);
-    int hitEnd                   = row->getIntAt(row,7);
-    char *hitName                = row->getStringAt(row,8);
-    int hitStrand                = row->getIntAt(row,9);
-    char *cigarLine              = row->getStringAt(row,10);
-    double eValue                = row->getDoubleAt(row,11);
-    double percIdent             = row->getDoubleAt(row,12);
-    double score                 = row->getDoubleAt(row,13);
-    IDType externalDbId          = row->getLongLongAt(row,14);
-    double hCoverage             = row->getDoubleAt(row,15);
-    char *extraData              = row->getStringAt(row,16);
-    IDType pairDnaAlignFeatureId = row->getLongLongAt(row,17);
-    char *externalDbName         = row->getStringAt(row,18);
-    char *externalDbDisplayName  = row->getStringAt(row,19);
+    int i = 0;
+    IDType dnaAlignFeatureId     = row->getLongLongAt(row,i); ++i;
+    IDType seqRegionId           = row->getLongLongAt(row,i); ++i;
+    IDType analysisId            = row->getLongLongAt(row,i); ++i;
+    long seqRegionStart          = row->getLongAt(row,i); ++i;
+    long seqRegionEnd            = row->getLongAt(row,i); ++i;
+    int seqRegionStrand          = row->getIntAt(row,i); ++i;
+    int hitStart                 = row->getIntAt(row,i); ++i;
+    int hitEnd                   = row->getIntAt(row,i); ++i;
+    char *hitName                = row->getStringAt(row,i); ++i;
+    int hitStrand                = row->getIntAt(row,i); ++i;
+    char *cigarLine              = row->getStringAt(row,i); ++i;
+    double eValue                = row->getDoubleAt(row,i); ++i;
+    double percIdent             = row->getDoubleAt(row,i); ++i;
+    double score                 = row->getDoubleAt(row,i); ++i;
+    IDType externalDbId          = row->getLongLongAt(row,i); ++i;
+    double hCoverage             = row->getDoubleAt(row,i); ++i;
+    char *extraData              = row->getStringAt(row,i); ++i;
+    //IDType pairDnaAlignFeatureId = row->getLongLongAt(row,i); ++i;
+    char *externalDbName         = row->getStringAt(row,i); ++i;
+    char *externalDbDisplayName  = row->getStringAt(row,i); ++i;
 
     // get the analysis object
     Analysis *analysis = AnalysisAdaptor_fetchByDbID(aa, analysisId);
@@ -601,7 +602,7 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
     DNAAlignFeature_setDbName(daf, externalDbName);
     DNAAlignFeature_setDbDisplayName(daf, externalDbDisplayName);
 
-    DNAAlignFeature_setPairDNAAlignFeatureId(daf, pairDnaAlignFeatureId);
+    //DNAAlignFeature_setPairDNAAlignFeatureId(daf, pairDnaAlignFeatureId);
 
     Vector_addElement(features, daf); 
   } 
