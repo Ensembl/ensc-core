@@ -101,7 +101,7 @@ unsigned long long MysqlStatementHandle_execute(StatementHandle *sth, ...) {
 
   if (qlen < 0 || qlen > 655500) {
     fprintf(stderr, "ERROR: vsnprintf call failed during statement execution (qlen = %d)\n", qlen);
-    exit(1);
+    return 0;
   }
 
   //fprintf(stderr, "Statement after formatting = %s\n",statement);
@@ -159,6 +159,7 @@ void MysqlStatementHandle_addFlag(StatementHandle *sth, unsigned long flag) {
   
 
 ResultRow *MysqlStatementHandle_fetchRow(StatementHandle *sth) {
+  ResultRow *result = NULL;
   MysqlStatementHandle *m_sth;
   MYSQL_ROW mysql_row;
 
@@ -169,18 +170,18 @@ ResultRow *MysqlStatementHandle_fetchRow(StatementHandle *sth) {
   if (m_sth->results == NULL) {
     fprintf(stderr,"ERROR: Tried to fetch a row for a StatementHandle with no results for %s\n",
             sth->statementFormat);
-    exit(1);
+  }
+  else {
+    mysql_row = mysql_fetch_row(m_sth->results);
+
+    if (mysql_row != NULL) {
+      //m_row = MysqlResultRow_new();
+      m_sth->m_row->mysql_row = mysql_row;
+      result = (ResultRow *)(m_sth->m_row);
+    }
   }
 
-  mysql_row = mysql_fetch_row(m_sth->results);
-
-  if (mysql_row == NULL) {
-    return NULL;
-  }
-  //m_row = MysqlResultRow_new();
-  m_sth->m_row->mysql_row = mysql_row;
-
-  return (ResultRow *)(m_sth->m_row);
+  return result;
 }
 
 unsigned long long MysqlStatementHandle_numRows(StatementHandle *sth) {
@@ -193,7 +194,7 @@ unsigned long long MysqlStatementHandle_numRows(StatementHandle *sth) {
   if (m_sth->results == NULL) {
     fprintf(stderr,"ERROR: Tried to fetch number of rows for a StatementHandle with no results for %s\n",
             sth->statementFormat);
-    exit(1);
+    return 0;
   }
 
   return mysql_num_rows(m_sth->results);
