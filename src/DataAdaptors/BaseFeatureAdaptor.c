@@ -1080,9 +1080,8 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
               strcat(constraint, tmpStr);
             }
                       
+            /* queryaccumdata takes ownership of constraint here */
             Vector_addElement(queryAccumulator, QueryAccumData_new(constraint, mapper, slice));
-
-            free(constraint);
           }
         } else { // LRG - ignore this stuff
           fprintf(stderr,"Ignoring lrg coord system\n");
