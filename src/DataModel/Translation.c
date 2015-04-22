@@ -20,7 +20,7 @@
 #include "TranslationAdaptor.h"
 #include "AttributeAdaptor.h"
 #include "SeqEdit.h"
-#include "DBEntryAdaptor"
+#include "DBEntryAdaptor.h"
 
 #include <strings.h>
 
