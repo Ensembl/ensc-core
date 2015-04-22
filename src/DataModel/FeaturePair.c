@@ -35,7 +35,7 @@ FeaturePair *FeaturePair_new(void) {
   return fp;
 }
 
-int FeaturePair_copyData(FeaturePair *to, FeaturePair *from) {
+void FeaturePair_copyData(FeaturePair *to, FeaturePair *from) {
   if (FeaturePair_getHitSeqName(from))
     FeaturePair_setHitSeqName(to, FeaturePair_getHitSeqName(from));
 }

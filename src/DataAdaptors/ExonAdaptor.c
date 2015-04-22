@@ -849,7 +849,7 @@ Vector *ExonAdaptor_objectsFromStatementHandle(ExonAdaptor *ea,
     Exon_setPhase          (exon, phase);
     Exon_setEndPhase       (exon, endPhase);
     Exon_setIsCurrent      (exon, isCurrent);
-    Exon_setIsConstitutive (exon, isCurrent);
+    Exon_setIsConstitutive (exon, isConstitutive);
  
     Vector_addElement(exons, exon);
   }

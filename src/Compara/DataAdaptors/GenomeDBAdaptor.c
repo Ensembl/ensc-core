@@ -161,7 +161,7 @@ IDType GenomeDBAdaptor_store(GenomeDBAdaptor *gda, GenomeDB *gdb) {
     // if the genome db has not been stored before, store it now
     sprintf(qStr,
         "INSERT into genome_db (name,assembly,taxon_id)"
-        " VALUES ('%s','%s', %d)",
+        " VALUES ('%s','%s', %lld)",
         GenomeDB_getName(gdb),GenomeDB_getAssembly(gdb), GenomeDB_getTaxonId(gdb));
 
     sth = gda->prepare((BaseAdaptor *)gda, qStr, strlen(qStr));

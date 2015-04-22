@@ -263,8 +263,7 @@ int BioIndex_get_fasta_entry(BioIndex *bi, BioIndex_Location *loc) {
   
   do {
     printf("%s",line);
-    // Keep compiler happy by getting return value even though not really needed because of feof check just after
-    char *ret = fgets(line,1024,FpDat);
+    fgets(line,1024,FpDat);
   } while(!feof(FpDat) && line[0] != '>');
   
   fclose(FpDat);
@@ -766,9 +765,7 @@ static void BioIndex_add_file(BioIndex *bi, char *fname,
       }
     }
     filePos = newPos;
-    // Don't really need to check for return value here as going to do an feof check at the top of the loop - 
-    // get the return value to satify the compiler
-    char *ret = fgets(line,MAXSTRLEN,fpSeq);
+    fgets(line,MAXSTRLEN,fpSeq);
   }
 }         
 

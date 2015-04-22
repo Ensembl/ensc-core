@@ -292,6 +292,8 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
   }
 
   sth->finish(sth);
+
+  return 1;
 }
 
 

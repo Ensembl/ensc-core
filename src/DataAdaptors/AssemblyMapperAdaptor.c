@@ -322,7 +322,6 @@ SeqRegionRange *AssemblyMapperAdaptor_addToRangeVector(Vector *ranges, IDType id
 
 void AssemblyMapperAdaptor_registerAssembled(AssemblyMapperAdaptor *ama, AssemblyMapper *asmMapper, IDType asmSeqRegion, long asmStart, long asmEnd) {
 
-  IDType asmCsId = CoordSystem_getDbID(AssemblyMapper_getAssembledCoordSystem(asmMapper));
   IDType cmpCsId = CoordSystem_getDbID(AssemblyMapper_getComponentCoordSystem(asmMapper));
 
   //split up the region to be registered into fixed chunks
@@ -592,7 +591,6 @@ char *AssemblyMapperAdaptor_seqRegionIdToName(AssemblyMapperAdaptor *ama, IDType
 
 void AssemblyMapperAdaptor_registerComponent(AssemblyMapperAdaptor *ama, AssemblyMapper *asmMapper, IDType cmpSeqRegion) {
 
-  IDType cmpCsId = CoordSystem_getDbID(AssemblyMapper_getComponentCoordSystem(asmMapper));
   IDType asmCsId = CoordSystem_getDbID(AssemblyMapper_getAssembledCoordSystem(asmMapper));
 
   // do nothing if this region is already registered or special case
@@ -1028,7 +1026,6 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
     SeqRegionRange *midRange = Vector_getElementAt(midRanges, i);
 
     IDType midSeqRegionId = SeqRegionRange_getSeqRegionId(midRange);
-    char *midSeqRegion    = SeqRegionRange_getSeqRegionName(midRange); 
     long start            = SeqRegionRange_getSeqRegionStart(midRange);
     long end              = SeqRegionRange_getSeqRegionEnd(midRange);
 

@@ -937,7 +937,7 @@ sub get_stable_entry_info {
 Vector *TranslationAdaptor_fetchAll(TranslationAdaptor *tlna) {
   TranscriptAdaptor *ta = DBAdaptor_getTranscriptAdaptor(tlna->dba);
 
-  Vector *translations;
+  Vector *translations = Vector_new();
   Vector *transcripts = TranscriptAdaptor_fetchAll(ta);
 
   int i;

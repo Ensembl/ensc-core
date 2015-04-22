@@ -485,7 +485,7 @@ Vector *ChainedAssemblyMapper_listSeqRegionsImpl(ChainedAssemblyMapper *cam, cha
 }
 
 void ChainedAssemblyMapper_freeImpl(ChainedAssemblyMapper *cam) {
-  Object_errorUnimplementedMethod(cam, "ChainedAssemblyMapper_free");
+  Object_errorUnimplementedMethod((Object*)cam, "ChainedAssemblyMapper_free");
 }
 
 /*

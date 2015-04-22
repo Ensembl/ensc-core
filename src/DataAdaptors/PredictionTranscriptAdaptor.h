@@ -33,7 +33,7 @@ Vector *PredictionTranscriptAdaptor_objectsFromStatementHandle(PredictionTranscr
                                                                StatementHandle *sth,
                                                                AssemblyMapper *assMapper,
                                                                Slice *destSlice);
-void PredictionTranscriptAdaptor_store(PredictionTranscriptAdaptor *pta, Vector *preTranscripts);
+int PredictionTranscriptAdaptor_store(PredictionTranscriptAdaptor *pta, Vector *preTranscripts);
 
 
 #define PredictionTranscriptAdaptor_genericFetch(pta, constraint, mapper, slice) \

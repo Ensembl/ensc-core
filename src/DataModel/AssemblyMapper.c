@@ -586,7 +586,7 @@ void AssemblyMapper_registerAssembled(AssemblyMapper *am, IDType asmSeqRegionId,
 
 
 void AssemblyMapper_freeImpl(AssemblyMapper *am) {
-  Object_errorUnimplementedMethod(am, "AssemblyMapper_free");
+  Object_errorUnimplementedMethod((Object*)am, "AssemblyMapper_free");
 }
 
 

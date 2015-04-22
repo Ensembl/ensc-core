@@ -306,6 +306,8 @@ int PredictionTranscript_setExonCount(PredictionTranscript *trans, int count) {
     fprintf(stderr, "Error: Trying to shrink exon vector\n");
   }
   Vector_setNumElement(trans->exons, count);
+
+  return 1;
 }
 
 /*
@@ -518,7 +520,7 @@ Mapper *PredictionTranscript_getcDNACoordMapper(PredictionTranscript *trans) {
   for (i=0; i<Vector_getNumElement(translateable); i++) {
     PredictionExon *exon = Vector_getElementAt(translateable,i);
 
-    PredictionExon_loadGenomicMapper(exon, mapper, (IDType)trans, start);
+    PredictionExon_loadGenomicMapper((Exon*)exon, mapper, (IDType)trans, start);
     start += PredictionExon_getLength(exon);
   }
   trans->exonCoordMapper = mapper;

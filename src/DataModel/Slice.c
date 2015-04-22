@@ -196,7 +196,7 @@ void Slice_free(Slice *slice) {
                    "       Freeing it anyway\n");
   }
 
-  BaseContig_freePtrs(slice);
+  BaseContig_freePtrs((BaseContig*)slice);
 
   if (slice->name) EcoString_freeStr(ecoSTable, slice->name);
   if (slice->seqRegionName) EcoString_freeStr(ecoSTable, slice->seqRegionName);

@@ -480,7 +480,7 @@ Vector *PredictionTranscriptAdaptor_objectsFromStatementHandle(PredictionTranscr
 =cut
 */
 
-void PredictionTranscriptAdaptor_store(PredictionTranscriptAdaptor *pta, Vector *preTranscripts) {
+int PredictionTranscriptAdaptor_store(PredictionTranscriptAdaptor *pta, Vector *preTranscripts) {
   fprintf(stderr,"PredictionTranscript store not implemented yet\n");
   exit(1);
 
@@ -560,6 +560,8 @@ void PredictionTranscriptAdaptor_store(PredictionTranscriptAdaptor *pta, Vector 
     }
   }
 */
+
+  return 1;
 }
 
 

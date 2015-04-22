@@ -198,7 +198,7 @@ char *SequenceAdaptor_fetchBySliceStartEndStrand(SequenceAdaptor *sa,
 char *SequenceAdaptor_fetchBySliceStartEndStrandRecursive(SequenceAdaptor *sa,
                                                           Slice *slice, long start, long end,
                                                           int strand, int *recLev) {
-  *recLev++;
+  (*recLev)++;
 
   if (!slice ) {
     fprintf(stderr,"ERROR: need a slice to work\n");
