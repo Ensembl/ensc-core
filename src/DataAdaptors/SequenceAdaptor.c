@@ -631,6 +631,7 @@ void SequenceAdaptor_rnaEdit(SequenceAdaptor *sa, Slice *slice, char **seqPP, in
 
 
 char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long start, long length) {
+  int status = 0;
 
   if (length < SEQ_CACHE_MAX) {
     long chunkMin = (start-1) >> SEQ_CHUNK_PWR;
@@ -679,33 +680,42 @@ char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long st
 
         sth->execute(sth);
         ResultRow *row = sth->fetchRow(sth);
-        char *tmpSeq   = row->getStringCopyAt(row, 0);
-//        long lenTmpSeq = row->getLongAt(row, 1);
-        long lenTmpSeq = strlen(tmpSeq);
+
+        if (row) {
+            char *tmpSeq   = row->getStringCopyAt(row, 0);
+            //long lenTmpSeq = row->getLongAt(row, 1);
+            long lenTmpSeq = strlen(tmpSeq);
+
+            // always give back uppercased sequence so it can be properly softmasked
+            //StrUtil_strupr(tmpSeq);
+
+            memcpy(&(entireSeq[min-minChunkMin]), tmpSeq, lenTmpSeq);
+            //StrUtil_appendString(entireSeq,tmpSeq);
+            LRUCache_put(sa->seqCache, chunkKey, tmpSeq, free, lenTmpSeq);
+            //StringHash_add(sa->seqCache, chunkKey, tmpSeq);
+        }
+        else {
+          fprintf(stderr,"Failed to fetch sequence: SQL results empty");
+          status = 1;
+        }
+
         sth->finish(sth);
-
-        // always give back uppercased sequence so it can be properly softmasked
-        //StrUtil_strupr(tmpSeq);
-
-        memcpy(&(entireSeq[min-minChunkMin]), tmpSeq, lenTmpSeq);
-//        StrUtil_appendString(entireSeq,tmpSeq);
-        LRUCache_put(sa->seqCache, chunkKey, tmpSeq, free, lenTmpSeq);
-        //StringHash_add(sa->seqCache, chunkKey, tmpSeq);
-
       }
     }
 
-    // return only the requested portion of the entire sequence
-    long min = ( chunkMin << SEQ_CHUNK_PWR ) + 1;
-    //# my $max = ( $chunk_max + 1 ) << $SEQ_CHUNK_PWR;
+    if (status == 0) {
+        // return only the requested portion of the entire sequence
+        long min = ( chunkMin << SEQ_CHUNK_PWR ) + 1;
+        //# my $max = ( $chunk_max + 1 ) << $SEQ_CHUNK_PWR;
 
-    //seq = substr( $entire_seq, $start - $min, $length );
-    // memmove it down and set '\0' at position length
-    if (start-min != 0) {
-//      memmove(entireSeq, &entireSeq[start-min], length);
-      bcopy(&entireSeq[start-min], entireSeq, length);
+        //seq = substr( $entire_seq, $start - $min, $length );
+        // memmove it down and set '\0' at position length
+        if (start-min != 0) {
+          //memmove(entireSeq, &entireSeq[start-min], length);
+          bcopy(&entireSeq[start-min], entireSeq, length);
+        }
+        entireSeq[length] = '\0';
     }
-    entireSeq[length] = '\0';
 
     return entireSeq;
   } else {
@@ -720,7 +730,11 @@ char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long st
 
     sth->execute(sth);
     ResultRow *row = sth->fetchRow(sth);
-    char *tmpSeq = row->getStringCopyAt(row, 0);
+    char *tmpSeq = NULL;
+    
+    if (row)
+      tmpSeq = row->getStringCopyAt(row, 0);
+
     sth->finish(sth);
     // always give back uppercased sequence so it can be properly softmasked
     //StrUtil_strupr(tmpSeq);
