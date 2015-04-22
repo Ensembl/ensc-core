@@ -465,17 +465,18 @@ Vector *GenomicAlignAdaptor_mergeAlignsets(GenomicAlignAdaptor *gaa, Vector *ali
     GenomicAlignListElem *gale  = Vector_getElementAt(bigList,i);
 
     GenomicAlign *align = gale->align;
+    IDType alignID      = GenomicAlign_GetDbID(align);
     int setNo           = gale->setNum;
 
-    if (IDHash_contains(overlappingSets[setNo], align)) {
+    if (IDHash_contains(overlappingSets[setNo], alignID)) {
       // remove from current overlapping set
-      IDHash_remove(overlappingSets[setNo], align, NULL);
+      IDHash_remove(overlappingSets[setNo], alignID, NULL);
     } else {
       int j;
       void **values = IDHash_getValues(overlappingSets[1-setNo]);
 
       // insert into the set and do all the overlap business
-      IDHash_add(overlappingSets[setNo], align, align);
+      IDHash_add(overlappingSets[setNo], alignID, align);
 
       // the other set contains everything this align overlaps with
       for (j=0; j<IDHash_getNumValues(overlappingSets[1-setNo]); j++) {
