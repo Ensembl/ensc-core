@@ -150,7 +150,7 @@ int SeqUtil_readTransTab(char *fName, char TransTab[4][4][4]) {
   }
   
 
-  while (strncmp(Line,headerStr,sizeof(headerStr)) && !feof(FpIn)) {
+  while (strncmp(Line,headerStr,strlen(headerStr)) && !feof(FpIn)) {
     if  (!fgets(Line,MAXSTRLEN,FpIn)) {
       Error_write(EFGETSNULL,"ReadTransTab", ERR_SEVERE, "reading translation table file %s\n", fName);
       return 0;
