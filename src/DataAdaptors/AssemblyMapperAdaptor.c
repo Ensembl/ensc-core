@@ -709,7 +709,7 @@ void AssemblyMapperAdaptor_registerComponent(AssemblyMapperAdaptor *ama, Assembl
 void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAssemblyMapper *casmMapper, 
                                            char *from, IDType seqRegionId, Vector *ranges, Slice *toSlice ) {
 
-  IDType toSeqRegionId;
+  IDType toSeqRegionId = 0;
 
   if (toSlice != NULL) {
     if (!CoordSystem_compare(ChainedAssemblyMapper_getFirstCoordSystem(casmMapper), 

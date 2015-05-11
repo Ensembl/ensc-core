@@ -46,7 +46,7 @@ struct RepeatConsensusStruct {
 #define RepeatConsensus_setAdaptor(rcs,ad) Storable_setAdaptor(&((rcs)->st),(ad))
 #define RepeatConsensus_getAdaptor(rcs) Storable_getAdaptor(&((rcs)->st))
 
-ECOSTRING RepeatConsensus_setRepeatClass(RepeatConsensus *rc, char *class);
+ECOSTRING RepeatConsensus_setRepeatClass(RepeatConsensus *rc, char *classStr);
 #define RepeatConsensus_getRepeatClass(rcs) (rcs)->repeatClass
 
 ECOSTRING RepeatConsensus_setRepeatType(RepeatConsensus *rc, char *type);

@@ -40,8 +40,8 @@ ECOSTRING RepeatConsensus_setConsensus(RepeatConsensus *rc, char *cons) {
   return rc->consensus;
 }
 
-ECOSTRING RepeatConsensus_setRepeatClass(RepeatConsensus *rc, char *class) {
-  EcoString_copyStr(ecoSTable,&(rc->repeatClass), class, 0);
+ECOSTRING RepeatConsensus_setRepeatClass(RepeatConsensus *rc, char *classStr) {
+  EcoString_copyStr(ecoSTable,&(rc->repeatClass), classStr, 0);
   return rc->repeatClass;
 }
 

@@ -73,7 +73,7 @@ typedef enum ClassTypeEnum {
 
 struct ClassHierarchyNodeStruct {
   int nSubClass;
-  Class *class;
+  Class *mClass;
   ClassHierarchyNode **subClasses;
 };
 
