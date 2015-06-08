@@ -931,7 +931,7 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
         maxLen = MetaCoordContainer_fetchMaxLengthByCoordSystemFeatureType(metaCoordContainer,  coordSystem, tableName);
       }
                        
-      IDType seqRegionId;
+      IDType seqRegionId = 0;
 
       if (Slice_getAdaptor(slice)) {
         seqRegionId = SliceAdaptor_getSeqRegionId((SliceAdaptor *)Slice_getAdaptor(slice), slice);
@@ -952,13 +952,19 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
         $seq_region_id = $ext_seq_region_id;
       }
 */
+
+      if (!seqRegionId) {
+        fprintf(stderr, "Error getting sequence region ID for slice.");
+        continue;
+      }
+
       if (constraint[0]) {
         strcat(constraint," AND ");
       }
 
       sprintf(tmpStr, "%s.seq_region_id = "IDFMTSTR" AND ", tableSynonym, seqRegionId);
       strcat(constraint, tmpStr);
-            
+
       //faster query for 1bp slices where SNP data is not compressed
       if (BaseFeatureAdaptor_getStartEqualsEnd(bfa) && Slice_getStart(slice) == Slice_getEnd(slice)) {
         sprintf(tmpStr, " AND %s.seq_region_start = %ld AND %s.seq_region_end = %ld",
@@ -966,35 +972,35 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
         strcat(constraint, tmpStr);
       } else {
         //if ( !$slice->is_circular() ) 
-        if (1) {
-          // Deal with the default case of a non-circular chromosome.
-          sprintf(tmpStr,"%s.seq_region_start <= %ld AND %s.seq_region_end >= %ld", 
-                  tableSynonym, Slice_getEnd(slice), tableSynonym, Slice_getStart(slice));
-          strcat(constraint, tmpStr);
-            
-          if (maxLen) {
-            long minStart = Slice_getStart(slice) - maxLen;
-            sprintf(tmpStr," AND %s.seq_region_start >= %ld", tableSynonym, minStart);
+          if (1) {
+            // Deal with the default case of a non-circular chromosome.
+            sprintf(tmpStr,"%s.seq_region_start <= %ld AND %s.seq_region_end >= %ld", 
+                    tableSynonym, Slice_getEnd(slice), tableSynonym, Slice_getStart(slice));
             strcat(constraint, tmpStr);
-          }
-        } else {
-/* Don't deal with circular - not supported in C implementation
-          // Deal with the case of a circular chromosome.
-          if ( $slice->start > $slice->end ) {
-            $constraint .= " ( ".$table_synonym.".seq_region_start >= ".$slice->start
-                            . " OR ".$table_synonym.".seq_region_start <= ".$slice->end
-                            . " OR ".$table_synonym.".seq_region_end >= ".$slice->start
-                            . " OR ".$table_synonym.".seq_region_end <= ".$slice->end
-                            . " OR ".$table_synonym.".seq_region_start > ".$table_synonym.".seq_region_end";
+            
+            if (maxLen) {
+              long minStart = Slice_getStart(slice) - maxLen;
+              sprintf(tmpStr," AND %s.seq_region_start >= %ld", tableSynonym, minStart);
+              strcat(constraint, tmpStr);
+            }
           } else {
+            /* Don't deal with circular - not supported in C implementation
+            // Deal with the case of a circular chromosome.
+            if ( $slice->start > $slice->end ) {
+            $constraint .= " ( ".$table_synonym.".seq_region_start >= ".$slice->start
+            . " OR ".$table_synonym.".seq_region_start <= ".$slice->end
+            . " OR ".$table_synonym.".seq_region_end >= ".$slice->start
+            . " OR ".$table_synonym.".seq_region_end <= ".$slice->end
+            . " OR ".$table_synonym.".seq_region_start > ".$table_synonym.".seq_region_end";
+            } else {
             $constraint .= " ((".$table_synonym.".seq_region_start <= ".$slice->end
-                            . " AND ".$table_synonym.".seq_region_end >= ".$slice->start.") "
-                            . "OR (".$table_synonym.".seq_region_start > ".$table_synonym.".seq_region_end"
-                            . " AND (".$table_synonym.".seq_region_start <= ".$slice->end
-                            . " OR ".$table_synonym.".seq_region_end >= ".$slice->start.")))";
-          }
+            . " AND ".$table_synonym.".seq_region_end >= ".$slice->start.") "
+            . "OR (".$table_synonym.".seq_region_start > ".$table_synonym.".seq_region_end"
+            . " AND (".$table_synonym.".seq_region_start <= ".$slice->end
+            . " OR ".$table_synonym.".seq_region_end >= ".$slice->start.")))";
+            }
 */
-        }
+          }
       }
 
       Vector_addElement(queryAccumulator, QueryAccumData_new(constraint, NULL, slice));

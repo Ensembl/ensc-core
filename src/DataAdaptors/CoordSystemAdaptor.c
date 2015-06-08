@@ -452,7 +452,8 @@ CoordSystem *CoordSystemAdaptor_fetchByName(CoordSystemAdaptor *csa, char *name,
 
   //didn't find a default, just take first one
   CoordSystem *cs = Vector_getElementAt(coordSystems, 0);
-  fprintf(stderr, "No default version for coord_system [%s] exists. Using version [%s] arbitrarily", name, CoordSystem_getVersion(cs));
+  fprintf(stderr, "No default version for coord_system [%s] exists. Using version [%s] arbitrarily", 
+          (name ? name : ""), (cs && CoordSystem_getVersion(cs) ? CoordSystem_getVersion(cs) : ""));
 
   return cs;
 }

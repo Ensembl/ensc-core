@@ -895,7 +895,9 @@ Vector *SliceAdaptor_fetchByRegionUnique(SliceAdaptor *sa, char *coordSystemName
     SliceAdaptor_buildExceptionCache(sa);
   }
 
-  if (IDHash_contains(sa->asmExcCache, SliceAdaptor_getSeqRegionId(sa, slice))) {
+  IDType seqRegionId = SliceAdaptor_getSeqRegionId(sa, slice);
+
+  if (seqRegionId && IDHash_contains(sa->asmExcCache, seqRegionId)) {
     // Dereference symlinked assembly regions.  Take out any regions
     // which are symlinked because these are duplicates.
 
@@ -914,8 +916,11 @@ Vector *SliceAdaptor_fetchByRegionUnique(SliceAdaptor *sa, char *coordSystemName
       }
     }
     Vector_free(projection);
-  } else {
+  } else if (seqRegionId) {
     Vector_addElement(out, slice);
+  } else {
+    fprintf(stderr, "Error getting sequence region ID for slice [%s %s %d %d]", 
+            (coordSystemName ? coordSystemName : ""), (seqRegionName ? seqRegionName : ""), start, end);
   }
 
   return out;
@@ -1111,8 +1116,12 @@ IDType SliceAdaptor_getSeqRegionId(SliceAdaptor *sa, Slice *slice) {
   
   char *seqRegionName = Slice_getSeqRegionName(slice);
 
+  if (!seqRegionName)
+    return 0;
+
   char key[1024];
 //  sprintf(key, "%s:"IDFMTSTR, seqRegionName, CoordSystem_getDbID(Slice_getCoordSystem(slice)));
+
   char *endP = stpcpy(key,seqRegionName);
   *endP++ = ':';
   stpcpy(endP, CoordSystem_getDbIDStr(Slice_getCoordSystem(slice)));
@@ -1646,31 +1655,36 @@ Slice *SliceAdaptor_fetchByChrBand(SliceAdaptor *sa, char *chr, char *band) {
   Slice *chrSlice = SliceAdaptor_fetchByRegion(sa, "toplevel", chr, POS_UNDEF, POS_UNDEF, STRAND_UNDEF, NULL, 0);
   IDType seqRegionId = SliceAdaptor_getSeqRegionId(sa, chrSlice);
 
-  char qStr[1024];
-  sprintf(qStr,"SELECT MIN(k.seq_region_start), "
-                      "MAX(k.seq_region_end) "
-                      "FROM karyotype k "
-                      "WHERE k.seq_region_id = "IDFMTSTR
-                      "AND k.band LIKE '%s%%%%'", seqRegionId, band );
+  if (seqRegionId) {
+    char qStr[1024];
+    sprintf(qStr,"SELECT MIN(k.seq_region_start), "
+                        "MAX(k.seq_region_end) "
+                        "FROM karyotype k "
+                        "WHERE k.seq_region_id = "IDFMTSTR
+                        "AND k.band LIKE '%s%%%%'", seqRegionId, band );
 
   StatementHandle *sth = sa->prepare((BaseAdaptor *)sa,qStr,strlen(qStr));
   sth->execute(sth);
 
-// How can we have undefined ??? When no row???
-  if (sth->numRows(sth) == 1) {
-    ResultRow *row = sth->fetchRow(sth);
-    long sliceStart = row->getLongAt(row,0);
-    long sliceEnd   = row->getLongAt(row,1);
+    // How can we have undefined ??? When no row???
+    if (sth->numRows(sth) == 1) {
+      ResultRow *row = sth->fetchRow(sth);
+      long sliceStart = row->getLongAt(row,0);
+      long sliceEnd   = row->getLongAt(row,1);
 
-// Need to free chrSlice
-    Slice_free(chrSlice);
+      // Need to free chrSlice
+      Slice_free(chrSlice);
+      sth->finish(sth);
+
+      return SliceAdaptor_fetchByRegion(sa, "toplevel", chr, sliceStart, sliceEnd, STRAND_UNDEF, NULL, 0);
+    }
+
     sth->finish(sth);
-
-    return SliceAdaptor_fetchByRegion(sa, "toplevel", chr, sliceStart, sliceEnd, STRAND_UNDEF, NULL, 0);
+  } else {
+    fprintf(stderr, "Error getting sequence region ID for slice");
   }
 
   Slice_free(chrSlice);
-  sth->finish(sth);
 
   fprintf(stderr,"Band not recognised in database\n");
   exit(1);
@@ -2043,7 +2057,7 @@ Vector *SliceAdaptor_fetchNormalizedSliceProjection(SliceAdaptor *sa, Slice *sli
 
   Vector *result = NULL;
 
-  if (IDHash_contains(sa->asmExcCache, sliceSeqRegionId)) {
+  if (sliceSeqRegionId && IDHash_contains(sa->asmExcCache, sliceSeqRegionId)) {
     result = IDHash_getValue(sa->asmExcCache, sliceSeqRegionId);
   }
 
@@ -2093,52 +2107,54 @@ Vector *SliceAdaptor_fetchNormalizedSliceProjection(SliceAdaptor *sa, Slice *sli
     long hapStart = 1;
     int last = 0;
 
-    Slice *seqRegSlice = SliceAdaptor_fetchBySeqRegionId(sa, sliceSeqRegionId, POS_UNDEF, POS_UNDEF, STRAND_UNDEF);
-    Slice *excSlice    = SliceAdaptor_fetchBySeqRegionId(sa, sortHaps[0]->excSeqRegionId, POS_UNDEF, POS_UNDEF, STRAND_UNDEF);
+    if (sliceSeqRegionId) {
+      Slice *seqRegSlice = SliceAdaptor_fetchBySeqRegionId(sa, sliceSeqRegionId, POS_UNDEF, POS_UNDEF, STRAND_UNDEF);
+      Slice *excSlice    = SliceAdaptor_fetchBySeqRegionId(sa, sortHaps[0]->excSeqRegionId, POS_UNDEF, POS_UNDEF, STRAND_UNDEF);
 
-    long len1 = Slice_getLength(seqRegSlice);
-    long len2 = Slice_getLength(excSlice);
+      long len1 = Slice_getLength(seqRegSlice);
+      long len2 = Slice_getLength(excSlice);
 
-    while (count <= nSortHap && !last) { // Note goes one past end of sortHaps array 
-      long chrEnd;
-      long hapEnd;
+      while (count <= nSortHap && !last) { // Note goes one past end of sortHaps array 
+        long chrEnd;
+        long hapEnd;
 
-      // Can we really have undefined's here???
-      //if (defined($sort_haps[$count]) and defined($sort_haps[$count][0]) )
-      if (count < nSortHap) {
-        hapEnd = sortHaps[count]->seqRegionStart-1;
-        chrEnd = sortHaps[count]->excSeqRegionStart-1;
-
-      } else {
-        last = 1;
-        hapEnd = len1;
-        chrEnd = len2;
-        long diff = (hapEnd-hapStart)-(chrEnd-chrStart);
-        if (diff > 0){
-          AssemblyExceptionUnit *aeu = AssemblyExceptionUnit_new(hapStart, hapEnd, sortHaps[0]->excSeqRegionId, 
-                                                                 chrStart, chrEnd + diff);  
-          Vector_addElement(syms, aeu);
-        } else if(diff < 0) {
-          AssemblyExceptionUnit *aeu = AssemblyExceptionUnit_new(hapStart, hapEnd - diff, sortHaps[0]->excSeqRegionId, 
-                                                                 chrStart, chrEnd);  
-          Vector_addElement(syms, aeu);
+        // Can we really have undefined's here???
+        //if (defined($sort_haps[$count]) and defined($sort_haps[$count][0]) )
+        if (count < nSortHap) {
+          hapEnd = sortHaps[count]->seqRegionStart-1;
+          chrEnd = sortHaps[count]->excSeqRegionStart-1;
+          
         } else {
+          last = 1;
+          hapEnd = len1;
+          chrEnd = len2;
+          long diff = (hapEnd-hapStart)-(chrEnd-chrStart);
+          if (diff > 0){
+            AssemblyExceptionUnit *aeu = AssemblyExceptionUnit_new(hapStart, hapEnd, sortHaps[0]->excSeqRegionId, 
+                                                                   chrStart, chrEnd + diff);  
+            Vector_addElement(syms, aeu);
+          } else if(diff < 0) {
+            AssemblyExceptionUnit *aeu = AssemblyExceptionUnit_new(hapStart, hapEnd - diff, sortHaps[0]->excSeqRegionId, 
+                                                                   chrStart, chrEnd);  
+            Vector_addElement(syms, aeu);
+          } else {
+            AssemblyExceptionUnit *aeu = AssemblyExceptionUnit_new(hapStart, hapEnd, sortHaps[0]->excSeqRegionId, 
+                                                                   chrStart, chrEnd);  
+            Vector_addElement(syms, aeu);
+          }        
+          continue;
+        }
+
+        // NIY: Check if possible for hapEnd not to be set (perl was if ($hap_end and ...)
+        if (hapEnd && hapStart < len1){ // if hap at start or end of chromosome
           AssemblyExceptionUnit *aeu = AssemblyExceptionUnit_new(hapStart, hapEnd, sortHaps[0]->excSeqRegionId, 
                                                                  chrStart, chrEnd);  
           Vector_addElement(syms, aeu);
-        }        
-        continue;
+        }
+        chrStart = chrEnd + (sortHaps[count]->excSeqRegionEnd - sortHaps[count]->excSeqRegionStart) + 2;
+        hapStart = hapEnd + (sortHaps[count]->seqRegionEnd - sortHaps[count]->seqRegionStart) + 2;
+        count++;
       }
-
-      // NIY: Check if possible for hapEnd not to be set (perl was if ($hap_end and ...)
-      if (hapEnd && hapStart < len1){ // if hap at start or end of chromosome
-        AssemblyExceptionUnit *aeu = AssemblyExceptionUnit_new(hapStart, hapEnd, sortHaps[0]->excSeqRegionId, 
-                                                               chrStart, chrEnd);  
-        Vector_addElement(syms, aeu);
-      }
-      chrStart = chrEnd + (sortHaps[count]->excSeqRegionEnd - sortHaps[count]->excSeqRegionStart) + 2;
-      hapStart = hapEnd + (sortHaps[count]->seqRegionEnd - sortHaps[count]->seqRegionStart) + 2;
-      count++;
     }
   }
 

@@ -342,23 +342,26 @@ char *SequenceAdaptor_fetchBySliceStartEndStrandRecursive(SequenceAdaptor *sa,
 
     IDType seqRegionId = SliceAdaptor_getSeqRegionId(sliceAdaptor, seqSlice);
 
-    char *tmpSeq = SequenceAdaptor_fetchSeq(sa, seqRegionId,
-                                            Slice_getStart(seqSlice), Slice_getLength(seqSlice));
+    if (seqRegionId) {
+      char *tmpSeq = SequenceAdaptor_fetchSeq(sa, seqRegionId,
+                                              Slice_getStart(seqSlice), Slice_getLength(seqSlice));
 
-    // reverse complement on negatively oriented slices
-    if (Slice_getStrand(seqSlice) == -1) {
-      SeqUtil_reverseComplement(tmpSeq, lenSegment);
+      // reverse complement on negatively oriented slices
+      if (Slice_getStrand(seqSlice) == -1) {
+        SeqUtil_reverseComplement(tmpSeq, lenSegment);
+      }
+
+      if (start+lenSegment-1 > Slice_getLength(slice)) { 
+        fprintf(stderr," segment off end of slice start = %ld lenSegment = %ld slice length = %ld len tmpSeq (%ld)\n", 
+                start, lenSegment, Slice_getLength(slice),strlen(tmpSeq));
+      }
+      // Do with memcpy rather than strcpy
+      // Think projection segment from coordinates are slice coordinates so relative to slice and starting at 1
+      memcpy(&(seq[start-1]), tmpSeq, lenSegment);
+      free(tmpSeq);
+    } else {
+      fprintf(stderr, "Error getting sequence region ID for slice");
     }
-
-    if (start+lenSegment-1 > Slice_getLength(slice)) { 
-      fprintf(stderr," segment off end of slice start = %ld lenSegment = %ld slice length = %ld len tmpSeq (%ld)\n", 
-              start, lenSegment, Slice_getLength(slice),strlen(tmpSeq));
-    }
-// Do with memcpy rather than strcpy
-// Think projection segment from coordinates are slice coordinates so relative to slice and starting at 1
-    memcpy(&(seq[start-1]), tmpSeq, lenSegment);
-    free(tmpSeq);
-
 
 // Hopefully OK to free this here
     if (seqSlice != slice) {

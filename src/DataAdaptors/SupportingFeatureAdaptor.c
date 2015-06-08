@@ -405,9 +405,10 @@ void SupportingFeatureAdaptor_store(SupportingFeatureAdaptor *sfa, IDType exonDb
     IDType seqRegionId = SliceAdaptor_getSeqRegionId(sliceAdaptor, BaseAlignFeature_getSlice(f));
     
 // Note - moved the checkSth execute into the condition because I can't do the variable args
-    if (f->objectType == CLASS_DNADNAALIGNFEATURE) {
-      adap     = (BaseFeatureAdaptor*)dnaAdaptor;      
-      type     = "dna_align_feature";
+    if (seqRegionId) {
+      if (f->objectType == CLASS_DNADNAALIGNFEATURE) {
+        adap     = (BaseFeatureAdaptor*)dnaAdaptor;      
+        type     = "dna_align_feature";
 
       checkSth = dnaCheckSth;
       checkSth->execute(checkSth, seqRegionId, 
@@ -422,9 +423,9 @@ void SupportingFeatureAdaptor_store(SupportingFeatureAdaptor *sfa, IDType exonDb
                                   BaseAlignFeature_gethCoverage(f), 
                                   DNAAlignFeature_getHitStrand((DNAAlignFeature *)f));
 
-    } else if (f->objectType == CLASS_DNAPEPALIGNFEATURE) {
-      adap     = (BaseFeatureAdaptor*)pepAdaptor;
-      type     = "protein_align_feature";
+      } else if (f->objectType == CLASS_DNAPEPALIGNFEATURE) {
+        adap     = (BaseFeatureAdaptor*)pepAdaptor;
+        type     = "protein_align_feature";
 
       checkSth = pepCheckSth;
       checkSth->execute(checkSth, seqRegionId, 
@@ -438,9 +439,12 @@ void SupportingFeatureAdaptor_store(SupportingFeatureAdaptor *sfa, IDType exonDb
                                   BaseAlignFeature_getCigarString(f),
                                   BaseAlignFeature_gethCoverage(f));
 
+      } else {
+        fprintf(stderr, "Warning: Supporting feature of unknown type. Skipping\n");
+        continue;
+      }
     } else {
-      fprintf(stderr, "Warning: Supporting feature of unknown type. Skipping\n");
-      continue;
+      fprintf(stderr, "Error getting sequence region ID for slice");
     }
 
 /// HOW?? - moved into conditions above
