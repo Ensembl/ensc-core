@@ -291,7 +291,7 @@ Slice *SliceAdaptor_fetchByRegion(SliceAdaptor *sa, char *coordSystemName, char 
         char *newCoordSystem = row->getStringAt(row, 1);
         char *newVersion     = row->getStringAt(row, 2);
 
-        Slice *retSlice;
+        Slice *retSlice = NULL;
         
         // Need to change logic slightly to ease memory management (don't want to do synSqlSth->finish before this 
         // conditional because it need the row results which would have been freed if I'd done the finish)
@@ -919,7 +919,7 @@ Vector *SliceAdaptor_fetchByRegionUnique(SliceAdaptor *sa, char *coordSystemName
   } else if (seqRegionId) {
     Vector_addElement(out, slice);
   } else {
-    fprintf(stderr, "Error getting sequence region ID for slice [%s %s %d %d]", 
+    fprintf(stderr, "Error getting sequence region ID for slice [%s %s %f %f]", 
             (coordSystemName ? coordSystemName : ""), (seqRegionName ? seqRegionName : ""), start, end);
   }
 

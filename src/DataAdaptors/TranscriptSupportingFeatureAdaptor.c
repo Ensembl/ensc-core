@@ -271,26 +271,23 @@ void TranscriptSupportingFeatureAdaptor_store(TranscriptSupportingFeatureAdaptor
         fprintf(stderr, "Warning: Supporting feature of unknown type. Skipping\n");
         continue;
       }
-    } else {
-      fprintf(stderr, "Error getting sequence region ID for slice");
-    }
 
-/// HOW?? - moved into conditions above
-//    checkSth->execute(@check_args);
+      /// HOW?? - moved into conditions above
+      //    checkSth->execute(@check_args);
 
-    if (checkSth->numRows(checkSth) > 0) {
-      ResultRow *row = checkSth->fetchRow(checkSth);
-      sfDbID = row->getLongLongAt(row, 0);
+      if (checkSth->numRows(checkSth) > 0) {
+        ResultRow *row = checkSth->fetchRow(checkSth);
+        sfDbID = row->getLongLongAt(row, 0);
 
-    } else {
-      Vector *vec = Vector_new();
-      Vector_addElement(vec, f);
-      //BaseFeatureAdaptor_store(adap, vec);
-      adap->store((BaseAdaptor*)adap, vec);
-      Vector_free(vec);
+      } else {
+        Vector *vec = Vector_new();
+        Vector_addElement(vec, f);
+        //BaseFeatureAdaptor_store(adap, vec);
+        adap->store((BaseAdaptor*)adap, vec);
+        Vector_free(vec);
      
-      sfDbID = BaseAlignFeature_getDbID(f);
-    }
+        sfDbID = BaseAlignFeature_getDbID(f);
+      }
 
     // now check association
     assocCheckSth->execute(assocCheckSth, type, sfDbID);
@@ -300,10 +297,14 @@ void TranscriptSupportingFeatureAdaptor_store(TranscriptSupportingFeatureAdaptor
     }
   }
 
-  dnaCheckSth->finish(dnaCheckSth);
-  pepCheckSth->finish(pepCheckSth);
-  assocCheckSth->finish(assocCheckSth);
-  sfSth->finish(sfSth);
-  
+      dnaCheckSth->finish(dnaCheckSth);
+      pepCheckSth->finish(pepCheckSth);
+      assocCheckSth->finish(assocCheckSth);
+      sfSth->finish(sfSth);
+    } else {
+      fprintf(stderr, "Error getting sequence region ID for slice");
+    }
+  }
+
   return;
 }
