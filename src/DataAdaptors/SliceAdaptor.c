@@ -321,7 +321,7 @@ Slice *SliceAdaptor_fetchByRegion(SliceAdaptor *sa, char *coordSystemName, char 
       // NOTE: Started on this statement (%s.%%%% added from bind_param below it)
       // Note I need 4 '%' characters to end up with one because it goes through two sprintfs
       // which each need an escaped % character
-      fprintf(stderr,"Before fuzzy\n");
+      //fprintf(stderr,"Before fuzzy\n");
       sprintf(qStr, "%s WHERE sr.name LIKE '%s.%%%%' %s", sql, seqRegionName, constraint);
 
       sth = sa->prepare((BaseAdaptor *)sa,qStr,strlen(qStr));
@@ -384,7 +384,7 @@ Slice *SliceAdaptor_fetchByRegion(SliceAdaptor *sa, char *coordSystemName, char 
 
       cs = highCs;
 
-      fprintf(stderr,"After fuzzy hadVer = %d\n",hadVer);
+      //fprintf(stderr,"After fuzzy hadVer = %d\n",hadVer);
       sth->finish(sth);
 
       // return if we did not find any appropriate match:

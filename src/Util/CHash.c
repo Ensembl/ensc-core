@@ -176,15 +176,22 @@ int CHash_binSearch(CHASHTABLE *Table,CHASHARRAY *Array,char *String,int *Ind,
     return -1;
   } else {
     middle=(high+low)/2;
-    if (!strcmp(String,Table->Strings[Array[middle].Index])) {
-      *Ind = middle;
-      return middle;
-    } else if (strcmp(String,Table->Strings[Array[middle].Index])<0) {
-      return CHash_binSearch(Table,Array,String,Ind,low,middle-1);
+    char *comparison_string = Table->Strings[Array[middle].Index];
+    if (String && comparison_string) {
+      if (!strcmp(String,comparison_string)) {
+        *Ind = middle;
+        return middle;
+      } else if (strcmp(String,comparison_string)<0) {
+        return CHash_binSearch(Table,Array,String,Ind,low,middle-1);
+      } else {
+        return CHash_binSearch(Table,Array,String,Ind,middle+1,high);
+      }
     } else {
-      return CHash_binSearch(Table,Array,String,Ind,middle+1,high);
+      fprintf(stderr, "CHash_binSearch error: string is null for String=%s, low=%d, high=%d", 
+              String, low, high);
     }
   }
+  return 0;
 }
 
 /******************************************************************************/

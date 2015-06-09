@@ -480,7 +480,11 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Sl
     // Check the cache and return the cached results if we have already
     // done this query.  The cache key is the made up from the slice
     // name, the constraint, and the bound parameters (if there are any).
-    sprintf(key, "%s:%s", Slice_getName(slice), constraint);
+    ECOSTRING slice_name = Slice_getName(slice);
+    if (slice_name)
+      sprintf(key, "%s:%s", slice_name, constraint);
+    else
+      fprintf(stderr, "Error getting slice name");
 
     StrUtil_strupr(key);
     
