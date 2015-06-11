@@ -54,7 +54,8 @@ GenomicAlignAdaptor *GenomicAlignAdaptor_new(ComparaDBAdaptor *dba) {
 }
 
 void GenomicAlignAdaptor_store(GenomicAlignAdaptor *gaa, Vector *genomicAligns) {
-  char *qStr;
+  int ok = 1;
+  char *qStr = NULL;
   StatementHandle *sth;
   char commaStr[2] = {'\0','\0'};
   int i;
@@ -62,65 +63,81 @@ void GenomicAlignAdaptor_store(GenomicAlignAdaptor *gaa, Vector *genomicAligns) 
   
   if ((tmpStr = (char *)calloc(65556,sizeof(char))) == NULL) {
     fprintf(stderr,"Failed allocating tmpStr\n");
-    return;
+    ok = 0;
   }
 
-  StrUtil_copyString(&qStr, "INSERT INTO genomic_align_block"
-             " (consensus_dnafrag_id, consensus_start, consensus_end,"
-             "  query_dnafrag_id, query_start, query_end, query_strand, method_link_id,"
-             "  score, perc_id, cigar_line) VALUES ",0);
+  if (ok) {
+    StrUtil_copyString(&qStr, "INSERT INTO genomic_align_block"
+                       " (consensus_dnafrag_id, consensus_start, consensus_end,"
+                       "  query_dnafrag_id, query_start, query_end, query_strand, method_link_id,"
+                       "  score, perc_id, cigar_line) VALUES ",0);
   
-  for (i=0; i<Vector_getNumElement(genomicAligns); i++) {
-    GenomicAlign *ga = Vector_getElementAt(genomicAligns,i);
-    DNAFrag *consDNAFrag  = GenomicAlign_getConsensusDNAFrag(ga);
-    DNAFrag *queryDNAFrag = GenomicAlign_getQueryDNAFrag(ga);
+    for (i=0; i<Vector_getNumElement(genomicAligns); i++) {
+      GenomicAlign *ga = Vector_getElementAt(genomicAligns,i);
+      DNAFrag *consDNAFrag  = GenomicAlign_getConsensusDNAFrag(ga);
+      DNAFrag *queryDNAFrag = GenomicAlign_getQueryDNAFrag(ga);
 
-    // check that everything has dbIDs
-    if (!DNAFrag_getDbID(consDNAFrag) || !DNAFrag_getDbID(queryDNAFrag)) {
-      fprintf(stderr, "Error: dna_fragment in GenomicAlign is not in DB\n");
-      exit(1);
+      // check that everything has dbIDs
+      if (!DNAFrag_getDbID(consDNAFrag) || !DNAFrag_getDbID(queryDNAFrag)) {
+        fprintf(stderr, "Error: dna_fragment in GenomicAlign is not in DB\n");
+        ok = 0;
+        break;
+      }
     }
   }
 
-  // all clear for storing
+  GenomicAlign *ga = NULL;
+  DNAFrag *consDNAFrag = NULL;
+  DNAFrag *queryDNAFrag = NULL;
+  IDType methodLinkId = 0;
+
+  if (ok) {
+    // all clear for storing
   
-  for (i=0; i<Vector_getNumElement(genomicAligns); i++) {
-    GenomicAlign *ga = Vector_getElementAt(genomicAligns,i);
-    DNAFrag *consDNAFrag  = GenomicAlign_getConsensusDNAFrag(ga);
-    DNAFrag *queryDNAFrag = GenomicAlign_getQueryDNAFrag(ga);
+    for (i=0; i<Vector_getNumElement(genomicAligns); i++) {
+      ga = Vector_getElementAt(genomicAligns,i);
+      consDNAFrag  = GenomicAlign_getConsensusDNAFrag(ga);
+      queryDNAFrag = GenomicAlign_getQueryDNAFrag(ga);
 
-    IDType methodLinkId = GenomicAlignAdaptor_methodLinkIdByAlignmentType(gaa, GenomicAlign_getAlignmentType(ga));
+      methodLinkId = GenomicAlignAdaptor_methodLinkIdByAlignmentType(gaa, GenomicAlign_getAlignmentType(ga));
 
-    if (!methodLinkId) {
-      fprintf(stderr, "Error: There is no method_link with this type [%s] in the DB.\n",
-              GenomicAlign_getAlignmentType(ga));
-      exit(1);
+      if (!methodLinkId) {
+        fprintf(stderr, "Error: There is no method_link with this type [%s] in the DB.\n",
+                GenomicAlign_getAlignmentType(ga));
+        ok = 0;
+        break;
+      }
     }
     
-    sprintf(tmpStr," %s(" IDFMTSTR ", %d, %d, " IDFMTSTR ", %d, %d, %d, " IDFMTSTR ", %f, %f, '%s')", 
-            commaStr, 
-            DNAFrag_getDbID(consDNAFrag),
-            GenomicAlign_getConsensusStart(ga),
-            GenomicAlign_getConsensusEnd(ga),
-            DNAFrag_getDbID(queryDNAFrag),  
-            GenomicAlign_getQueryStart(ga),
-            GenomicAlign_getQueryEnd(ga),
-            GenomicAlign_getQueryStrand(ga),
-            methodLinkId,
-            GenomicAlign_getScore(ga),
-            GenomicAlign_getPercentId(ga),
-            GenomicAlign_getCigarString(ga));
+    if (ok) {
+      sprintf(tmpStr," %s(" IDFMTSTR ", %d, %d, " IDFMTSTR ", %d, %d, %d, " IDFMTSTR ", %f, %f, '%s')", 
+              commaStr, 
+              DNAFrag_getDbID(consDNAFrag),
+              GenomicAlign_getConsensusStart(ga),
+              GenomicAlign_getConsensusEnd(ga),
+              DNAFrag_getDbID(queryDNAFrag),  
+              GenomicAlign_getQueryStart(ga),
+              GenomicAlign_getQueryEnd(ga),
+              GenomicAlign_getQueryStrand(ga),
+              methodLinkId,
+              GenomicAlign_getScore(ga),
+              GenomicAlign_getPercentId(ga),
+              GenomicAlign_getCigarString(ga));
 
-    qStr = StrUtil_appendString(qStr, tmpStr);
-    commaStr[0] = ','; 
-  }
+      qStr = StrUtil_appendString(qStr, tmpStr);
+      commaStr[0] = ','; 
+    }
   
-  sth = gaa->prepare((BaseAdaptor *)gaa, qStr, strlen(qStr));
-  sth->execute(sth);
-  sth->finish(sth);
+    sth = gaa->prepare((BaseAdaptor *)gaa, qStr, strlen(qStr));
+    sth->execute(sth);
+    sth->finish(sth);
+  }
 
-  free(qStr);
-  free(tmpStr);
+  if (qStr)
+    free(qStr);
+
+  if (tmpStr)
+    free(tmpStr);
 }
      
 /*
@@ -150,107 +167,112 @@ Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect( GenomicAlignAdaptor
      DNAFrag *dnaFrag, GenomeDB *targetGenome, int *startP, int *endP, IDType methodLinkId) {
   IDType dnaFragId;
   GenomeDB *genomeDB;
-  char *qStr;
+  char *qStr = NULL;
   char tmpStr[512];
   Vector *results;
   StatementHandle *sth;
+  int ok = 0;
 
   if (!dnaFrag) {
     fprintf(stderr, "Error: Input dnafrag must not be NULL\n");
-    exit(1);
+    ok = 0;
   }
 
-  // formatting the dnafrag
-  dnaFragId = DNAFrag_getDbID(dnaFrag);
+  if (ok) {
+    // formatting the dnafrag
+    dnaFragId = DNAFrag_getDbID(dnaFrag);
 
-  genomeDB = DNAFrag_getGenomeDB(dnaFrag);
+    genomeDB = DNAFrag_getGenomeDB(dnaFrag);
 
-  StrUtil_copyString(&qStr,
-     "SELECT gab.consensus_dnafrag_id,"
-     "       gab.consensus_start," 
-     "       gab.consensus_end,"
-     "       gab.query_dnafrag_id," 
-     "       gab.query_start," 
-     "       gab.query_end,"
-     "       gab.query_strand,"
-     "       gab.method_link_id,"
-     "       gab.score,"
-     "       gab.perc_id," 
-     "       gab.cigar_line"
-     " FROM genomic_align_block gab ",0);
-
-  if (targetGenome) {
-    qStr = StrUtil_appendString(qStr,", dnafrag d");
-  }
-  sprintf(tmpStr," WHERE gab.method_link_id = " IDFMTSTR, methodLinkId);
-  qStr = StrUtil_appendString(qStr,tmpStr);
-
-  results = Vector_new();
-
-  if (!targetGenome ||
-      GenomeDB_hasQuery(genomeDB, targetGenome, methodLinkId)) {
-    Vector *qres;
-
-    sprintf(tmpStr," AND gab.consensus_dnafrag_id = " IDFMTSTR, dnaFragId);
-    qStr = StrUtil_appendString(qStr, tmpStr);
-
-    if (startP && endP) {
-      int lowerBound = *startP - gaa->maxAlignmentLength;
-      sprintf(tmpStr,
-               " AND gab.consensus_start <= %d"
-               " AND gab.consensus_start >= %d"
-               " AND gab.consensus_end >= %d", *endP, lowerBound, *startP ) ;
-      qStr = StrUtil_appendString(qStr, tmpStr);
-    }
+    StrUtil_copyString(&qStr,
+                       "SELECT gab.consensus_dnafrag_id,"
+                       "       gab.consensus_start," 
+                       "       gab.consensus_end,"
+                       "       gab.query_dnafrag_id," 
+                       "       gab.query_start," 
+                       "       gab.query_end,"
+                       "       gab.query_strand,"
+                       "       gab.method_link_id,"
+                       "       gab.score,"
+                       "       gab.perc_id," 
+                       "       gab.cigar_line"
+                       " FROM genomic_align_block gab ",0);
 
     if (targetGenome) {
-      sprintf(tmpStr,
-              " AND gab.query_dnafrag_id = d.dnafrag_id"
-              " AND d.genome_db_id = " IDFMTSTR, GenomeDB_getDbID(targetGenome));
+      qStr = StrUtil_appendString(qStr,", dnafrag d");
+    }
+    sprintf(tmpStr," WHERE gab.method_link_id = " IDFMTSTR, methodLinkId);
+    qStr = StrUtil_appendString(qStr,tmpStr);
+
+    results = Vector_new();
+
+    if (!targetGenome ||
+        GenomeDB_hasQuery(genomeDB, targetGenome, methodLinkId)) {
+      Vector *qres;
+
+      sprintf(tmpStr," AND gab.consensus_dnafrag_id = " IDFMTSTR, dnaFragId);
       qStr = StrUtil_appendString(qStr, tmpStr);
+
+      if (startP && endP) {
+        int lowerBound = *startP - gaa->maxAlignmentLength;
+        sprintf(tmpStr,
+                " AND gab.consensus_start <= %d"
+                " AND gab.consensus_start >= %d"
+                " AND gab.consensus_end >= %d", *endP, lowerBound, *startP ) ;
+        qStr = StrUtil_appendString(qStr, tmpStr);
+      }
+
+      if (targetGenome) {
+        sprintf(tmpStr,
+                " AND gab.query_dnafrag_id = d.dnafrag_id"
+                " AND d.genome_db_id = " IDFMTSTR, GenomeDB_getDbID(targetGenome));
+        qStr = StrUtil_appendString(qStr, tmpStr);
+      }
+
+      sth = gaa->prepare((BaseAdaptor *)gaa, qStr, strlen(qStr));
+      sth->execute(sth);
+
+      qres = GenomicAlignAdaptor_objectsFromStatementHandle(gaa, sth, 0);
+      Vector_append(results,qres);
+      Vector_free(qres);
+
+      sth->finish(sth);
     }
 
-    sth = gaa->prepare((BaseAdaptor *)gaa, qStr, strlen(qStr));
-    sth->execute(sth);
+    if (!targetGenome ||
+        GenomeDB_hasConsensus(genomeDB, targetGenome, methodLinkId)) {
+      Vector *cres;
 
-    qres = GenomicAlignAdaptor_objectsFromStatementHandle(gaa, sth, 0);
-    Vector_append(results,qres);
-    Vector_free(qres);
+      sprintf(tmpStr," AND gab.query_dnafrag_id = " IDFMTSTR, dnaFragId);
+      qStr = StrUtil_appendString(qStr, tmpStr);
 
-    sth->finish(sth);
+      if (startP && endP) {
+        int lowerBound = *startP - gaa->maxAlignmentLength;
+        sprintf(tmpStr,
+                " AND gab.query_start <= %d"
+                " AND gab.query_start >= %d"
+                " AND gab.query_end >= %d", *endP, lowerBound, *startP ) ;
+        qStr = StrUtil_appendString(qStr, tmpStr);
+      }
+      if (targetGenome) {
+        sprintf(tmpStr,
+                " AND gab.consensus_dnafrag_id = d.dnafrag_id"
+                " AND d.genome_db_id = " IDFMTSTR, GenomeDB_getDbID(targetGenome));
+        qStr = StrUtil_appendString(qStr, tmpStr);
+      }
+      sth = gaa->prepare((BaseAdaptor *)gaa, qStr, strlen(qStr));
+      sth->execute(sth);
+
+      cres = GenomicAlignAdaptor_objectsFromStatementHandle(gaa, sth, 1);
+      Vector_append(results,cres);
+      Vector_free(cres);
+
+      sth->finish(sth);
+    }
   }
 
-  if (!targetGenome ||
-      GenomeDB_hasConsensus(genomeDB, targetGenome, methodLinkId)) {
-    Vector *cres;
-
-    sprintf(tmpStr," AND gab.query_dnafrag_id = " IDFMTSTR, dnaFragId);
-    qStr = StrUtil_appendString(qStr, tmpStr);
-
-    if (startP && endP) {
-      int lowerBound = *startP - gaa->maxAlignmentLength;
-      sprintf(tmpStr,
-               " AND gab.query_start <= %d"
-               " AND gab.query_start >= %d"
-               " AND gab.query_end >= %d", *endP, lowerBound, *startP ) ;
-      qStr = StrUtil_appendString(qStr, tmpStr);
-    }
-    if (targetGenome) {
-      sprintf(tmpStr,
-               " AND gab.consensus_dnafrag_id = d.dnafrag_id"
-               " AND d.genome_db_id = " IDFMTSTR, GenomeDB_getDbID(targetGenome));
-      qStr = StrUtil_appendString(qStr, tmpStr);
-    }
-    sth = gaa->prepare((BaseAdaptor *)gaa, qStr, strlen(qStr));
-    sth->execute(sth);
-
-    cres = GenomicAlignAdaptor_objectsFromStatementHandle(gaa, sth, 1);
-    Vector_append(results,cres);
-    Vector_free(cres);
-
-    sth->finish(sth);
-  }
-  free(qStr);
+  if (qStr)
+    free(qStr);
 
   return results;
 }
@@ -281,86 +303,92 @@ Vector *GenomicAlignAdaptor_fetchAllByDNAFragGenomeDB(GenomicAlignAdaptor *gaa,
                DNAFrag *dnaFrag, GenomeDB *targetGenome, int *startP, int *endP, 
                char *alignmentType) {
 
+  Vector *result = NULL;
   GenomeDB *genomeCons;
   IDType methodLinkId;
   GenomeDB *genomeQuery;
   Vector *mergedAligns;
+  int ok = 1;
 
   if (!dnaFrag) {
     fprintf(stderr, "Error: dnaFrag argument must be non NULL\n");
-    exit(1);
+    ok = 0;
   }
 
-  methodLinkId = GenomicAlignAdaptor_methodLinkIdByAlignmentType(gaa, alignmentType);
+  if (ok) {
+    methodLinkId = GenomicAlignAdaptor_methodLinkIdByAlignmentType(gaa, alignmentType);
 
-  genomeCons = DNAFrag_getGenomeDB(dnaFrag);
-  genomeQuery = targetGenome;
+    genomeCons = DNAFrag_getGenomeDB(dnaFrag);
+    genomeQuery = targetGenome;
   
-  // direct or indirect ??
-  if (GenomeDB_hasConsensus(genomeCons, genomeQuery, methodLinkId) ||
-      GenomeDB_hasQuery(genomeCons, genomeQuery, methodLinkId)) {
-    return GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect(gaa, 
-                   dnaFrag, targetGenome, startP, endP, methodLinkId);
-  } else {
-    // indirect checks
-    Vector *linkedCons  = GenomeDB_linkedGenomesByMethodLinkId(genomeCons, methodLinkId);
-    Vector *linkedQuery = GenomeDB_linkedGenomesByMethodLinkId(genomeQuery, methodLinkId);
+    // direct or indirect ??
+    if (GenomeDB_hasConsensus(genomeCons, genomeQuery, methodLinkId) ||
+        GenomeDB_hasQuery(genomeCons, genomeQuery, methodLinkId)) {
+      result = GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect(gaa, 
+                                                                   dnaFrag, targetGenome, startP, endP, methodLinkId);
+    } else {
+      // indirect checks
+      Vector *linkedCons  = GenomeDB_linkedGenomesByMethodLinkId(genomeCons, methodLinkId);
+      Vector *linkedQuery = GenomeDB_linkedGenomesByMethodLinkId(genomeQuery, methodLinkId);
     
-    // there are not many genomes, square effort is cheap
-    Vector *linked = Vector_new();
-    Vector *set1 = Vector_new();
-    mergedAligns = Vector_new();
-    int i;
+      // there are not many genomes, square effort is cheap
+      Vector *linked = Vector_new();
+      Vector *set1 = Vector_new();
+      mergedAligns = Vector_new();
+      int i;
 
-    for (i=0; i<Vector_getNumElement(linkedCons); i++) {
-      int j;
-      GenomeDB *g1 = Vector_getElementAt(linkedCons, i);
-
-      for (j=0; j<Vector_getNumElement(linkedQuery); j++) {
-        GenomeDB *g2 = Vector_getElementAt(linkedQuery, i);
-	if (g1 == g2) {
-	  Vector_addElement(linked, g1);
-	}
+      for (i=0; i<Vector_getNumElement(linkedCons); i++) {
+        int j;
+        GenomeDB *g1 = Vector_getElementAt(linkedCons, i);
+        
+        for (j=0; j<Vector_getNumElement(linkedQuery); j++) {
+          GenomeDB *g2 = Vector_getElementAt(linkedQuery, i);
+          if (g1 == g2) {
+            Vector_addElement(linked, g1);
+          }
+        }
       }
-    }
-    Vector_free(linkedCons);
-    Vector_free(linkedQuery);
+      Vector_free(linkedCons);
+      Vector_free(linkedQuery);
 
-    // collect GenomicAligns from all linked genomes
-    for (i=0; i<Vector_getNumElement(linked); i++) {
-      GenomeDB *g = Vector_getElementAt(linked, i);
+      // collect GenomicAligns from all linked genomes
+      for (i=0; i<Vector_getNumElement(linked); i++) {
+        GenomeDB *g = Vector_getElementAt(linked, i);
 
-      Vector *gres = GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect(gaa, 
-                             dnaFrag, g, startP, endP, methodLinkId);
-      Vector_append(set1, gres);
+        Vector *gres = GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect(gaa, 
+                                                                           dnaFrag, g, startP, endP, methodLinkId);
+        Vector_append(set1, gres);
+        
+        Vector_free(gres);
+      }
 
-      Vector_free(gres);
-    }
-
-    // go from each dnafrag in the result set to target_genome
-    // there is room for improvement here: create start end
-    // my %frags = map { $_->query_dnafrag->dbID => $_->query_dnafrag } @$set1;
+      // go from each dnafrag in the result set to target_genome
+      // there is room for improvement here: create start end
+      // my %frags = map { $_->query_dnafrag->dbID => $_->query_dnafrag } @$set1;
     
 
-    for (i=0; i<Vector_getNumElement(set1); i++) {
-      GenomicAlign *alignA = Vector_getElementAt(set1,i);
-      DNAFrag *frag = GenomicAlign_getQueryDNAFrag(alignA);
-      int qStart = GenomicAlign_getQueryStart(alignA);
-      int qEnd   = GenomicAlign_getQueryEnd(alignA);
+      for (i=0; i<Vector_getNumElement(set1); i++) {
+        GenomicAlign *alignA = Vector_getElementAt(set1,i);
+        DNAFrag *frag = GenomicAlign_getQueryDNAFrag(alignA);
+        int qStart = GenomicAlign_getQueryStart(alignA);
+        int qEnd   = GenomicAlign_getQueryEnd(alignA);
 
-      Vector *dres = GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect(gaa,
-                      frag, genomeQuery, &qStart, &qEnd, methodLinkId);
-      int j;
+        Vector *dres = GenomicAlignAdaptor_fetchAllByDNAFragGenomeDBDirect(gaa,
+                                                                           frag, genomeQuery, &qStart, &qEnd, methodLinkId);
+        int j;
 
-      for (j=0; j<Vector_getNumElement(dres); j++) {
-        GenomicAlign *alignB = Vector_getElementAt(dres,j);
-	GenomicAlignAdaptor_addDerivedAlignments(gaa,  mergedAligns, alignA, alignB);
-      } 
-      Vector_free(dres);
+        for (j=0; j<Vector_getNumElement(dres); j++) {
+          GenomicAlign *alignB = Vector_getElementAt(dres,j);
+          GenomicAlignAdaptor_addDerivedAlignments(gaa,  mergedAligns, alignA, alignB);
+        } 
+        Vector_free(dres);
+      }
+      // NIY freeing
+      result = mergedAligns;
     }
-// NIY freeing
-    return mergedAligns;
   }
+
+  return result;
 }
 
 /*
@@ -391,17 +419,17 @@ typedef struct GenomicAlignListElemStruct {
 } GenomicAlignListElem;
 
 GenomicAlignListElem *GenomicAlignListElem_new(IDType id, int start, GenomicAlign *ga, int setNum) {
-  GenomicAlignListElem *gale;
+  GenomicAlignListElem *gale = NULL;
 
   if ((gale = (GenomicAlignListElem *)calloc(1,sizeof(GenomicAlignListElem))) == NULL) {
     fprintf(stderr, "Error: Failed allocating gale\n");
-    exit(1);
+  } else {
+    gale->queryDbID = id;
+    gale->queryStart = start;
+    gale->align = ga;
+    gale->setNum = setNum;
   }
-  gale->queryDbID = id;
-  gale->queryStart = start;
-  gale->align = ga;
-  gale->setNum = setNum;
- 
+
   return gale;
 }
 
@@ -785,7 +813,7 @@ void GenomicAlignAdaptor_nextCig(GenomicAlignAdaptor *gaa,
     
     if (type!='M' && type!='I' && type!='D') {
       fprintf(stderr,"Error: Cigar string format error for %s\n",cigElem);
-      exit(1);
+      break;
     }
   
     if (lenElem > 1) {
@@ -894,25 +922,30 @@ char *GenomicAlignAdaptor_alignmentTypeByMethodLinkId(GenomicAlignAdaptor *gaa, 
   StatementHandle *sth;
   ResultRow *row;
   char qStr[512];
-  char *alignmentType;
+  char *alignmentType = NULL;
+  int ok = 1;
 
   if (!methodLinkId) {
     fprintf(stderr, "Error: methodLinkId has to be defined");
-    exit(1);
+    ok = 0;
   } 
 
-  sprintf(qStr,"SELECT type FROM method_link WHERE method_link_id = " IDFMTSTR, methodLinkId);
-  sth = gaa->prepare((BaseAdaptor *)gaa, qStr, strlen(qStr));
-  sth->execute(sth);
+  if (ok) {
+    sprintf(qStr,"SELECT type FROM method_link WHERE method_link_id = " IDFMTSTR, methodLinkId);
+    sth = gaa->prepare((BaseAdaptor *)gaa, qStr, strlen(qStr));
+    sth->execute(sth);
 
-  if ((row = sth->fetchRow(sth))) {
-    alignmentType = StrUtil_copyString(&alignmentType, row->getStringAt(row,0), 0); 
-  } else {
-    fprintf(stderr,"Error: No alignmentType for " IDFMTSTR "\n",methodLinkId);
-    exit(1);
+    if ((row = sth->fetchRow(sth))) {
+      alignmentType = StrUtil_copyString(&alignmentType, row->getStringAt(row,0), 0); 
+    } else {
+      fprintf(stderr,"Error: No alignmentType for " IDFMTSTR "\n",methodLinkId);
+      ok = 0;
+    }
   }
 
-  sth->finish(sth);
+  if (ok) {
+    sth->finish(sth);
+  }
 
 // NIY switch to using passed in string
   return alignmentType;
@@ -923,24 +956,29 @@ IDType GenomicAlignAdaptor_methodLinkIdByAlignmentType(GenomicAlignAdaptor *gaa,
   ResultRow *row;
   IDType methodLinkId = 0;
   char qStr[512];
+  int ok = 1;
 
   if (!alignmentType) {
     fprintf(stderr, "Error: alignment_type has to be defined\n");
-    exit(1);
+    ok = 0;
   }
   
-  sprintf(qStr, "SELECT method_link_id FROM method_link WHERE type = '%s'", alignmentType);
-  sth = gaa->prepare((BaseAdaptor *)gaa, qStr, strlen(qStr));
-  sth->execute(sth);
+  if (ok) {
+    sprintf(qStr, "SELECT method_link_id FROM method_link WHERE type = '%s'", alignmentType);
+    sth = gaa->prepare((BaseAdaptor *)gaa, qStr, strlen(qStr));
+    sth->execute(sth);
 
-  if ((row = sth->fetchRow(sth))) {
-    methodLinkId = row->getLongLongAt(row,0); 
-  } else {
-    fprintf(stderr,"Error: No methodLinkId for %s\n",alignmentType);
-    exit(1);
+    if ((row = sth->fetchRow(sth))) {
+      methodLinkId = row->getLongLongAt(row,0); 
+    } else {
+      fprintf(stderr,"Error: No methodLinkId for %s\n",alignmentType);
+      ok = 0;
+    }
   }
 
-  sth->finish(sth);
+  if (ok) {
+    sth->finish(sth);
+  }
 
   return methodLinkId;
 }

@@ -60,7 +60,6 @@ BaseContig *DNAFrag_getContig(DNAFrag *df) {
        df->contig = (BaseContig *)RawContigAdaptor_fetchByName(rca, DNAFrag_getName(df));
      } else if (!strcmp(DNAFrag_getType(df),"VirtualContig")) {
        fprintf(stderr, "VC type not implemented \n");
-       exit(1);
        //my ($chr,$start,$end) = split /\./, $self->name;
        //df->contig = $core_dbadaptor->get_SliceAdaptor->fetch_by_chr_start_end(chrName,start,end);
      } else if (!strcmp(DNAFrag_getType(df),"Chromosome")) {

@@ -37,39 +37,51 @@ GenomeDB *GenomeDB_new() {
 }
 
 int GenomeDB_hasConsensus(GenomeDB *gdb, GenomeDB *conGdb, IDType methodLinkId) {
+  int result = 0;
   GenomeDBAdaptor *gda = (GenomeDBAdaptor *)GenomeDB_getAdaptor(gdb);
+  int ok = 1;
 
   // sanity check on the GenomeDB passed in
   if (!conGdb) {
     fprintf(stderr,"Error: No query genome specified\n");
-    exit(1);
+    ok = 0;
   }
 
   // and check that you are not trying to compare the same GenomeDB
-  if (conGdb == gdb) {
+  if (ok && conGdb == gdb) {
     fprintf(stderr,"Error: Trying to return consensus/query information from the same db\n");
-    exit(1);
+    ok = 0;
   }
 
-  return GenomeDBAdaptor_checkForConsensusDb(gda, gdb, conGdb, methodLinkId);
+  if (ok) {
+    result = GenomeDBAdaptor_checkForConsensusDb(gda, gdb, conGdb, methodLinkId);
+  }
+
+  return result;
 }
 
 int GenomeDB_hasQuery(GenomeDB *gdb, GenomeDB *queryGdb, IDType methodLinkId) {
+  int result = 0;
   GenomeDBAdaptor *gda = (GenomeDBAdaptor *)GenomeDB_getAdaptor(gdb);
+  int ok = 0;
 
   // sanity check on the GenomeDB passed in
   if (!queryGdb) {
     fprintf(stderr,"Error: No query genome specified\n");
-    exit(1);
+    ok = 0;
   }
 
   // and check that you are not trying to compare the same GenomeDB
-  if (queryGdb == gdb) {
+  if (ok && queryGdb == gdb) {
     fprintf(stderr,"Error: Trying to return consensus/query information from the same db\n");
-    exit(1);
+    ok = 0;
   }
 
-  return GenomeDBAdaptor_checkForQueryDb(gda, gdb, queryGdb, methodLinkId);
+  if (ok) {
+    result = GenomeDBAdaptor_checkForQueryDb(gda, gdb, queryGdb, methodLinkId);
+  }
+
+  return result;
 }
 
 Vector *GenomeDB_linkedGenomesByMethodLinkId(GenomeDB *gdb, IDType methodLinkId) {

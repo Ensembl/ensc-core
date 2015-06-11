@@ -80,12 +80,13 @@ ECOSTRING GenomicAlign_setAlignmentType(GenomicAlign *ga, char *alType) {
 char * GenomicAlign_getSequenceAlignString(GenomicAlign *ga, Slice *consensusSlice, Slice *querySlice, unsigned int flags) {
   Vector *cig = CigarStrUtil_getPieces(GenomicAlign_getCigarString(ga));
   char *cSeq, *qSeq;
-  char *rSeq;
+  char *rSeq = NULL;
   int cPos = 0;
   int qPos = 0;
   int cigCount;
   char cigType;
   int i;
+  int ok = 1;
 
   // here fill cseq and qseq with the aligned area sequence
 
@@ -112,7 +113,8 @@ char * GenomicAlign_getSequenceAlignString(GenomicAlign *ga, Slice *consensusSli
 
     if (!cigElemLen) {
       fprintf(stderr,"Error: Empty cig element in string %s\n",GenomicAlign_getCigarString(ga));
-      exit(1);
+      ok = 0;
+      break;
     }
 
     cigType = cigElem[cigElemLen-1];
@@ -164,10 +166,17 @@ char * GenomicAlign_getSequenceAlignString(GenomicAlign *ga, Slice *consensusSli
 
       default:
         fprintf(stderr,"Error: Unknown cigar elem type %c\n",cigType);
-        exit(1);
+        ok = 0;
+        break;
     }
   }     
   Vector_free(cig);
+
+  if (!ok && rSeq) {
+    free(rSeq);
+    rSeq = NULL;
+  }
+    
 
   return rSeq;
 }

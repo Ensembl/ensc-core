@@ -594,7 +594,7 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Sl
 Vector *BaseFeatureAdaptor_fetchAllByLogicName(BaseFeatureAdaptor *bfa, char *logicName) {
   if ( logicName == NULL ) {
     fprintf(stderr,"Need a logic_name\n");
-    exit(1);
+    return NULL;
   }
   char constraint[1024];
 
@@ -630,7 +630,7 @@ Vector *BaseFeatureAdaptor_fetchAllByLogicName(BaseFeatureAdaptor *bfa, char *lo
 Vector *BaseFeatureAdaptor_fetchAllByStableIdList(BaseFeatureAdaptor *bfa, Vector *ids, Slice *slice) {
 
   fprintf(stderr," BaseFeatureAdaptor_fetchAllByStableIdList not implemented until I decide how to do it\n");
-  exit(1);
+  return NULL;
   //return BaseFeatureAdaptor_uncachedFetchAllByIdList(bfa, ids, slice, "stable_id");
 }
 
@@ -814,7 +814,7 @@ long *BaseFeatureAdaptor_generateFeatureBounds(BaseFeatureAdaptor *bfa, Slice *s
 
   if ((bounds = calloc(Vector_getNumElement(entProj), sizeof(long))) == NULL) {
     fprintf(stderr, "Failed allocating bounds array for %d bounds\n", Vector_getNumElement(entProj));
-    exit(1);
+    return 0;
   }
 
   *nBound = Vector_getNumElement(entProj)-1;
@@ -855,7 +855,7 @@ QueryAccumData *QueryAccumData_new(char *constraint, AssemblyMapper *mapper, Sli
   QueryAccumData *qad;
   if ((qad = calloc(1,sizeof(QueryAccumData))) == NULL) {
     fprintf(stderr, "Failed allocating space for qad\n");
-    exit(1);
+    return NULL;
   }
   qad->constraint = constraint;
   qad->mapper = mapper;
@@ -921,7 +921,7 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
     // Note allocated because stored in struct for later execution
     if ((constraint = calloc(655500, sizeof(char))) == NULL) {
       fprintf(stderr,"Failed allocating constraint\n");
-      exit(1);
+      return NULL;
     }
 
     constraint[0] = '\0';
@@ -1069,7 +1069,7 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
             // Note allocated because stored in struct for later execution
             if ((constraint = calloc(655500, sizeof(char))) == NULL) {
               fprintf(stderr,"Failed allocating constraint\n");
-              exit(1);
+              return NULL;
             }
         
             constraint[0] = '\0';
@@ -1111,7 +1111,7 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
         int *countP;
         if ((countP = calloc(1,sizeof(int))) == NULL) {
           fprintf(stderr, "Failed allocating space for a count\n");
-          exit(1);
+          return NULL;
         }
     
         *countP = count;
@@ -1197,14 +1197,14 @@ IDType BaseFeatureAdaptor_preStore(BaseFeatureAdaptor *bfa, SeqFeature *feature)
 
   if(feature == NULL) {
     fprintf(stderr,"Expected Feature argument.\n");
-    exit(1);
+    return 0;
   }
 
   Slice *slice = SeqFeature_getSlice(feature);
 
   if (slice == NULL) {
     fprintf(stderr, "Feature must be attached to Slice to be stored.\n");
-    exit(1);
+    return 0;
   }
 
   BaseFeatureAdaptor_checkStartEndStrand(bfa, 
@@ -1258,7 +1258,7 @@ IDType BaseFeatureAdaptor_preStore(BaseFeatureAdaptor *bfa, SeqFeature *feature)
 
   if (!seqRegionId) {
     fprintf(stderr, "Feature is associated with seq_region which is not in this DB.\n");
-    exit(1);
+    return 0;
   }
 
 //  return ($feature, $seq_region_id);
@@ -1354,7 +1354,7 @@ int BaseFeatureAdaptor_checkStartEndStrand(BaseFeatureAdaptor *bfa, long start, 
 */
   if(strand < -1 || strand > 1) {
     fprintf(stderr, "Invalid Feature strand [%d]. Must be -1, 0 or 1.", strand);
-    exit(1);
+    return 0;
   }
 
 /* circular shite
@@ -1416,7 +1416,7 @@ Vector *BaseFeatureAdaptor_remap(BaseFeatureAdaptor *bfa, Vector *features, Asse
 
     if (fSlice == NULL) {
       fprintf(stderr, "Feature does not have attached slice.\n");
-      exit(1);
+      return 0;
     }
 
     char *fSeqRegion = Slice_getSeqRegionName(fSlice);
@@ -1510,7 +1510,7 @@ char *BaseFeatureAdaptor_logicNameToConstraint(BaseFeatureAdaptor *bfa, char *co
     char *dotP = strchr(columns[i], '.');
     if (dotP == NULL) {
       fprintf(stderr, "No '.' in columns string %s\n", columns[i]);
-      exit(1);
+      return NULL;
     }
     int synLen = dotP-columns[i];
     strncpy(syn, columns[i], synLen);
@@ -1539,7 +1539,7 @@ char *BaseFeatureAdaptor_logicNameToConstraint(BaseFeatureAdaptor *bfa, char *co
   // Perl returned undef, I'm going to throw for now
   //  return undef;
     fprintf(stderr, "Unknown analysis %s in BFA_logicNameToConstraint - exiting\n", logicName);
-    exit(1);
+    return NULL;
   }
 
   IDType anId = Analysis_getDbID(an);
@@ -1724,7 +1724,7 @@ Vector *BaseFeatureAdaptor_listSeqRegionIds(BaseFeatureAdaptor *bfa, char *table
 
     if ((idP = calloc(1,sizeof(IDType))) == NULL) {
       fprintf(stderr, "Failed allocating space for a id\n");
-      exit(1);
+      return NULL;
     }
 
     *idP = id;

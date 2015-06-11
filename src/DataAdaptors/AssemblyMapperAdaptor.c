@@ -266,7 +266,6 @@ AssemblyMapper *AssemblyMapperAdaptor_fetchByCoordSystems(AssemblyMapperAdaptor 
                      CoordSystem_getName(cs1), CoordSystem_getVersion(cs1),
                      CoordSystem_getName(cs2), CoordSystem_getVersion(cs2),
                      Vector_getNumElement(mappingPath));
-      exit(1);
   }
 
   return NULL;
@@ -303,19 +302,19 @@ AssemblyMapper *AssemblyMapperAdaptor_fetchByCoordSystems(AssemblyMapperAdaptor 
 */
 
 SeqRegionRange *AssemblyMapperAdaptor_addToRangeVector(Vector *ranges, IDType id, long start, long end, char *name) {
-  SeqRegionRange *range;
+  SeqRegionRange *range = NULL;
 
   if ((range = (SeqRegionRange *)calloc(1,sizeof(SeqRegionRange))) == NULL) {
     fprintf(stderr, "ERROR: Failed allocating space for SeqRegionRange\n");
-    exit(1);
+  } else {
+    SeqRegionRange_setSeqRegionStart(range, start);
+    SeqRegionRange_setSeqRegionEnd(range, end);
+    SeqRegionRange_setSeqRegionId(range, id);
+
+    if (name) SeqRegionRange_setSeqRegionName(range, name);
+
+    Vector_addElement(ranges, range);
   }
-  SeqRegionRange_setSeqRegionStart(range, start);
-  SeqRegionRange_setSeqRegionEnd(range, end);
-  SeqRegionRange_setSeqRegionId(range, id);
-
-  if (name) SeqRegionRange_setSeqRegionName(range, name);
-
-  Vector_addElement(ranges, range);
 
   return range; 
 }
@@ -482,7 +481,7 @@ void AssemblyMapperAdaptor_registerAssembled(AssemblyMapperAdaptor *ama, Assembl
 IDType AssemblyMapperAdaptor_seqRegionNameToId(AssemblyMapperAdaptor *ama, char *srName, IDType csId) {
   if (srName == NULL || csId <= 0) {
     fprintf(stderr, "seq_region_name and coord_system_id args are required\n");
-    exit(1);
+    return 0;
   }
 
   char key[1024];
@@ -507,7 +506,7 @@ IDType AssemblyMapperAdaptor_seqRegionNameToId(AssemblyMapperAdaptor *ama, char 
 
   if (sth->numRows(sth) != 1) {
     fprintf(stderr,"Ambiguous or non-existant seq_region [%s] in coord system "IDFMTSTR" (numRowss = "IDFMTSTR")\n", srName,csId,sth->numRows(sth));
-    exit(1);
+    return 0;
   }
 
   
@@ -526,7 +525,7 @@ char *AssemblyMapperAdaptor_seqRegionIdToName(AssemblyMapperAdaptor *ama, IDType
 
   if (!srId) {
     fprintf(stderr,"seq_region_id is required");
-    exit(1);
+    return NULL;
   }
 
   if (IDHash_contains(ama->srIdCache, srId)) {
@@ -549,7 +548,7 @@ char *AssemblyMapperAdaptor_seqRegionIdToName(AssemblyMapperAdaptor *ama, IDType
 
   if (sth->numRows(sth) != 1) {
     fprintf(stderr, "non-existant seq_region ["IDFMTSTR"]\n", srId);
-    exit(1);
+    return NULL;
   }
 
   ResultRow *row = sth->fetchRow(sth);
@@ -639,7 +638,7 @@ void AssemblyMapperAdaptor_registerComponent(AssemblyMapperAdaptor *ama, Assembl
     fprintf(stderr,"Multiple assembled regions for single component region cmp_seq_region_id="IDFMTSTR"\n"
                    "Remember that multiple mappings use the #-operaator in the meta-table (i.e. chromosome:EquCab2#contig\n",
                    cmpSeqRegion);
-    exit(1);
+    return;
   }
 
   ResultRow *row = sth->fetchRow(sth);
@@ -722,7 +721,7 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
     // NIY can we do not defined?? Use 0 for now if (!defined($to_seq_region_id)){
     if (!toSeqRegionId) {
       fprintf(stderr, "Could not get seq_region_id for to_slice %s\n", Slice_getSeqRegionName(toSlice));
-      exit(1);
+      return ;
     }
   }
 
@@ -755,7 +754,7 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
     endName         = AMA_FIRST;
   } else {
     fprintf(stderr, "Invalid from argument: [%s], must be 'first' or 'last'",from);
-    exit(1);
+    return;
   }
 
   Mapper *combinedMapper  = ChainedAssemblyMapper_getFirstLastMapper(casmMapper);
@@ -796,7 +795,7 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
                      CoordSystem_getName(startCs), CoordSystem_getVersion(startCs),
                      CoordSystem_getName(midCs), CoordSystem_getVersion(midCs),
                      len, pathStr);
-    exit(1);
+    return;
   }
 
   StatementHandle *sth;
@@ -997,7 +996,7 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
                      CoordSystem_getName(midCs), CoordSystem_getVersion(midCs),
                      CoordSystem_getName(endCs), CoordSystem_getVersion(endCs),
                      len, pathStr);
-    exit(1);
+    return;
   }
 
   if (toSlice != NULL) {
@@ -1175,7 +1174,7 @@ void AssemblyMapperAdaptor_registerChainedSpecial(AssemblyMapperAdaptor *ama, Ch
     endName         = AMA_FIRST;
   } else {
     fprintf(stderr, "Invalid from argument: [%s], must be 'first' or 'last'",from);
-    exit(1);
+    return;
   }
 
   Mapper *combinedMapper  = ChainedAssemblyMapper_getFirstLastMapper(casmMapper);
@@ -1210,7 +1209,7 @@ void AssemblyMapperAdaptor_registerChainedSpecial(AssemblyMapperAdaptor *ama, Ch
                      CoordSystem_getName(startCs), CoordSystem_getVersion(startCs),
                      CoordSystem_getName(midCs), CoordSystem_getVersion(midCs),
                      len, pathStr);
-    exit(1);
+    return;
   }
 
   CoordSystem *asmCs;
@@ -1554,7 +1553,7 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
                      CoordSystem_getName(firstCs), CoordSystem_getVersion(firstCs),
                      CoordSystem_getName(midCs), CoordSystem_getVersion(midCs),
                      len, pathStr);
-    exit(1);
+    return;
   }
 
   CoordSystem *asmCs = Vector_getElementAt(path,0);
@@ -1670,7 +1669,7 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
                      CoordSystem_getName(midCs), CoordSystem_getVersion(midCs),
                      CoordSystem_getName(lastCs), CoordSystem_getVersion(lastCs),
                      len, pathStr);
-    exit(1);
+    return;
   }
 
   asmCs = Vector_getElementAt(path,0);
@@ -1741,6 +1740,7 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
 // results into the combined mapper
 void AssemblyMapperAdaptor_buildCombinedMapper(AssemblyMapperAdaptor *ama, Vector *ranges, Mapper *startMidMapper, 
                                               Mapper *endMidMapper, Mapper *combinedMapper, char *startName) {
+  int ok = 1;
   int i;
   for (i=0; i<Vector_getNumElement(ranges); i++) {
     SeqRegionRange *range = Vector_getElementAt(ranges, i);
@@ -1765,7 +1765,8 @@ void AssemblyMapperAdaptor_buildCombinedMapper(AssemblyMapperAdaptor *ama, Vecto
 
       if (icoord->rangeType != MAPPERRANGE_COORD) {
         fprintf(stderr,"Belt and Braces check for icoord being a MAPPERRANGE_COORD. Its a %d\n", icoord->rangeType);
-        exit(1);
+        ok = 0;
+        break;
       }
 
       MapperCoordinate *coordICoord = (MapperCoordinate *)icoord;
@@ -1801,7 +1802,10 @@ void AssemblyMapperAdaptor_buildCombinedMapper(AssemblyMapperAdaptor *ama, Vecto
       }
       MapperRangeSet_free(finalCoords);
     }
-    MapperRangeSet_free(initialCoords);
+
+    if (ok) {
+      MapperRangeSet_free(initialCoords);
+    }
   }
   //all done!
 }
@@ -1828,6 +1832,7 @@ void AssemblyMapperAdaptor_buildCombinedMapper(AssemblyMapperAdaptor *ama, Vecto
 
 Vector *AssemblyMapperAdaptor_seqRegionsToIds(AssemblyMapperAdaptor *ama, CoordSystem *coordSystem, Vector *seqRegions) {
 
+  int ok = 1;
   IDType csId = CoordSystem_getDbID(coordSystem);
 
   Vector *out = Vector_new();
@@ -1849,12 +1854,18 @@ Vector *AssemblyMapperAdaptor_seqRegionsToIds(AssemblyMapperAdaptor *ama, CoordS
 
       if ((idP = (IDType *)calloc(1,sizeof(IDType))) == NULL) {
         fprintf(stderr, "ERROR: Failed allocating space for idP\n");
-        exit(1);
+        ok = 0;
+        break;
       }
       *idP = id;
       
       Vector_addElement(out, idP);
     }
+  }
+
+  if (!ok) {
+    Vector_free(out);
+    out = NULL;
   }
 
   return out;

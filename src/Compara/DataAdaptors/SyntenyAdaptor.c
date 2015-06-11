@@ -19,13 +19,13 @@
 #include "StrUtil.h"
 
 SyntenyAdaptor *SyntenyAdaptor_new(ComparaDBAdaptor *dba) {
-  SyntenyAdaptor *sa;
+  SyntenyAdaptor *sa = NULL;
 
   if ((sa = (SyntenyAdaptor *)calloc(1,sizeof(SyntenyAdaptor))) == NULL) {
     fprintf(stderr,"Error: Failed allocating sa\n");
-    exit(1);
+  } else {
+    BaseComparaAdaptor_init((BaseComparaAdaptor *)sa, dba, SYNTENY_ADAPTOR);
   }
-  BaseComparaAdaptor_init((BaseComparaAdaptor *)sa, dba, SYNTENY_ADAPTOR);
 
   return sa;
 }

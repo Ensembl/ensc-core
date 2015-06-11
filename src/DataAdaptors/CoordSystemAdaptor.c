@@ -83,7 +83,8 @@ CoordSystemAdaptor *CoordSystemAdaptor_new(DBAdaptor *dba) {
 
       if (!StrUtil_tokenizeByDelim(&tokens, &ntok, attribs, ",")) {
         fprintf(stderr,"Failed tokenizing attribs string %s\n", attribs);
-        exit(1);
+        free(csa);
+        return NULL;
       }
         
       
@@ -224,7 +225,7 @@ void CoordSystemAdaptor_cacheMappingPaths(CoordSystemAdaptor *csa) {
 
     if (!StrUtil_tokenizeByDelim(&csStrings, &nCsString, mapPath, "|#")) {
       fprintf(stderr, "Failed tokenizing mapPath string %s\n", mapPath);
-      exit(1);
+      return;
     }
 
     if ( nCsString < 2 ) {
@@ -551,13 +552,13 @@ CoordSystem *CoordSystemAdaptor_fetchSeqLevel(CoordSystemAdaptor *csa) {
 
   if (IDHash_getNumValues(csa->isSeqLevelCache) == 0) {  
     fprintf(stderr, "No sequence_level coord_system is defined");
-    exit(1);
+    return NULL;
   }
 
 
   if (IDHash_getNumValues(csa->isSeqLevelCache) > 1) {  
     fprintf(stderr,"Multiple sequence_level coord_systems are defined. Only one is currently supported");
-    exit(1);
+    return NULL;
   }
   
   void **values = IDHash_getValues(csa->isSeqLevelCache);
@@ -842,7 +843,7 @@ CoordSystem *CoordSystemAdaptor_fetchByAttrib(CoordSystemAdaptor *csa, char *att
   
   if (!IDHash_getNumValues(attribCache)) {
     fprintf(stderr, "No %s coordinate system defined\n",attrib);
-    exit(1);
+    return NULL;
   }
 
   int i=0;
@@ -864,7 +865,7 @@ CoordSystem *CoordSystemAdaptor_fetchByAttrib(CoordSystemAdaptor *csa, char *att
   //specifically requested attrib system was not found
   if (version) {
     fprintf(stderr,"%s coord_system with version [%s] does not exist\n", attrib, version);
-    exit(1);
+    return NULL;
   }
 
   CoordSystem *cs = values[0];

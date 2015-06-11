@@ -56,6 +56,7 @@ StatementHandle *BaseAdaptor_prepare(BaseAdaptor *ba, char *qStr, size_t len) {
 // For ordered, the default should be 0 (if you just need to fill out the args)
 // Note ONLY stable_id can be char, all other pk's must be IDType (see code)
 Vector *BaseAdaptor_listDbIDs(BaseAdaptor *ba, char *table, char *pk, int ordered) {
+  int ok = 1;
   char colName[1024];
 
   if (pk == NULL) {
@@ -106,12 +107,17 @@ Vector *BaseAdaptor_listDbIDs(BaseAdaptor *ba, char *table, char *pk, int ordere
   
       if ((idP = calloc(1,sizeof(IDType))) == NULL) {
         fprintf(stderr, "Failed allocating space for a id\n");      
-        exit(1);
-      } 
-  
-      *idP = id;
-      Vector_addElement(out, idP);
+        ok = 0;
+      } else {
+        *idP = id;
+        Vector_addElement(out, idP);
+      }
     }
+  }
+
+  if (!ok) {
+    Vector_free(out);
+    out = NULL;
   }
 
   return out;
@@ -270,7 +276,7 @@ int BaseAdaptor_genericCount(BaseAdaptor *ba, char *constraint) {
 
   if (sth->numRows(sth) != 1) {
     fprintf(stderr, "genericCount didn't return a row - bye!\n");
-    exit(1);
+    return 0;
   }
   ResultRow *row = sth->fetchRow(sth);
   int count = row->getLongAt(row, 0);
@@ -523,7 +529,7 @@ SeqFeature *BaseAdaptor_fetchByDbID(BaseAdaptor *ba, IDType id) {
     return sf;
   }
   fprintf(stderr,"Cached fetching not implemented yet - didn't seem to be used much in perl so I didn't bother - ask Steve\n");
-  exit(1);
+
 
   // Please compiler
   return NULL;
@@ -536,6 +542,7 @@ SeqFeature *BaseAdaptor_fetchByDbID(BaseAdaptor *ba, IDType id) {
 */
 
 SeqFeature *BaseAdaptor_uncachedFetchByDbID(BaseAdaptor *ba, IDType id) {
+  SeqFeature *feat = NULL;
   char constraint[1024];
 
   //construct a constraint like 't1.table1_id = 123'
@@ -547,14 +554,12 @@ SeqFeature *BaseAdaptor_uncachedFetchByDbID(BaseAdaptor *ba, IDType id) {
   Vector *vec = BaseAdaptor_genericFetch(ba, constraint, NULL, NULL);
 
   if (Vector_getNumElement(vec) > 1) {
-    fprintf(stderr, "Got more than one feature back in fetch ID call - bye!\n");
-    exit(1);
-  }
-
-  SeqFeature *feat = NULL;
-  if (Vector_getNumElement(vec) == 1) {
-    feat = Vector_getElementAt(vec, 0);
-    Object_incRefCount(feat);
+    fprintf(stderr, "Error: Got more than one feature back in fetch ID call\n");
+  } else {
+    if (Vector_getNumElement(vec) == 1) {
+      feat = Vector_getElementAt(vec, 0);
+      Object_incRefCount(feat);
+    }
   }
   
 // NIY May want to set a free func???
@@ -596,7 +601,6 @@ Vector *BaseAdaptor_fetchAllByDbIDList(BaseAdaptor *ba, Vector *idList, Slice *s
     return BaseAdaptor_uncachedFetchAllByDbIDList(ba, idList, slice);
   }
   fprintf(stderr,"Cached fetching not implemented yet - didn't seem to be used much in perl so I didn't bother - ask Steve\n");
-  exit(1);
 
   // Please compiler
   return NULL;
@@ -612,7 +616,7 @@ Vector *BaseAdaptor_fetchAllByDbIDList(BaseAdaptor *ba, Vector *idList, Slice *s
 Vector *BaseAdaptor_uncachedFetchAllByDbIDList(BaseAdaptor *ba, Vector *idList, Slice *slice) {
   if ( idList == NULL) {
     fprintf(stderr, "id_list list reference argument is required - bye!");
-    exit(1);
+    return NULL;
   }
   char constraintPref[1024];
   
@@ -834,7 +838,6 @@ sub ignore_cache_override {
 
 NameTableType *BaseAdaptor_getTables(void) {
   fprintf(stderr,"ERROR: Abstract method getTables not defined by implementing subclass\n");
-  exit(1);
 
 // Please the compiler
   return NULL;
@@ -857,7 +860,6 @@ NameTableType *BaseAdaptor_getTables(void) {
 
 char **BaseAdaptor_getColumns(void) {
   fprintf(stderr,"ERROR: Abstract method getColumns not defined by implementing subclass\n");
-  exit(1);
 
 // Please the compiler
   return NULL;
@@ -939,7 +941,6 @@ char *BaseAdaptor_finalClause(void) {
 Vector *BaseAdaptor_objectsFromStatementHandle(BaseAdaptor *bfa, StatementHandle *sth,
                                                AssemblyMapper *mapper, Slice *slice) {
   fprintf(stderr,"ERROR: Abstract method objectsFromStatementHandle not defined by implementing subclass\n");
-  exit(1);
 
 // Please the compiler
   return NULL;
@@ -965,7 +966,7 @@ Vector *BaseAdaptor_objectsFromStatementHandle(BaseAdaptor *bfa, StatementHandle
 int BaseAdaptor_store(BaseAdaptor *ba, Vector *sfs) {
 
   fprintf(stderr, "Abstract method store not defined by implementing subclass\n");
-  exit(1);
+  return 0;
 }
 
 /*
