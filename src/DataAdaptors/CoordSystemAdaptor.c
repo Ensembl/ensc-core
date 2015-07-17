@@ -437,7 +437,7 @@ CoordSystem *CoordSystemAdaptor_fetchByName(CoordSystemAdaptor *csa, char *name,
   int i;
   for (i=0; i<Vector_getNumElement(coordSystems); i++) {
     CoordSystem *cs = Vector_getElementAt(coordSystems, i);
-    if (version) {
+    if (version && CoordSystem_getVersion(cs)) {
       if (!strcasecmp(CoordSystem_getVersion(cs),version)) {
         return cs;
       }
