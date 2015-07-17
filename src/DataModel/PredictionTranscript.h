@@ -108,7 +108,7 @@ int PredictionTranscript_getExonCount(PredictionTranscript *trans);
 void PredictionTranscript_flushExons(PredictionTranscript *transcript);
 
 void PredictionTranscript_free(PredictionTranscript *transcript);
-
+PredictionTranscript *PredictionTranscript_shallowCopy(PredictionTranscript *trans);
 int PredictionTranscript_getLength(PredictionTranscript *trans);
 
 int PredictionTranscript_setCodingRegionStart(PredictionTranscript *trans, int start);
@@ -139,7 +139,7 @@ void PredictionTranscript_free(PredictionTranscript *trans);
   PredictionTranscriptFuncs 
     predictionTranscriptFuncs = {
                        PredictionTranscript_free,
-                       NULL, // shallowCopy
+                       PredictionTranscript_shallowCopy,
                        NULL, // deepCopy
                        NULL, // getStart
                        NULL, // setStart

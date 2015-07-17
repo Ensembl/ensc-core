@@ -42,6 +42,17 @@ PredictionTranscript *PredictionTranscript_new() {
   return transcript;
 }
 
+PredictionTranscript *PredictionTranscript_shallowCopy(PredictionTranscript *trans) {
+  PredictionTranscript *newTranscript = PredictionTranscript_new();
+
+  // Exons will come in mem copy so free vector just created in PredictionTranscript_new
+  Vector_free(newTranscript->exons);
+
+  memcpy(newTranscript,trans,sizeof(PredictionTranscript));
+
+  return newTranscript;
+}
+
 ECOSTRING PredictionTranscript_setDisplayLabel(PredictionTranscript *pt, char *label) {
   EcoString_copyStr(ecoSTable, &(pt->displayLabel), label, 0);
   return pt->displayLabel;

@@ -95,7 +95,7 @@ SeqFeature *SeqFeatureFactory_newFeatureFromFeature(SeqFeature *sf) {
       feature = FeaturePair_new(); 
       break;
     case CLASS_PREDICTIONTRANSCRIPT:
-      feature = PredictionTranscript_new(); 
+      feature = PredictionTranscript_shallowCopy((PredictionTranscript*)sf); 
       break;
     case CLASS_SIMPLEFEATURE:
       feature = SimpleFeature_shallowCopy((SimpleFeature *)sf); 
