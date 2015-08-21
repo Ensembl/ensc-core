@@ -437,136 +437,148 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Sl
   Vector *result = Vector_new();
   char *allConstraint = NULL;
   char *key = NULL;
+  int done = FALSE;
 
-  if ((allConstraint = (char *)calloc(655500,sizeof(char))) == NULL) {
+  if (!done && (allConstraint = (char *)calloc(655500,sizeof(char))) == NULL) {
     fprintf(stderr,"Failed allocating allConstraint\n");
-    return result;
+    done = TRUE;
   }
 
-  if ((key = (char *)calloc(655500,sizeof(char))) == NULL) {
+  if (!done && (key = (char *)calloc(655500,sizeof(char))) == NULL) {
     fprintf(stderr,"Failed allocating key\n");
-    return result;
+    done = TRUE;
   }
 
-  allConstraint[0] = '\0';
-  key[0] = '\0';
+  if (!done) {
+    allConstraint[0] = '\0';
+    key[0] = '\0';
 
-  if (constraint != NULL && *constraint != '\0') {
-    strcpy(allConstraint, constraint);
+    if (constraint != NULL && *constraint != '\0') {
+      strcpy(allConstraint, constraint);
+    }
+
+    if ( ! BaseFeatureAdaptor_logicNameToConstraint(bfa, allConstraint, logicName)) {
+      // If the logic name was invalid, undef was returned
+      done = TRUE;
+    }
   }
 
-  if ( ! BaseFeatureAdaptor_logicNameToConstraint(bfa, allConstraint, logicName)) {
-  // If the logic name was invalid, undef was returned
-    return result;
-  }
- 
-  // Will only use feature_cache if hasn't got no_cache attribute set
-  if ( !DBAdaptor_noCache(bfa->dba)) {
+  if (!done) {
+    // Will only use feature_cache if hasn't got no_cache attribute set
+    if ( !DBAdaptor_noCache(bfa->dba)) {
 
-/*
-    // strain test and add to constraint if so to stop caching.
-    if ( $slice->isa('Bio::EnsEMBL::StrainSlice') ) {
+      /*
+      // strain test and add to constraint if so to stop caching.
+      if ( $slice->isa('Bio::EnsEMBL::StrainSlice') ) {
       my $string =
-        $self->dbc()->db_handle()->quote( $slice->strain_name() );
-
+      $self->dbc()->db_handle()->quote( $slice->strain_name() );
+        
       if ( $constraint ne "" ) {
-        $constraint .= " AND $string = $string ";
+      $constraint .= " AND $string = $string ";
       } else {
-        $constraint .= " $string = $string ";
+      $constraint .= " $string = $string ";
+      }
+      }
+      */
+
+      // Check the cache and return the cached results if we have already
+      // done this query.  The cache key is the made up from the slice
+      // name, the constraint, and the bound parameters (if there are any).
+      ECOSTRING slice_name = Slice_getName(slice);
+      if (slice_name)
+        sprintf(key, "%s:%s", slice_name, allConstraint);
+      else
+        fprintf(stderr, "Error getting slice name");
+
+      StrUtil_strupr(key);
+    
+      /* In C I don't have bound params, I put them into the constraint, so there should be no need for this bit of the key
+         if ( defined($bind_params) ) {
+         $key .= ':'
+         . join( ':', map { $_->[0] . '/' . $_->[1] } @{$bind_params} );
+         }
+      */
+
+      if (Cache_contains(bfa->sliceFeatureCache, key)) {
+        Vector_free(result);
+        result = Cache_findElem(bfa->sliceFeatureCache, key);
+        done = TRUE;
       }
     }
-*/
-
-    // Check the cache and return the cached results if we have already
-    // done this query.  The cache key is the made up from the slice
-    // name, the constraint, and the bound parameters (if there are any).
-    ECOSTRING slice_name = Slice_getName(slice);
-    if (slice_name)
-      sprintf(key, "%s:%s", slice_name, constraint);
-    else
-      fprintf(stderr, "Error getting slice name");
-
-    StrUtil_strupr(key);
-    
- /* In C I don't have bound params, I put them into the constraint, so there should be no need for this bit of the key
-    if ( defined($bind_params) ) {
-      $key .= ':'
-        . join( ':', map { $_->[0] . '/' . $_->[1] } @{$bind_params} );
-    }
- */
-
-    if (Cache_contains(bfa->sliceFeatureCache, key)) {
-      return Cache_findElem(bfa->sliceFeatureCache, key);
-    }
   }
 
-  Vector *projVec = BaseFeatureAdaptor_getAndFilterSliceProjections(bfa, slice);
-  int nBound = 0;
-  long *bounds = BaseFeatureAdaptor_generateFeatureBounds(bfa, slice, &nBound); 
+  if (!done) {
+    Vector *projVec = BaseFeatureAdaptor_getAndFilterSliceProjections(bfa, slice);
+    int nBound = 0;
+    long *bounds = BaseFeatureAdaptor_generateFeatureBounds(bfa, slice, &nBound); 
 
-  // fetch features for the primary slice AND all symlinked slices
-  int i;
-  for (i=0; i<Vector_getNumElement(projVec); i++) {
-    ProjectionSegment *seg = Vector_getElementAt(projVec, i);
+    // fetch features for the primary slice AND all symlinked slices
+    int i;
+    for (i=0; i<Vector_getNumElement(projVec); i++) {
+      ProjectionSegment *seg = Vector_getElementAt(projVec, i);
 
-    long offset     = ProjectionSegment_getFromStart(seg);
-    Slice *segSlice = ProjectionSegment_getToSlice(seg);
+      long offset     = ProjectionSegment_getFromStart(seg);
+      Slice *segSlice = ProjectionSegment_getToSlice(seg);
 
-    Vector *features = BaseFeatureAdaptor_sliceFetch(bfa, segSlice, allConstraint);
+      Vector *features = BaseFeatureAdaptor_sliceFetch(bfa, segSlice, allConstraint);
 
-    // If this was a symlinked slice offset the feature coordinates as
-    // needed.
-    if ( EcoString_strcmp(Slice_getName(segSlice), Slice_getName(slice))) {
-      int j;
-      for (j=0; j<Vector_getNumElement(features); j++) {
-        SeqFeature *f = Vector_getElementAt(features, j);
-        if ( offset != 1 ) {
-          SeqFeature_setStart(f, (SeqFeature_getStart(f) + (offset-1)));
-          SeqFeature_setEnd(f, (SeqFeature_getEnd(f) + (offset-1)));
-        }
+      // If this was a symlinked slice offset the feature coordinates as
+      // needed.
+      if ( EcoString_strcmp(Slice_getName(segSlice), Slice_getName(slice))) {
+        int j;
+        for (j=0; j<Vector_getNumElement(features); j++) {
+          SeqFeature *f = Vector_getElementAt(features, j);
+          if ( offset != 1 ) {
+            SeqFeature_setStart(f, (SeqFeature_getStart(f) + (offset-1)));
+            SeqFeature_setEnd(f, (SeqFeature_getEnd(f) + (offset-1)));
+          }
 
-        // discard boundary crossing features from symlinked regions
-        int k;
-        int skipFlag = 0;
-        for (k=0; k<nBound && !skipFlag; k++) {
-          long bound = bounds[k];
-          if ( SeqFeature_getStart(f) < bound && SeqFeature_getEnd(f) >= bound ) {
-            skipFlag = 1;
+          // discard boundary crossing features from symlinked regions
+          int k;
+          int skipFlag = 0;
+          for (k=0; k<nBound && !skipFlag; k++) {
+            long bound = bounds[k];
+            if ( SeqFeature_getStart(f) < bound && SeqFeature_getEnd(f) >= bound ) {
+              skipFlag = 1;
+            }
+          }
+
+          // NIY: Do I need to free slice f was on????
+          if (!skipFlag) {
+            SeqFeature_setSlice(f, slice);
+            Vector_addElement(result, f);
+          } else {
+            // NIY: Free feature if it was out of bounds
           }
         }
-
-        // NIY: Do I need to free slice f was on????
-        if (!skipFlag) {
-          SeqFeature_setSlice(f, slice);
-          Vector_addElement(result, f);
-        } else {
-          // NIY: Free feature if it was out of bounds
-        }
+        Vector_free(features);
+      } else {
+        Vector_append(result, features);
+        Vector_free(features);
       }
-      Vector_free(features);
-    } else {
-      Vector_append(result, features);
-      Vector_free(features);
+    }
+    // NIY: I need to free ProjectionSegments
+    Vector_setFreeFunc(projVec, ProjectionSegment_free);
+    Vector_free(projVec);
+    free(bounds);
+
+    // Will only use feature_cache when set attribute no_cache in DBAdaptor
+    // Condition looks slightly odd, but key will have only been set to something if
+    // the code entered the noCache controlled condition above
+    if (key[0]) {
+      // Was null free func
+      // Make null free func again for now
+      //Vector_setFreeFunc(result, Object_freeImpl);
+      Vector_setFreeFunc(result, NULL);
+      Cache_addElement(bfa->sliceFeatureCache, key, result, (Cache_FreeFunc)Object_freeImpl);
     }
   }
-  // NIY: I need to free ProjectionSegments
-  Vector_setFreeFunc(projVec, ProjectionSegment_free);
-  Vector_free(projVec);
-  free(bounds);
 
-  // Will only use feature_cache when set attribute no_cache in DBAdaptor
-  // Condition looks slightly odd, but key will have only been set to something if
-  // the code entered the noCache controlled condition above
-  if (key[0]) {
-// Was null free func
-// Make null free func again for now
-    //Vector_setFreeFunc(result, Object_freeImpl);
-    Vector_setFreeFunc(result, NULL);
-    Cache_addElement(bfa->sliceFeatureCache, key, result, (Cache_FreeFunc)Object_freeImpl);
-  }
+  if (allConstraint)
+    free(allConstraint);
 
-  free(allConstraint);
-  free(key);
+  if (key)
+    free(key);
 
   return result;
 }
