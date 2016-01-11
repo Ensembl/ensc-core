@@ -186,14 +186,14 @@ int CoordSystem_compare(CoordSystem *cs1, CoordSystem *cs2) {
 }
 
 char *CoordSystem_getNameColonVersion(CoordSystem *cs) {
-  if (cs->nameColonVersion == NULL) {
+  if (cs && cs->nameColonVersion == NULL) {
     char tmpStr[1024];
     sprintf(tmpStr,"%s:%s",CoordSystem_getName(cs),CoordSystem_getVersion(cs) ? CoordSystem_getVersion(cs):"");
     StrUtil_copyString(&cs->nameColonVersion, tmpStr, 0);
     cs->lenNameColonVersion = strlen(tmpStr);
   }
  
-  return cs->nameColonVersion;
+  return cs? cs->nameColonVersion : NULL;
 }
 
 char *CoordSystem_getDbIDStr(CoordSystem *cs) {

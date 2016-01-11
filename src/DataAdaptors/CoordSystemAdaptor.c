@@ -576,7 +576,10 @@ Vector *CoordSystemAdaptor_getMappingPath(CoordSystemAdaptor *csa, CoordSystem *
   char *key2;
   char keypair[2048];
   char revKeypair[2048];
-  Vector *path;
+  Vector *path = NULL;
+
+  if (!cs1 || !cs2)
+    return emptyVector ;
 
 //  int lenKey1 = sprintf(key1,"%s:%s", CoordSystem_getName(cs1), CoordSystem_getVersion(cs1) ? CoordSystem_getVersion(cs1) : "");
   

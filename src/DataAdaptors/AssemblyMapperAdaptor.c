@@ -167,11 +167,11 @@ char *makeMappingPathKey(Vector *path, char *key) {
 */
 
 AssemblyMapper *AssemblyMapperAdaptor_fetchByCoordSystems(AssemblyMapperAdaptor *ama, CoordSystem *cs1, CoordSystem *cs2) {
-  if (CoordSystem_getIsTopLevel(cs1)) {
+  if (cs1 && CoordSystem_getIsTopLevel(cs1)) {
     return (AssemblyMapper *)TopLevelAssemblyMapper_new(ama, cs1, cs2);
   }
 
-  if (CoordSystem_getIsTopLevel(cs2)) {
+  if (cs2 && CoordSystem_getIsTopLevel(cs2)) {
     return (AssemblyMapper *)TopLevelAssemblyMapper_new(ama, cs2, cs1);
   }
 
