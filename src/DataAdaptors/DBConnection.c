@@ -37,6 +37,14 @@ DBConnection *DBConnection_new(char *host, char *user, char *pass,
     return NULL;
   }
 
+  /* on unix, localhost will connect via a local socket by default and ignore the port. If the
+   * user has specified a port then force mysql to use it by setting the protocol to TCP (this is
+   * necessary if using ssh tunnels). */
+  if (mysql && host && port && !strcmp(host, "localhost")) {
+    const mysql_protocol_type arg = MYSQL_PROTOCOL_TCP ;
+    mysql_options(mysql, MYSQL_OPT_PROTOCOL, &arg) ;
+  }
+
   if ((mysql_real_connect(mysql,host, user, pass, dbname, port, NULL, 0)) == NULL) {
     Error_write(EMYSQLCONN, "DBConnection_new", ERR_SEVERE,
                 " dbname %s (host %s user %s pass %s port %d), mysql error %s",
