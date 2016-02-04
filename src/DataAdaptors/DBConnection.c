@@ -41,7 +41,7 @@ DBConnection *DBConnection_new(char *host, char *user, char *pass,
    * user has specified a port then force mysql to use it by setting the protocol to TCP (this is
    * necessary if using ssh tunnels). */
   if (mysql && host && port && !strcmp(host, "localhost")) {
-    const mysql_protocol_type arg = MYSQL_PROTOCOL_TCP ;
+    const enum mysql_protocol_type arg = MYSQL_PROTOCOL_TCP ;
     mysql_options(mysql, MYSQL_OPT_PROTOCOL, &arg) ;
   }
 
