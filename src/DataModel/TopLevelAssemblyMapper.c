@@ -53,6 +53,12 @@ toplevel coordinate system to another coordinate system.
 
 TopLevelAssemblyMapper *TopLevelAssemblyMapper_new(AssemblyMapperAdaptor *ama, CoordSystem *topLevelCs, CoordSystem *otherCs) {
 
+  TopLevelAssemblyMapper *tlam = NULL;
+
+  if (!topLevelCs || !otherCs) {
+    return tlam;
+  }
+
   if (!CoordSystem_getIsTopLevel(topLevelCs)) {
     fprintf(stderr,"%s is not the toplevel CoordSystem.\n", CoordSystem_getName(topLevelCs));
     exit(1);
@@ -65,7 +71,6 @@ TopLevelAssemblyMapper *TopLevelAssemblyMapper_new(AssemblyMapperAdaptor *ama, C
   CoordSystemAdaptor *csAdaptor = DBAdaptor_getCoordSystemAdaptor(ama->dba);
   Vector *coordSystems          = CoordSystemAdaptor_fetchAll(csAdaptor);
 
-  TopLevelAssemblyMapper *tlam;
   if ((tlam = (TopLevelAssemblyMapper *)calloc(1, sizeof(TopLevelAssemblyMapper))) == NULL) {
     fprintf(stderr, "ERROR: Failed allocating space for TopLevelAssemblyMapper\n");
     return NULL;

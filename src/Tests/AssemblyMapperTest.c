@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "%s\n",regionName);
       }
   
-      seqRegions = AssemblyMapper_listSeqRegions(asmMapper, "AL359765.6.1.13780", 1, 13780, ctgCs);
+      seqRegions = AssemblyMapper_listSeqRegions(asmMapper, "AL359765.6", 1, 13780, ctgCs);
       ok(testNum++, seqRegions!=NULL);
 
       if (seqRegions) {
@@ -187,7 +187,7 @@ int main(int argc, char *argv[]) {
         }
       }
   
-      seqIds = AssemblyMapper_listIds(asmMapper, "AL359765.6.1.13780", 1, 13780, ctgCs);
+      seqIds = AssemblyMapper_listIds(asmMapper, "AL359765.6", 1, 13780, ctgCs);
       ok(testNum++, seqIds!=NULL);
 
       if (seqIds) {

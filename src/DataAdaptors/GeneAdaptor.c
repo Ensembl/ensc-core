@@ -124,7 +124,7 @@ char *Gene_cols[] = {
                 "g.source",
                 "g.is_current",
                 "g.canonical_transcript_id",
-                "g.canonical_annotation",
+                //"g.canonical_annotation",
                 "g.stable_id",
                 "g.version",
                 "UNIX_TIMESTAMP(g.created_date)",
@@ -1434,9 +1434,9 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
                //"source = '%s',"
                //"status = '%s',"
                "is_current = %d,"
-               "canonical_transcript_id = 0," 
+               "canonical_transcript_id = 0," ,
                //"canonical_annotation = '%s'", 
-               "canonical_annotation = %%s", 
+               //"canonical_annotation = %%s", 
            analysisId, 
            seqRegionId, 
           Gene_getSeqRegionStart((SeqFeature*)gene),
