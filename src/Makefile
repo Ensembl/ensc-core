@@ -28,7 +28,7 @@ endif
 
 # *edgrif* -Ofast is not recognised...
 #
-CFLAGS = -Wall -Wno-format-security -Wno-unused-but-set-variable -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS) $(LIBCONFIGCFLAGS) -g -O0
+CFLAGS = -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS) $(LIBCONFIGCFLAGS)
 #CFLAGS =  -Ofast -fprofile-arcs -ftest-coverage -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
 #CFLAGS =  -Ofast -fbranch-probabilities -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
 
