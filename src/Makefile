@@ -3,44 +3,50 @@
 #CC = /software/gcc-4.8.1/bin/gcc
 CC = gcc
 
+# use libs_r for thread safe version
 MYSQLCFLAGS=${shell mysql_config --cflags}
-MYSQLLIBS=${shell mysql_config --libs}
+MYSQLLIBS=${shell mysql_config --libs_r}
 
-LIBCONFIGCFLAGS=${shell ( export PKG_CONFIG_PATH=/software/ensembl/central/lib/pkgconfig; pkg-config --cflags libconfig ) }
-LIBCONFIGLIBS=${shell ( export PKG_CONFIG_PATH=/software/ensembl/central/lib/pkgconfig; pkg-config --libs libconfig ) }
+# Removed LIBCONFIG stuff because /software/ensembl/central does not exist
+#LIBCONFIGCFLAGS=${shell ( export PKG_CONFIG_PATH=/software/ensembl/central/lib/pkgconfig; pkg-config --cflags libconfig ) }
+#LIBCONFIGLIBS=${shell ( export PKG_CONFIG_PATH=/software/ensembl/central/lib/pkgconfig; pkg-config --libs libconfig ) }
 
-#SAMDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/bin/samtools-0.1.18
-#SAMDIR=/Users/searle/progs/ensc-dependencies/bin/samtools_parallel
-#SAMDIR=/nfs/users/nfs_s/searle/src/samtools_parallel
-#SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools-0.1.18
-#SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools_parallel
-#ZLIBDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/include
-#SAMDIR=/software/ensembl/central/bin/samtools-0.1.18
-SAMDIR=/nfs/ensembl/searle/progs/production_code/ensembl-trunk_0713/samtools_parallel
-ZLIBDIR=/software/ensembl/central/include
+# Define HAVE_SAMTOOLS to compile programs that use samtools_parallel
+ifdef $(HAVE_SAMTOOLS)
+  #SAMDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/bin/samtools-0.1.18
+  #SAMDIR=/Users/searle/progs/ensc-dependencies/bin/samtools_parallel
+  #SAMDIR=/nfs/users/nfs_s/searle/src/samtools_parallel
+  #SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools-0.1.18
+  #SAMDIR=/ensemblweb/searle/testcvs_pre70/ensc-core/src/samtools_parallel
+  #ZLIBDIR=/ensemblweb/searle/ensdistprep_opt/longdir/longlonglonglonglonglong/long/include
+  #SAMDIR=/software/ensembl/central/bin/samtools-0.1.18
+  SAMDIR=/nfs/ensembl/searle/progs/production_code/ensembl-trunk_0713/samtools_parallel
+endif
 
-CFLAGS =  -Ofast -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS) $(LIBCONFIGCFLAGS)
+# Removed ZLIBDIR because /software/ensembl/central does not exist
+#ZLIBDIR=/software/ensembl/central/include
+
+# *edgrif* -Ofast is not recognised...
+#
+CFLAGS =   -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS) $(LIBCONFIGCFLAGS)
 #CFLAGS =  -Ofast -fprofile-arcs -ftest-coverage -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
 #CFLAGS =  -Ofast -fbranch-probabilities -Wno-format-security -IDataModel -IDataAdaptors -IUtil -IDataModel/Mapper -IDataModel/Basic -ICompara/DataAdaptors -ICompara/DataModel -IOBDA $(MYSQLCFLAGS)
 
+# *edgrif* -lunwind is not recognised....
+#
 #LDFLAGS = $(MYSQLLIBS) -L/usr/lib/system -lSystem -L/Users/searle/progs/ensc-dependencies/lib -ltcmalloc
-LDFLAGS = $(MYSQLLIBS) $(LIBCONFIGLIBS) -lunwind
+#LDFLAGS = $(MYSQLLIBS) $(LIBCONFIGLIBS) -lunwind
+LDFLAGS = $(MYSQLLIBS) $(LIBCONFIGLIBS) 
+
+
+
 #CPPFLAGS = -I/Users/searle/progs/ensc-dependencies/include
 
 BINDIR=../bin
 
-all	: directories \
+BUILT_PROGRAMS = \
+          directories \
           libensc.a \
-          Programs/testdbc \
-          Programs/bamcount \
-          Programs/bamcount_exon \
-          Programs/bamcov \
-          Programs/bammap \
-          Programs/countsnps \
-          Programs/indicate \
-          Programs/fastasplit \
-          Programs/moveperl \
-          Programs/RefineSolexaGenes \
           Tests/AssemblyMapperTest \
           Tests/CacheTest \
           Tests/ChainedAssemblyMapperTest \
@@ -50,14 +56,9 @@ all	: directories \
           Tests/ComparaDNAAlignFeatureAdaptorTest \
           Tests/CoordSystemTest \
           Tests/DBAdaptorTest \
-          Tests/DNAAlignFeatureTest \
-          Tests/DNAAlignFeatureWriteTest \
           Tests/DNAPepAlignFeatureTest \
           Tests/DNAPepAlignFeatureWriteTest \
           Tests/EcoStringTest \
-          Tests/FreeTest \
-          Tests/GeneTest \
-          Tests/GeneWriteTest \
           Tests/HomologyTest \
           Tests/MapperTest \
           Tests/PredictionTranscriptTest \
@@ -66,7 +67,6 @@ all	: directories \
           Tests/SequenceAdaptorTest \
           Tests/SeqUtilTest \
           Tests/SimpleFeatureTest \
-          Tests/SimpleFeatureWriteTest \
           Tests/SliceAdaptorTest \
           Tests/StreamTest \
           Tests/StrUtilTest \
@@ -74,6 +74,38 @@ all	: directories \
           Tests/TopLevelAssemblyMapperTest \
           Tests/TranslateTest \
           Tests/VectorTest
+
+# These Programs require samtools_parallel
+ifdef $(HAVE_SAMTOOLS)
+  BUILT_PROGRAMS += \
+          Programs/testdbc \
+          Programs/bamcount \
+          Programs/bamcount_exon \
+          Programs/bamcov \
+          Programs/bammap \
+          Programs/countsnps \
+          Programs/indicate \
+          Programs/fastasplit \
+          Programs/moveperl
+endif
+
+# These require libtcmalloc and libconfig
+ifdef $(HAVE_LIBTCMALLOC)
+  ifdef $(HAVE_LIBCONFIG)
+    BUILT_PROGRAMS += \
+          Programs/RefineSolexaGenes \
+          Tests/DNAAlignFeatureTest \
+          Tests/DNAAlignFeatureWriteTest \
+          Tests/FreeTest \
+          Tests/GeneTest \
+          Tests/GeneWriteTest \
+          Tests/SimpleFeatureWriteTest
+  endif
+endif
+
+all	: $(BUILT_PROGRAMS)
+
+install	: $(BUILT_PROGRAMS)
 
 directories	:
 	mkdir -p objectfiles
@@ -465,6 +497,13 @@ clean	:
 	rm -f Programs/indicate
 	find ./ -name "*.o" -exec rm {} \;
 	find ./Tests ! -name "*.c" ! -name "*.h" -type f -perm -0700 -exec rm {} \;
+
+distclean: clean
+	-rm -f TAGS
+
+# I haven't worked out what needs doing here, this is just a placeholder for now
+# so our recursive make via the zmap src tree will find this target.
+maintainer-clean:
 
 #DO NOT REMOVE THIS LINE OR ADD ANYTHING AFTER IT - ADDMAKE DEPENDS ON IT FOR MAKING DEPENDENCIES
 
