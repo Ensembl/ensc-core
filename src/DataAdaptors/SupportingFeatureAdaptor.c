@@ -467,12 +467,11 @@ void SupportingFeatureAdaptor_store(SupportingFeatureAdaptor *sfa, IDType exonDb
     if (checkSth->numRows(assocCheckSth) == 0) {
       sfSth->execute(sfSth, exonDbID, sfDbID, type);
     }
-  }
 
-      dnaCheckSth->finish(dnaCheckSth);
-      pepCheckSth->finish(pepCheckSth);
-      assocCheckSth->finish(assocCheckSth);
-      sfSth->finish(sfSth);
+    dnaCheckSth->finish(dnaCheckSth);
+    pepCheckSth->finish(pepCheckSth);
+    assocCheckSth->finish(assocCheckSth);
+    sfSth->finish(sfSth);
     } else {
       fprintf(stderr, "Error getting sequence region ID for slice");
     }

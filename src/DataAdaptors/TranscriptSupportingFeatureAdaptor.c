@@ -295,12 +295,11 @@ void TranscriptSupportingFeatureAdaptor_store(TranscriptSupportingFeatureAdaptor
     if (checkSth->numRows(assocCheckSth) == 0) {
       sfSth->execute(sfSth, transcriptDbID, sfDbID, type);
     }
-  }
 
-      dnaCheckSth->finish(dnaCheckSth);
-      pepCheckSth->finish(pepCheckSth);
-      assocCheckSth->finish(assocCheckSth);
-      sfSth->finish(sfSth);
+    dnaCheckSth->finish(dnaCheckSth);
+    pepCheckSth->finish(pepCheckSth);
+    assocCheckSth->finish(assocCheckSth);
+    sfSth->finish(sfSth);
     } else {
       fprintf(stderr, "Error getting sequence region ID for slice");
     }
