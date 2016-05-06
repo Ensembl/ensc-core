@@ -107,6 +107,9 @@ all	: $(BUILT_PROGRAMS)
 
 install	: $(BUILT_PROGRAMS)
 
+distdir:
+	cp -r ./* $(distdir) ;
+
 directories	:
 	mkdir -p objectfiles
 	mkdir -p objectfiles/DataAdaptors
