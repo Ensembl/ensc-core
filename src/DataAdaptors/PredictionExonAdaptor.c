@@ -44,7 +44,7 @@ PredictionExonAdaptor *PredictionExonAdaptor_new(DBAdaptor *dba) {
 
   pea->getTables                  = PredictionExonAdaptor_getTables;
   pea->getColumns                 = PredictionExonAdaptor_getColumns;
-  pea->store                      = PredictionExonAdaptor_store;
+  pea->store                      = (BaseAdaptor_StoreFunc)PredictionExonAdaptor_store;
   pea->objectsFromStatementHandle = (BaseAdaptor_ObjectsFromStatementHandleFunc)PredictionExonAdaptor_objectsFromStatementHandle;
   pea->finalClause                = PredictionExonAdaptor_finalClause;
 

@@ -36,6 +36,7 @@ SyntenyAdaptor *SyntenyAdaptor_new(ComparaDBAdaptor *dba);
 #define SyntenyAdaptor_setSpeciesSecondary(sa,ss) (sa)->speciesSecondary = (ss)
 #define SyntenyAdaptor_getSpeciesSecondary(sa) (sa)->speciesSecondary
 
+void SyntenyAdaptor_setSpecies(SyntenyAdaptor *sa, char *species1, char *species2);
 Vector *SyntenyAdaptor_getSyntenyForChromosome(SyntenyAdaptor *sa, char *chr, int *startP, int *endP);
 
 #endif

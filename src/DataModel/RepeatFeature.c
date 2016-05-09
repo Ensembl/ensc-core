@@ -16,6 +16,7 @@
 
 #define __REPEATFEATURE_MAIN__
 #include "RepeatFeature.h"
+#include <string.h>
 #undef __REAPEATFEATURE_MAIN__
 
 RepeatFeature *RepeatFeature_new() {

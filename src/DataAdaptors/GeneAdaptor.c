@@ -74,7 +74,7 @@ GeneAdaptor *GeneAdaptor_new(DBAdaptor *dba) {
 
   ga->getTables                  = GeneAdaptor_getTables;
   ga->getColumns                 = GeneAdaptor_getColumns;
-  ga->store                      = GeneAdaptor_store;
+  ga->store                      = (BaseAdaptor_StoreFunc)GeneAdaptor_store;
   ga->objectsFromStatementHandle = (BaseAdaptor_ObjectsFromStatementHandleFunc)GeneAdaptor_objectsFromStatementHandle;
   ga->leftJoin                   = GeneAdaptor_leftJoin;
 

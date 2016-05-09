@@ -78,7 +78,7 @@ TranscriptAdaptor *TranscriptAdaptor_new(DBAdaptor *dba) {
 
   ta->getTables                  = TranscriptAdaptor_getTables;
   ta->getColumns                 = TranscriptAdaptor_getColumns;
-  ta->store                      = TranscriptAdaptor_store;
+  ta->store                      = (BaseAdaptor_StoreFunc)TranscriptAdaptor_store;
   ta->objectsFromStatementHandle = (BaseAdaptor_ObjectsFromStatementHandleFunc)TranscriptAdaptor_objectsFromStatementHandle;
   ta->leftJoin                   = TranscriptAdaptor_leftJoin;
 

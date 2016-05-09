@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
   ok(3, features!=NULL);
   ok(4, Vector_getNumElement(features)!=0);
 
-  RepeatFeatureAdaptor_store(sfa, features);
+  RepeatFeatureAdaptor_store((BaseFeatureAdaptor*)sfa, features);
 
   return 0;
 }

@@ -57,7 +57,7 @@ IntronSupportingEvidenceAdaptor *IntronSupportingEvidenceAdaptor_new(DBAdaptor *
 
   isea->getTables                  = IntronSupportingEvidenceAdaptor_getTables;
   isea->getColumns                 = IntronSupportingEvidenceAdaptor_getColumns;
-  isea->store                      = IntronSupportingEvidenceAdaptor_store;
+  isea->store                      = (BaseAdaptor_StoreFunc)IntronSupportingEvidenceAdaptor_store;
   isea->objectsFromStatementHandle = (BaseAdaptor_ObjectsFromStatementHandleFunc)IntronSupportingEvidenceAdaptor_objectsFromStatementHandle;
 
   return isea;

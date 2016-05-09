@@ -21,6 +21,7 @@
 #include "ProjectionSegment.h"
 #include "DBAdaptor.h"
 #include "EnsC.h"
+#include "SeqUtil.h"
 
 #include "BaseTest.h"
 

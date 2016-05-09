@@ -44,7 +44,7 @@ PredictionTranscriptAdaptor *PredictionTranscriptAdaptor_new(DBAdaptor *dba) {
 
   pta->getTables = PredictionTranscriptAdaptor_getTables;
   pta->getColumns = PredictionTranscriptAdaptor_getColumns;
-  pta->store = PredictionTranscriptAdaptor_store;
+  pta->store = (BaseAdaptor_StoreFunc)PredictionTranscriptAdaptor_store;
   pta->objectsFromStatementHandle = (BaseAdaptor_ObjectsFromStatementHandleFunc)PredictionTranscriptAdaptor_objectsFromStatementHandle;
 
   return pta;

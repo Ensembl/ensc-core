@@ -26,6 +26,7 @@ char *SeqUtil_addGaps(char *seq, int length);
 char *SeqUtil_addRes(char *seq, int length, char res);
 void SeqUtil_printConvTable(int *convTable);
 void SeqUtil_writeFasta(FILE *fp, char *header, char *seq, int lineLen);
+int SeqUtil_readTransTab(char *fName, char TransTab[4][4][4]);
 
 
 #ifdef __SEQUTIL_MAIN__

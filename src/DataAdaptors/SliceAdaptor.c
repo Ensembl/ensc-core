@@ -920,7 +920,7 @@ Vector *SliceAdaptor_fetchByRegionUnique(SliceAdaptor *sa, char *coordSystemName
     Vector_addElement(out, slice);
   } else {
     fprintf(stderr, "Error getting sequence region ID for slice [%s %s %f %f]", 
-            (coordSystemName ? coordSystemName : ""), (seqRegionName ? seqRegionName : ""), start, end);
+            (coordSystemName ? coordSystemName : ""), (seqRegionName ? seqRegionName : ""), (double)start, (double)end);
   }
 
   return out;

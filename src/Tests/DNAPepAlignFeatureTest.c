@@ -20,6 +20,7 @@
 #include "DBAdaptor.h"
 #include "EnsC.h"
 #include "DNAPepAlignFeature.h"
+#include "ProcUtil.h"
 
 #include "BaseRODBTest.h"
 
@@ -58,7 +59,7 @@ int main(int argc, char *argv[]) {
     if (!ungapped) failed = 1;
     // printf(" cigar = %s num ungapped %d\n",DNAPepAlignFeature_getCigarString(daf), Vector_getNumElement(ungapped));
 
-    BaseAlignFeature_parseFeatures(daf,ungapped); 
+    BaseAlignFeature_parseFeatures((BaseAlignFeature*)daf,ungapped); 
     // printf(" cigar now = %s\n",DNAPepAlignFeature_getCigarString(daf));
 // NIY Make sure free func has been set for vector
     Vector_free(ungapped);
@@ -79,7 +80,7 @@ int main(int argc, char *argv[]) {
 
     // printf("slice start = %d end = %d\n",start,end);
     // Temporary:
-    rdaf = SeqFeature_transform(daf, "contig", NULL, NULL);
+    rdaf = (DNAPepAlignFeature*)SeqFeature_transform((SeqFeature*)daf, "contig", NULL, NULL);
 /*
     if (Vector_getNumElement(rdafVector) > 1) {
       printf("Feature mapped to more than one rawcontig\n");
@@ -93,7 +94,7 @@ int main(int argc, char *argv[]) {
 
     // printf("rc start = %d end = %d\n",DNAPepAlignFeature_getStart(rdaf),DNAPepAlignFeature_getEnd(rdaf));
       // Temporary:
-      daf = SeqFeature_transfer(rdaf, slice);
+      daf = (DNAPepAlignFeature*)SeqFeature_transfer((SeqFeature*)rdaf, slice);
       if (DNAPepAlignFeature_getStart(daf) != start ||
           DNAPepAlignFeature_getEnd(daf) != end) {
         printf("Remapping to slice produced different coords\n");
