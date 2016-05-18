@@ -5,6 +5,5 @@ ensc_version.m4
 Makefile.in
 build
 config
-m4
 aclocal.m4
 *.dSYM
