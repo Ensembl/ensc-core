@@ -3,7 +3,7 @@
 
 m4_include([./ensc_version.m4])
 
-AC_PREREQ([2.69])
+AC_PREREQ([2.50])
 AC_INIT([EnsC], [VERSION_NUMBER], [annosoft@sanger.ac.uk])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_SRCDIR([Compara/DataAdaptors/BaseComparaAdaptor.c])
