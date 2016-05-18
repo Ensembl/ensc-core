@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include "IDHash.h"
+#include "Vector.h"
 
 #define IDHash_getBucketNum(idHash,key) ((key)%(idHash)->size);
 

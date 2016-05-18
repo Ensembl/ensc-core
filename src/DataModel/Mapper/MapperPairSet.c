@@ -15,6 +15,7 @@
  */
 
 #include "MapperPairSet.h"
+#include "Vector.h"
 #include <stdio.h>
 #include <stdlib.h>
 
