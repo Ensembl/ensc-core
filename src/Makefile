@@ -5,9 +5,9 @@ CC = gcc
 
 # Allow the caller to disable compilation of programs with non-standard dependencies
 # by undefining these variables, i.e. make HAVE_SAMTOOLS= HAVE_LIBTCMALLOC= HAVE_LIBCONFIG=
-HAVE_SAMTOOLS?="yes"
-HAVE_LIBTCMALLOC?="yes"
-HAVE_LIBCONFIG?="yes"
+HAVE_SAMTOOLS?="no"
+HAVE_LIBTCMALLOC?="no"
+HAVE_LIBCONFIG?="no"
 
 # use libs_r for thread safe version
 MYSQLCFLAGS=${shell mysql_config --cflags}
