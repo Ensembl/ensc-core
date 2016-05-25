@@ -35,14 +35,14 @@ TranslateTest \
 VectorTest
 
 TEST_LIBS = \
-$(top_builddir)/Compara/DataAdaptors/.libs/libComparaDataAdaptors.a \
-$(top_builddir)/Compara/DataModel/.libs/libComparaDataModel.a \
-$(top_builddir)/DataAdaptors/.libs/libDataAdaptors.a \
-$(top_builddir)/DataModel/.libs/libDataModel.a \
-$(top_builddir)/DataModel/Basic/.libs/libDataModelBasic.a \
-$(top_builddir)/DataModel/Mapper/.libs/libDataModelMapper.a \
-$(top_builddir)/OBDA/.libs/libOBDA.a \
-$(top_builddir)/Util/.libs/libUtil.a \
+$(top_builddir)/Util/libUtil.la \
+$(top_builddir)/DataModel/Basic/libDataModelBasic.la \
+$(top_builddir)/DataModel/Mapper/libDataModelMapper.la \
+$(top_builddir)/DataModel/libDataModel.la \
+$(top_builddir)/DataAdaptors/libDataAdaptors.la \
+$(top_builddir)/Compara/DataAdaptors/libComparaDataAdaptors.la \
+$(top_builddir)/Compara/DataModel/libComparaDataModel.la \
+$(top_builddir)/OBDA/libOBDA.la \
 $(NULL)
 
 AssemblyMapperTest_SOURCES = AssemblyMapperTest.c BaseRODBTest.h BaseTest.h
@@ -95,6 +95,10 @@ if HAVE_LIBCONFIG
 endif 
 
 
+TEST_LIBS += $(MYSQL_LDFLAGS)
+
+
+
 AssemblyMapperTest_LDADD = $(TEST_LIBS)
 CacheTest_LDADD = $(TEST_LIBS)
 ChainedAssemblyMapperTest_LDADD = $(TEST_LIBS)
@@ -122,8 +126,6 @@ SyntenyTest_LDADD = $(TEST_LIBS)
 TopLevelAssemblyMapperTest_LDADD = $(TEST_LIBS)
 TranslateTest_LDADD = $(TEST_LIBS)
 VectorTest_LDADD = $(TEST_LIBS)
-
-TEST_LIBS += $(MYSQL_LDFLAGS)
 
 
 # Extra files to remove for the maintainer-clean target.

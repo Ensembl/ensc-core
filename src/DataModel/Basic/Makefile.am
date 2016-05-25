@@ -6,11 +6,13 @@ SUBDIRS = .
 noinst_LTLIBRARIES = libDataModelBasic.la
 
 include_HEADERS = \
-Vector.h
+Vector.h \
+IDHash.h \
 $(NULL)
 
 libDataModelBasic_la_SOURCES = \
-Vector.c
+Vector.c \
+IDHash.c \
 $(NULL)
 
 

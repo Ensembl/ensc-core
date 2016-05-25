@@ -3,7 +3,7 @@
 # Process this file with automake to create Makefile.in.
 #
 
-SUBDIRS = Compara DataAdaptors DataModel OBDA Util Programs Tests
+SUBDIRS = Util DataModel DataAdaptors Compara OBDA Programs Tests
 
 ACLOCAL_AMFLAGS = -I m4
 
@@ -13,14 +13,14 @@ lib_LTLIBRARIES = libensc.la
 libensc_la_SOURCES = 
 
 libensc_la_LIBADD = \
-Compara/DataAdaptors/libComparaDataAdaptors.la \
-Compara/DataModel/libComparaDataModel.la \
-DataAdaptors/libDataAdaptors.la \
-DataModel/libDataModel.la \
+Util/libUtil.la \
 DataModel/Basic/libDataModelBasic.la \
 DataModel/Mapper/libDataModelMapper.la \
+DataModel/libDataModel.la \
+DataAdaptors/libDataAdaptors.la \
+Compara/DataModel/libComparaDataModel.la \
+Compara/DataAdaptors/libComparaDataAdaptors.la \
 OBDA/libOBDA.la \
-Util/libUtil.la \
 $(NULL)
 
 

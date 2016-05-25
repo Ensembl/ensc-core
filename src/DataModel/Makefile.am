@@ -23,7 +23,6 @@ DBEntry.h \
 DNAAlignFeature.h \
 DNAPepAlignFeature.h \
 DataModelTypes.h \
-EnsC.h \
 EnsRoot.h \
 Exon.h \
 FeaturePair.h \
@@ -75,7 +74,6 @@ CoordSystem.c \
 DBEntry.c \
 DNAAlignFeature.c \
 DNAPepAlignFeature.c \
-EnsC.c \
 Exon.c \
 FeaturePair.c \
 FeatureSet.c \

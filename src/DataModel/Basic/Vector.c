@@ -17,8 +17,8 @@
 #define __VECTOR_MAIN__
 #include "Vector.h"
 #undef __VECTOR_MAIN__
-#include "EnsC.h"
-#include "ProcUtil.h"
+//#include "EnsC.h"
+//#include "ProcUtil.h"
 
 #include <string.h>
 
