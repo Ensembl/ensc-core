@@ -1,5 +1,5 @@
 
-SUBDIRS = DataAdaptors DataModel
+SUBDIRS = DataModel DataAdaptors
 
 # Extra files to remove for the maintainer-clean target.
 #
