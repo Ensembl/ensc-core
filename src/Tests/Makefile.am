@@ -3,7 +3,7 @@ include $(top_srcdir)/Makefile.am.common
 
 SUBDIRS = .
 
-noinst_bindir = .
+noinst_bindir = $(abs_top_builddir)/bin
 
 noinst_bin_PROGRAMS = \
 AssemblyMapperTest \
