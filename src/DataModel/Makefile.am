@@ -1,7 +1,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-SUBDIRS = . Basic Mapper
+SUBDIRS = Basic Mapper .
 
 noinst_LTLIBRARIES = libDataModel.la
 
