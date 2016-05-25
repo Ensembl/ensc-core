@@ -5,6 +5,17 @@ SUBDIRS = .
 
 bin_PROGRAMS = 
 
+PROG_LIBS = \
+$(top_builddir)/Util/libUtil.la \
+$(top_builddir)/DataModel/Basic/libDataModelBasic.la \
+$(top_builddir)/DataModel/Mapper/libDataModelMapper.la \
+$(top_builddir)/DataModel/libDataModel.la \
+$(top_builddir)/DataAdaptors/libDataAdaptors.la \
+$(top_builddir)/Compara/DataAdaptors/libComparaDataAdaptors.la \
+$(top_builddir)/Compara/DataModel/libComparaDataModel.la \
+$(top_builddir)/OBDA/libOBDA.la \
+$(NULL)
+
 if HAVE_SAMTOOLS
   bin_PROGRAMS += bamcount bamcount_exon bamcov bammap countsnps fastasplit indicate moveperl testdbc
 
@@ -18,10 +29,22 @@ if HAVE_SAMTOOLS
   moveperl_SOURCES = moveperl.c
   testdbc_SOURCES = testdbc.c
 
+  bamcount_LDADD = $(PROG_LIBS)
+  bamcount_exon_LDADD = $(PROG_LIBS)
+  bamcov_LDADD = $(PROG_LIBS)
+  bammap_LDADD = $(PROG_LIBS)
+  countsnps_LDADD = $(PROG_LIBS)
+  fastasplit_LDADD = $(PROG_LIBS)
+  indicate_LDADD = $(PROG_LIBS)
+  moveperl_LDADD = $(PROG_LIBS)
+  testdbc_LDADD = $(PROG_LIBS)
+
   if HAVE_LIBTCMALLOC
     bin_PROGRAMS += RefineSolexaGenes
 
     RefineSolexaGenes_SOURCES = RefineSolexaGenes.c RefineSolexaGenes.h 
+
+    RefineSolexaGenes_LDADD = $(PROG_LIBS)
   endif
 endif
 

@@ -15,6 +15,10 @@ Vector.c \
 IDHash.c \
 $(NULL)
 
+libDataModelBasic_la_LIBADD = \
+$(top_builddir)/Util/libUtil.la \
+$(NULL)
+
 
 # Extra files to remove for the maintainer-clean target.
 #
