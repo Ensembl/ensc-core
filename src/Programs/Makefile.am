@@ -39,13 +39,13 @@ if HAVE_SAMTOOLS
   moveperl_LDADD = $(PROG_LIBS)
   testdbc_LDADD = $(PROG_LIBS)
 
-  if HAVE_LIBTCMALLOC
-    bin_PROGRAMS += RefineSolexaGenes
+if HAVE_LIBTCMALLOC
+  bin_PROGRAMS += RefineSolexaGenes
 
-    RefineSolexaGenes_SOURCES = RefineSolexaGenes.c RefineSolexaGenes.h 
+  RefineSolexaGenes_SOURCES = RefineSolexaGenes.c RefineSolexaGenes.h 
 
-    RefineSolexaGenes_LDADD = $(PROG_LIBS)
-  endif
+  RefineSolexaGenes_LDADD = $(PROG_LIBS)
+endif
 endif
 
 

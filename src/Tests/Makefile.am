@@ -5,6 +5,10 @@ SUBDIRS = .
 
 noinst_bindir = $(abs_top_builddir)/bin
 
+#
+# PROGRAMS
+#
+
 noinst_bin_PROGRAMS = \
 AssemblyMapperTest \
 CacheTest \
@@ -34,17 +38,22 @@ TopLevelAssemblyMapperTest \
 TranslateTest \
 VectorTest
 
-TEST_LIBS = \
-$(top_builddir)/Util/libUtil.la \
-$(top_builddir)/DataModel/Basic/libDataModelBasic.la \
-$(top_builddir)/DataModel/Mapper/libDataModelMapper.la \
-$(top_builddir)/DataModel/libDataModel.la \
-$(top_builddir)/DataAdaptors/libDataAdaptors.la \
-$(top_builddir)/Compara/DataAdaptors/libComparaDataAdaptors.la \
-$(top_builddir)/Compara/DataModel/libComparaDataModel.la \
-$(top_builddir)/OBDA/libOBDA.la \
-$(NULL)
+if HAVE_LIBCONFIG
+if HAVE_LIBTCMALLOC
+  noinst_bin_PROGRAMS += \
+        DNAAlignFeatureTest \
+        DNAAlignFeatureWriteTest \
+        FreeTest \
+        GeneTest \
+        GeneWriteTest \
+        SimpleFeatureWriteTest
+endif
+endif 
 
+
+#
+# SOURCES
+#
 AssemblyMapperTest_SOURCES = AssemblyMapperTest.c BaseRODBTest.h BaseTest.h
 CacheTest_SOURCES = CacheTest.c BaseTest.h
 ChainedAssemblyMapperTest_SOURCES = ChainedAssemblyMapperTest.c BaseRODBTest.h BaseTest.h
@@ -74,30 +83,39 @@ TranslateTest_SOURCES = TranslateTest.c BaseTest.h
 VectorTest_SOURCES = VectorTest.c BaseTest.h                                                        
 
 if HAVE_LIBCONFIG
-  if HAVE_LIBTCMALLOC
-    noinst_bin_PROGRAMS += \
-          DNAAlignFeatureTest \
-          DNAAlignFeatureWriteTest \
-          FreeTest \
-          GeneTest \
-          GeneWriteTest \
-          SimpleFeatureWriteTest
-
-    TEST_LIBS += $(DEPS_LIBCONFIG) $(DEPS_LIBTCMALLOC)
-
-    DNAAlignFeatureTest_SOURCES = DNAAlignFeatureTest.c BaseRODBTest.h BaseTest.h
-    DNAAlignFeatureWriteTest_SOURCES = DNAAlignFeatureWriteTest.c BaseRODBTest.h BaseRWDBTest.h BaseTest.h
-    FreeTest_SOURCES = FreeTest.c BaseRODBTest.h BaseTest.h
-    GeneTest_SOURCES = GeneTest.c BaseRODBTest.h BaseTest.h
-    GeneWriteTest_SOURCES = GeneWriteTest.c BaseRODBTest.h BaseRWDBTest.h BaseTest.h
-    SimpleFeatureWriteTest_SOURCES = SimpleFeatureWriteTest.c BaseRODBTest.h BaseRWDBTest.h BaseTest.h
-  endif
+if HAVE_LIBTCMALLOC
+  DNAAlignFeatureTest_SOURCES = DNAAlignFeatureTest.c BaseRODBTest.h BaseTest.h
+  DNAAlignFeatureWriteTest_SOURCES = DNAAlignFeatureWriteTest.c BaseRODBTest.h BaseRWDBTest.h BaseTest.h
+  FreeTest_SOURCES = FreeTest.c BaseRODBTest.h BaseTest.h
+  GeneTest_SOURCES = GeneTest.c BaseRODBTest.h BaseTest.h
+  GeneWriteTest_SOURCES = GeneWriteTest.c BaseRODBTest.h BaseRWDBTest.h BaseTest.h
+  SimpleFeatureWriteTest_SOURCES = SimpleFeatureWriteTest.c BaseRODBTest.h BaseRWDBTest.h BaseTest.h
+endif
 endif 
 
 
+#
+# LIBS
+#
+
+TEST_LIBS = \
+$(top_builddir)/Util/libUtil.la \
+$(top_builddir)/DataModel/Basic/libDataModelBasic.la \
+$(top_builddir)/DataModel/Mapper/libDataModelMapper.la \
+$(top_builddir)/DataModel/libDataModel.la \
+$(top_builddir)/DataAdaptors/libDataAdaptors.la \
+$(top_builddir)/Compara/DataAdaptors/libComparaDataAdaptors.la \
+$(top_builddir)/Compara/DataModel/libComparaDataModel.la \
+$(top_builddir)/OBDA/libOBDA.la \
+$(NULL)
+
+if HAVE_LIBCONFIG
+if HAVE_LIBTCMALLOC
+  TEST_LIBS += $(DEPS_LIBCONFIG_LIBS) -ltcmalloc
+endif
+endif 
+
 TEST_LIBS += $(MYSQL_LDFLAGS)
-
-
 
 AssemblyMapperTest_LDADD = $(TEST_LIBS)
 CacheTest_LDADD = $(TEST_LIBS)
@@ -126,6 +144,17 @@ SyntenyTest_LDADD = $(TEST_LIBS)
 TopLevelAssemblyMapperTest_LDADD = $(TEST_LIBS)
 TranslateTest_LDADD = $(TEST_LIBS)
 VectorTest_LDADD = $(TEST_LIBS)
+
+if HAVE_LIBCONFIG
+if HAVE_LIBTCMALLOC
+  DNAAlignFeatureTest_LDADD = $(TEST_LIBS)
+  DNAAlignFeatureWriteTest_LDADD = $(TEST_LIBS)
+  FreeTest_LDADD = $(TEST_LIBS)
+  GeneTest_LDADD = $(TEST_LIBS)
+  GeneWriteTest_LDADD = $(TEST_LIBS)
+  SimpleFeatureWriteTest_LDADD = $(TEST_LIBS)
+endif
+endif 
 
 
 # Extra files to remove for the maintainer-clean target.

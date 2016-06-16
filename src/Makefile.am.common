@@ -5,6 +5,7 @@ AM_CXXFLAGS = -std=c++0x
 
 AM_CPPFLAGS = \
 $(DEPS_CFLAGS) \
+$(DEPS_LIBCONFIG_CFLAGS) \
 $(MYSQL_CFLAGS) \
 -I$(top_srcdir) \
 -I$(top_srcdir)/Compara/DataAdaptors \

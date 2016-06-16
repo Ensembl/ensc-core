@@ -76,36 +76,34 @@ AX_LIB_MYSQL()           # Standard macro to test for mysql
 AM_CONDITIONAL([HAVE_MYSQL_LIB], [ test -n "$MYSQL_VERSION" ])
 AM_COND_IF([HAVE_MYSQL_LIB], [AC_SUBST([HAVE_MYSQL_LIB], ['mysql lib is available'])])
 AM_COND_IF([HAVE_MYSQL_LIB], [AC_DEFINE([HAVE_MYSQL_LIB], [1], [define to 1 if mysql lib is available])])
+AM_COND_IF([HAVE_MYSQL_LIB], [[ CFLAGS="$CFLAGS $MYSQL_CFLAGS" ]])
 
 # Also need to check for headers - need mysql include directory in cflags or AC_CHECK_HEADERS
 # fails
-AM_COND_IF([HAVE_MYSQL_LIB], [[ CFLAGS="$CFLAGS $MYSQL_CFLAGS" ]])
 AC_CHECK_HEADERS([mysql.h], [HAVE_MYSQL_HEADER=1])
-
 AM_CONDITIONAL([HAVE_MYSQL], [ test -n "$HAVE_MYSQL_HEADER" && test -n "$HAVE_MYSQL_LIB" ])
+AM_COND_IF([HAVE_MYSQL], [ echo 'mysql is available' ])
 AM_COND_IF([HAVE_MYSQL], [AC_SUBST(HAVE_MYSQL, 'mysql is available')])
 AM_COND_IF([HAVE_MYSQL], [AC_DEFINE(HAVE_MYSQL, [1], [define to 1 if mysql is available])])
 
-
 AC_CHECK_HEADERS([sam.h], [HAVE_SAMTOOLS_HEADER=1])
 AM_CONDITIONAL([HAVE_SAMTOOLS], [ test -n "$HAVE_SAMTOOLS_HEADER" ])
+AM_COND_IF([HAVE_SAMTOOLS], [ echo 'samtools_parallel is available' ])
 AM_COND_IF([HAVE_SAMTOOLS], [AC_SUBST([HAVE_SAMTOOLS], ['samtools_parallel is available'])])
 AM_COND_IF([HAVE_SAMTOOLS], [AC_DEFINE([HAVE_SAMTOOLS], [1], [define to 1 if samtools_parallel is available])])
 
+PKG_CHECK_MODULES([DEPS_LIBCONFIG], [libconfig], [HAVE_LIBCONFIG=1], [HAVE_LIBCONFIG=])
+AM_CONDITIONAL([HAVE_LIBCONFIG], [ test -n "$DEPS_LIBCONFIG_LIBS" || test -n "DEPS_LIBCONFIG_CFLAGS" ])
+AM_COND_IF([HAVE_LIBCONFIG], [ echo 'libconfig is available' ])
+AM_COND_IF([HAVE_LIBCONFIG], [AC_SUBST([HAVE_LIBCONFIG], ['libconfig is available'])])
+AM_COND_IF([HAVE_LIBCONFIG], [AC_DEFINE([HAVE_LIBCONFIG], [1], [define to 1 if libconfig is available])])
 
-AC_CHECK_HEADERS([libconfig.h], [HAVE_LIBCONFIG_HEADER=1])
-AM_CONDITIONAL([HAVE_LIBCONFIG], [ test -n "$HAVE_LIBCONFIG_HEADER" ])
-AM_COND_IF([HAVE_LIBCONFIG], [AC_SUBST([HAVE_LIBONFIG], ['libconfig is available'])])
-AM_COND_IF([HAVE_LIBCONFIG], [AC_DEFINE([HAVE_LIBONFIG], [1], [defien to 1 if libconfig is available])])
-
-AC_CHECK_HEADERS([tcmalloc.h], [HAVE_LIBTCMALLOC_HEADER=1])
+AC_CHECK_HEADERS([gperftools/tcmalloc.h], [HAVE_LIBTCMALLOC_HEADER=1])
 AM_CONDITIONAL([HAVE_LIBTCMALLOC], [ test -n "$HAVE_LIBTCMALLOC_HEADER" ])
+AM_COND_IF([HAVE_LIBTCMALLOC], [ echo 'libtcmalloc is available' ])
 AM_COND_IF([HAVE_LIBTCMALLOC], [AC_SUBST([HAVE_LIBTCMALLOC], ['libtcmalloc is available'])])
 AM_COND_IF([HAVE_LIBTCMALLOC], [AC_DEFINE([HAVE_LIBTCMALLOC], [1], [define to 1 if libtcmalloc is available])])
 
-
-PKG_CHECK_MODULES([DEPS_LIBCONFIG], [libconfig], [HAVE_LIBCONFIG=1], [HAVE_LIBCONFIG=])
-PKG_CHECK_MODULES([DEPS_LIBTCMALLOC], [libtcmalloc], [HAVE_LIBTCMALLOC=1], [HAVE_LIBTCMALLOC=])
 
 AC_DEFINE([HAVE_LIBCONFIG], [1], [Define to 1 if libconfig is available])
 AC_DEFINE([HAVE_LIBTCMALLOC], [1], [Define to 1 if libtcmalloc is available])
