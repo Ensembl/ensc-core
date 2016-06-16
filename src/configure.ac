@@ -139,6 +139,11 @@ then
   echo
 fi
 
+if test -z "$HAVE_SAMTOOLS"
+then
+  echo " samtools not available: some functions will be disabled"; echo
+fi
+
 if test -z "$HAVE_LIBCONFIG"
 then
   echo " libconfig not available: some functions will be disabled"; echo

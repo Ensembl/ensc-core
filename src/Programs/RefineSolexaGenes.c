@@ -41,6 +41,7 @@
 #include "MetaContainer.h"
 
 #include "libconfig.h"
+#include "gperftools/tcmalloc.h"
 
 #include "sam.h"
 #include "bam.h"

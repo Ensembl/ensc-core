@@ -19,6 +19,8 @@ $(NULL)
 if HAVE_SAMTOOLS
   bin_PROGRAMS += bamcount bamcount_exon bamcov bammap countsnps fastasplit indicate moveperl testdbc
 
+  PROG_LIBS += -lbam -lz
+
   bamcount_SOURCES = bamcount.c
   bamcount_exon_SOURCES = bamcount_exon.c
   bamcov_SOURCES = bamcov.c
@@ -41,9 +43,9 @@ if HAVE_SAMTOOLS
 
 if HAVE_LIBTCMALLOC
   bin_PROGRAMS += RefineSolexaGenes
-
   RefineSolexaGenes_SOURCES = RefineSolexaGenes.c RefineSolexaGenes.h 
 
+  PROG_LIBS += $(DEPS_LIBCONFIG_LIBS) -ltcmalloc
   RefineSolexaGenes_LDADD = $(PROG_LIBS)
 endif
 endif

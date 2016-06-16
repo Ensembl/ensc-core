@@ -19,6 +19,7 @@ $(NULL)
 libOBDA_la_LIBADD = \
 $(top_builddir)/Util/libUtil.la \
 $(top_builddir)/DataModel/Basic/libDataModelBasic.la \
+$(top_builddir)/DataModel/libDataModel.la \
 $(NULL)
 
 
