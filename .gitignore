@@ -14,6 +14,7 @@
 *.a
 *.la
 *.lo
+*.lai
 
 # Shared objects (inc. Windows DLLs)
 *.dll
@@ -28,6 +29,25 @@
 *.i*86
 *.x86_64
 *.hex
+
+# Debugging symbols
+*.dSYM
+
+# Autoconf files
+.deps
+aclocal.m4
+autom4te.cache
+config
+config.h
+config.h.in
+config.log
+config.status
+configure
+ensc_version.m4
+libtool
+Makefile
+Makefile.in
+stamp-h1
 
 # for this particular style of project executables have no extensions
 src/Tests/*Test
