@@ -54,5 +54,7 @@ src/Tests/*Test
 src/Programs/*
 !src/Programs/*.*
 src/Programs/*.*~
-
+src/Programs/.deps
+src/Programs/*.o
+src/Programs/Makefile.in
 
