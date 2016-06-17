@@ -8,6 +8,8 @@ Warning: This code is in the early stages of development. Do not
 
 To see it in action:
 cd src
+./autogen.sh
+./runconfig
 make
 Programs/testdbc
 
