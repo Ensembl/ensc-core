@@ -167,11 +167,11 @@ char *makeMappingPathKey(Vector *path, char *key) {
 */
 
 AssemblyMapper *AssemblyMapperAdaptor_fetchByCoordSystems(AssemblyMapperAdaptor *ama, CoordSystem *cs1, CoordSystem *cs2) {
-  if (CoordSystem_getIsTopLevel(cs1)) {
+  if (cs1 && CoordSystem_getIsTopLevel(cs1)) {
     return (AssemblyMapper *)TopLevelAssemblyMapper_new(ama, cs1, cs2);
   }
 
-  if (CoordSystem_getIsTopLevel(cs2)) {
+  if (cs2 && CoordSystem_getIsTopLevel(cs2)) {
     return (AssemblyMapper *)TopLevelAssemblyMapper_new(ama, cs2, cs1);
   }
 
@@ -266,8 +266,9 @@ AssemblyMapper *AssemblyMapperAdaptor_fetchByCoordSystems(AssemblyMapperAdaptor 
                      CoordSystem_getName(cs1), CoordSystem_getVersion(cs1),
                      CoordSystem_getName(cs2), CoordSystem_getVersion(cs2),
                      Vector_getNumElement(mappingPath));
-      exit(1);
   }
+
+  return NULL;
 }
 
 
@@ -301,26 +302,25 @@ AssemblyMapper *AssemblyMapperAdaptor_fetchByCoordSystems(AssemblyMapperAdaptor 
 */
 
 SeqRegionRange *AssemblyMapperAdaptor_addToRangeVector(Vector *ranges, IDType id, long start, long end, char *name) {
-  SeqRegionRange *range;
+  SeqRegionRange *range = NULL;
 
   if ((range = (SeqRegionRange *)calloc(1,sizeof(SeqRegionRange))) == NULL) {
     fprintf(stderr, "ERROR: Failed allocating space for SeqRegionRange\n");
-    exit(1);
+  } else {
+    SeqRegionRange_setSeqRegionStart(range, start);
+    SeqRegionRange_setSeqRegionEnd(range, end);
+    SeqRegionRange_setSeqRegionId(range, id);
+
+    if (name) SeqRegionRange_setSeqRegionName(range, name);
+
+    Vector_addElement(ranges, range);
   }
-  SeqRegionRange_setSeqRegionStart(range, start);
-  SeqRegionRange_setSeqRegionEnd(range, end);
-  SeqRegionRange_setSeqRegionId(range, id);
-
-  if (name) SeqRegionRange_setSeqRegionName(range, name);
-
-  Vector_addElement(ranges, range);
 
   return range; 
 }
 
 void AssemblyMapperAdaptor_registerAssembled(AssemblyMapperAdaptor *ama, AssemblyMapper *asmMapper, IDType asmSeqRegion, long asmStart, long asmEnd) {
 
-  IDType asmCsId = CoordSystem_getDbID(AssemblyMapper_getAssembledCoordSystem(asmMapper));
   IDType cmpCsId = CoordSystem_getDbID(AssemblyMapper_getComponentCoordSystem(asmMapper));
 
   //split up the region to be registered into fixed chunks
@@ -481,7 +481,7 @@ void AssemblyMapperAdaptor_registerAssembled(AssemblyMapperAdaptor *ama, Assembl
 IDType AssemblyMapperAdaptor_seqRegionNameToId(AssemblyMapperAdaptor *ama, char *srName, IDType csId) {
   if (srName == NULL || csId <= 0) {
     fprintf(stderr, "seq_region_name and coord_system_id args are required\n");
-    exit(1);
+    return 0;
   }
 
   char key[1024];
@@ -506,7 +506,7 @@ IDType AssemblyMapperAdaptor_seqRegionNameToId(AssemblyMapperAdaptor *ama, char 
 
   if (sth->numRows(sth) != 1) {
     fprintf(stderr,"Ambiguous or non-existant seq_region [%s] in coord system "IDFMTSTR" (numRowss = "IDFMTSTR")\n", srName,csId,sth->numRows(sth));
-    exit(1);
+    return 0;
   }
 
   
@@ -525,7 +525,7 @@ char *AssemblyMapperAdaptor_seqRegionIdToName(AssemblyMapperAdaptor *ama, IDType
 
   if (!srId) {
     fprintf(stderr,"seq_region_id is required");
-    exit(1);
+    return NULL;
   }
 
   if (IDHash_contains(ama->srIdCache, srId)) {
@@ -548,7 +548,7 @@ char *AssemblyMapperAdaptor_seqRegionIdToName(AssemblyMapperAdaptor *ama, IDType
 
   if (sth->numRows(sth) != 1) {
     fprintf(stderr, "non-existant seq_region ["IDFMTSTR"]\n", srId);
-    exit(1);
+    return NULL;
   }
 
   ResultRow *row = sth->fetchRow(sth);
@@ -590,7 +590,6 @@ char *AssemblyMapperAdaptor_seqRegionIdToName(AssemblyMapperAdaptor *ama, IDType
 
 void AssemblyMapperAdaptor_registerComponent(AssemblyMapperAdaptor *ama, AssemblyMapper *asmMapper, IDType cmpSeqRegion) {
 
-  IDType cmpCsId = CoordSystem_getDbID(AssemblyMapper_getComponentCoordSystem(asmMapper));
   IDType asmCsId = CoordSystem_getDbID(AssemblyMapper_getAssembledCoordSystem(asmMapper));
 
   // do nothing if this region is already registered or special case
@@ -639,7 +638,7 @@ void AssemblyMapperAdaptor_registerComponent(AssemblyMapperAdaptor *ama, Assembl
     fprintf(stderr,"Multiple assembled regions for single component region cmp_seq_region_id="IDFMTSTR"\n"
                    "Remember that multiple mappings use the #-operaator in the meta-table (i.e. chromosome:EquCab2#contig\n",
                    cmpSeqRegion);
-    exit(1);
+    return;
   }
 
   ResultRow *row = sth->fetchRow(sth);
@@ -709,7 +708,7 @@ void AssemblyMapperAdaptor_registerComponent(AssemblyMapperAdaptor *ama, Assembl
 void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAssemblyMapper *casmMapper, 
                                            char *from, IDType seqRegionId, Vector *ranges, Slice *toSlice ) {
 
-  IDType toSeqRegionId;
+  IDType toSeqRegionId = 0;
 
   if (toSlice != NULL) {
     if (!CoordSystem_compare(ChainedAssemblyMapper_getFirstCoordSystem(casmMapper), 
@@ -722,7 +721,7 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
     // NIY can we do not defined?? Use 0 for now if (!defined($to_seq_region_id)){
     if (!toSeqRegionId) {
       fprintf(stderr, "Could not get seq_region_id for to_slice %s\n", Slice_getSeqRegionName(toSlice));
-      exit(1);
+      return ;
     }
   }
 
@@ -755,7 +754,7 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
     endName         = AMA_FIRST;
   } else {
     fprintf(stderr, "Invalid from argument: [%s], must be 'first' or 'last'",from);
-    exit(1);
+    return;
   }
 
   Mapper *combinedMapper  = ChainedAssemblyMapper_getFirstLastMapper(casmMapper);
@@ -796,7 +795,7 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
                      CoordSystem_getName(startCs), CoordSystem_getVersion(startCs),
                      CoordSystem_getName(midCs), CoordSystem_getVersion(midCs),
                      len, pathStr);
-    exit(1);
+    return;
   }
 
   StatementHandle *sth;
@@ -997,7 +996,7 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
                      CoordSystem_getName(midCs), CoordSystem_getVersion(midCs),
                      CoordSystem_getName(endCs), CoordSystem_getVersion(endCs),
                      len, pathStr);
-    exit(1);
+    return;
   }
 
   if (toSlice != NULL) {
@@ -1026,7 +1025,6 @@ void AssemblyMapperAdaptor_registerChained(AssemblyMapperAdaptor *ama, ChainedAs
     SeqRegionRange *midRange = Vector_getElementAt(midRanges, i);
 
     IDType midSeqRegionId = SeqRegionRange_getSeqRegionId(midRange);
-    char *midSeqRegion    = SeqRegionRange_getSeqRegionName(midRange); 
     long start            = SeqRegionRange_getSeqRegionStart(midRange);
     long end              = SeqRegionRange_getSeqRegionEnd(midRange);
 
@@ -1176,7 +1174,7 @@ void AssemblyMapperAdaptor_registerChainedSpecial(AssemblyMapperAdaptor *ama, Ch
     endName         = AMA_FIRST;
   } else {
     fprintf(stderr, "Invalid from argument: [%s], must be 'first' or 'last'",from);
-    exit(1);
+    return;
   }
 
   Mapper *combinedMapper  = ChainedAssemblyMapper_getFirstLastMapper(casmMapper);
@@ -1211,7 +1209,7 @@ void AssemblyMapperAdaptor_registerChainedSpecial(AssemblyMapperAdaptor *ama, Ch
                      CoordSystem_getName(startCs), CoordSystem_getVersion(startCs),
                      CoordSystem_getName(midCs), CoordSystem_getVersion(midCs),
                      len, pathStr);
-    exit(1);
+    return;
   }
 
   CoordSystem *asmCs;
@@ -1504,7 +1502,7 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
   Mapper *endMidMapper   = ChainedAssemblyMapper_getLastMiddleMapper(casmMapper);
   Mapper *combinedMapper = ChainedAssemblyMapper_getFirstLastMapper(casmMapper);
 
-  Vector *ranges;
+  Vector *ranges = NULL;
 
   char qStr[1024];
   sprintf(qStr,"SELECT "
@@ -1555,7 +1553,7 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
                      CoordSystem_getName(firstCs), CoordSystem_getVersion(firstCs),
                      CoordSystem_getName(midCs), CoordSystem_getVersion(midCs),
                      len, pathStr);
-    exit(1);
+    return;
   }
 
   CoordSystem *asmCs = Vector_getElementAt(path,0);
@@ -1600,37 +1598,39 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
   ResultRow *row;
   while ((row = sth->fetchRow(sth))) {
     if (!CoordSystem_compare(asmCs,firstCs)) {
-      long midStart           = row->getLongAt(row,0);
-      long midEnd             = row->getLongAt(row,1);
-      IDType midSeqRegionId   = row->getLongLongAt(row,2);
-      char *midSeqRegion      = row->getStringAt(row,3);
-      long midLength          = row->getLongAt(row,4);
-      int  ori                = row->getIntAt(row,5);
-      long startStart         = row->getLongAt(row,6);
-      long startEnd           = row->getLongAt(row,7);
-      IDType startSeqRegionId = row->getLongLongAt(row,8);
-      char *startSeqRegion    = row->getStringAt(row,9);
-      long startLength        = row->getLongAt(row,10);
+      midStart           = row->getLongAt(row,0);
+      midEnd             = row->getLongAt(row,1);
+      midSeqRegionId   = row->getLongLongAt(row,2);
+      midSeqRegion      = row->getStringAt(row,3);
+      midLength          = row->getLongAt(row,4);
+      ori                = row->getIntAt(row,5);
+      startStart         = row->getLongAt(row,6);
+      startEnd           = row->getLongAt(row,7);
+      startSeqRegionId = row->getLongLongAt(row,8);
+      startSeqRegion    = row->getStringAt(row,9);
+      startLength        = row->getLongAt(row,10);
 
     } else {
-      long startStart         = row->getLongAt(row,0);
-      long startEnd           = row->getLongAt(row,1);
-      IDType startSeqRegionId = row->getLongLongAt(row,2);
-      char *startSeqRegion    = row->getStringAt(row,3);
-      long startLength        = row->getLongAt(row,4);
-      int  ori                = row->getIntAt(row,5);
-      long midStart           = row->getLongAt(row,6);
-      long midEnd             = row->getLongAt(row,7);
-      IDType midSeqRegionId   = row->getLongLongAt(row,8);
-      char *midSeqRegion      = row->getStringAt(row,9);
-      long midLength          = row->getLongAt(row,10);
+      startStart         = row->getLongAt(row,0);
+      startEnd           = row->getLongAt(row,1);
+      startSeqRegionId = row->getLongLongAt(row,2);
+      startSeqRegion    = row->getStringAt(row,3);
+      startLength        = row->getLongAt(row,4);
+      ori                = row->getIntAt(row,5);
+      midStart           = row->getLongAt(row,6);
+      midEnd             = row->getLongAt(row,7);
+      midSeqRegionId   = row->getLongLongAt(row,8);
+      midSeqRegion      = row->getStringAt(row,9);
+      midLength          = row->getLongAt(row,10);
     }
 
     Mapper_addMapCoordinates(mapper,
        startSeqRegionId, startStart, startEnd, ori,
        midSeqRegionId, midStart, midEnd);
 
-    AssemblyMapperAdaptor_addToRangeVector(ranges, startSeqRegionId, startStart, startEnd, NULL);  
+    /* gb10: ranges doesn't seem to get set so surely this can't work?! */
+    if (ranges)
+      AssemblyMapperAdaptor_addToRangeVector(ranges, startSeqRegionId, startStart, startEnd, NULL);  
 
     RangeRegistry_checkAndRegister(reg, startSeqRegionId, 1, startLength, 1, startLength, 0 );
 
@@ -1669,7 +1669,7 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
                      CoordSystem_getName(midCs), CoordSystem_getVersion(midCs),
                      CoordSystem_getName(lastCs), CoordSystem_getVersion(lastCs),
                      len, pathStr);
-    exit(1);
+    return;
   }
 
   asmCs = Vector_getElementAt(path,0);
@@ -1688,30 +1688,30 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
 
   while ((row = sth->fetchRow(sth))) {
     if (!CoordSystem_compare(asmCs,midCs)) {
-      long endStart         = row->getLongAt(row,0);
-      long endEnd           = row->getLongAt(row,1);
-      IDType endSeqRegionId = row->getLongLongAt(row,2);
-      char *endSeqRegion    = row->getStringAt(row,3);
-      long endLength        = row->getLongAt(row,4);
-      int  ori              = row->getIntAt(row,5);
-      long midStart         = row->getLongAt(row,6);
-      long midEnd           = row->getLongAt(row,7);
-      IDType midSeqRegionId = row->getLongLongAt(row,8);
-      char *midSeqRegion    = row->getStringAt(row,9);
-      long midLength        = row->getLongAt(row,10);
+      endStart         = row->getLongAt(row,0);
+      endEnd           = row->getLongAt(row,1);
+      endSeqRegionId = row->getLongLongAt(row,2);
+      endSeqRegion    = row->getStringAt(row,3);
+      endLength        = row->getLongAt(row,4);
+      ori              = row->getIntAt(row,5);
+      midStart         = row->getLongAt(row,6);
+      midEnd           = row->getLongAt(row,7);
+      midSeqRegionId = row->getLongLongAt(row,8);
+      midSeqRegion    = row->getStringAt(row,9);
+      midLength        = row->getLongAt(row,10);
 
     } else {
-      long midStart         = row->getLongAt(row,0);
-      long midEnd           = row->getLongAt(row,1);
-      IDType midSeqRegionId = row->getLongLongAt(row,2);
-      char *midSeqRegion    = row->getStringAt(row,3);
-      long midLength        = row->getLongAt(row,4);
-      int  ori              = row->getIntAt(row,5);
-      long endStart         = row->getLongAt(row,6);
-      long endEnd           = row->getLongAt(row,7);
-      IDType endSeqRegionId = row->getLongLongAt(row,8);
-      char *endSeqRegion    = row->getStringAt(row,9);
-      long endLength        = row->getLongAt(row,10);
+      midStart         = row->getLongAt(row,0);
+      midEnd           = row->getLongAt(row,1);
+      midSeqRegionId = row->getLongLongAt(row,2);
+      midSeqRegion    = row->getStringAt(row,3);
+      midLength        = row->getLongAt(row,4);
+      ori              = row->getIntAt(row,5);
+      endStart         = row->getLongAt(row,6);
+      endEnd           = row->getLongAt(row,7);
+      endSeqRegionId = row->getLongLongAt(row,8);
+      endSeqRegion    = row->getStringAt(row,9);
+      endLength        = row->getLongAt(row,10);
     }
 
     Mapper_addMapCoordinates(endMidMapper, 
@@ -1740,6 +1740,7 @@ void AssemblyMapperAdaptor_registerAllChained(AssemblyMapperAdaptor *ama, Chaine
 // results into the combined mapper
 void AssemblyMapperAdaptor_buildCombinedMapper(AssemblyMapperAdaptor *ama, Vector *ranges, Mapper *startMidMapper, 
                                               Mapper *endMidMapper, Mapper *combinedMapper, char *startName) {
+  int ok = 1;
   int i;
   for (i=0; i<Vector_getNumElement(ranges); i++) {
     SeqRegionRange *range = Vector_getElementAt(ranges, i);
@@ -1764,7 +1765,8 @@ void AssemblyMapperAdaptor_buildCombinedMapper(AssemblyMapperAdaptor *ama, Vecto
 
       if (icoord->rangeType != MAPPERRANGE_COORD) {
         fprintf(stderr,"Belt and Braces check for icoord being a MAPPERRANGE_COORD. Its a %d\n", icoord->rangeType);
-        exit(1);
+        ok = 0;
+        break;
       }
 
       MapperCoordinate *coordICoord = (MapperCoordinate *)icoord;
@@ -1800,7 +1802,10 @@ void AssemblyMapperAdaptor_buildCombinedMapper(AssemblyMapperAdaptor *ama, Vecto
       }
       MapperRangeSet_free(finalCoords);
     }
-    MapperRangeSet_free(initialCoords);
+
+    if (ok) {
+      MapperRangeSet_free(initialCoords);
+    }
   }
   //all done!
 }
@@ -1827,6 +1832,7 @@ void AssemblyMapperAdaptor_buildCombinedMapper(AssemblyMapperAdaptor *ama, Vecto
 
 Vector *AssemblyMapperAdaptor_seqRegionsToIds(AssemblyMapperAdaptor *ama, CoordSystem *coordSystem, Vector *seqRegions) {
 
+  int ok = 1;
   IDType csId = CoordSystem_getDbID(coordSystem);
 
   Vector *out = Vector_new();
@@ -1848,12 +1854,18 @@ Vector *AssemblyMapperAdaptor_seqRegionsToIds(AssemblyMapperAdaptor *ama, CoordS
 
       if ((idP = (IDType *)calloc(1,sizeof(IDType))) == NULL) {
         fprintf(stderr, "ERROR: Failed allocating space for idP\n");
-        exit(1);
+        ok = 0;
+        break;
       }
       *idP = id;
       
       Vector_addElement(out, idP);
     }
+  }
+
+  if (!ok) {
+    Vector_free(out);
+    out = NULL;
   }
 
   return out;

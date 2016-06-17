@@ -41,6 +41,7 @@
 #include "MetaContainer.h"
 
 #include "libconfig.h"
+#include "gperftools/tcmalloc.h"
 
 #include "sam.h"
 #include "bam.h"
@@ -1780,10 +1781,14 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
             char *startP;
             char *endP;
             char *middleP;
-            char start[100000];  startP  = start;
-            char end[100000];    endP    = end;
-            char middle[100000]; middleP = middle;
             
+            char *start = (char *)calloc(100000,sizeof(char));
+            char *end = (char *)calloc(100000,sizeof(char));
+            char *middle = (char *)calloc(100000,sizeof(char));
+
+            startP  = start;
+            endP    = end;
+            middleP = middle;
 
             int m;
             for (m=0; m<nArray; m++)  {
@@ -1845,6 +1850,9 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
               free(array[m]);
             }
             free(array);
+            free(start);
+            free(end);
+            free(middle);
           }
           
           //fprintf(stderr, "Have %d paths to remove\n", nPathsToRemove);
@@ -2632,7 +2640,7 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
       //fprintf(stderr, "TRANSCRIPT %d Exon use %s biotype %s\n", ted->depth, ted->exonUse, Gene_getBiotype(gene));
       int es = 0;
       int ee = 0;
-      char pattern[65500];
+      char *pattern = (char *)calloc(65550,sizeof(char));
       pattern[0] = '\0';
       Transcript *trans = Gene_getTranscriptAt(gene, 0);
       int k;
@@ -2666,6 +2674,8 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
       } else {
         StringHash_add(exonPattern, pattern, &trueVal);
       }
+
+      free(pattern);
     } 
     IDHash_free(exonStarts, NULL);
     IDHash_free(exonEnds, NULL);
@@ -4188,7 +4198,7 @@ StringHash *RefineSolexaGenes_processPaths(RefineSolexaGenes *rsg, Vector *exons
   // work out all the possible paths given the features we have
   int result = 0;
   StringHash *paths = StringHash_new(STRINGHASH_LARGE);
-  char soFar[1000000];
+  char *soFar = (char *)calloc(1000000,sizeof(char));
   for (i=0; i<Vector_getNumElement(exons) && result != PT_ERROR; i++) {
     limit = 0;
 // Instead of undef for sofar I pass in ""
@@ -4209,6 +4219,7 @@ StringHash *RefineSolexaGenes_processPaths(RefineSolexaGenes *rsg, Vector *exons
 
   StringHash_free(variants, StringHash_freeNoValFree);
 
+  free(soFar);
   return paths;
 }
 

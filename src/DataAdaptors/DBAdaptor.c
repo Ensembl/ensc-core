@@ -42,6 +42,7 @@
 #include "TranslationAdaptor.h"
 #include "MetaCoordContainer.h"
 #include "TranscriptSupportingFeatureAdaptor.h"
+#include "PredictionExonAdaptor.h"
 
 #include "StrUtil.h"
 #include "SeqRegionCacheEntry.h"

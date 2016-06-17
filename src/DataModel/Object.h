@@ -53,6 +53,7 @@ struct ObjectStruct {
 #undef FUNCSTRUCTTYPE
 
 void Object_freeImpl(Object *obj);
+void Object_errorUnimplementedMethod(Object *obj, char *methodName);
 
 #define Object_incRefCount(obj) (obj)->referenceCount++
 //void Object_incRefCount(Object *obj);

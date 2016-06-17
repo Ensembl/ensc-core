@@ -25,16 +25,17 @@
 int COMPARA_DAFA_CACHE_SIZE = 4;
 
 ComparaDNAAlignFeatureAdaptor *ComparaDNAAlignFeatureAdaptor_new(ComparaDBAdaptor *dba) {
-  ComparaDNAAlignFeatureAdaptor *cdafa;
+  ComparaDNAAlignFeatureAdaptor *cdafa = NULL;
 
   if ((cdafa = (ComparaDNAAlignFeatureAdaptor *)
             calloc(1,sizeof(ComparaDNAAlignFeatureAdaptor))) == NULL) {
     fprintf(stderr,"Error: Failed allocating cdafa\n");
-    exit(1);
-  }
-  BaseComparaAdaptor_init((BaseComparaAdaptor *)cdafa, dba, COMPARADNAALIGNFEATURE_ADAPTOR);
+    cdafa = NULL;
+  } else {
+    BaseComparaAdaptor_init((BaseComparaAdaptor *)cdafa, dba, COMPARADNAALIGNFEATURE_ADAPTOR);
 
-  cdafa->regionCache = Cache_new(COMPARA_DAFA_CACHE_SIZE);
+    cdafa->regionCache = Cache_new(COMPARA_DAFA_CACHE_SIZE);
+  }
 
   return cdafa;
 }
@@ -105,11 +106,11 @@ Vector *ComparaDNAAlignFeatureAdaptor_fetchAllBySpeciesRegion(ComparaDNAAlignFea
       // skip features which do not overlap the requested region
       // next if ($cstart > $end || $cend < $start); 
 
-      DNAAlignFeature_setSeqName(f, Slice_getChrName(slice));
+      DNAAlignFeature_setSeqName((SeqFeature*)f, Slice_getChrName(slice));
       DNAAlignFeature_setStart(f, cStart);
       DNAAlignFeature_setEnd(f, cEnd);
       DNAAlignFeature_setStrand(f, 1);
-      DNAAlignFeature_setSpecies(f, csSpecies);
+      DNAAlignFeature_setSpecies((FeaturePair*)f, csSpecies);
       DNAAlignFeature_setScore(f, GenomicAlign_getScore(ga));
       DNAAlignFeature_setPercId(f, GenomicAlign_getPercentId(ga));
 
@@ -117,7 +118,7 @@ Vector *ComparaDNAAlignFeatureAdaptor_fetchAllBySpeciesRegion(ComparaDNAAlignFea
       DNAAlignFeature_setHitEnd(f, DNAFrag_getStart(qdf) + GenomicAlign_getQueryEnd(ga) - 1);
       DNAAlignFeature_setHitStrand(f,  GenomicAlign_getQueryStrand(ga));
       DNAAlignFeature_setHitSeqName(f, Slice_getChrName(qSlice));
-      DNAAlignFeature_setHitSpecies(f, qySpecies);
+      DNAAlignFeature_setHitSpecies((FeaturePair*)f, qySpecies);
 
       Vector_addElement(out, f);
     }
@@ -141,12 +142,12 @@ Vector *ComparaDNAAlignFeatureAdaptor_fetchAllBySlice(ComparaDNAAlignFeatureAdap
 
   if (!slice || slice->objectType!=CLASS_SLICE) {
     fprintf(stderr, "Error: Invalid slice argument\n");
-    exit(1);
+    return NULL;
   }
 
   if (!qySpecies || !qyAssembly) {
     fprintf(stderr, "Error: Query species argument is required\n");
-    exit(1);
+    return NULL;
   }
 
   mc = DBAdaptor_getMetaContainer(Slice_getAdaptor(slice)->dba);

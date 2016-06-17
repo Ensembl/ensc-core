@@ -126,7 +126,6 @@ Vector *SupportingFeatureAdaptor_fetchAllByExon(SupportingFeatureAdaptor *sfa, E
 
 
 Vector *SupportingFeatureAdaptor_fetchAllByExonList(SupportingFeatureAdaptor *sfa, Vector *exons, Slice *slice) {
-  char constraint[655500];
   int i;
 
   // associate exon identifiers with transcripts
@@ -157,9 +156,14 @@ Vector *SupportingFeatureAdaptor_fetchAllByExonList(SupportingFeatureAdaptor *sf
   
 
   char tmpStr[1024];
-  char qStr[655500];
+  char *qStr = NULL;
   int lenNum;
   int maxSize = 16384;
+
+  if ((qStr = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating qStr\n");
+    return NULL;
+  }
 
   IDHash *dnaFeatIdToExHash  = IDHash_new(IDHASH_MEDIUM);
   IDHash *protFeatIdToExHash = IDHash_new(IDHASH_MEDIUM);
@@ -220,11 +224,11 @@ Vector *SupportingFeatureAdaptor_fetchAllByExonList(SupportingFeatureAdaptor *sf
     BaseAdaptor *ba;
     if (i==0) {
       idToEx = dnaFeatIdToExHash;
-      ba = DBAdaptor_getDNAAlignFeatureAdaptor(sfa->dba);
+      ba = (BaseAdaptor*)DBAdaptor_getDNAAlignFeatureAdaptor(sfa->dba);
       type = "dna";
     } else {
       idToEx = protFeatIdToExHash;
-      ba = DBAdaptor_getProteinAlignFeatureAdaptor(sfa->dba);
+      ba = (BaseAdaptor*)DBAdaptor_getProteinAlignFeatureAdaptor(sfa->dba);
       type = "protein";
     }
 
@@ -259,7 +263,7 @@ Vector *SupportingFeatureAdaptor_fetchAllByExonList(SupportingFeatureAdaptor *sf
           }
   // NIY: Free feature???
           if (newFeature) {
-            Exon_addSupportingFeature(exon, newFeature);
+            Exon_addSupportingFeature(exon, (SeqFeature*)newFeature);
             Vector_addElement(out, newFeature);
           } else if (slice == NULL) {
             fprintf(stderr,"Failed to transfer feature\n");
@@ -283,6 +287,7 @@ Vector *SupportingFeatureAdaptor_fetchAllByExonList(SupportingFeatureAdaptor *sf
     if (exon->supportingFeatures == NULL) exon->supportingFeatures = emptyVector;
   }
 
+  free(qStr);
   return out;
 }
 
@@ -393,22 +398,23 @@ void SupportingFeatureAdaptor_store(SupportingFeatureAdaptor *sfa, IDType exonDb
 */
     
     IDType sfDbID;
-    char *type;
+    char *type = NULL;
     BaseFeatureAdaptor *adap;
     StatementHandle *checkSth;
 
     IDType seqRegionId = SliceAdaptor_getSeqRegionId(sliceAdaptor, BaseAlignFeature_getSlice(f));
     
 // Note - moved the checkSth execute into the condition because I can't do the variable args
-    if (f->objectType == CLASS_DNADNAALIGNFEATURE) {
-      adap     = dnaAdaptor;      
-      type     = "dna_align_feature";
+    if (seqRegionId) {
+      if (f->objectType == CLASS_DNADNAALIGNFEATURE) {
+        adap     = (BaseFeatureAdaptor*)dnaAdaptor;      
+        type     = "dna_align_feature";
 
       checkSth = dnaCheckSth;
       checkSth->execute(checkSth, seqRegionId, 
-                                  BaseAlignFeature_getSeqRegionStart(f), 
-                                  BaseAlignFeature_getSeqRegionEnd(f), 
-                                  BaseAlignFeature_getSeqRegionStrand(f), 
+                        BaseAlignFeature_getSeqRegionStart((SeqFeature*)f), 
+                        BaseAlignFeature_getSeqRegionEnd((SeqFeature*)f), 
+                        BaseAlignFeature_getSeqRegionStrand((SeqFeature*)f), 
                                   BaseAlignFeature_getHitSeqName(f), 
                                   BaseAlignFeature_getHitStart(f), 
                                   BaseAlignFeature_getHitEnd(f), 
@@ -417,15 +423,15 @@ void SupportingFeatureAdaptor_store(SupportingFeatureAdaptor *sfa, IDType exonDb
                                   BaseAlignFeature_gethCoverage(f), 
                                   DNAAlignFeature_getHitStrand((DNAAlignFeature *)f));
 
-    } else if (f->objectType == CLASS_DNAPEPALIGNFEATURE) {
-      adap     = pepAdaptor;
-      type     = "protein_align_feature";
+      } else if (f->objectType == CLASS_DNAPEPALIGNFEATURE) {
+        adap     = (BaseFeatureAdaptor*)pepAdaptor;
+        type     = "protein_align_feature";
 
       checkSth = pepCheckSth;
       checkSth->execute(checkSth, seqRegionId, 
-                                  BaseAlignFeature_getSeqRegionStart(f), 
-                                  BaseAlignFeature_getSeqRegionEnd(f), 
-                                  BaseAlignFeature_getSeqRegionStrand(f), 
+                        BaseAlignFeature_getSeqRegionStart((SeqFeature*)f), 
+                        BaseAlignFeature_getSeqRegionEnd((SeqFeature*)f), 
+                        BaseAlignFeature_getSeqRegionStrand((SeqFeature*)f), 
                                   BaseAlignFeature_getHitSeqName(f), 
                                   BaseAlignFeature_getHitStart(f), 
                                   BaseAlignFeature_getHitEnd(f), 
@@ -433,27 +439,27 @@ void SupportingFeatureAdaptor_store(SupportingFeatureAdaptor *sfa, IDType exonDb
                                   BaseAlignFeature_getCigarString(f),
                                   BaseAlignFeature_gethCoverage(f));
 
-    } else {
-      fprintf(stderr, "Warning: Supporting feature of unknown type. Skipping\n");
-      continue;
-    }
+      } else {
+        fprintf(stderr, "Warning: Supporting feature of unknown type. Skipping\n");
+        continue;
+      }
 
-/// HOW?? - moved into conditions above
-//    checkSth->execute(@check_args);
+      /// HOW?? - moved into conditions above
+      //    checkSth->execute(@check_args);
 
-    if (checkSth->numRows(checkSth) > 0) {
-      ResultRow *row = checkSth->fetchRow(checkSth);
-      sfDbID = row->getLongLongAt(row, 0);
+      if (checkSth->numRows(checkSth) > 0) {
+        ResultRow *row = checkSth->fetchRow(checkSth);
+        sfDbID = row->getLongLongAt(row, 0);
 
-    } else {
-      Vector *vec = Vector_new();
-      Vector_addElement(vec, f);
-      //BaseFeatureAdaptor_store(adap, vec);
-      adap->store(adap, vec);
-      Vector_free(vec);
+      } else {
+        Vector *vec = Vector_new();
+        Vector_addElement(vec, f);
+        //BaseFeatureAdaptor_store(adap, vec);
+        adap->store((BaseAdaptor*)adap, vec);
+        Vector_free(vec);
      
-      sfDbID = BaseAlignFeature_getDbID(f);
-    }
+        sfDbID = BaseAlignFeature_getDbID(f);
+      }
 
     // now check association
     assocCheckSth->execute(assocCheckSth, type, sfDbID);
@@ -461,12 +467,15 @@ void SupportingFeatureAdaptor_store(SupportingFeatureAdaptor *sfa, IDType exonDb
     if (checkSth->numRows(assocCheckSth) == 0) {
       sfSth->execute(sfSth, exonDbID, sfDbID, type);
     }
+
+    dnaCheckSth->finish(dnaCheckSth);
+    pepCheckSth->finish(pepCheckSth);
+    assocCheckSth->finish(assocCheckSth);
+    sfSth->finish(sfSth);
+    } else {
+      fprintf(stderr, "Error getting sequence region ID for slice");
+    }
   }
 
-  dnaCheckSth->finish(dnaCheckSth);
-  pepCheckSth->finish(pepCheckSth);
-  assocCheckSth->finish(assocCheckSth);
-  sfSth->finish(sfSth);
-  
   return;
 }

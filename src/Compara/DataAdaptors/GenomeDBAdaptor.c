@@ -18,53 +18,59 @@
 
 
 GenomeDBAdaptor *GenomeDBAdaptor_new(ComparaDBAdaptor *dba) {
-  GenomeDBAdaptor *gda;
+  GenomeDBAdaptor *gda = NULL;
 
   if ((gda = (GenomeDBAdaptor *)calloc(1,sizeof(GenomeDBAdaptor))) == NULL) {
     fprintf(stderr,"Error: Failed allocating gda\n");
-    exit(1);
+  } else {
+    BaseComparaAdaptor_init((BaseComparaAdaptor *)gda, dba, GENOMEDB_ADAPTOR);
   }
-  BaseComparaAdaptor_init((BaseComparaAdaptor *)gda, dba, GENOMEDB_ADAPTOR);
 
 
   return gda;
 }
 
 GenomeDB *GenomeDBAdaptor_fetchByDbID(GenomeDBAdaptor *gda, IDType dbID) {
-  GenomeDB *gdb;
+  GenomeDB *gdb = NULL;
   DBAdaptor *dba;
+  int ok = 1;
 
   if (!dbID) {
     fprintf(stderr,"Error: Must have dbID to fetch by dbid\n");
-    exit(1);
+    ok = 0;
   }
 
   // check to see whether all the GenomeDBs have already been created
-  if (!gda->genomeDBCache) {
+  if (ok && !gda->genomeDBCache) {
     GenomeDBAdaptor_createGenomeDBs(gda);
   }
 
-  if (!IDHash_contains(gda->genomeDBCache, dbID)) {
-    return NULL; // return undef if fed a bogus dbID
-  }
-  gdb = IDHash_getValue(gda->genomeDBCache, dbID);
-
-  // set up the dbadaptor for this genome db
-  // this could have been added after the cache was created which is why
-  // it is re-added every request
-  dba = ComparaDBAdaptor_getDBAdaptor(gda->dba, GenomeDB_getName(gdb), 
-                                      GenomeDB_getAssembly(gdb));
-
-  if (!dba) {
-    fprintf(stderr,"Error: Could not obtain DBAdaptor for dbID [" IDFMTSTR "].\n" 
-                   "Genome DBAdaptor for name=[%s], "
-                   "assembly=[%s] must be loaded using config file or\n" 
-                   "ComparaDBAdaptor_add_genome\n", 
-                  dbID, GenomeDB_getName(gdb), GenomeDB_getAssembly(gdb));
-    exit(1);
+  if (ok && !IDHash_contains(gda->genomeDBCache, dbID)) {
+    ok = 0; // return undef if fed a bogus dbID
   }
 
-  GenomeDB_setDBAdaptor(gdb, dba);
+  if (ok) {
+    gdb = IDHash_getValue(gda->genomeDBCache, dbID);
+
+    // set up the dbadaptor for this genome db
+    // this could have been added after the cache was created which is why
+    // it is re-added every request
+    dba = ComparaDBAdaptor_getDBAdaptor(gda->dba, GenomeDB_getName(gdb), 
+                                        GenomeDB_getAssembly(gdb));
+
+    if (!dba) {
+      fprintf(stderr,"Error: Could not obtain DBAdaptor for dbID [" IDFMTSTR "].\n" 
+              "Genome DBAdaptor for name=[%s], "
+              "assembly=[%s] must be loaded using config file or\n" 
+              "ComparaDBAdaptor_add_genome\n", 
+              dbID, GenomeDB_getName(gdb), GenomeDB_getAssembly(gdb));
+      ok = 0;
+    }
+
+    if (ok) {
+      GenomeDB_setDBAdaptor(gdb, dba);
+    }
+  }
 
   return gdb;
 }
@@ -98,6 +104,8 @@ Vector *GenomeDBAdaptor_fetchAll(GenomeDBAdaptor *gda) {
 } 
 
 GenomeDB *GenomeDBAdaptor_fetchByNameAssembly(GenomeDBAdaptor *gda, char *name, char *assembly) {
+  GenomeDB *gdb = NULL;
+  int ok = 1;
   StatementHandle *sth;
   ResultRow *row;
   char qStr[512];
@@ -105,79 +113,89 @@ GenomeDB *GenomeDBAdaptor_fetchByNameAssembly(GenomeDBAdaptor *gda, char *name, 
 
   if (!name || !assembly) {
     fprintf(stderr,"Error: name and assembly arguments are required\n");
-    exit(1);
+    ok = 0;
   }
 
-  sprintf(qStr,
-	     "SELECT genome_db_id"
-             " FROM genome_db"
-             " WHERE name = '%s' AND assembly = '%s'", name, assembly);
-  sth = gda->prepare((BaseAdaptor *)gda, qStr, strlen(qStr));
+  if (ok) {
+    sprintf(qStr,
+            "SELECT genome_db_id"
+            " FROM genome_db"
+            " WHERE name = '%s' AND assembly = '%s'", name, assembly);
+    sth = gda->prepare((BaseAdaptor *)gda, qStr, strlen(qStr));
 
-  sth->execute(sth);
+    sth->execute(sth);
 
-  if (!(row = sth->fetchRow(sth))) {
-    fprintf(stderr,"Error: No GenomeDB with this name [%s] and " 
-                   "assembly [%s]\n", name, assembly);
-    exit(1);
+    if (!(row = sth->fetchRow(sth))) {
+      fprintf(stderr,"Error: No GenomeDB with this name [%s] and " 
+              "assembly [%s]\n", name, assembly);
+      ok = 0;
+    }
   }
 
-  id = row->getLongLongAt(row,0);
+  if (ok) {
+    id = row->getLongLongAt(row,0);
 
-  return GenomeDBAdaptor_fetchByDbID(gda, id);
+    gdb = GenomeDBAdaptor_fetchByDbID(gda, id);
+  }
+
+  return gdb;
 }
 
 IDType GenomeDBAdaptor_store(GenomeDBAdaptor *gda, GenomeDB *gdb) {
   IDType dbID = 0;
+  int ok = 1;
   StatementHandle *sth;
   ResultRow *row;
   char qStr[1024];
 
   if (!gdb) {
     fprintf(stderr, "Error: Must have genomedb arg in store\n");
-    exit(1);
+    ok = 0;
   }
 
-  if (!GenomeDB_getName(gdb) || !GenomeDB_getAssembly(gdb) || !GenomeDB_getTaxonId(gdb)) {
+  if (ok && (!GenomeDB_getName(gdb) || !GenomeDB_getAssembly(gdb) || !GenomeDB_getTaxonId(gdb))) {
     fprintf(stderr, "Error: genome db must have a name, assembly, and taxon_id\n");
-    exit(1);
+    ok = 0;
   }
 
-  sprintf(qStr, 
-      "SELECT genome_db_id"
-      " FROM genome_db"
-      " WHERE name = '%s' and assembly = '%s'", 
-      GenomeDB_getName(gdb), GenomeDB_getAssembly(gdb));
+  if (ok) {
+    sprintf(qStr, 
+            "SELECT genome_db_id"
+            " FROM genome_db"
+            " WHERE name = '%s' and assembly = '%s'", 
+            GenomeDB_getName(gdb), GenomeDB_getAssembly(gdb));
 
-  sth = gda->prepare((BaseAdaptor *)gda, qStr,strlen(qStr));
-  sth->execute(sth);
-
-  if ((row = sth->fetchRow(sth))) {
-    dbID = row->getLongLongAt(row,0);
-  }
-  sth->finish(sth);
-
-  if (!dbID) {
-    // if the genome db has not been stored before, store it now
-    sprintf(qStr,
-        "INSERT into genome_db (name,assembly,taxon_id)"
-        " VALUES ('%s','%s', %d)",
-        GenomeDB_getName(gdb),GenomeDB_getAssembly(gdb), GenomeDB_getTaxonId(gdb));
-
-    sth = gda->prepare((BaseAdaptor *)gda, qStr, strlen(qStr));
+    sth = gda->prepare((BaseAdaptor *)gda, qStr,strlen(qStr));
     sth->execute(sth);
-    dbID = sth->getInsertId(sth);
-    sth->finish(sth);
-  }
 
-  // update the genomeDB object so that it's dbID and adaptor are set
-  GenomeDB_setDbID(gdb, dbID);
-  GenomeDB_setAdaptor(gdb, (BaseAdaptor *)gda);
+    if ((row = sth->fetchRow(sth))) {
+      dbID = row->getLongLongAt(row,0);
+    }
+    sth->finish(sth);
+
+    if (!dbID) {
+      // if the genome db has not been stored before, store it now
+      sprintf(qStr,
+              "INSERT into genome_db (name,assembly,taxon_id)"
+              " VALUES ('%s','%s', %lld)",
+              GenomeDB_getName(gdb),GenomeDB_getAssembly(gdb), GenomeDB_getTaxonId(gdb));
+
+      sth = gda->prepare((BaseAdaptor *)gda, qStr, strlen(qStr));
+      sth->execute(sth);
+      dbID = sth->getInsertId(sth);
+      sth->finish(sth);
+    }
+
+    // update the genomeDB object so that it's dbID and adaptor are set
+    GenomeDB_setDbID(gdb, dbID);
+    GenomeDB_setAdaptor(gdb, (BaseAdaptor *)gda);
+  }
 
   return dbID;
 }
 
 void GenomeDBAdaptor_createGenomeDBs(GenomeDBAdaptor *gda) {
+  int ok = 1;
   char qStr[1024];
   StatementHandle *sth;
   ResultRow *row;
@@ -219,7 +237,8 @@ void GenomeDBAdaptor_createGenomeDBs(GenomeDBAdaptor *gda) {
     cVector =  StringHash_getValue(gda->genomeConsensusXrefList, cKey);
     if ((idP = (IDType *)calloc(1,sizeof(IDType))) == NULL) {
       fprintf(stderr,"Error: Failed allocating idP\n");
-      exit(1);
+      ok = 0;
+      break;
     }
     *idP = query;
     Vector_addElement(cVector, idP);
@@ -227,35 +246,38 @@ void GenomeDBAdaptor_createGenomeDBs(GenomeDBAdaptor *gda) {
     qVector =  StringHash_getValue(gda->genomeQueryXrefList, qKey);
     if ((idP = (IDType *)calloc(1,sizeof(IDType))) == NULL) {
       fprintf(stderr,"Error: Failed allocating idP\n");
-      exit(1);
+      ok = 0;
+      break;
     }
     *idP = cons;
     Vector_addElement(qVector, idP);
   }
 
-  sth->finish(sth);
+  if (ok) {
+    sth->finish(sth);
 
-  // grab all the possible species databases in the genome db table
-  sprintf(qStr,
-     "SELECT genome_db_id, name, assembly, taxon_id"
-     " FROM genome_db");
+    // grab all the possible species databases in the genome db table
+    sprintf(qStr,
+            "SELECT genome_db_id, name, assembly, taxon_id"
+            " FROM genome_db");
 
-  sth = gda->prepare((BaseAdaptor *)gda, qStr, strlen(qStr));
-  sth->execute(sth);
+    sth = gda->prepare((BaseAdaptor *)gda, qStr, strlen(qStr));
+    sth->execute(sth);
 
-  // build a genome db for each species
-  while ((row = sth->fetchRow(sth))) {
+    // build a genome db for each species
+    while ((row = sth->fetchRow(sth))) {
 
-    GenomeDB *gdb = GenomeDB_new();
-    GenomeDB_setDbID(gdb, row->getLongLongAt(row,0));
-    GenomeDB_setName(gdb, row->getStringAt(row,1));
-    GenomeDB_setAssembly(gdb, row->getStringAt(row,2));
-    GenomeDB_setTaxonId(gdb, row->getLongLongAt(row,3));
-    GenomeDB_setAdaptor(gdb,(BaseAdaptor *)gda);
-
-    IDHash_add(gda->genomeDBCache,GenomeDB_getDbID(gdb),gdb);
+      GenomeDB *gdb = GenomeDB_new();
+      GenomeDB_setDbID(gdb, row->getLongLongAt(row,0));
+      GenomeDB_setName(gdb, row->getStringAt(row,1));
+      GenomeDB_setAssembly(gdb, row->getStringAt(row,2));
+      GenomeDB_setTaxonId(gdb, row->getLongLongAt(row,3));
+      GenomeDB_setAdaptor(gdb,(BaseAdaptor *)gda);
+      
+      IDHash_add(gda->genomeDBCache,GenomeDB_getDbID(gdb),gdb);
+    }
+    sth->finish(sth);
   }
-  sth->finish(sth);
 }
 
 int GenomeDBAdaptor_checkForConsensusDb(GenomeDBAdaptor *gda, GenomeDB *queryGdb, 

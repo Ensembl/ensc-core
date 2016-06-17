@@ -83,7 +83,8 @@ CoordSystemAdaptor *CoordSystemAdaptor_new(DBAdaptor *dba) {
 
       if (!StrUtil_tokenizeByDelim(&tokens, &ntok, attribs, ",")) {
         fprintf(stderr,"Failed tokenizing attribs string %s\n", attribs);
-        exit(1);
+        free(csa);
+        return NULL;
       }
         
       
@@ -221,11 +222,10 @@ void CoordSystemAdaptor_cacheMappingPaths(CoordSystemAdaptor *csa) {
 
     char **csStrings = NULL;
     int nCsString;
-    int i;
 
     if (!StrUtil_tokenizeByDelim(&csStrings, &nCsString, mapPath, "|#")) {
       fprintf(stderr, "Failed tokenizing mapPath string %s\n", mapPath);
-      exit(1);
+      return;
     }
 
     if ( nCsString < 2 ) {
@@ -437,7 +437,7 @@ CoordSystem *CoordSystemAdaptor_fetchByName(CoordSystemAdaptor *csa, char *name,
   int i;
   for (i=0; i<Vector_getNumElement(coordSystems); i++) {
     CoordSystem *cs = Vector_getElementAt(coordSystems, i);
-    if (version) {
+    if (version && CoordSystem_getVersion(cs)) {
       if (!strcasecmp(CoordSystem_getVersion(cs),version)) {
         return cs;
       }
@@ -453,7 +453,8 @@ CoordSystem *CoordSystemAdaptor_fetchByName(CoordSystemAdaptor *csa, char *name,
 
   //didn't find a default, just take first one
   CoordSystem *cs = Vector_getElementAt(coordSystems, 0);
-  fprintf(stderr, "No default version for coord_system [%s] exists. Using version [%s] arbitrarily", name, CoordSystem_getVersion(cs));
+  fprintf(stderr, "No default version for coord_system [%s] exists. Using version [%s] arbitrarily", 
+          (name ? name : ""), (cs && CoordSystem_getVersion(cs) ? CoordSystem_getVersion(cs) : ""));
 
   return cs;
 }
@@ -495,6 +496,7 @@ Vector *CoordSystemAdaptor_fetchAllByName(CoordSystemAdaptor *csa, char *name) {
 
   if (StringHash_contains(csa->nameCache,lcName)) {
     Vector *v = (Vector *)StringHash_getValue(csa->nameCache, lcName);
+    return v;
   } else {
     return emptyVector;
   }
@@ -550,13 +552,13 @@ CoordSystem *CoordSystemAdaptor_fetchSeqLevel(CoordSystemAdaptor *csa) {
 
   if (IDHash_getNumValues(csa->isSeqLevelCache) == 0) {  
     fprintf(stderr, "No sequence_level coord_system is defined");
-    exit(1);
+    return NULL;
   }
 
 
   if (IDHash_getNumValues(csa->isSeqLevelCache) > 1) {  
     fprintf(stderr,"Multiple sequence_level coord_systems are defined. Only one is currently supported");
-    exit(1);
+    return NULL;
   }
   
   void **values = IDHash_getValues(csa->isSeqLevelCache);
@@ -574,7 +576,10 @@ Vector *CoordSystemAdaptor_getMappingPath(CoordSystemAdaptor *csa, CoordSystem *
   char *key2;
   char keypair[2048];
   char revKeypair[2048];
-  Vector *path;
+  Vector *path = NULL;
+
+  if (!cs1 || !cs2)
+    return emptyVector ;
 
 //  int lenKey1 = sprintf(key1,"%s:%s", CoordSystem_getName(cs1), CoordSystem_getVersion(cs1) ? CoordSystem_getVersion(cs1) : "");
   
@@ -841,7 +846,7 @@ CoordSystem *CoordSystemAdaptor_fetchByAttrib(CoordSystemAdaptor *csa, char *att
   
   if (!IDHash_getNumValues(attribCache)) {
     fprintf(stderr, "No %s coordinate system defined\n",attrib);
-    exit(1);
+    return NULL;
   }
 
   int i=0;
@@ -863,7 +868,7 @@ CoordSystem *CoordSystemAdaptor_fetchByAttrib(CoordSystemAdaptor *csa, char *att
   //specifically requested attrib system was not found
   if (version) {
     fprintf(stderr,"%s coord_system with version [%s] does not exist\n", attrib, version);
-    exit(1);
+    return NULL;
   }
 
   CoordSystem *cs = values[0];

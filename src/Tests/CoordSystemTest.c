@@ -30,7 +30,6 @@ int main(int argc, char *argv[]) {
   Vector *path;
   CoordSystem *cs;
   int i;
-  int failed;
   
   initEnsC(argc, argv);
 

@@ -15,6 +15,7 @@
  */
 
 #include "MapperPairSet.h"
+#include "Vector.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -41,19 +42,24 @@ void MapperPairSet_addPair(MapperPairSet *mps, MapperPair *pair) {
 }
 
 Vector *MapperPairSet_getIds(MapperPairSet *mps, int ind) {
-  Vector *idVector = Vector_new();
+  Vector *idVector = NULL;
 
-  int i;
-  IDType *idP;
-  for (i=0; i<mps->nPair; i++) {
-    if ((idP = (IDType *)calloc(1,sizeof(IDType))) == NULL) {
-      fprintf(stderr,"ERROR: Failed allocating space for id\n");
-      exit(1);
+  if (mps)
+    {
+      idVector = Vector_new();
+
+      int i;
+      IDType *idP;
+      for (i=0; i<mps->nPair; i++) {
+        if ((idP = (IDType *)calloc(1,sizeof(IDType))) == NULL) {
+          fprintf(stderr,"ERROR: Failed allocating space for id\n");
+          exit(1);
+        }
+        *idP = MapperPair_getUnit(mps->pairs[i], ind)->id;
+
+        Vector_addElement(idVector, idP);
+      }
     }
-    *idP = MapperPair_getUnit(mps->pairs[i], ind)->id;
-
-    Vector_addElement(idVector, idP);
-  }
 
   return idVector;
 }

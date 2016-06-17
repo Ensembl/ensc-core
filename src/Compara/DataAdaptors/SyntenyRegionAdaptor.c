@@ -17,14 +17,13 @@
 #include "SyntenyRegionAdaptor.h"
 
 SyntenyRegionAdaptor *SyntenyRegionAdaptor_new(ComparaDBAdaptor *dba) {
-  SyntenyRegionAdaptor *sra;
+  SyntenyRegionAdaptor *sra = NULL;
 
   if ((sra = (SyntenyRegionAdaptor *)calloc(1,sizeof(SyntenyRegionAdaptor))) == NULL) {
     fprintf(stderr,"Error: Failed allocating sra\n");
-    exit(1);
+  } else {
+    BaseComparaAdaptor_init((BaseComparaAdaptor *)sra, dba, SYNTENYREGION_ADAPTOR);
   }
-  BaseComparaAdaptor_init((BaseComparaAdaptor *)sra, dba, SYNTENYREGION_ADAPTOR);
-
 
 
   return sra;
@@ -34,37 +33,42 @@ SyntenyRegion *SyntenyRegionAdaptor_fetchByDbID(SyntenyRegionAdaptor *sra, IDTyp
   StatementHandle *sth;
   ResultRow *row;
   char qStr[1024];
-  SyntenyRegion *sr;
+  SyntenyRegion *sr = NULL;
+  int ok = 1;
   
   if (!dbID) {
     fprintf(stderr,"Error: SyntenyRegionAdaptor_fetchByDbID with no dbID!\n");
-    exit(1);
+    ok = 0;
   }
 
-  sprintf(qStr,
-           "select synteny_cluster_id,"
-           "       dnafrag_id,"
-           "       seq_start,"
-           "       seq_end"
-           " from synteny_region "
-           " where synteny_region_id = " IDFMTSTR,
-             dbID);
+  if (ok) {
+    sprintf(qStr,
+            "select synteny_cluster_id,"
+            "       dnafrag_id,"
+            "       seq_start,"
+            "       seq_end"
+            " from synteny_region "
+            " where synteny_region_id = " IDFMTSTR,
+            dbID);
            
-  sth = sra->prepare((BaseAdaptor *)sra, qStr, strlen(qStr));
-  sth->execute(sth);
+    sth = sra->prepare((BaseAdaptor *)sra, qStr, strlen(qStr));
+    sth->execute(sth);
 
-  if (!(row = sth->fetchRow(sth))) {
-    fprintf(stderr,"Error: No such dbID " IDFMTSTR "\n",dbID);
-    exit(1);
+    if (!(row = sth->fetchRow(sth))) {
+      fprintf(stderr,"Error: No such dbID " IDFMTSTR "\n",dbID);
+      ok = 0;
+    }
   }
 
-  sr =  SyntenyRegionAdaptor_newRegionFromArray(sra, 
-                                        dbID,
-                                        row->getLongLongAt(row,0),
-                                        row->getLongLongAt(row,1), 
-                                        row->getIntAt(row,2),
-                                        row->getIntAt(row,3));
-  sth->finish(sth);
+  if (ok) {
+    sr =  SyntenyRegionAdaptor_newRegionFromArray(sra, 
+                                                  dbID,
+                                                  row->getLongLongAt(row,0),
+                                                  row->getLongLongAt(row,1), 
+                                                  row->getIntAt(row,2),
+                                                  row->getIntAt(row,3));
+    sth->finish(sth);
+  }
 
   return sr;
 }
@@ -73,14 +77,12 @@ Vector *SyntenyRegionAdaptor_fetchByClusterId(SyntenyRegionAdaptor *sra, IDType 
   char qStr[256];
   StatementHandle *sth;
   ResultRow *row;
-  Vector *out;
+  Vector *out = NULL;
 
   if (!clusterId) {
     fprintf(stderr, "Error: fetch_by_cluster_id with no cluster_id!\n");
-    exit(1);
-  }
-
-  sprintf(qStr,
+  } else {
+    sprintf(qStr,
             "select synteny_region_id,"
             "       dnafrag_id,"
             "       seq_start,"
@@ -88,21 +90,22 @@ Vector *SyntenyRegionAdaptor_fetchByClusterId(SyntenyRegionAdaptor *sra, IDType 
             " from synteny_region "
             " where synteny_cluster_id = " IDFMTSTR, clusterId);
 
-  sth = sra->prepare((BaseAdaptor *)sra, qStr, strlen(qStr));
-  sth->execute(sth);
+    sth = sra->prepare((BaseAdaptor *)sra, qStr, strlen(qStr));
+    sth->execute(sth);
 
-  out = Vector_new();
-  while ((row = sth->fetchRow(sth))) {
-    SyntenyRegion *sr = SyntenyRegionAdaptor_newRegionFromArray(sra, 
-                              row->getLongLongAt(row,0),
-                              clusterId,
-                              row->getLongLongAt(row,1), 
-                              row->getIntAt(row,2),
-                              row->getIntAt(row,3));
+    out = Vector_new();
+    while ((row = sth->fetchRow(sth))) {
+      SyntenyRegion *sr = SyntenyRegionAdaptor_newRegionFromArray(sra, 
+                                                                  row->getLongLongAt(row,0),
+                                                                  clusterId,
+                                                                  row->getLongLongAt(row,1), 
+                                                                  row->getIntAt(row,2),
+                                                                  row->getIntAt(row,3));
     
-    Vector_addElement(out,sr);
+      Vector_addElement(out,sr);
+    }
+    sth->finish(sth);
   }
-  sth->finish(sth);
 
   return out;
 }
@@ -124,29 +127,28 @@ SyntenyRegion *SyntenyRegionAdaptor_newRegionFromArray(SyntenyRegionAdaptor *sra
 }
 
 IDType SyntenyRegionAdaptor_store(SyntenyRegionAdaptor *sra, IDType clusterId, SyntenyRegion *region) {
-  IDType regionId;
+  IDType regionId = 0;
   StatementHandle *sth;
   char qStr[1024];
   
   if (!region) {
     fprintf(stderr, "Error: region is not a SyntenyRegion\n");
-    exit(1);
+  } else {
+    sprintf(qStr, "insert into synteny_region (synteny_cluster_id,dnafrag_id,seq_start,seq_end)"
+            " VALUES (" IDFMTSTR ", " IDFMTSTR ", %d, %d)", 
+            clusterId,
+            SyntenyRegion_getDNAFragId(region),
+            SyntenyRegion_getSeqStart(region),
+            SyntenyRegion_getSeqEnd(region));
+    sth = sra->prepare((BaseAdaptor *)sra, qStr, strlen(qStr));
+   
+    sth->execute(sth);
+
+    regionId = sth->getInsertId(sth);
+   
+    SyntenyRegion_setDbID(region, regionId);
+    SyntenyRegion_setAdaptor(region, sra);
   }
-
-  sprintf(qStr, "insert into synteny_region (synteny_cluster_id,dnafrag_id,seq_start,seq_end)"
-                " VALUES (" IDFMTSTR ", " IDFMTSTR ", %d, %d)", 
-                clusterId,
-                SyntenyRegion_getDNAFragId(region),
-                SyntenyRegion_getSeqStart(region),
-                SyntenyRegion_getSeqEnd(region));
-  sth = sra->prepare((BaseAdaptor *)sra, qStr, strlen(qStr));
-   
-  sth->execute(sth);
-
-  regionId = sth->getInsertId(sth);
-   
-  SyntenyRegion_setDbID(region, regionId);
-  SyntenyRegion_setAdaptor(region, sra);
    
   return regionId;
 }

@@ -44,8 +44,8 @@ PredictionTranscriptAdaptor *PredictionTranscriptAdaptor_new(DBAdaptor *dba) {
 
   pta->getTables = PredictionTranscriptAdaptor_getTables;
   pta->getColumns = PredictionTranscriptAdaptor_getColumns;
-  pta->store = PredictionTranscriptAdaptor_store;
-  pta->objectsFromStatementHandle = PredictionTranscriptAdaptor_objectsFromStatementHandle;
+  pta->store = (BaseAdaptor_StoreFunc)PredictionTranscriptAdaptor_store;
+  pta->objectsFromStatementHandle = (BaseAdaptor_ObjectsFromStatementHandleFunc)PredictionTranscriptAdaptor_objectsFromStatementHandle;
 
   return pta;
 }
@@ -201,11 +201,11 @@ Vector *PredictionTranscriptAdaptor_fetchAllBySlice(PredictionTranscriptAdaptor 
   int i;
   for (i=0; i<Vector_getNumElement(transcripts); i++) {
     PredictionTranscript *t  = Vector_getElementAt(transcripts, i);
-    if (PredictionTranscript_getSeqRegionStart(t) < minStart) {
-      minStart = PredictionTranscript_getSeqRegionStart(t);
+    if (PredictionTranscript_getSeqRegionStart((SeqFeature*)t) < minStart) {
+      minStart = PredictionTranscript_getSeqRegionStart((SeqFeature*)t);
     }
-    if (PredictionTranscript_getSeqRegionEnd(t) > maxEnd) {
-      maxEnd = PredictionTranscript_getSeqRegionEnd(t);
+    if (PredictionTranscript_getSeqRegionEnd((SeqFeature*)t) > maxEnd) {
+      maxEnd = PredictionTranscript_getSeqRegionEnd((SeqFeature*)t);
     }
   }
 
@@ -231,7 +231,12 @@ Vector *PredictionTranscriptAdaptor_fetchAllBySlice(PredictionTranscriptAdaptor 
   IDType *uniqueIds = IDHash_getKeys(trHash);
 
   char tmpStr[1024];
-  char qStr[655500];
+  char *qStr = NULL;
+  if ((qStr = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating qStr\n");
+    return transcripts;
+  }
+
   int lenNum;
   int endPoint = sprintf(qStr, "SELECT prediction_transcript_id, prediction_exon_id, exon_rank FROM prediction_exon WHERE  prediction_transcript_id IN (");
   for (i=0; i<IDHash_getNumValues(trHash); i++) {
@@ -282,9 +287,9 @@ Vector *PredictionTranscriptAdaptor_fetchAllBySlice(PredictionTranscriptAdaptor 
   // Perl didn't have this line - it was in GeneAdaptor version so I think I'm going to keep it
     if (!IDHash_contains(exTrHash, PredictionExon_getDbID(ex))) continue;
 
-    Exon *newEx;
+    PredictionExon *newEx;
     if (slice != extSlice) {
-      newEx = PredictionExon_transfer(ex, slice);
+      newEx = (PredictionExon*)PredictionExon_transfer((SeqFeature*)ex, slice);
       if (newEx == NULL) {
         fprintf(stderr, "Unexpected. Exon could not be transferred onto PredictionTranscript slice.\n");
         exit(1);
@@ -302,6 +307,7 @@ Vector *PredictionTranscriptAdaptor_fetchAllBySlice(PredictionTranscriptAdaptor 
   }
 
   IDHash_free(exTrHash, Vector_free);
+  free(qStr);
 
   return transcripts;
 }
@@ -480,7 +486,7 @@ Vector *PredictionTranscriptAdaptor_objectsFromStatementHandle(PredictionTranscr
 =cut
 */
 
-void PredictionTranscriptAdaptor_store(PredictionTranscriptAdaptor *pta, Vector *preTranscripts) {
+int PredictionTranscriptAdaptor_store(PredictionTranscriptAdaptor *pta, Vector *preTranscripts) {
   fprintf(stderr,"PredictionTranscript store not implemented yet\n");
   exit(1);
 
@@ -560,6 +566,8 @@ void PredictionTranscriptAdaptor_store(PredictionTranscriptAdaptor *pta, Vector 
     }
   }
 */
+
+  return 1;
 }
 
 

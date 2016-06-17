@@ -26,6 +26,7 @@
 #include "PredictionExon.h"
 #include "Transcript.h"
 #include "SimpleFeature.h"
+#include "RepeatFeature.h"
 #include "Class.h"
 
 SeqFeature *SeqFeatureFactory_newFeature(ClassType type) {
@@ -62,6 +63,9 @@ SeqFeature *SeqFeatureFactory_newFeature(ClassType type) {
     case CLASS_PREDICTIONEXON:
       feature = PredictionExon_new(); 
       break;
+    case CLASS_REPEATFEATURE:
+      feature = RepeatFeature_new();
+      break;
     case CLASS_INTRONSUPPORTINGEVIDENCE:
       fprintf(stderr,"!!!!!! ise new in seqfeaturefactory\n");
       feature = IntronSupportingEvidence_new(); 
@@ -91,7 +95,7 @@ SeqFeature *SeqFeatureFactory_newFeatureFromFeature(SeqFeature *sf) {
       feature = FeaturePair_new(); 
       break;
     case CLASS_PREDICTIONTRANSCRIPT:
-      feature = PredictionTranscript_new(); 
+      feature = PredictionTranscript_shallowCopy((PredictionTranscript*)sf); 
       break;
     case CLASS_SIMPLEFEATURE:
       feature = SimpleFeature_shallowCopy((SimpleFeature *)sf); 
@@ -103,16 +107,19 @@ SeqFeature *SeqFeatureFactory_newFeatureFromFeature(SeqFeature *sf) {
       feature = Exon_shallowCopy(sf); 
       break;
     case CLASS_TRANSCRIPT:
-      feature = Transcript_shallowCopy(sf); 
+      feature = Transcript_shallowCopy((Transcript*)sf); 
       break;
     case CLASS_PREDICTIONEXON:
       feature = PredictionExon_shallowCopy(sf); 
       break;
     case CLASS_GENE:
-      feature = Gene_shallowCopy(sf); 
+      feature = Gene_shallowCopy((Gene*)sf); 
       break;
     case CLASS_INTRONSUPPORTINGEVIDENCE:
       feature = IntronSupportingEvidence_shallowCopy(sf);
+      break;
+    case CLASS_REPEATFEATURE:
+      feature = RepeatFeature_shallowCopy((RepeatFeature*)sf);
       break;
     default:
       fprintf(stderr,"Error: Unknown feature type %s in SeqFeatureFactory_newFeatureFromFeature\n",Class_findByType(sf->objectType)->name);

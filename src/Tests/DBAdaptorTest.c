@@ -26,9 +26,9 @@ int main(int argc, char *argv[]) {
 
   initEnsC(argc, argv);
 
-  dba = DBAdaptor_new("ensembldb.ensembl.org","anonymous",NULL,"homo_sapiens_core_29_35b",3306,NULL);
+  dba = DBAdaptor_new("ensembldb.ensembl.org","anonymous",NULL,"homo_sapiens_core_70_37",3306,NULL);
 
-  ok(1,!strcmp("NCBI35",DBAdaptor_getAssemblyType(dba)));
+  ok(1,!strcmp("GRCh37",DBAdaptor_getAssemblyType(dba)));
 
   return 0;
 }

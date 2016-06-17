@@ -173,12 +173,13 @@ ECOSTRING Transcript_setStatus(Transcript *t, char *status);
 ECOSTRING Transcript_setExternalDb(Transcript *t, char *externalDb);
 ECOSTRING Transcript_setExternalStatus(Transcript *t, char *externalStatus);
 char *Transcript_setExternalName(Transcript *t, char *externalName);
+#define Transcript_getExternalName(transcript)  (transcript)->externalName
 
 
-#define Transcript_getSeqRegionStart(t) SeqFeature_getSeqRegionStart((t))
-#define Transcript_getSeqRegionEnd(t) SeqFeature_getSeqRegionEnd((t))
-#define Transcript_getSeqRegionStrand(t) SeqFeature_getSeqRegionStrand((t))
-#define Transcript_getSeqRegionName(t) SeqFeature_getSeqRegionName((t))
+#define Transcript_getSeqRegionStart(t) SeqFeature_getSeqRegionStart(((SeqFeature*)t))
+#define Transcript_getSeqRegionEnd(t) SeqFeature_getSeqRegionEnd(((SeqFeature*)t))
+#define Transcript_getSeqRegionStrand(t) SeqFeature_getSeqRegionStrand(((SeqFeature*)t))
+#define Transcript_getSeqRegionName(t) SeqFeature_getSeqRegionName(((SeqFeature*)t))
 
 
 Exon *Transcript_getStartExon(Transcript *trans);

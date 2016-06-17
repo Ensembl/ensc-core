@@ -667,7 +667,7 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
                 Gene_getDisplayXref(gene) ? DBEntry_getDisplayId(Gene_getDisplayXref(gene)) : "", 
                 Gene_getBiotype(gene), Gene_getSource(gene),
                 Transcript_getStableId(trans), Transcript_getBiotype(trans), Analysis_getLogicName(Transcript_getAnalysis(trans)), 
-                Exon_getStableId(exon), Slice_getSeqRegionName(Exon_getSlice(exon)), Exon_getSeqRegionStart(exon), Exon_getSeqRegionEnd(exon), Exon_getSeqRegionStrand(exon), 
+                Exon_getStableId(exon), Slice_getSeqRegionName(Exon_getSlice(exon)), Exon_getSeqRegionStart(exon), Exon_getSeqRegionEnd(exon), Exon_getSeqRegionStrand((SeqFeature*)exon), 
                 Exon_getLength(exon), Exon_getScore(exon), Exon_getScore(exon)/Exon_getLength(exon), 
                 maxScore != 0.0 ? (((normExonScore)/maxScore)*1000.0) : 0.0);
 

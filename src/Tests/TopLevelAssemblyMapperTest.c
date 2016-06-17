@@ -62,6 +62,7 @@ int main(int argc, char *argv[]) {
   TopLevelAssemblyMapper *superctgToplevelMapper = (TopLevelAssemblyMapper *)AssemblyMapperAdaptor_fetchByCoordSystems(asma, toplevelCs, superctgCs);
 
   ok(testNum++, clnToplevelMapper!=NULL); //  && $cln_toplevel_mapper->isa('Bio::EnsEMBL::TopLevelAssemblyMapper'));
+  ok(testNum++, superctgToplevelMapper!=NULL); //  && $cln_toplevel_mapper->isa('Bio::EnsEMBL::TopLevelAssemblyMapper'));
 
 
 //
@@ -71,60 +72,68 @@ int main(int argc, char *argv[]) {
 //
 // Test map
 //
+  MapperRangeSet *coords = NULL;
 
-  fprintf(stderr, "MAP 'AL359765.6'->toplevel\n");
-  MapperRangeSet *coords = TopLevelAssemblyMapper_map(clnToplevelMapper,"AL359765.6", 1, 13780, 1, clnCs,  0, NULL);
-  printCoords(coords);
-  ok(testNum++, coords!=NULL);
+  if (clnToplevelMapper) {
+    fprintf(stderr, "MAP 'AL359765.6'->toplevel\n");
+    coords = TopLevelAssemblyMapper_map(clnToplevelMapper,"AL359765.6", 1, 13780, 1, clnCs,  0, NULL);
+    printCoords(coords);
+    ok(testNum++, coords!=NULL);
+  }
 
-
-  fprintf(stderr, "MAP NT_028392->toplevel\n");
-  coords = TopLevelAssemblyMapper_map(superctgToplevelMapper, "NT_028392", 600000, 1000000, 1, superctgCs, 0, NULL);
-  printCoords(coords);
-  ok(testNum++, coords!=NULL);
-
+  if (superctgToplevelMapper) {
+      fprintf(stderr, "MAP NT_028392->toplevel\n");
+      coords = TopLevelAssemblyMapper_map(superctgToplevelMapper, "NT_028392", 600000, 1000000, 1, superctgCs, 0, NULL);
+      printCoords(coords);
+      ok(testNum++, coords!=NULL);
+    }
 
 
 //
 // Test list_seq_regions
 //
   Vector *seqRegions;
-
-  seqRegions = TopLevelAssemblyMapper_listSeqRegions(clnToplevelMapper, "AL359765.6", 1, 13780, clnCs);
-  ok(testNum++, seqRegions!=NULL && Vector_getNumElement(seqRegions) == 1 && !strcmp("20", Vector_getElementAt(seqRegions,0)));
   int i;
-  for (i=0;i<Vector_getNumElement(seqRegions); i++) {
-    char *regionName = Vector_getElementAt(seqRegions, i);
-    fprintf(stderr, "%s\n",regionName);
+    
+  if (clnToplevelMapper) {
+    seqRegions = TopLevelAssemblyMapper_listSeqRegions(clnToplevelMapper, "AL359765.6", 1, 13780, clnCs);
+    ok(testNum++, seqRegions!=NULL && Vector_getNumElement(seqRegions) == 1 && !strcmp("20", Vector_getElementAt(seqRegions,0)));
+    for (i=0;i<Vector_getNumElement(seqRegions); i++) {
+      char *regionName = Vector_getElementAt(seqRegions, i);
+      fprintf(stderr, "%s\n",regionName);
+    }
   }
 
-
-  seqRegions = TopLevelAssemblyMapper_listSeqRegions(superctgToplevelMapper, "NT_028392", 600000, 1000000, superctgCs);
-  ok(testNum++, seqRegions!=NULL && Vector_getNumElement(seqRegions) == 1 && !strcmp("20", Vector_getElementAt(seqRegions,0)));
-  for (i=0;i<Vector_getNumElement(seqRegions); i++) {
-    char *regionName = Vector_getElementAt(seqRegions, i);
-    fprintf(stderr, "%s\n",regionName);
+  if (superctgToplevelMapper) {
+    seqRegions = TopLevelAssemblyMapper_listSeqRegions(superctgToplevelMapper, "NT_028392", 600000, 1000000, superctgCs);
+    ok(testNum++, seqRegions!=NULL && Vector_getNumElement(seqRegions) == 1 && !strcmp("20", Vector_getElementAt(seqRegions,0)));
+    for (i=0;i<Vector_getNumElement(seqRegions); i++) {
+      char *regionName = Vector_getElementAt(seqRegions, i);
+      fprintf(stderr, "%s\n",regionName);
+    }
   }
-
 
 //
 // Test list_seq_ids
 //
   Vector *ids;
 
-  ids = TopLevelAssemblyMapper_listIds(clnToplevelMapper, "AL359765.6", 1, 13780, clnCs);
-  ok(testNum++, ids!=NULL && Vector_getNumElement(ids) == 1 && *((IDType *)Vector_getElementAt(ids,0)) == 469283 );
-  for (i=0;i<Vector_getNumElement(ids); i++) {
-    IDType id = *((IDType *)Vector_getElementAt(ids, i));
-    fprintf(stderr, IDFMTSTR"\n",id);
+  if (clnToplevelMapper) {
+    ids = TopLevelAssemblyMapper_listIds(clnToplevelMapper, "AL359765.6", 1, 13780, clnCs);
+    ok(testNum++, ids!=NULL && Vector_getNumElement(ids) == 1 && *((IDType *)Vector_getElementAt(ids,0)) == 469283 );
+    for (i=0;i<Vector_getNumElement(ids); i++) {
+      IDType id = *((IDType *)Vector_getElementAt(ids, i));
+      fprintf(stderr, IDFMTSTR"\n",id);
+    }
   }
 
-
-  ids = TopLevelAssemblyMapper_listIds(superctgToplevelMapper, "NT_028392", 600000, 1000000, superctgCs);
-  ok(testNum++, ids!=NULL && Vector_getNumElement(ids) == 1 && *((IDType *)Vector_getElementAt(ids,0)) == 469283 );
-  for (i=0;i<Vector_getNumElement(ids); i++) {
-    IDType id = *((IDType *)Vector_getElementAt(ids, i));
-    fprintf(stderr, IDFMTSTR"\n",id);
+  if (superctgToplevelMapper) {
+    ids = TopLevelAssemblyMapper_listIds(superctgToplevelMapper, "NT_028392", 600000, 1000000, superctgCs);
+    ok(testNum++, ids!=NULL && Vector_getNumElement(ids) == 1 && *((IDType *)Vector_getElementAt(ids,0)) == 469283 );
+    for (i=0;i<Vector_getNumElement(ids); i++) {
+      IDType id = *((IDType *)Vector_getElementAt(ids, i));
+      fprintf(stderr, IDFMTSTR"\n",id);
+    }
   }
 
 // Test for a not implemented method

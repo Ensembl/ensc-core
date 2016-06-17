@@ -74,8 +74,8 @@ GeneAdaptor *GeneAdaptor_new(DBAdaptor *dba) {
 
   ga->getTables                  = GeneAdaptor_getTables;
   ga->getColumns                 = GeneAdaptor_getColumns;
-  ga->store                      = GeneAdaptor_store;
-  ga->objectsFromStatementHandle = GeneAdaptor_objectsFromStatementHandle;
+  ga->store                      = (BaseAdaptor_StoreFunc)GeneAdaptor_store;
+  ga->objectsFromStatementHandle = (BaseAdaptor_ObjectsFromStatementHandleFunc)GeneAdaptor_objectsFromStatementHandle;
   ga->leftJoin                   = GeneAdaptor_leftJoin;
 
   return ga;
@@ -124,7 +124,7 @@ char *Gene_cols[] = {
                 "g.source",
                 "g.is_current",
                 "g.canonical_transcript_id",
-                "g.canonical_annotation",
+                //"g.canonical_annotation",
                 "g.stable_id",
                 "g.version",
                 "UNIX_TIMESTAMP(g.created_date)",
@@ -687,11 +687,11 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
   int i;
   for (i=0; i<Vector_getNumElement(genes); i++) {
     Gene *g  = Vector_getElementAt(genes, i);
-    if (Gene_getSeqRegionStart(g) < minStart) {
-      minStart = Gene_getSeqRegionStart(g);
+    if (Gene_getSeqRegionStart((SeqFeature*)g) < minStart) {
+      minStart = Gene_getSeqRegionStart((SeqFeature*)g);
     }
-    if (Gene_getSeqRegionEnd(g) > maxEnd) {
-      maxEnd = Gene_getSeqRegionEnd(g);
+    if (Gene_getSeqRegionEnd((SeqFeature*)g) > maxEnd) {
+      maxEnd = Gene_getSeqRegionEnd((SeqFeature*)g);
     }
   }
 
@@ -716,7 +716,12 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
 
   IDType *uniqueIds = IDHash_getKeys(gHash);
 
-  char qStr[655500];
+  char *qStr = NULL;
+  if ((qStr = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating qStr\n");
+    return genes;
+  }
+
   strcpy(qStr, "SELECT gene_id, transcript_id FROM   transcript WHERE  gene_id IN (");
   for (i=0; i<IDHash_getNumValues(gHash); i++) {
     if (i!=0) {
@@ -809,6 +814,7 @@ Vector *GeneAdaptor_fetchAllBySlice(GeneAdaptor *ga, Slice *slice, char *logicNa
   Vector *tmpVec = SupportingFeatureAdaptor_fetchAllByExonList(sfa, exons, slice);
   Vector_free(tmpVec);
   Vector_free(exons);
+  free(qStr);
 
   return genes;
 }
@@ -1406,7 +1412,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
   ($gene, $seq_region_id) = $self->_pre_store($gene);
 */
 
-  IDType seqRegionId = BaseFeatureAdaptor_preStore((BaseFeatureAdaptor *)ga, gene); 
+  IDType seqRegionId = BaseFeatureAdaptor_preStore((BaseFeatureAdaptor *)ga, (SeqFeature*)gene); 
 
   char fmtStr[1024];
   char qStr[1024];
@@ -1428,14 +1434,14 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
                //"source = '%s',"
                //"status = '%s',"
                "is_current = %d,"
-               "canonical_transcript_id = 0," 
+               "canonical_transcript_id = 0," ,
                //"canonical_annotation = '%s'", 
-               "canonical_annotation = %%s", 
+               //"canonical_annotation = %%s", 
            analysisId, 
            seqRegionId, 
-           Gene_getSeqRegionStart(gene),
-           Gene_getSeqRegionEnd(gene),
-           Gene_getSeqRegionStrand(gene),
+          Gene_getSeqRegionStart((SeqFeature*)gene),
+          Gene_getSeqRegionEnd((SeqFeature*)gene),
+          Gene_getSeqRegionStrand((SeqFeature*)gene),
            type, 
            //Gene_getDescription(gene),
            //Gene_getSource(gene),

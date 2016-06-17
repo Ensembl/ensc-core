@@ -427,7 +427,10 @@ Vector *ChainedAssemblyMapper_listIdsImpl(ChainedAssemblyMapper *cam, char *frmS
 
     MapperPairSet *mps = Mapper_listPairs( ChainedAssemblyMapper_getFirstLastMapper(cam), seqRegionId, frmStart, frmEnd, "last");
 
-    return MapperPairSet_getFromIds(mps) ;
+    if (mps)
+      return MapperPairSet_getFromIds(mps) ;
+    else
+      return NULL;
   } else {
     fprintf(stderr,"Coordinate system %s %s is neither the first nor the last coordinate system "
                     " of this ChainedAssemblyMapper\n", CoordSystem_getName(frmCs), CoordSystem_getVersion(frmCs) );
@@ -461,9 +464,13 @@ Vector *ChainedAssemblyMapper_listIdsImpl(ChainedAssemblyMapper *cam, char *frmS
 
 Vector *ChainedAssemblyMapper_listSeqRegionsImpl(ChainedAssemblyMapper *cam, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
 
+  Vector *regions = NULL ;
+  
   //retrieve the seq_region names
   Vector *seqRegs = ChainedAssemblyMapper_listIds(cam, frmSeqRegionName, frmStart, frmEnd, frmCs);
 
+  if (seqRegs)
+    {
   // The seq_regions are from the 'to' coordinate system not the
   // from coordinate system we used to obtain them
 // SMJS toCs doesn't seem to be used
@@ -474,18 +481,19 @@ Vector *ChainedAssemblyMapper_listSeqRegionsImpl(ChainedAssemblyMapper *cam, cha
 //    toCs = ChainedAssemblyMapper_getFirstCoordSystem(cam);
 //  }
 
-  // convert them to names
-  AssemblyMapperAdaptor *adaptor = ChainedAssemblyMapper_getAdaptor(cam);
+      // convert them to names
+      AssemblyMapperAdaptor *adaptor = ChainedAssemblyMapper_getAdaptor(cam);
 
-  Vector *regions = AssemblyMapperAdaptor_seqIdsToRegions(adaptor, seqRegs);
-  // Need to tidy up seqRegs;
-  Vector_free(seqRegs);
+      regions = AssemblyMapperAdaptor_seqIdsToRegions(adaptor, seqRegs);
+      // Need to tidy up seqRegs;
+      Vector_free(seqRegs);
+    }
 
   return regions;
 }
 
 void ChainedAssemblyMapper_freeImpl(ChainedAssemblyMapper *cam) {
-  Object_errorUnimplementedMethod(cam, "ChainedAssemblyMapper_free");
+  Object_errorUnimplementedMethod((Object*)cam, "ChainedAssemblyMapper_free");
 }
 
 /*

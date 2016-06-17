@@ -138,7 +138,7 @@ ClassHierarchyNode *ClassHierarchyNode_new(char *className) {
     fprintf(stderr, "Error: Failed allocating ClassHierarchyNode\n");
     exit(1);
   }
-  chn->class = Class_findByName(className);
+  chn->mClass = Class_findByName(className);
   return chn;
 }
 
@@ -185,14 +185,14 @@ int Class_searchHierarchyForParentChildPair(ClassHierarchyNode *chn, ClassType p
 
   (*depth)++;
 
-  if (chn->class->type == parentType) {
+  if (chn->mClass->type == parentType) {
     if (belowParent) {
-      fprintf(stderr,"ERROR: Class type %s is parent to itself\n", chn->class->name);
+      fprintf(stderr,"ERROR: Class type %s is parent to itself\n", chn->mClass->name);
       exit(1);
     }
     belowParent = TRUE;
     isParent = 1;
-  } else if (chn->class->type == descType && belowParent == TRUE) {
+  } else if (chn->mClass->type == descType && belowParent == TRUE) {
     (*depth)--;
     return 1;
   }
@@ -215,12 +215,9 @@ int Class_searchHierarchyForParentChildPair(ClassHierarchyNode *chn, ClassType p
 
 #define MAXCLASSTYPE 1024
 void Class_initHierarchy(ClassHierarchyNode *chn, char **chPP,int *depth) {
-  Class **addedClasses[MAXCLASSTYPE];
-  int nAdded = 0;
   char clsName[1024];
   int len=0;
   int curDepth;
-  int i;
   char *chP = *chPP;
 
   while (*chP != '\0') {

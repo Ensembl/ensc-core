@@ -30,7 +30,9 @@ typedef struct DNAAlignFeatureFuncsStruct {
   BASEALIGNFEATURE_DATA \
   IDType pairDNAAlignFeatureId;
 
-//  ECOSTRING extraData; \
+#ifdef COMMENTED_OUT
+ECOSTRING extraData;
+#endif
 
 #define FUNCSTRUCTTYPE DNAAlignFeatureFuncs
 struct DNAAlignFeatureStruct {

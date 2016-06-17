@@ -28,7 +28,6 @@
 #include "gperftools/tcmalloc.h"
 #include "ProcUtil.h"
 #define UNW_LOCAL_ONLY
-#include "libunwind.h"
 
 int main(int argc, char *argv[]) {
   DBAdaptor *dba;

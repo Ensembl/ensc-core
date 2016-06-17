@@ -58,7 +58,7 @@ struct BaseAlignFeatureStruct {
 
 BaseAlignFeature *BaseAlignFeature_new(void);
 
-int BaseAlignFeature_copyData(BaseAlignFeature *to, BaseAlignFeature *from);
+void BaseAlignFeature_copyData(BaseAlignFeature *to, BaseAlignFeature *from);
 
 #define BaseAlignFeature_getSeqRegionStart(baf) SeqFeature_getSeqRegionStart((baf))
 #define BaseAlignFeature_getSeqRegionEnd(baf) SeqFeature_getSeqRegionEnd((baf))
@@ -156,6 +156,7 @@ Vector *BaseAlignFeature_getUngappedFeatures(BaseAlignFeature *baf);
 void BaseAlignFeature_reverseComplementImpl(BaseAlignFeature *baf);
 
 void BaseAlignFeature_freeImpl(BaseAlignFeature *baf);
+void BaseAlignFeature_freePtrs(BaseAlignFeature *baf);
 
 #define BaseAlignFeature_getHitUnit() \
       ((baf)->funcs->getHitUnit == NULL ? \

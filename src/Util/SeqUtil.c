@@ -137,7 +137,6 @@ int SeqUtil_readTransTab(char *fName, char TransTab[4][4][4]) {
   int   Inds[3];
   char  aa;
   char *ChP;
-  char  TmpName[MAXSTRLEN];
   char *headerStr = "Symbol   3-letter    Codons";
 
   if ((FpIn=FileUtil_open(fName,"r","ReadTransTab"))==NULL) {
@@ -151,7 +150,7 @@ int SeqUtil_readTransTab(char *fName, char TransTab[4][4][4]) {
   }
   
 
-  while (strncmp(Line,headerStr,sizeof(headerStr)) && !feof(FpIn)) {
+  while (strncmp(Line,headerStr,strlen(headerStr)) && !feof(FpIn)) {
     if  (!fgets(Line,MAXSTRLEN,FpIn)) {
       Error_write(EFGETSNULL,"ReadTransTab", ERR_SEVERE, "reading translation table file %s\n", fName);
       return 0;

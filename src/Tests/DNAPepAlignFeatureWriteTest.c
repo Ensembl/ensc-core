@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
   ok(3, features!=NULL);
   ok(4, Vector_getNumElement(features)!=0);
 
-  ProteinAlignFeatureAdaptor_store(pafa, features);
+  ProteinAlignFeatureAdaptor_store((BaseFeatureAdaptor*)pafa, features);
 
   return 0;
 }

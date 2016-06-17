@@ -33,7 +33,6 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
                                                        StatementHandle *sth,
                                                        AssemblyMapper *assMapper,
                                                        Slice *slice);
-int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features);
 
 
 #define DNAAlignFeatureAdaptor_fetchByDbID(dafa, id) BaseFeatureAdaptor_fetchByDbID((BaseFeatureAdaptor *)(dafa), (id))

@@ -62,6 +62,11 @@ int EcoString_addStr(ECOSTRTABLE *EcoSTabP, char *String, int *StrInd) {
     }
   }
 
+  if (!EcoSTabP->UseCount || !EcoSTabP->CheckSums) {
+    Error_write(EREALLERR,"EcoString_addStr",ERR_SEVERE,"EcoSTabP->UseCount");
+    return 0;
+  }
+
   EcoSTabP->UseCount[NElement-1] = 1;
   EcoSTabP->CheckSums[NElement-1] = EcoString_genCheckSum(String);
   *StrInd = NElement-1;

@@ -1,0 +1,57 @@
+#!/bin/bash
+
+if [ "x$ensc_host_name" == "x" ]; then
+    ensc_host_name=$(hostname)
+fi
+
+# Make a prefix.
+# Usage your_var=$(ensc_make_prefix) 
+function ensc_make_prefix
+{
+    now=$(date +%H:%M:%S)
+
+    $ECHO "[$ensc_host_name $SCRIPT_NAME ($now)] $@"
+}
+
+# Usage: ensc_message_err Your Message
+function ensc_message_err
+{
+    $ECHO "$(ensc_make_prefix) $@" >&2
+}
+
+# Usage: ensc_message_exit Your Message
+function ensc_message_exit
+{
+    ensc_message_err "$@"
+    exit 1;
+}
+
+
+INSTALL_DIR=$1
+
+ECHO=echo
+SCRIPT_NAME=$(basename $0)
+INITIAL_DIR=$(pwd)
+SCRIPT_DIR=$(dirname $0)
+if ! echo $SCRIPT_DIR | egrep -q "(^)/" ; then
+   BASE_DIR=$INITIAL_DIR/$SCRIPT_DIR
+else
+   BASE_DIR=$SCRIPT_DIR
+fi
+
+
+# It's possible to override settings from Makefile.am and configure.ac
+# by setting these two variables, e.g. export CXXFLAGS='-std=c++0x -g' etc.
+export CXXFLAGS=''
+export LDFLAGS=''
+
+
+# run the configure.......watch out for the quoting, sometimes we want the variable to
+# be interpreted as a single cmdline arg, sometimes as multiple ones.
+
+$BASE_DIR/configure \
+$INSTALL_DIR \
+"$CC_param" "$CFLAGS_param" "$LDFLAGS_param" "$@" || ensc_message_exit "configure script failed."
+
+
+exit 0

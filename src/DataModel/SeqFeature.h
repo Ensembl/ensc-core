@@ -27,7 +27,9 @@
 
 #include "EnsRoot.h"
 
-//typedef void (*CLASSTYPE ## _FreeFunc)(CLASSTYPE *); \
+#ifdef COMMENTED_OUT
+typedef void (*CLASSTYPE ## _FreeFunc)(CLASSTYPE *);
+#endif
 
 #define SEQFEATUREFUNC_TYPES(CLASSTYPE) \
 OBJECTFUNC_TYPES(CLASSTYPE) \
@@ -47,7 +49,9 @@ typedef CLASSTYPE * (*CLASSTYPE ## _TransformToSliceFunc)(CLASSTYPE *sf, Slice *
 typedef CLASSTYPE * (*CLASSTYPE ## _TransformRawContigToSliceFunc)(CLASSTYPE *sf, Slice *slice); \
 typedef CLASSTYPE * (*CLASSTYPE ## _TransformSliceToSliceFunc)(CLASSTYPE *sf, Slice *slice);
 
-//  CLASSTYPE ## _FreeFunc free; \
+#ifdef COMMENTED_OUT
+CLASSTYPE ## _FreeFunc free;
+#endif
 
 #define SEQFEATUREFUNCS_DATA(CLASSTYPE) \
   OBJECTFUNCS_DATA(CLASSTYPE) \
@@ -138,7 +142,7 @@ SeqFeature *SeqFeature_new(void);
 #define SeqFeature_getAnalysis(sf) (sf)->analysis
 
 char *SeqFeature_setStableId(SeqFeature *sf, char *stableId);
-#define SeqFeature_getStableId(sf) (sf)->stableId
+#define SeqFeature_getStableId(sf) (sf)->si->stableId
 
 #define SeqFeature_setDbID(sf,dbID) Storable_setDbID(&((sf)->st),dbID)
 #define SeqFeature_getDbID(sf) Storable_getDbID(&((sf)->st))
@@ -204,6 +208,7 @@ int SeqFeature_overlaps(SeqFeature *sf, SeqFeature *f);
          ((sf)->funcs->transformRawContigToSlice((sf),(slice))))
 
 #define SeqFeature_free(sf) EnsRoot_free((sf))
+void SeqFeature_freePtrs(SeqFeature *sf);
 
 #define SeqFeature_shallowCopy(sf) EnsRoot_shallowCopy((sf))
 #define SeqFeature_deepCopy(sf) EnsRoot_deepCopy((sf))

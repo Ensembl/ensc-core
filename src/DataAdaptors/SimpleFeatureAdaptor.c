@@ -39,8 +39,8 @@ SimpleFeatureAdaptor *SimpleFeatureAdaptor_new(DBAdaptor *dba) {
 
   sfa->getTables = SimpleFeatureAdaptor_getTables;
   sfa->getColumns = SimpleFeatureAdaptor_getColumns;
-  sfa->store = SimpleFeatureAdaptor_store;
-  sfa->objectsFromStatementHandle = SimpleFeatureAdaptor_objectsFromStatementHandle;
+  sfa->store = (BaseAdaptor_StoreFunc)SimpleFeatureAdaptor_store;
+  sfa->objectsFromStatementHandle = (BaseAdaptor_ObjectsFromStatementHandleFunc)SimpleFeatureAdaptor_objectsFromStatementHandle;
 
 
   return sfa;
@@ -165,12 +165,12 @@ int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
     my $seq_region_id;
     ($sf, $seq_region_id) = $self->_pre_store($sf);
 */
-    IDType seqRegionId = BaseFeatureAdaptor_preStore(bfa, feat);
+    IDType seqRegionId = BaseFeatureAdaptor_preStore(bfa, (SeqFeature*)feat);
 
     sth->execute(sth, (IDType)(seqRegionId), 
-                      SimpleFeature_getSeqRegionStart(feat), 
-                      SimpleFeature_getSeqRegionEnd(feat),
-                      SimpleFeature_getSeqRegionStrand(feat),
+                 SimpleFeature_getSeqRegionStart((SeqFeature*)feat), 
+                 SimpleFeature_getSeqRegionEnd((SeqFeature*)feat),
+                 SimpleFeature_getSeqRegionStrand((SeqFeature*)feat),
                       SimpleFeature_getDisplayLabel(feat),
                       (IDType)(Analysis_getDbID(analysis)), 
                       SimpleFeature_getScore(feat));
@@ -180,6 +180,8 @@ int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
   }
 
   sth->finish(sth);
+
+  return 1;
 }
 
 

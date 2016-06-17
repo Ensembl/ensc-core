@@ -32,4 +32,6 @@ IdentityXref *IdentityXref_new();
 #define IdentityXref_setTargetIdentity(idx, ti) (idx)->targetIdentity = (ti)
 #define IdentityXref_getTargetIdentity(idx) (idx)->targetIdentity
 
+void IdentityXref_free(IdentityXref *idx);
+
 #endif

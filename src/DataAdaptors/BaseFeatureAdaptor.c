@@ -25,6 +25,7 @@
 #include "MetaContainer.h"
 #include "MetaCoordContainer.h"
 #include "Object.h"
+#include "Slice.h"
 
 #include "DNAAlignFeature.h"
 
@@ -434,120 +435,150 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceAndScore(BaseFeatureAdaptor *bfa, Slic
 
 Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Slice *slice, char *constraint, char *logicName) {
   Vector *result = Vector_new();
-  char allConstraint[655500];
-  char key[655500];
-  allConstraint[0] = '\0';
-  key[0] = '\0';
+  char *allConstraint = NULL;
+  char *key = NULL;
+  int done = FALSE;
 
-  if (constraint != NULL) {
-    strcpy(allConstraint, constraint);
+  if (!done && (allConstraint = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating allConstraint\n");
+    done = TRUE;
   }
 
-  if ( ! BaseFeatureAdaptor_logicNameToConstraint(bfa, allConstraint, logicName)) {
-  // If the logic name was invalid, undef was returned
-    return result;
+  if (!done && (key = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating key\n");
+    done = TRUE;
   }
- 
-  // Will only use feature_cache if hasn't got no_cache attribute set
-  if ( !DBAdaptor_noCache(bfa->dba)) {
 
-/*
-    // strain test and add to constraint if so to stop caching.
-    if ( $slice->isa('Bio::EnsEMBL::StrainSlice') ) {
+  if (!done) {
+    allConstraint[0] = '\0';
+    key[0] = '\0';
+
+    if (constraint != NULL && *constraint != '\0') {
+      strcpy(allConstraint, constraint);
+    }
+
+    if ( ! BaseFeatureAdaptor_logicNameToConstraint(bfa, allConstraint, logicName)) {
+      // If the logic name was invalid, undef was returned
+      done = TRUE;
+    }
+  }
+
+  if (!done) {
+    // Will only use feature_cache if hasn't got no_cache attribute set
+    if ( !DBAdaptor_noCache(bfa->dba)) {
+
+      /*
+      // strain test and add to constraint if so to stop caching.
+      if ( $slice->isa('Bio::EnsEMBL::StrainSlice') ) {
       my $string =
-        $self->dbc()->db_handle()->quote( $slice->strain_name() );
-
+      $self->dbc()->db_handle()->quote( $slice->strain_name() );
+        
       if ( $constraint ne "" ) {
-        $constraint .= " AND $string = $string ";
+      $constraint .= " AND $string = $string ";
       } else {
-        $constraint .= " $string = $string ";
+      $constraint .= " $string = $string ";
+      }
+      }
+      */
+
+      // Check the cache and return the cached results if we have already
+      // done this query.  The cache key is the made up from the slice
+      // name, the constraint, and the bound parameters (if there are any).
+      ECOSTRING slice_name = Slice_getName(slice);
+      if (slice_name)
+        sprintf(key, "%s:%s", slice_name, allConstraint);
+      else
+        fprintf(stderr, "Error getting slice name");
+
+      StrUtil_strupr(key);
+    
+      /* In C I don't have bound params, I put them into the constraint, so there should be no need for this bit of the key
+         if ( defined($bind_params) ) {
+         $key .= ':'
+         . join( ':', map { $_->[0] . '/' . $_->[1] } @{$bind_params} );
+         }
+      */
+
+      if (Cache_contains(bfa->sliceFeatureCache, key)) {
+        Vector_free(result);
+        result = Cache_findElem(bfa->sliceFeatureCache, key);
+        done = TRUE;
       }
     }
-*/
-
-    // Check the cache and return the cached results if we have already
-    // done this query.  The cache key is the made up from the slice
-    // name, the constraint, and the bound parameters (if there are any).
-    sprintf(key, "%s:%s", Slice_getName(slice), constraint);
-
-    StrUtil_strupr(key);
-    
- /* In C I don't have bound params, I put them into the constraint, so there should be no need for this bit of the key
-    if ( defined($bind_params) ) {
-      $key .= ':'
-        . join( ':', map { $_->[0] . '/' . $_->[1] } @{$bind_params} );
-    }
- */
-
-    if (Cache_contains(bfa->sliceFeatureCache, key)) {
-      return Cache_findElem(bfa->sliceFeatureCache, key);
-    }
   }
 
-  Vector *projVec = BaseFeatureAdaptor_getAndFilterSliceProjections(bfa, slice);
-  int nBound = 0;
-  long *bounds = BaseFeatureAdaptor_generateFeatureBounds(bfa, slice, &nBound); 
+  if (!done) {
+    Vector *projVec = BaseFeatureAdaptor_getAndFilterSliceProjections(bfa, slice);
+    int nBound = 0;
+    long *bounds = BaseFeatureAdaptor_generateFeatureBounds(bfa, slice, &nBound); 
 
-  // fetch features for the primary slice AND all symlinked slices
-  int i;
-  for (i=0; i<Vector_getNumElement(projVec); i++) {
-    ProjectionSegment *seg = Vector_getElementAt(projVec, i);
+    // fetch features for the primary slice AND all symlinked slices
+    int i;
+    for (i=0; i<Vector_getNumElement(projVec); i++) {
+      ProjectionSegment *seg = Vector_getElementAt(projVec, i);
 
-    long offset     = ProjectionSegment_getFromStart(seg);
-    Slice *segSlice = ProjectionSegment_getToSlice(seg);
+      long offset     = ProjectionSegment_getFromStart(seg);
+      Slice *segSlice = ProjectionSegment_getToSlice(seg);
 
-    Vector *features = BaseFeatureAdaptor_sliceFetch(bfa, segSlice, allConstraint);
+      Vector *features = BaseFeatureAdaptor_sliceFetch(bfa, segSlice, allConstraint);
 
-    // If this was a symlinked slice offset the feature coordinates as
-    // needed.
-    if ( EcoString_strcmp(Slice_getName(segSlice), Slice_getName(slice))) {
-      int j;
-      for (j=0; j<Vector_getNumElement(features); j++) {
-        SeqFeature *f = Vector_getElementAt(features, j);
-        if ( offset != 1 ) {
-          SeqFeature_setStart(f, (SeqFeature_getStart(f) + (offset-1)));
-          SeqFeature_setEnd(f, (SeqFeature_getEnd(f) + (offset-1)));
-        }
+      // If this was a symlinked slice offset the feature coordinates as
+      // needed.
+      if ( EcoString_strcmp(Slice_getName(segSlice), Slice_getName(slice))) {
+        int j;
+        for (j=0; j<Vector_getNumElement(features); j++) {
+          SeqFeature *f = Vector_getElementAt(features, j);
+          if ( offset != 1 ) {
+            SeqFeature_setStart(f, (SeqFeature_getStart(f) + (offset-1)));
+            SeqFeature_setEnd(f, (SeqFeature_getEnd(f) + (offset-1)));
+          }
 
-        // discard boundary crossing features from symlinked regions
-        int k;
-        int skipFlag = 0;
-        for (k=0; k<nBound && !skipFlag; k++) {
-          long bound = bounds[k];
-          if ( SeqFeature_getStart(f) < bound && SeqFeature_getEnd(f) >= bound ) {
-            skipFlag = 1;
+          // discard boundary crossing features from symlinked regions
+          int k;
+          int skipFlag = 0;
+          for (k=0; k<nBound && !skipFlag; k++) {
+            long bound = bounds[k];
+            if ( SeqFeature_getStart(f) < bound && SeqFeature_getEnd(f) >= bound ) {
+              skipFlag = 1;
+            }
+          }
+
+          // NIY: Do I need to free slice f was on????
+          if (!skipFlag) {
+            SeqFeature_setSlice(f, slice);
+            Vector_addElement(result, f);
+          } else {
+            // NIY: Free feature if it was out of bounds
           }
         }
-
-        // NIY: Do I need to free slice f was on????
-        if (!skipFlag) {
-          SeqFeature_setSlice(f, slice);
-          Vector_addElement(result, f);
-        } else {
-          // NIY: Free feature if it was out of bounds
-        }
+        Vector_free(features);
+      } else {
+        Vector_append(result, features);
+        Vector_free(features);
       }
-      Vector_free(features);
-    } else {
-      Vector_append(result, features);
-      Vector_free(features);
+    }
+    // NIY: I need to free ProjectionSegments
+    Vector_setFreeFunc(projVec, ProjectionSegment_free);
+    Vector_free(projVec);
+    free(bounds);
+
+    // Will only use feature_cache when set attribute no_cache in DBAdaptor
+    // Condition looks slightly odd, but key will have only been set to something if
+    // the code entered the noCache controlled condition above
+    if (key[0]) {
+      // Was null free func
+      // Make null free func again for now
+      //Vector_setFreeFunc(result, Object_freeImpl);
+      Vector_setFreeFunc(result, NULL);
+      Cache_addElement(bfa->sliceFeatureCache, key, result, (Cache_FreeFunc)Object_freeImpl);
     }
   }
-  // NIY: I need to free ProjectionSegments
-  Vector_setFreeFunc(projVec, ProjectionSegment_free);
-  Vector_free(projVec);
-  free(bounds);
 
-  // Will only use feature_cache when set attribute no_cache in DBAdaptor
-  // Condition looks slightly odd, but key will have only been set to something if
-  // the code entered the noCache controlled condition above
-  if (key[0]) {
-// Was null free func
-// Make null free func again for now
-    //Vector_setFreeFunc(result, Object_freeImpl);
-    Vector_setFreeFunc(result, NULL);
-    Cache_addElement(bfa->sliceFeatureCache, key, result, Object_freeImpl);
-  }
+  if (allConstraint)
+    free(allConstraint);
+
+  if (key)
+    free(key);
 
   return result;
 }
@@ -575,7 +606,7 @@ Vector *BaseFeatureAdaptor_fetchAllBySliceConstraint(BaseFeatureAdaptor *bfa, Sl
 Vector *BaseFeatureAdaptor_fetchAllByLogicName(BaseFeatureAdaptor *bfa, char *logicName) {
   if ( logicName == NULL ) {
     fprintf(stderr,"Need a logic_name\n");
-    exit(1);
+    return NULL;
   }
   char constraint[1024];
 
@@ -611,7 +642,7 @@ Vector *BaseFeatureAdaptor_fetchAllByLogicName(BaseFeatureAdaptor *bfa, char *lo
 Vector *BaseFeatureAdaptor_fetchAllByStableIdList(BaseFeatureAdaptor *bfa, Vector *ids, Slice *slice) {
 
   fprintf(stderr," BaseFeatureAdaptor_fetchAllByStableIdList not implemented until I decide how to do it\n");
-  exit(1);
+  return NULL;
   //return BaseFeatureAdaptor_uncachedFetchAllByIdList(bfa, ids, slice, "stable_id");
 }
 
@@ -658,11 +689,15 @@ int BaseFeatureAdaptor_countBySliceConstraint(BaseFeatureAdaptor *bfa, Slice *sl
   //Table synonym
   NameTableType *tables = bfa->getTables();
   char **primTab = (*tables)[0];
-  char *tableName = primTab[NAME];
   char *tableSynonym = primTab[SYN];
   
   //Constraints
-  char allConstraint[655500];
+  char *allConstraint = NULL;
+  if ((allConstraint = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating allConstraint\n");
+    return 0;
+  }
+
   allConstraint[0] = '\0';
 
   if (constraint != NULL) {
@@ -733,6 +768,8 @@ int BaseFeatureAdaptor_countBySliceConstraint(BaseFeatureAdaptor *bfa, Slice *sl
       count += *cnt;
     }
   }
+
+  free(allConstraint);
   
   return count;
 }
@@ -789,7 +826,7 @@ long *BaseFeatureAdaptor_generateFeatureBounds(BaseFeatureAdaptor *bfa, Slice *s
 
   if ((bounds = calloc(Vector_getNumElement(entProj), sizeof(long))) == NULL) {
     fprintf(stderr, "Failed allocating bounds array for %d bounds\n", Vector_getNumElement(entProj));
-    exit(1);
+    return 0;
   }
 
   *nBound = Vector_getNumElement(entProj)-1;
@@ -830,7 +867,7 @@ QueryAccumData *QueryAccumData_new(char *constraint, AssemblyMapper *mapper, Sli
   QueryAccumData *qad;
   if ((qad = calloc(1,sizeof(QueryAccumData))) == NULL) {
     fprintf(stderr, "Failed allocating space for qad\n");
-    exit(1);
+    return NULL;
   }
   qad->constraint = constraint;
   qad->mapper = mapper;
@@ -859,7 +896,12 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
 
   Vector *featureCoordSystems;
 
-  char tmpStr[655500];
+  char *tmpStr = NULL;
+  if ((tmpStr = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating tmpStr\n");
+    return NULL;
+  }
+
   sprintf(tmpStr, "%sbuild.level", tableName);  
   Vector *metaValues = MetaContainer_listValueByKey(metaContainer, tmpStr);
 
@@ -891,7 +933,7 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
     // Note allocated because stored in struct for later execution
     if ((constraint = calloc(655500, sizeof(char))) == NULL) {
       fprintf(stderr,"Failed allocating constraint\n");
-      exit(1);
+      return NULL;
     }
 
     constraint[0] = '\0';
@@ -905,7 +947,7 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
         maxLen = MetaCoordContainer_fetchMaxLengthByCoordSystemFeatureType(metaCoordContainer,  coordSystem, tableName);
       }
                        
-      IDType seqRegionId;
+      IDType seqRegionId = 0;
 
       if (Slice_getAdaptor(slice)) {
         seqRegionId = SliceAdaptor_getSeqRegionId((SliceAdaptor *)Slice_getAdaptor(slice), slice);
@@ -926,13 +968,19 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
         $seq_region_id = $ext_seq_region_id;
       }
 */
+
+      if (!seqRegionId) {
+        fprintf(stderr, "Error getting sequence region ID for slice.");
+        continue;
+      }
+
       if (constraint[0]) {
         strcat(constraint," AND ");
       }
 
       sprintf(tmpStr, "%s.seq_region_id = "IDFMTSTR" AND ", tableSynonym, seqRegionId);
       strcat(constraint, tmpStr);
-            
+
       //faster query for 1bp slices where SNP data is not compressed
       if (BaseFeatureAdaptor_getStartEqualsEnd(bfa) && Slice_getStart(slice) == Slice_getEnd(slice)) {
         sprintf(tmpStr, " AND %s.seq_region_start = %ld AND %s.seq_region_end = %ld",
@@ -940,35 +988,35 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
         strcat(constraint, tmpStr);
       } else {
         //if ( !$slice->is_circular() ) 
-        if (1) {
-          // Deal with the default case of a non-circular chromosome.
-          sprintf(tmpStr,"%s.seq_region_start <= %ld AND %s.seq_region_end >= %ld", 
-                  tableSynonym, Slice_getEnd(slice), tableSynonym, Slice_getStart(slice));
-          strcat(constraint, tmpStr);
-            
-          if (maxLen) {
-            long minStart = Slice_getStart(slice) - maxLen;
-            sprintf(tmpStr," AND %s.seq_region_start >= %ld", tableSynonym, minStart);
+          if (1) {
+            // Deal with the default case of a non-circular chromosome.
+            sprintf(tmpStr,"%s.seq_region_start <= %ld AND %s.seq_region_end >= %ld", 
+                    tableSynonym, Slice_getEnd(slice), tableSynonym, Slice_getStart(slice));
             strcat(constraint, tmpStr);
-          }
-        } else {
-/* Don't deal with circular - not supported in C implementation
-          // Deal with the case of a circular chromosome.
-          if ( $slice->start > $slice->end ) {
-            $constraint .= " ( ".$table_synonym.".seq_region_start >= ".$slice->start
-                            . " OR ".$table_synonym.".seq_region_start <= ".$slice->end
-                            . " OR ".$table_synonym.".seq_region_end >= ".$slice->start
-                            . " OR ".$table_synonym.".seq_region_end <= ".$slice->end
-                            . " OR ".$table_synonym.".seq_region_start > ".$table_synonym.".seq_region_end";
+            
+            if (maxLen) {
+              long minStart = Slice_getStart(slice) - maxLen;
+              sprintf(tmpStr," AND %s.seq_region_start >= %ld", tableSynonym, minStart);
+              strcat(constraint, tmpStr);
+            }
           } else {
+            /* Don't deal with circular - not supported in C implementation
+            // Deal with the case of a circular chromosome.
+            if ( $slice->start > $slice->end ) {
+            $constraint .= " ( ".$table_synonym.".seq_region_start >= ".$slice->start
+            . " OR ".$table_synonym.".seq_region_start <= ".$slice->end
+            . " OR ".$table_synonym.".seq_region_end >= ".$slice->start
+            . " OR ".$table_synonym.".seq_region_end <= ".$slice->end
+            . " OR ".$table_synonym.".seq_region_start > ".$table_synonym.".seq_region_end";
+            } else {
             $constraint .= " ((".$table_synonym.".seq_region_start <= ".$slice->end
-                            . " AND ".$table_synonym.".seq_region_end >= ".$slice->start.") "
-                            . "OR (".$table_synonym.".seq_region_start > ".$table_synonym.".seq_region_end"
-                            . " AND (".$table_synonym.".seq_region_start <= ".$slice->end
-                            . " OR ".$table_synonym.".seq_region_end >= ".$slice->start.")))";
-          }
+            . " AND ".$table_synonym.".seq_region_end >= ".$slice->start.") "
+            . "OR (".$table_synonym.".seq_region_start > ".$table_synonym.".seq_region_end"
+            . " AND (".$table_synonym.".seq_region_start <= ".$slice->end
+            . " OR ".$table_synonym.".seq_region_end >= ".$slice->start.")))";
+            }
 */
-        }
+          }
       }
 
       Vector_addElement(queryAccumulator, QueryAccumData_new(constraint, NULL, slice));
@@ -1033,7 +1081,7 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
             // Note allocated because stored in struct for later execution
             if ((constraint = calloc(655500, sizeof(char))) == NULL) {
               fprintf(stderr,"Failed allocating constraint\n");
-              exit(1);
+              return NULL;
             }
         
             constraint[0] = '\0';
@@ -1054,6 +1102,7 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
               strcat(constraint, tmpStr);
             }
                       
+            /* queryaccumdata takes ownership of constraint here */
             Vector_addElement(queryAccumulator, QueryAccumData_new(constraint, mapper, slice));
           }
         } else { // LRG - ignore this stuff
@@ -1074,7 +1123,7 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
         int *countP;
         if ((countP = calloc(1,sizeof(int))) == NULL) {
           fprintf(stderr, "Failed allocating space for a count\n");
-          exit(1);
+          return NULL;
         }
     
         *countP = count;
@@ -1104,6 +1153,7 @@ Vector *BaseFeatureAdaptor_getBySlice(BaseFeatureAdaptor *bfa, Slice *slice, cha
   }
   Vector_free(featureCoordSystems);
 
+  free(tmpStr);
   return panCoordFeatures;
 }
 /*
@@ -1159,14 +1209,14 @@ IDType BaseFeatureAdaptor_preStore(BaseFeatureAdaptor *bfa, SeqFeature *feature)
 
   if(feature == NULL) {
     fprintf(stderr,"Expected Feature argument.\n");
-    exit(1);
+    return 0;
   }
 
   Slice *slice = SeqFeature_getSlice(feature);
 
   if (slice == NULL) {
     fprintf(stderr, "Feature must be attached to Slice to be stored.\n");
-    exit(1);
+    return 0;
   }
 
   BaseFeatureAdaptor_checkStartEndStrand(bfa, 
@@ -1220,7 +1270,7 @@ IDType BaseFeatureAdaptor_preStore(BaseFeatureAdaptor *bfa, SeqFeature *feature)
 
   if (!seqRegionId) {
     fprintf(stderr, "Feature is associated with seq_region which is not in this DB.\n");
-    exit(1);
+    return 0;
   }
 
 //  return ($feature, $seq_region_id);
@@ -1316,7 +1366,7 @@ int BaseFeatureAdaptor_checkStartEndStrand(BaseFeatureAdaptor *bfa, long start, 
 */
   if(strand < -1 || strand > 1) {
     fprintf(stderr, "Invalid Feature strand [%d]. Must be -1, 0 or 1.", strand);
-    exit(1);
+    return 0;
   }
 
 /* circular shite
@@ -1378,7 +1428,7 @@ Vector *BaseFeatureAdaptor_remap(BaseFeatureAdaptor *bfa, Vector *features, Asse
 
     if (fSlice == NULL) {
       fprintf(stderr, "Feature does not have attached slice.\n");
-      exit(1);
+      return 0;
     }
 
     char *fSeqRegion = Slice_getSeqRegionName(fSlice);
@@ -1472,7 +1522,7 @@ char *BaseFeatureAdaptor_logicNameToConstraint(BaseFeatureAdaptor *bfa, char *co
     char *dotP = strchr(columns[i], '.');
     if (dotP == NULL) {
       fprintf(stderr, "No '.' in columns string %s\n", columns[i]);
-      exit(1);
+      return NULL;
     }
     int synLen = dotP-columns[i];
     strncpy(syn, columns[i], synLen);
@@ -1501,7 +1551,7 @@ char *BaseFeatureAdaptor_logicNameToConstraint(BaseFeatureAdaptor *bfa, char *co
   // Perl returned undef, I'm going to throw for now
   //  return undef;
     fprintf(stderr, "Unknown analysis %s in BFA_logicNameToConstraint - exiting\n", logicName);
-    exit(1);
+    return NULL;
   }
 
   IDType anId = Analysis_getDbID(an);
@@ -1686,7 +1736,7 @@ Vector *BaseFeatureAdaptor_listSeqRegionIds(BaseFeatureAdaptor *bfa, char *table
 
     if ((idP = calloc(1,sizeof(IDType))) == NULL) {
       fprintf(stderr, "Failed allocating space for a id\n");
-      exit(1);
+      return NULL;
     }
 
     *idP = id;

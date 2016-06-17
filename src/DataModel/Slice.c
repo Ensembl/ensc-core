@@ -196,7 +196,7 @@ void Slice_free(Slice *slice) {
                    "       Freeing it anyway\n");
   }
 
-  BaseContig_freePtrs(slice);
+  BaseContig_freePtrs((BaseContig*)slice);
 
   if (slice->name) EcoString_freeStr(ecoSTable, slice->name);
   if (slice->seqRegionName) EcoString_freeStr(ecoSTable, slice->seqRegionName);
@@ -3575,8 +3575,6 @@ Vector *Slice_projectToSlice(Slice *slice, Slice *toSlice) {
           currentStart += length;
           continue;
         }
-
-        CoordSystem *coordCs = mc->coordSystem;
 
         // If the normalised projection just ended up mapping to the
         // same coordinate system we were already in then we should just

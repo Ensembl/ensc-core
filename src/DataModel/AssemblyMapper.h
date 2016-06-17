@@ -120,6 +120,8 @@ Vector *AssemblyMapper_listContigIdsImpl(AssemblyMapper *am, char *chrName, long
 MapperRangeSet *AssemblyMapper_fastMapImpl(AssemblyMapper *am, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, CoordSystem *frmCs, Slice *toSlice);
 void AssemblyMapper_registerAllImpl(AssemblyMapper *am);
 
+int AssemblyMapper_getSize(AssemblyMapper *am);
+
 void AssemblyMapper_registerComponent(AssemblyMapper *am, IDType cmpSeqRegionId);
 void AssemblyMapper_registerAssembled(AssemblyMapper *am, IDType asmSeqRegionId, int chunkId);
 

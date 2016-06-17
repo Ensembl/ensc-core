@@ -91,7 +91,7 @@ Chromosome *ChromosomeAdaptor_fetchByChrName(ChromosomeAdaptor *ca, char *chrNam
     if( row == NULL ) {
       sth->finish(sth);
       fprintf(stderr, "ERROR: Do not recognise chromosome %s\n",chrName);
-      exit(1);
+      return NULL;
     }
   
     chromosome = ChromosomeAdaptor_chromosomeFromRow(ca, row);

@@ -38,7 +38,12 @@ void BaseAdaptor_init(BaseAdaptor *ba, DBAdaptor *dba, int adaptorType) {
 
 StatementHandle *BaseAdaptor_prepare(BaseAdaptor *ba, char *qStr, size_t len) {
   /*printf("Query = %s len = %d\n",qStr,len);*/
-  return DBAdaptor_prepare(ba->dba,qStr,len);
+  StatementHandle* result = NULL;
+
+  if (ba && ba->dba && ba->dba->dbc)
+    result = DBAdaptor_prepare(ba->dba,qStr,len);
+
+  return result;
 }
 
 
@@ -51,6 +56,7 @@ StatementHandle *BaseAdaptor_prepare(BaseAdaptor *ba, char *qStr, size_t len) {
 // For ordered, the default should be 0 (if you just need to fill out the args)
 // Note ONLY stable_id can be char, all other pk's must be IDType (see code)
 Vector *BaseAdaptor_listDbIDs(BaseAdaptor *ba, char *table, char *pk, int ordered) {
+  int ok = 1;
   char colName[1024];
 
   if (pk == NULL) {
@@ -61,8 +67,6 @@ Vector *BaseAdaptor_listDbIDs(BaseAdaptor *ba, char *table, char *pk, int ordere
 
   char qStr[1024];
   sprintf(qStr,"SELECT `%s` FROM `%s`", colName, table );
-
-  int joinWithCs = 0;
 
   if ( BaseAdaptor_isMultiSpecies(BaseAdaptor *ba)
       // For now just the multi species because I don't have adaptors in the Class hierarchy
@@ -103,12 +107,17 @@ Vector *BaseAdaptor_listDbIDs(BaseAdaptor *ba, char *table, char *pk, int ordere
   
       if ((idP = calloc(1,sizeof(IDType))) == NULL) {
         fprintf(stderr, "Failed allocating space for a id\n");      
-        exit(1);
-      } 
-  
-      *idP = id;
-      Vector_addElement(out, idP);
+        ok = 0;
+      } else {
+        *idP = id;
+        Vector_addElement(out, idP);
+      }
     }
+  }
+
+  if (!ok) {
+    Vector_free(out);
+    out = NULL;
   }
 
   return out;
@@ -211,8 +220,14 @@ sub _bind_param_generic_fetch {
 =cut
 */
 Vector *BaseAdaptor_genericFetch(BaseAdaptor *ba, char *constraint, AssemblyMapper *mapper, Slice *slice) {
-  char qStr[655500];
-//  char *qStr = calloc(5655500, sizeof(char));
+  Vector *res = NULL;
+  char *qStr = NULL;
+
+  if ((qStr = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating qStr\n");
+    return res;
+  }
+
   qStr[0] = '\0';
 
   BaseAdaptor_generateSql(ba, constraint, NULL, qStr);
@@ -221,10 +236,10 @@ Vector *BaseAdaptor_genericFetch(BaseAdaptor *ba, char *constraint, AssemblyMapp
 
   sth->execute(sth);
 
-  Vector *res = ba->objectsFromStatementHandle(ba, sth, mapper, slice);
+  res = ba->objectsFromStatementHandle(ba, sth, mapper, slice);
   sth->finish(sth);
 
-  //free(qStr);
+  free(qStr);
   return res;
 }
 
@@ -245,7 +260,13 @@ Vector *BaseAdaptor_genericFetch(BaseAdaptor *ba, char *constraint, AssemblyMapp
 char *countCols[] = {"count(*)", NULL};
 
 int BaseAdaptor_genericCount(BaseAdaptor *ba, char *constraint) {
-  char qStr[655500];
+  char *qStr = NULL;
+
+  if ((qStr = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating qStr\n");
+    return 0;
+  }
+
   qStr[0] = '\0';
 
   BaseAdaptor_generateSql(ba, constraint, countCols, qStr);
@@ -255,21 +276,20 @@ int BaseAdaptor_genericCount(BaseAdaptor *ba, char *constraint) {
 
   if (sth->numRows(sth) != 1) {
     fprintf(stderr, "genericCount didn't return a row - bye!\n");
-    exit(1);
+    return 0;
   }
   ResultRow *row = sth->fetchRow(sth);
   int count = row->getLongAt(row, 0);
 
+  free(qStr);
   return count;
 }
 
 void BaseAdaptor_generateSql(BaseAdaptor *ba, char *constraint, char **inputColumns, char *sql) {
   NameTableType *tables = ba->getTables();
-  int nTable = 0;
   char tmpStr[1024];
   char extraDefaultWhere[1024];
   int i;
-  NameTableType *tabs;
   int needCsTab = 0;
   int needSrTab = 0;
 
@@ -509,7 +529,7 @@ SeqFeature *BaseAdaptor_fetchByDbID(BaseAdaptor *ba, IDType id) {
     return sf;
   }
   fprintf(stderr,"Cached fetching not implemented yet - didn't seem to be used much in perl so I didn't bother - ask Steve\n");
-  exit(1);
+
 
   // Please compiler
   return NULL;
@@ -522,6 +542,7 @@ SeqFeature *BaseAdaptor_fetchByDbID(BaseAdaptor *ba, IDType id) {
 */
 
 SeqFeature *BaseAdaptor_uncachedFetchByDbID(BaseAdaptor *ba, IDType id) {
+  SeqFeature *feat = NULL;
   char constraint[1024];
 
   //construct a constraint like 't1.table1_id = 123'
@@ -533,14 +554,12 @@ SeqFeature *BaseAdaptor_uncachedFetchByDbID(BaseAdaptor *ba, IDType id) {
   Vector *vec = BaseAdaptor_genericFetch(ba, constraint, NULL, NULL);
 
   if (Vector_getNumElement(vec) > 1) {
-    fprintf(stderr, "Got more than one feature back in fetch ID call - bye!\n");
-    exit(1);
-  }
-
-  SeqFeature *feat = NULL;
-  if (Vector_getNumElement(vec) == 1) {
-    feat = Vector_getElementAt(vec, 0);
-    Object_incRefCount(feat);
+    fprintf(stderr, "Error: Got more than one feature back in fetch ID call\n");
+  } else {
+    if (Vector_getNumElement(vec) == 1) {
+      feat = Vector_getElementAt(vec, 0);
+      Object_incRefCount(feat);
+    }
   }
   
 // NIY May want to set a free func???
@@ -582,7 +601,6 @@ Vector *BaseAdaptor_fetchAllByDbIDList(BaseAdaptor *ba, Vector *idList, Slice *s
     return BaseAdaptor_uncachedFetchAllByDbIDList(ba, idList, slice);
   }
   fprintf(stderr,"Cached fetching not implemented yet - didn't seem to be used much in perl so I didn't bother - ask Steve\n");
-  exit(1);
 
   // Please compiler
   return NULL;
@@ -598,7 +616,7 @@ Vector *BaseAdaptor_fetchAllByDbIDList(BaseAdaptor *ba, Vector *idList, Slice *s
 Vector *BaseAdaptor_uncachedFetchAllByDbIDList(BaseAdaptor *ba, Vector *idList, Slice *slice) {
   if ( idList == NULL) {
     fprintf(stderr, "id_list list reference argument is required - bye!");
-    exit(1);
+    return NULL;
   }
   char constraintPref[1024];
   
@@ -636,10 +654,15 @@ Vector *BaseAdaptor_uncachedFetchAllByDbIDList(BaseAdaptor *ba, Vector *idList, 
 
   Vector *out = Vector_new();
 
-  int endPoint;
   int lenNum;
   for (i=0; i<nUniqueId; i+=maxSize) {
-    char constraint[655500];
+    char *constraint = NULL;
+
+    if ((constraint = (char *)calloc(655500,sizeof(char))) == NULL) {
+      fprintf(stderr,"Failed allocating constraint\n");
+      return out;
+    }
+
     strcpy(constraint, constraintPref);
   
     // Special case for one remaining Id
@@ -667,6 +690,7 @@ Vector *BaseAdaptor_uncachedFetchAllByDbIDList(BaseAdaptor *ba, Vector *idList, 
     Vector_append(out, resChunk);
 
     Vector_free(resChunk);
+    free(constraint);
   }
   free(uniqueIds);
 
@@ -814,7 +838,6 @@ sub ignore_cache_override {
 
 NameTableType *BaseAdaptor_getTables(void) {
   fprintf(stderr,"ERROR: Abstract method getTables not defined by implementing subclass\n");
-  exit(1);
 
 // Please the compiler
   return NULL;
@@ -837,7 +860,6 @@ NameTableType *BaseAdaptor_getTables(void) {
 
 char **BaseAdaptor_getColumns(void) {
   fprintf(stderr,"ERROR: Abstract method getColumns not defined by implementing subclass\n");
-  exit(1);
 
 // Please the compiler
   return NULL;
@@ -919,7 +941,6 @@ char *BaseAdaptor_finalClause(void) {
 Vector *BaseAdaptor_objectsFromStatementHandle(BaseAdaptor *bfa, StatementHandle *sth,
                                                AssemblyMapper *mapper, Slice *slice) {
   fprintf(stderr,"ERROR: Abstract method objectsFromStatementHandle not defined by implementing subclass\n");
-  exit(1);
 
 // Please the compiler
   return NULL;
@@ -945,7 +966,7 @@ Vector *BaseAdaptor_objectsFromStatementHandle(BaseAdaptor *bfa, StatementHandle
 int BaseAdaptor_store(BaseAdaptor *ba, Vector *sfs) {
 
   fprintf(stderr, "Abstract method store not defined by implementing subclass\n");
-  exit(1);
+  return 0;
 }
 
 /*

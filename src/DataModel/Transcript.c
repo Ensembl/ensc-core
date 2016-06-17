@@ -582,7 +582,7 @@ int Transcript_getVersion(Transcript *transcript) {
 int notWarned = 1;
 Transcript *Transcript_transfer(Transcript *transcript, Slice *slice) {
   // Call super transfer
-  Transcript *newTranscript = SeqFeature_transfer(transcript, slice);
+  Transcript *newTranscript = (Transcript*)SeqFeature_transfer((SeqFeature*)transcript, slice);
 
   if (newTranscript == NULL) {
     return NULL;
@@ -930,7 +930,6 @@ char *Transcript_getSplicedSeq(Transcript *trans) {
 char *Transcript_getTranslateableSeq(Transcript *trans) {
   int i;
 //  int lastPhase = 0;
-  int first = 1;
  // char *mrna = StrUtil_copyString(&mrna,"",0);
   char *mrna;
   Vector *translateableExons;
@@ -959,7 +958,6 @@ char *Transcript_getTranslateableSeq(Transcript *trans) {
 
   for (i=0; i<Vector_getNumElement(translateableExons); i++) {
     Exon *exon = Vector_getElementAt(translateableExons, i);
-    int j;
     //fprintf(stderr, "translateable exons %d from %ld to %ld\n", i, Exon_getStart(exon), Exon_getEnd(exon));
 
 //    mrna = StrUtil_appendString(mrna, Exon_getSeqString(exon));

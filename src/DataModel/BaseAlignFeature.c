@@ -28,6 +28,7 @@
 #include "StrUtil.h"
 #include "SeqFeatureFactory.h"
 #include "CigarStrUtil.h"
+#include "FeaturePair.h"
 
 #define MAXCIGARPIECELEN 1024
 
@@ -60,9 +61,10 @@ ECOSTRING BaseAlignFeature_setCigarString(BaseAlignFeature *baf, char *str) {
   return baf->cigarString;
 }
 
-int BaseAlignFeature_copyData(BaseAlignFeature *to, BaseAlignFeature *from) {
-  if (BaseAlignFeature_getCigarString(from)) BaseAlignFeature_setCigarString(to, BaseAlignFeature_getCigarString(from));
-  FeaturePair_copyData(to, from);
+void BaseAlignFeature_copyData(BaseAlignFeature *to, BaseAlignFeature *from) {
+  if (BaseAlignFeature_getCigarString(from)) 
+    BaseAlignFeature_setCigarString(to, BaseAlignFeature_getCigarString(from));
+  FeaturePair_copyData((FeaturePair*)to, (FeaturePair*)from);
 }
 
 ECOSTRING BaseAlignFeature_setDbName(BaseAlignFeature *baf, char *dbName) {
@@ -102,9 +104,6 @@ Vector *BaseAlignFeature_getUngappedFeatures(BaseAlignFeature *baf) {
 void BaseAlignFeature_reverseComplementImpl(BaseAlignFeature *baf) {
   char *newCigarString;
   char *oldCigarString = BaseAlignFeature_getCigarString(baf);
-  char *oldChP;
-  char *newChP;
-  char *newPieceStartP;
   int len = strlen(oldCigarString);
 
 
@@ -342,8 +341,8 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
 
 
   hstrand = FeaturePair_getHitStrand(fp);
-  contig  = FeaturePair_getSlice(fp);
-  name    = FeaturePair_getSeqName(fp);
+  contig  = (BaseContig*)FeaturePair_getSlice(fp);
+  name    = FeaturePair_getSeqName((SeqFeature*)fp);
   hname   = FeaturePair_getHitSeqName(fp);
   score   = FeaturePair_getScore(fp);
   percent = FeaturePair_getPercId(fp);
@@ -423,9 +422,9 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
         exit(1);
       }
 //    }
-    if (strcmp(name, FeaturePair_getSeqName(f))) {
+      if (strcmp(name, FeaturePair_getSeqName((SeqFeature*)f))) {
       fprintf(stderr,"Error: Inconsistent names in feature array [%s - %s]\n", 
-              name, FeaturePair_getSeqName(f));
+              name, FeaturePair_getSeqName((SeqFeature*)f));
       exit(1);
     }
     if (strcmp(hname,FeaturePair_getHitSeqName(f))) {
@@ -624,7 +623,7 @@ int BaseAlignFeature_parseFeatures(BaseAlignFeature *baf, Vector *features) {
   if (contig) {
     BaseAlignFeature_setSlice(baf, contig);
   } else {
-    BaseAlignFeature_setSeqName(baf, name);
+    BaseAlignFeature_setSeqName((SeqFeature*)baf, name);
   }
   BaseAlignFeature_setPhase(baf, phase);
   BaseAlignFeature_setAnalysis(baf, analysis);

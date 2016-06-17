@@ -116,7 +116,7 @@ char *CachingSequenceAdaptor_fetchBySliceStartEndStrand(CachingSequenceAdaptor *
                                                         int strand) {
   if (!slice) {
     fprintf(stderr,"ERROR: need a slice to work\n");
-    exit(1);
+    return NULL;
   }
 
   if (start == POS_UNDEF) {
@@ -125,7 +125,7 @@ char *CachingSequenceAdaptor_fetchBySliceStartEndStrand(CachingSequenceAdaptor *
 
   if (BaseContig_getObjectType(slice) != CLASS_SLICE) {
     fprintf(stderr,"ERROR: slice fetch called with something that isn't a slice\n");
-    exit(1);
+    return NULL;
   }
 
   if (end == POS_UNDEF) { // && (not $slice->is_circular) ) {
@@ -134,7 +134,7 @@ char *CachingSequenceAdaptor_fetchBySliceStartEndStrand(CachingSequenceAdaptor *
 
   if ( start > end ) {
     fprintf(stderr,"Start must be less than or equal to end.\n");
-    exit(1);
+    return NULL;
   }
 
   if (strand == STRAND_UNDEF) {
@@ -148,7 +148,7 @@ char *CachingSequenceAdaptor_fetchBySliceStartEndStrand(CachingSequenceAdaptor *
   if ( Slice_getStrand(slice) != 1 ) {
     long tmp = rightExpand;
     rightExpand = leftExpand;
-    leftExpand = rightExpand;
+    leftExpand = tmp;
   }
 
   long seqRegStart = Slice_getStart(slice) - leftExpand;
@@ -157,7 +157,7 @@ char *CachingSequenceAdaptor_fetchBySliceStartEndStrand(CachingSequenceAdaptor *
   char *seq;
   if ((seq = calloc((seqRegEnd-seqRegStart)+2, sizeof(char))) == NULL) {
     fprintf(stderr,"Failed allocating seq\n");
-    exit(1);
+    return NULL;
   }
   memset(seq, 'N', seqRegEnd-seqRegStart+1);
 

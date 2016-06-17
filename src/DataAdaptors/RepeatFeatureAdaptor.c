@@ -48,8 +48,8 @@ RepeatFeatureAdaptor *RepeatFeatureAdaptor_new(DBAdaptor *dba) {
 
   rfa->getTables = RepeatFeatureAdaptor_getTables;
   rfa->getColumns = RepeatFeatureAdaptor_getColumns;
-  rfa->store = RepeatFeatureAdaptor_store;
-  rfa->objectsFromStatementHandle = RepeatFeatureAdaptor_objectsFromStatementHandle;
+  rfa->store = (BaseAdaptor_StoreFunc)RepeatFeatureAdaptor_store;
+  rfa->objectsFromStatementHandle = (BaseAdaptor_ObjectsFromStatementHandleFunc)RepeatFeatureAdaptor_objectsFromStatementHandle;
   rfa->defaultWhereClause = RepeatFeatureAdaptor_defaultWhereClause;
 
   return rfa;
@@ -516,15 +516,15 @@ int RepeatFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *repeats) {
     my $seq_region_id;
     ($rf, $seq_region_id) = $self->_pre_store($rf);
 */
-    IDType seqRegionId = BaseFeatureAdaptor_preStore(bfa, rf);
+    IDType seqRegionId = BaseFeatureAdaptor_preStore(bfa, (SeqFeature*)rf);
 
     consId = RepeatConsensus_getDbID(RepeatFeature_getConsensus(rf));
     analId = Analysis_getDbID(RepeatFeature_getAnalysis(rf));
     sth->execute(sth,
           (IDType)seqRegionId,
-          RepeatFeature_getSeqRegionStart(rf),
-          RepeatFeature_getSeqRegionEnd(rf),
-          RepeatFeature_getSeqRegionStrand(rf),
+                 RepeatFeature_getSeqRegionStart((SeqFeature*)rf),
+                 RepeatFeature_getSeqRegionEnd((SeqFeature*)rf),
+                 RepeatFeature_getSeqRegionStrand((SeqFeature*)rf),
           (IDType)consId,
           RepeatFeature_getHitStart(rf),
           RepeatFeature_getHitEnd(rf),

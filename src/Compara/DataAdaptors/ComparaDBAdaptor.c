@@ -21,6 +21,12 @@
 #include "MetaContainer.h"
 #include "StrUtil.h"
 #include "FileUtil.h"
+#include "SyntenyAdaptor.h"
+#include "GenomeDBAdaptor.h"
+#include "DNAFragAdaptor.h"
+#include "GenomicAlignAdaptor.h"
+#include "HomologyAdaptor.h"
+#include "ComparaDNAAlignFeatureAdaptor.h"
 
 void ComparaDBAdaptor_readConfFile(ComparaDBAdaptor *cdba, char *fileName);
 
@@ -56,8 +62,6 @@ ComparaDBAdaptor *ComparaDBAdaptor_new(char *host, char *user, char *pass, char 
 */
 void ComparaDBAdaptor_readConfFile(ComparaDBAdaptor *cdba, char *fileName) {
   int inOuter = 0;
-  int inInner = 0;
-  int inHash = 0;
   FILE *confFP;
   char line[MAXSTRLEN];
   char *confStr;
@@ -66,7 +70,7 @@ void ComparaDBAdaptor_readConfFile(ComparaDBAdaptor *cdba, char *fileName) {
 
   if ((confFP = FileUtil_open(fileName, "r", "ComparaDBAdaptor_readConfFile")) == NULL) {
     fprintf(stderr, "Error: Failed opening conf file.\n");
-    exit(1);
+    return;
   }
 
   StrUtil_copyString(&confStr, "", 0);
@@ -89,7 +93,7 @@ void ComparaDBAdaptor_readConfFile(ComparaDBAdaptor *cdba, char *fileName) {
 
   if (confStr[confStrLen-1] != ']') {
     fprintf(stderr,"Error: conf file missing closing ']'\n");
-    exit(1);
+    return;
   }
 
 // Remove the outer []
@@ -114,7 +118,7 @@ void ComparaDBAdaptor_readConfFile(ComparaDBAdaptor *cdba, char *fileName) {
 
     if (*chP != '[') {
       fprintf(stderr, "Error: didn't get a '[' at start of conf section\n");
-      exit(1);
+      return;
     }
 
     startSect = ++chP;
@@ -167,7 +171,7 @@ void ComparaDBAdaptor_readConfFile(ComparaDBAdaptor *cdba, char *fileName) {
             } else if (!strcmp(key,"module")) {
               if (strcmp(value,"Bio::EnsEMBL::DBSQL::DBAdaptor")) {
                 fprintf(stderr,"Error: Module not normal adaptor is %s\n",value);
-                exit(1);
+                return;
               }
             }
           }
@@ -184,7 +188,7 @@ void ComparaDBAdaptor_readConfFile(ComparaDBAdaptor *cdba, char *fileName) {
         user[0] == '\0' ||
         dbname[0] == '\0') {
       fprintf(stderr,"Error: Missing parameter in conf section\n");
-      exit(1);
+      return;
     }
     dba = DBAdaptor_new(host,user,NULL,dbname,port,NULL);
     DBAdaptor_setAssemblyType(dba, assembly);
@@ -208,39 +212,40 @@ void ComparaDBAdaptor_addDBAdaptor(ComparaDBAdaptor *cdba, DBAdaptor *dba) {
 
   if (!dba) {
     fprintf(stderr, "Error: dba argument must be non null\n");
-    exit(1);
+  } else {
+    mc = DBAdaptor_getMetaContainer(dba);
+
+    species = MetaContainer_getSpecies(mc);
+    speciesName = Species_getBinomialName(species);
+    assembly = MetaContainer_getDefaultAssembly(mc);
+
+
+    sprintf(key,"%s:%s",speciesName,assembly);
+    StringHash_add(cdba->genomes, key, dba);
+
+    Species_free(species);
+    // NIY ??
+    free(assembly);
   }
-
-  mc = DBAdaptor_getMetaContainer(dba);
-
-  species = MetaContainer_getSpecies(mc);
-  speciesName = Species_getBinomialName(species);
-  assembly = MetaContainer_getDefaultAssembly(mc);
-
-
-  sprintf(key,"%s:%s",speciesName,assembly);
-  StringHash_add(cdba->genomes, key, dba);
-
-  Species_free(species);
-// NIY ??
-  free(assembly);
 }
 
 // Perl returns undef if not found - I throw
 DBAdaptor *ComparaDBAdaptor_getDBAdaptor(ComparaDBAdaptor *cdba, char *species, char *assembly) {
+  DBAdaptor *dba = NULL;
   char key[1024];
 
   if (!species || !assembly) {
     fprintf(stderr, "Error: species and assembly arguments are required\n");
-    exit(1);
+  } else {
+    sprintf(key,"%s:%s",species,assembly);
+    if (!StringHash_contains(cdba->genomes, key)) {
+      fprintf(stderr, "Error: No DBAdaptor loaded for %s\n", key);
+    } else {
+      dba =StringHash_getValue(cdba->genomes, key);
+    }
   }
 
-  sprintf(key,"%s:%s",species,assembly);
-  if (!StringHash_contains(cdba->genomes, key)) {
-    fprintf(stderr, "Error: No DBAdaptor loaded for %s\n", key);
-    exit(1);
-  }
-  return StringHash_getValue(cdba->genomes, key);
+  return dba;
 }
 
 SyntenyAdaptor *ComparaDBAdaptor_getSyntenyAdaptor(ComparaDBAdaptor *cdba) {

@@ -84,8 +84,6 @@ int verbosity = 1;
 
 int main(int argc, char *argv[]) {
   DBAdaptor *      dba;
-  StatementHandle *sth;
-  ResultRow *      row;
   Vector *         slices;
   int              nSlices;
 

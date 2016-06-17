@@ -45,4 +45,6 @@ char *StableIdInfo_setStableId(StableIdInfo *si, char *sid);
 #define StableIdInfo_setIsCurrent(si,isC)  (si)->isCurrent = (isC)
 #define StableIdInfo_getIsCurrent(si) (si)->isCurrent
 
+void StableIdInfo_freePtrs(StableIdInfo *si);
+
 #endif

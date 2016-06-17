@@ -232,7 +232,7 @@ void RawContig_free(RawContig *rc) {
   }
 
   printf("Freeing rawcontig\n");
-  BaseContig_freePtrs(rc);
+  BaseContig_freePtrs((BaseContig*)rc);
 
   free(rc);
 }

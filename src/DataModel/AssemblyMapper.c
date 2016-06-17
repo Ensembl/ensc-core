@@ -18,6 +18,7 @@
 #include "AssemblyMapper.h"
 #undef  __ASSEMBLYMAPPER_MAIN__
 #include "AssemblyMapperAdaptor.h"
+
 /*
 =head1 DESCRIPTION
 
@@ -206,7 +207,6 @@ MapperRangeSet *AssemblyMapper_mapImpl(AssemblyMapper *am, char *frmSeqRegionNam
 // HACK HACK HACK - freeing an IDHash within an IDHash
 void freeRegisterIDHash(IDHash *idHash) {
   int i;
-  int j;
 
   for (i=0; i<idHash->size; i++) {
     if (idHash->bucketCounts[i]) {
@@ -586,7 +586,7 @@ void AssemblyMapper_registerAssembled(AssemblyMapper *am, IDType asmSeqRegionId,
 
 
 void AssemblyMapper_freeImpl(AssemblyMapper *am) {
-  Object_errorUnimplementedMethod(am, "AssemblyMapper_free");
+  Object_errorUnimplementedMethod((Object*)am, "AssemblyMapper_free");
 }
 
 

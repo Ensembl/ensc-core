@@ -107,6 +107,7 @@ Slice *Slice_getSeqRegionSlice(Slice *slice);
 
 //ECOSTRING Slice_setAssemblyType(Slice *sl,char *type);
 //#define Slice_getAssemblyType(sl) (sl)->assemblyType
+char *Slice_getAssemblyType(Slice *slice);
 
 ECOSTRING Slice_setSeqRegionName(Slice *sl,char *seqRegionName);
 #define Slice_getSeqRegionName(sl) (sl)->seqRegionName
@@ -132,8 +133,8 @@ IDType Slice_getSeqRegionId(Slice *slice);
 DBAdaptor *Slice_getSelectedDBAdaptor(Slice *slice, char *dbType);
 
 int Slice_isTopLevel(Slice *slice);
-
-
+void Slice_free(Slice *slice);
+int Slice_isReference(Slice *slice);
 
 
 char *Slice_getSubSeq(Slice *slice, int start, int end, int strand);

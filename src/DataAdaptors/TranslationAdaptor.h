@@ -40,6 +40,7 @@ Translation *TranslationAdaptor_fetchByStableId(TranslationAdaptor *tlna, char *
 Vector *TranslationAdaptor_fetchAllByTranscriptList(TranslationAdaptor *tlna, Vector *transcripts);
 Translation *TranslationAdaptor_translationFromResultRow(TranslationAdaptor *tlna, ResultRow *row, Transcript *transcript);
 Vector *TranslationAdaptor_fetchAll(TranslationAdaptor *tlna);
+IDType TranslationAdaptor_store(TranslationAdaptor *tlna, Translation *translation, IDType transcriptId);
 
 #define TranslationAdaptor_isMultiSpecies(ba) (0)
 

@@ -33,7 +33,7 @@ char *CigarStrUtil_reverse(char *oldCigarString, int len) {
 
   newPieceStartP = newChP = newCigarString;
   *newChP = *(oldChP+1);
-  *newChP++;
+  newChP++;
 
   while (oldChP >= oldCigarString-1) {
     if (*oldChP == 'M' || *oldChP == 'D' || *oldChP == 'I' || oldChP == oldCigarString-1) {
@@ -44,8 +44,8 @@ char *CigarStrUtil_reverse(char *oldCigarString, int len) {
     }
 
     *newChP = *oldChP;
-    *oldChP--;
-    *newChP++;
+    oldChP--;
+    newChP++;
   }
 
 

@@ -33,7 +33,7 @@
 
 #ifdef __APPLE__
 #define UNW_LOCAL_ONLY
-#include <libunwind.h>
+//#include <libunwind.h>
 #include <mach-o/dyld.h>
 #endif
 

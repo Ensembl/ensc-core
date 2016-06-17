@@ -16,6 +16,7 @@
 
 #define __REPEATFEATURE_MAIN__
 #include "RepeatFeature.h"
+#include <string.h>
 #undef __REAPEATFEATURE_MAIN__
 
 RepeatFeature *RepeatFeature_new() {
@@ -48,3 +49,11 @@ void RepeatFeature_freeImpl(RepeatFeature *rf) {
   free(rf);
 }
 
+
+RepeatFeature *RepeatFeature_shallowCopyImpl(RepeatFeature *rf) {
+  RepeatFeature *newRepeatFeature = RepeatFeature_new();
+
+  memcpy(newRepeatFeature,rf,sizeof(RepeatFeature));
+
+  return newRepeatFeature;
+}

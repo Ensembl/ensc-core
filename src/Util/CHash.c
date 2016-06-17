@@ -40,8 +40,8 @@
 /******************************************************************************/
 int CHash_addAllocedStr(CHASHTABLE *Table,char *String) {
 
-  if (String==NULL) {
-    Error_write(ENULLPOINTER,"CHash_addAllocedStr",ERR_SEVERE,"String was NULL");
+  if (String==NULL || Table==NULL) {
+    Error_write(ENULLPOINTER,"CHash_addAllocedStr",ERR_SEVERE,"String or Table was NULL");
     return 0;
   }
 
@@ -134,7 +134,11 @@ int CHash_addStr(CHASHTABLE *Table,char *String) {
 /******************************************************************************/
 int CHash_addToArray(CHASHTABLE *Table,CHASHARRAY *LetArray,int NArray,
                     char *String,int StrInd, int Position) {
-  int i;
+  int i = 0;
+  if (LetArray==NULL) {
+    Error_write(ENULLPOINTER,"CHash_addStr",ERR_SEVERE, "LetArray was NULL");
+    return 0;
+  }
    
   for (i=NArray;i>Position;i--) {
     LetArray[i].Index=LetArray[i-1].Index;
@@ -161,22 +165,33 @@ int CHash_addToArray(CHASHTABLE *Table,CHASHARRAY *LetArray,int NArray,
 /******************************************************************************/
 int CHash_binSearch(CHASHTABLE *Table,CHASHARRAY *Array,char *String,int *Ind, 
                     int low, int high) {
-  int middle;
+  int middle = 0;
+  if (Table==NULL || Array==NULL || String==NULL || Ind==NULL) {
+    Error_write(ENULLPOINTER,"CHash_addStr",ERR_SEVERE, "Table, Array, String or Ind was NULL");
+    return 0;
+  }
 
   if (low>high) {
     *Ind = low;
     return -1;
   } else {
     middle=(high+low)/2;
-    if (!strcmp(String,Table->Strings[Array[middle].Index])) {
-      *Ind = middle;
-      return middle;
-    } else if (strcmp(String,Table->Strings[Array[middle].Index])<0) {
-      return CHash_binSearch(Table,Array,String,Ind,low,middle-1);
+    char *comparison_string = Table->Strings[Array[middle].Index];
+    if (String && comparison_string) {
+      if (!strcmp(String,comparison_string)) {
+        *Ind = middle;
+        return middle;
+      } else if (strcmp(String,comparison_string)<0) {
+        return CHash_binSearch(Table,Array,String,Ind,low,middle-1);
+      } else {
+        return CHash_binSearch(Table,Array,String,Ind,middle+1,high);
+      }
     } else {
-      return CHash_binSearch(Table,Array,String,Ind,middle+1,high);
+      fprintf(stderr, "CHash_binSearch error: string is null for String=%s, low=%d, high=%d", 
+              String, low, high);
     }
   }
+  return 0;
 }
 
 /******************************************************************************/
@@ -194,6 +209,11 @@ int CHash_binSearch(CHASHTABLE *Table,CHASHARRAY *Array,char *String,int *Ind,
 void CHash_dump(CHASHTABLE *Table) {
   int i;
   int j;
+
+  if (Table==NULL) {
+    Error_write(ENULLPOINTER,"CHash_addStr",ERR_SEVERE, "Table was NULL");
+    return;
+  }
 
   Stream_fprintf(DBGStream,"DBG>> Dumping CHash Table\n      ===================\n");
   Stream_fprintf(DBGStream,"DBG>> NElement = %d\n",Table->NElement);
@@ -248,6 +268,11 @@ int CHash_find(char *String,CHASHTABLE *Table,int *StrInd) {
   int LetInd;
   int ArrayLoc = 0;
    
+  if (Table==NULL) {
+    Error_write(ENULLPOINTER,"CHash_addStr",ERR_SEVERE, "Table was NULL");
+    return 0;
+  }
+
   if (!Table->HashFunc(String,&LetInd)) {
     Error_trace("CHash_find",String);
     return 0;
@@ -284,6 +309,11 @@ int CHash_firstFour(char *String,int *LetInd) {
   int   i;
   char *ChP;
    
+  if (String==NULL || LetInd==NULL) {
+    Error_write(ENULLPOINTER,"CHash_addStr",ERR_SEVERE, "String or LetInd was NULL");
+    return 0;
+  }
+
   *LetInd=0;
   for (i=0,ChP=String;i<4 && *ChP!='\0';i++,ChP++) {
     *LetInd += *ChP;
@@ -309,6 +339,11 @@ int CHash_fourLets(char *String,int *LetInd) {
   int   i;
   char *ChP;
 
+  if (String==NULL || LetInd==NULL) {
+    Error_write(ENULLPOINTER,"CHash_addStr",ERR_SEVERE, "String or LetInd was NULL");
+    return 0;
+  }
+
   *LetInd=0;
   for (i=0,ChP=String;i<10 && *ChP!='\0';i++,ChP++) {
     if (i==0 || i==3 || i==6 || i==9) {
@@ -332,6 +367,11 @@ int CHash_fourLets(char *String,int *LetInd) {
 /******************************************************************************/
 void CHash_free(CHASHTABLE *Table) {
   int i;
+
+  if (Table==NULL) {
+    Error_write(ENULLPOINTER,"CHash_addStr",ERR_SEVERE, "Table was NULL");
+    return;
+  }
 
   for (i=0;i<Table->NElement;i++) {
     if (Table->Strings[i]) {
@@ -365,6 +405,11 @@ void CHash_free(CHASHTABLE *Table) {
 /******************************************************************************/
 int CHash_getLetInd(char *String,int *LetInd) {
 
+  if (String==NULL) {
+    Error_write(ENULLPOINTER,"CHash_addStr",ERR_SEVERE, "String was NULL");
+    return 0;
+  }
+
   *LetInd = String[0];
 
   return 1;
@@ -391,6 +436,11 @@ int CHash_getSorted(CHASHTABLE *Table,char ***Array,int *NArray) {
   int j;
   int NAdded = 0;
    
+  if (Table==NULL) {
+    Error_write(ENULLPOINTER,"CHash_addStr",ERR_SEVERE, "Table was NULL");
+    return 0;
+  }
+
   if (!Table->NElement) {
     /* Error */
     return 0;
@@ -473,6 +523,11 @@ int CHash_insert(char *String,CHASHTABLE *Table,int StrInd) {
   int LetInd;
   int ArrayLoc=0;
 
+  if (Table==NULL) {
+    Error_write(ENULLPOINTER,"CHash_addStr",ERR_SEVERE, "Table was NULL");
+    return 0;
+  }
+
   /* First find which array to add to */
   if (!Table->HashFunc(String,&LetInd)) {
     Error_trace("CHash_insert",String);
@@ -533,6 +588,11 @@ int CHash_insert(char *String,CHASHTABLE *Table,int StrInd) {
 int CHash_removeStr(CHASHTABLE *Table,char *String,int StrInd,int LetInd) {
   int i;
   int LetPos;
+
+  if (Table==NULL || String==NULL) {
+    Error_write(ENULLPOINTER,"CHash_addStr",ERR_SEVERE, "Table or String was NULL");
+    return 0;
+  }
    
 #ifdef DBG
   Stream_fprintf(DBGStream,"Removing %s\n",String);

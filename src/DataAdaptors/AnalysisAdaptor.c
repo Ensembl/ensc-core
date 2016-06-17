@@ -178,6 +178,7 @@ IDType AnalysisAdaptor_store(AnalysisAdaptor *aa, Analysis *analysis) {
   StatementHandle *sth;
   char qStr[4096];
   char fmtStr[1024];
+  int ok = 1;
   
   //fprintf(stderr,"Analysis dbId = " IDFMTSTR "\n", dbID);
 
@@ -198,103 +199,109 @@ IDType AnalysisAdaptor_store(AnalysisAdaptor *aa, Analysis *analysis) {
  
   if (Analysis_getLogicName(analysis) == NULL) {
     fprintf(stderr,"Must have a logic name on the analysis object");
-    exit(1);
+    dbID = 0;
+    ok = 0;
   }
 
+  if (ok) {
+    sprintf(fmtStr,
+            "INSERT IGNORE INTO analysis"
+            " SET created = %%s,"
+            "     logic_name = %%s,"
+            "     db = %%s,"
+            "     db_version = %%s,"
+            "     db_file = %%s,"
+            "     program = %%s,"
+            "     program_version = %%s,"
+            "     program_file = %%s,"
+            "     parameters = %%s,"
+            "     module = %%s,"
+            "     module_version = %%s,"
+            "     gff_source = %%s,"
+            "     gff_feature = %%s");
 
-  sprintf(fmtStr,
-    "INSERT IGNORE INTO analysis"
-    " SET created = %%s,"
-    "     logic_name = %%s,"
-    "     db = %%s,"
-    "     db_version = %%s,"
-    "     db_file = %%s,"
-    "     program = %%s,"
-    "     program_version = %%s,"
-    "     program_file = %%s,"
-    "     parameters = %%s,"
-    "     module = %%s,"
-    "     module_version = %%s,"
-    "     gff_source = %%s,"
-    "     gff_feature = %%s");
+    char createdQStr[1024];
+    Analysis_getCreated(analysis) ? sprintf(createdQStr,"'%s'", Analysis_getCreated(analysis)) : sprintf(createdQStr, "now()");
 
-  char createdQStr[1024];
-  Analysis_getCreated(analysis) ? sprintf(createdQStr,"'%s'", Analysis_getCreated(analysis)) : sprintf(createdQStr, "now()");
+    char logicNameQStr[1024];
+    Analysis_getLogicName(analysis) ? sprintf(logicNameQStr,"'%s'", Analysis_getLogicName(analysis)) : sprintf(logicNameQStr, "NULL");
 
-  char logicNameQStr[1024];
-  Analysis_getLogicName(analysis) ? sprintf(logicNameQStr,"'%s'", Analysis_getLogicName(analysis)) : sprintf(logicNameQStr, "NULL");
+    char dbQStr[1024];
+    Analysis_getDb(analysis) ? sprintf(dbQStr,"'%s'", Analysis_getDb(analysis)) : sprintf(dbQStr, "NULL");
 
-  char dbQStr[1024];
-  Analysis_getDb(analysis) ? sprintf(dbQStr,"'%s'", Analysis_getDb(analysis)) : sprintf(dbQStr, "NULL");
+    char dbVerQStr[1024];
+    Analysis_getDbVersion(analysis) ? sprintf(dbVerQStr,"%d", Analysis_getDbVersion(analysis)) : sprintf(dbVerQStr, "NULL");
 
-  char dbVerQStr[1024];
-  Analysis_getDbVersion(analysis) ? sprintf(dbVerQStr,"%d", Analysis_getDbVersion(analysis)) : sprintf(dbVerQStr, "NULL");
+    char dbFileQStr[1024];
+    Analysis_getDbFile(analysis) ? sprintf(dbFileQStr,"'%s'", Analysis_getDbFile(analysis)) : sprintf(dbFileQStr, "NULL");
 
-  char dbFileQStr[1024];
-  Analysis_getDbFile(analysis) ? sprintf(dbFileQStr,"'%s'", Analysis_getDbFile(analysis)) : sprintf(dbFileQStr, "NULL");
+    char programQStr[1024];
+    Analysis_getProgram(analysis) ? sprintf(programQStr,"'%s'", Analysis_getProgram(analysis)) : sprintf(programQStr, "NULL");
 
-  char programQStr[1024];
-  Analysis_getProgram(analysis) ? sprintf(programQStr,"'%s'", Analysis_getProgram(analysis)) : sprintf(programQStr, "NULL");
+    char progVerQStr[1024];
+    Analysis_getProgramVersion(analysis) ? sprintf(progVerQStr,"%d", Analysis_getProgramVersion(analysis)) : sprintf(progVerQStr, "NULL");
 
-  char progVerQStr[1024];
-  Analysis_getProgramVersion(analysis) ? sprintf(progVerQStr,"%d", Analysis_getProgramVersion(analysis)) : sprintf(progVerQStr, "NULL");
+    char progFileQStr[1024];
+    Analysis_getProgramFile(analysis) ? sprintf(progFileQStr,"'%s'", Analysis_getProgramFile(analysis)) : sprintf(progFileQStr, "NULL");
 
-  char progFileQStr[1024];
-  Analysis_getProgramFile(analysis) ? sprintf(progFileQStr,"'%s'", Analysis_getProgramFile(analysis)) : sprintf(progFileQStr, "NULL");
+    char paramQStr[1024];
+    Analysis_getParameters(analysis) ? sprintf(paramQStr,"'%s'", Analysis_getParameters(analysis)) : sprintf(paramQStr, "NULL");
 
-  char paramQStr[1024];
-  Analysis_getParameters(analysis) ? sprintf(paramQStr,"'%s'", Analysis_getParameters(analysis)) : sprintf(paramQStr, "NULL");
+    char moduleQStr[1024];
+    Analysis_getModule(analysis) ? sprintf(moduleQStr,"'%s'", Analysis_getModule(analysis)) : sprintf(moduleQStr, "NULL");
 
-  char moduleQStr[1024];
-  Analysis_getModule(analysis) ? sprintf(moduleQStr,"'%s'", Analysis_getModule(analysis)) : sprintf(moduleQStr, "NULL");
+    char modVerQStr[1024];
+    Analysis_getModuleVersion(analysis) ? sprintf(modVerQStr,"%d", Analysis_getModuleVersion(analysis)) : sprintf(modVerQStr, "NULL");
 
-  char modVerQStr[1024];
-  Analysis_getModuleVersion(analysis) ? sprintf(modVerQStr,"%d", Analysis_getModuleVersion(analysis)) : sprintf(modVerQStr, "NULL");
-
-  char gffSrcQStr[1024];
-  Analysis_getGFFSource(analysis) ? sprintf(gffSrcQStr,"'%s'", Analysis_getGFFSource(analysis)) : sprintf(gffSrcQStr, "NULL");
+    char gffSrcQStr[1024];
+    Analysis_getGFFSource(analysis) ? sprintf(gffSrcQStr,"'%s'", Analysis_getGFFSource(analysis)) : sprintf(gffSrcQStr, "NULL");
  
-  char gffFeatQStr[1024];
-  Analysis_getGFFFeature(analysis) ? sprintf(gffFeatQStr,"'%s'", Analysis_getGFFFeature(analysis)) : sprintf(gffFeatQStr, "NULL");
+    char gffFeatQStr[1024];
+    Analysis_getGFFFeature(analysis) ? sprintf(gffFeatQStr,"'%s'", Analysis_getGFFFeature(analysis)) : sprintf(gffFeatQStr, "NULL");
 
-  sprintf(qStr, fmtStr, createdQStr, logicNameQStr, dbQStr, dbVerQStr, dbFileQStr, programQStr, progVerQStr, progFileQStr, paramQStr, moduleQStr, modVerQStr, gffSrcQStr, gffFeatQStr);
+    sprintf(qStr, fmtStr, createdQStr, logicNameQStr, dbQStr, dbVerQStr, dbFileQStr, programQStr, progVerQStr, progFileQStr, paramQStr, moduleQStr, modVerQStr, gffSrcQStr, gffFeatQStr);
 
-  sth = aa->prepare((BaseAdaptor *)aa,qStr,strlen(qStr));
-  int nRowInserted = sth->execute(sth);
-  dbID = sth->getInsertId(sth);
-  sth->finish(sth);
+    sth = aa->prepare((BaseAdaptor *)aa,qStr,strlen(qStr));
+    int nRowInserted = sth->execute(sth);
+    dbID = sth->getInsertId(sth);
+    sth->finish(sth);
 
-  if (!nRowInserted) {
-    // if we didn't insert it should hopefully mean its already there so fetch it
-    Analysis *tmpAnal = AnalysisAdaptor_fetchByLogicName(aa, Analysis_getLogicName(analysis));
-    if (tmpAnal == NULL) {
-      fprintf(stderr,"Failed storing analysis\n");
-      exit(1);
-    }
-    dbID = Analysis_getDbID(tmpAnal);
-    Analysis_setCreated(analysis, Analysis_getCreated(tmpAnal));
+    if (!nRowInserted) {
+      // if we didn't insert it should hopefully mean its already there so fetch it
+      Analysis *tmpAnal = AnalysisAdaptor_fetchByLogicName(aa, Analysis_getLogicName(analysis));
+      if (tmpAnal == NULL) {
+        fprintf(stderr,"Failed storing analysis\n");
+        dbID = 0;
+        ok = 0;
+      } else {
+        dbID = Analysis_getDbID(tmpAnal);
+        Analysis_setCreated(analysis, Analysis_getCreated(tmpAnal));
+      }
 
-  } else if (!Analysis_getCreated(analysis)) {
+    } else if (ok && !Analysis_getCreated(analysis)) {
 
-    if (dbID) {
-      ResultRow *row;
+      if (dbID) {
+        ResultRow *row;
 
-      sprintf(qStr,"SELECT created FROM analysis WHERE analysis_id = " IDFMTSTR, dbID); 
-      sth = aa->prepare((BaseAdaptor *)aa,qStr,strlen(qStr));
-      sth->execute(sth);
-      row = sth->fetchRow(sth);
-      Analysis_setCreated(analysis, row->getStringAt(row,0));
-      sth->finish(sth);
+        sprintf(qStr,"SELECT created FROM analysis WHERE analysis_id = " IDFMTSTR, dbID); 
+        sth = aa->prepare((BaseAdaptor *)aa,qStr,strlen(qStr));
+        sth->execute(sth);
+        row = sth->fetchRow(sth);
+        Analysis_setCreated(analysis, row->getStringAt(row,0));
+        sth->finish(sth);
+      }
     }
   }
 
-  //fprintf(stderr,"dbID = "IDFMTSTR"\n", dbID);
+  if (ok) {
+    //fprintf(stderr,"dbID = "IDFMTSTR"\n", dbID);
 
-  IDHash_add(aa->analCache, dbID, analysis);
-  StringHash_add(aa->logicNameCache, Analysis_getLogicName(analysis), analysis);
+    IDHash_add(aa->analCache, dbID, analysis);
+    StringHash_add(aa->logicNameCache, Analysis_getLogicName(analysis), analysis);
 
-  Analysis_setAdaptor(analysis,(BaseAdaptor *)aa);
-  Analysis_setDbID(analysis,dbID);
+    Analysis_setAdaptor(analysis,(BaseAdaptor *)aa);
+    Analysis_setDbID(analysis,dbID);
+  }
 
   return dbID;
 }
@@ -323,6 +330,7 @@ IDType AnalysisAdaptor_analysisExists(AnalysisAdaptor *aa, Analysis *anal) {
   IDType *keys;
   int i;
   IDType cacheId = 0;
+  int ok = 1;
 
 
   // objects with already have this adaptor are store here.
@@ -331,20 +339,22 @@ IDType AnalysisAdaptor_analysisExists(AnalysisAdaptor *aa, Analysis *anal) {
       return Analysis_getDbID(anal);
     } else {
       fprintf(stderr,"analysis does not have an analysisId");
-      exit(1);
+      ok = 0;
     }
   }
   
-  keys = IDHash_getKeys(aa->analCache);
-  for (i=0;i<IDHash_getNumValues(aa->analCache);i++) {
-    Analysis *compAnal = (Analysis *)IDHash_getValue(aa->analCache, keys[i]);
+  if (ok) {
+    keys = IDHash_getKeys(aa->analCache);
+    for (i=0;i<IDHash_getNumValues(aa->analCache);i++) {
+      Analysis *compAnal = (Analysis *)IDHash_getValue(aa->analCache, keys[i]);
 
-    if (Analysis_compare(compAnal, anal) == 0) {
-      //fprintf(stderr,"Think analysis %p %s matches analysis %p %s\n", anal, Analysis_getLogicName(anal), compAnal, Analysis_getLogicName(compAnal));
-      cacheId = keys[i];
-      break;
+      if (Analysis_compare(compAnal, anal) == 0) {
+        //fprintf(stderr,"Think analysis %p %s matches analysis %p %s\n", anal, Analysis_getLogicName(anal), compAnal, Analysis_getLogicName(compAnal));
+        cacheId = keys[i];
+        break;
+      }
     }
+    free(keys);
   }
-  free(keys);
   return cacheId;
 }

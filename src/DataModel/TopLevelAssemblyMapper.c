@@ -53,6 +53,12 @@ toplevel coordinate system to another coordinate system.
 
 TopLevelAssemblyMapper *TopLevelAssemblyMapper_new(AssemblyMapperAdaptor *ama, CoordSystem *topLevelCs, CoordSystem *otherCs) {
 
+  TopLevelAssemblyMapper *tlam = NULL;
+
+  if (!topLevelCs || !otherCs) {
+    return tlam;
+  }
+
   if (!CoordSystem_getIsTopLevel(topLevelCs)) {
     fprintf(stderr,"%s is not the toplevel CoordSystem.\n", CoordSystem_getName(topLevelCs));
     exit(1);
@@ -65,7 +71,6 @@ TopLevelAssemblyMapper *TopLevelAssemblyMapper_new(AssemblyMapperAdaptor *ama, C
   CoordSystemAdaptor *csAdaptor = DBAdaptor_getCoordSystemAdaptor(ama->dba);
   Vector *coordSystems          = CoordSystemAdaptor_fetchAll(csAdaptor);
 
-  TopLevelAssemblyMapper *tlam;
   if ((tlam = (TopLevelAssemblyMapper *)calloc(1, sizeof(TopLevelAssemblyMapper))) == NULL) {
     fprintf(stderr, "ERROR: Failed allocating space for TopLevelAssemblyMapper\n");
     return NULL;
@@ -452,30 +457,30 @@ Vector *TopLevelAssemblyMapper_listIdsImpl(TopLevelAssemblyMapper *tlam, char *f
 
 
 void TopLevelAssemblyMapper_freeImpl(TopLevelAssemblyMapper *tlam) {
-  Object_errorUnimplementedMethod(tlam, "TopLevelAssemblyMapper_free");
+  Object_errorUnimplementedMethod((Object*)tlam, "TopLevelAssemblyMapper_free");
 }
 
 
 void TopLevelAssemblyMapper_registerAllImpl(TopLevelAssemblyMapper *am) {
-  Object_errorUnimplementedMethod(am, "TopLevelAssemblyMapper_registerAll");
+  Object_errorUnimplementedMethod((Object*)am, "TopLevelAssemblyMapper_registerAll");
 }
 
 MapperRangeSet *TopLevelAssemblyMapper_mapCoordinatesToAssemblyImpl(TopLevelAssemblyMapper *am, char *contigName, long start, long end, int strand) {
-  Object_errorUnimplementedMethod(am, "TopLevelAssemblyMapper_mapCoordinatesToAssembly");
+  Object_errorUnimplementedMethod((Object*)am, "TopLevelAssemblyMapper_mapCoordinatesToAssembly");
   return NULL;
 }
 
 MapperRangeSet *TopLevelAssemblyMapper_fastToAssemblyImpl(TopLevelAssemblyMapper *am, char *contigName, long start, long end, int strand) {
-  Object_errorUnimplementedMethod(am, "TopLevelAssemblyMapper_fastToAssembly");
+  Object_errorUnimplementedMethod((Object*)am, "TopLevelAssemblyMapper_fastToAssembly");
   return NULL;
 }
 
 MapperRangeSet *TopLevelAssemblyMapper_mapCoordinatesToRawContigImpl(TopLevelAssemblyMapper *am, char *chrName, long start, long end, int strand) {
-  Object_errorUnimplementedMethod(am, "TopLevelAssemblyMapper_mapCoordinatesToRawContig");
+  Object_errorUnimplementedMethod((Object*)am, "TopLevelAssemblyMapper_mapCoordinatesToRawContig");
   return NULL;
 }
 
 Vector *TopLevelAssemblyMapper_listContigIdsImpl(TopLevelAssemblyMapper *am, char *chrName, long start, long end, int strand) {
-  Object_errorUnimplementedMethod(am, "TopLevelAssemblyMapper_listContigIds");
+  Object_errorUnimplementedMethod((Object*)am, "TopLevelAssemblyMapper_listContigIds");
   return NULL;
 }

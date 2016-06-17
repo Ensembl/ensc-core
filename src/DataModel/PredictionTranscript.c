@@ -42,6 +42,17 @@ PredictionTranscript *PredictionTranscript_new() {
   return transcript;
 }
 
+PredictionTranscript *PredictionTranscript_shallowCopy(PredictionTranscript *trans) {
+  PredictionTranscript *newTranscript = PredictionTranscript_new();
+
+  // Exons will come in mem copy so free vector just created in PredictionTranscript_new
+  Vector_free(newTranscript->exons);
+
+  memcpy(newTranscript,trans,sizeof(PredictionTranscript));
+
+  return newTranscript;
+}
+
 ECOSTRING PredictionTranscript_setDisplayLabel(PredictionTranscript *pt, char *label) {
   EcoString_copyStr(ecoSTable, &(pt->displayLabel), label, 0);
   return pt->displayLabel;
@@ -306,6 +317,8 @@ int PredictionTranscript_setExonCount(PredictionTranscript *trans, int count) {
     fprintf(stderr, "Error: Trying to shrink exon vector\n");
   }
   Vector_setNumElement(trans->exons, count);
+
+  return 1;
 }
 
 /*
@@ -377,13 +390,12 @@ char *PredictionTranscript_translate(PredictionTranscript *trans) {
 char *PredictionTranscript_getcDNA(PredictionTranscript *trans) {
   Vector *exons = PredictionTranscript_getAllExons(trans,0);
   char *cdna = StrUtil_copyString(&cdna, "", 0);
-  int lastPhase = 0;
+  //int lastPhase = 0;
   int i;
   int first = 1;
 
-  int cdnaStart, cdnaEnd;
-  int pepStart, pepEnd;
-  int newcdna, pepCount;
+  int cdnaStart;
+  int pepStart;
 
   cdnaStart = 1;
   pepStart = 1;
@@ -489,7 +501,7 @@ MapperRangeSet *PredictionTranscript_genomic2cDNA(PredictionTranscript *trans, i
       return MapperRangeSet_new();
     }
     firstExon = Vector_getElementAt(translateable, 0);
-    contig = PredictionExon_getSlice(firstExon);
+    contig = (BaseContig*)PredictionExon_getSlice(firstExon);
     Vector_free(translateable);
   }
 
@@ -519,7 +531,7 @@ Mapper *PredictionTranscript_getcDNACoordMapper(PredictionTranscript *trans) {
   for (i=0; i<Vector_getNumElement(translateable); i++) {
     PredictionExon *exon = Vector_getElementAt(translateable,i);
 
-    PredictionExon_loadGenomicMapper(exon, mapper, (IDType)trans, start);
+    PredictionExon_loadGenomicMapper((Exon*)exon, mapper, (IDType)trans, start);
     start += PredictionExon_getLength(exon);
   }
   trans->exonCoordMapper = mapper;
@@ -528,8 +540,6 @@ Mapper *PredictionTranscript_getcDNACoordMapper(PredictionTranscript *trans) {
 }
 
 void PredictionTranscript_free(PredictionTranscript *trans) {
-  int i;
-
   Object_decRefCount(trans);
 
   if (Object_getRefCount(trans) > 0) {

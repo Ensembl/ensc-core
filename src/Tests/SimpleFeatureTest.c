@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
     SimpleFeature *rsf;
 
     //printf("slice start = %d end = %d\n",start,end);
-    rsf = SeqFeature_transform(sf,"contig",NULL,NULL);
+    rsf = (SimpleFeature*)SeqFeature_transform((SeqFeature*)sf,"contig",NULL,NULL);
 
     if (rsf) {
       printf("rc start = %ld end = %ld\n",SimpleFeature_getStart(rsf),SimpleFeature_getEnd(rsf));
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
 
     if (rsf) {
       //sf = SeqFeature_transform(rsf,"chromosome",NULL,slice);
-      sf = SeqFeature_transfer(rsf, slice);
+      sf = (SimpleFeature*)SeqFeature_transfer((SeqFeature*)rsf, slice);
       if (SimpleFeature_getStart(sf) != start ||
           SimpleFeature_getEnd(sf) != end) {
         printf("Remapping to slice produced different coords start %ld v %ld   end %ld v %ld\n", 

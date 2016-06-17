@@ -35,5 +35,4 @@ int DBEntryAdaptor_fetchAllByGene(DBEntryAdaptor *dbea, Gene *gene);
 Vector *DBEntryAdaptor_fetchAllByTranslation(DBEntryAdaptor *dbea, Translation *trans);
 
 
-
 #endif

@@ -45,56 +45,56 @@ IDType BaseAssemblyMapper_getSeqRegionId(BaseAssemblyMapper *am, char *seqRegion
 }
 
 void BaseAssemblyMapper_registerAllImpl(BaseAssemblyMapper *am) {
-  Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_registerAll");
+  Object_errorUnimplementedMethod((Object*)am, "BaseAssemblyMapper_registerAll");
 }
 
 void BaseAssemblyMapper_freeImpl(BaseAssemblyMapper *am) {
-  Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_free");
+  Object_errorUnimplementedMethod((Object*)am, "BaseAssemblyMapper_free");
 }
 
 MapperRangeSet *BaseAssemblyMapper_mapImpl(BaseAssemblyMapper *am, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, 
                                            CoordSystem *frmCs, int fakeFastMapFlag, Slice *toSlice) {
-  Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_map");
+  Object_errorUnimplementedMethod((Object*)am, "BaseAssemblyMapper_map");
   return NULL;
 }
 
 void BaseAssemblyMapper_flushImpl(BaseAssemblyMapper *am) {
-  Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_flush");
+  Object_errorUnimplementedMethod((Object*)am, "BaseAssemblyMapper_flush");
 }
 
 MapperRangeSet *BaseAssemblyMapper_fastMapImpl(BaseAssemblyMapper *am, char *frmSeqRegionName, long frmStart, long frmEnd, int frmStrand, 
                                                CoordSystem *frmCs, Slice *toSlice) {
-  Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_fastMap");
+  Object_errorUnimplementedMethod((Object*)am, "BaseAssemblyMapper_fastMap");
   return NULL;
 }
 
 Vector *BaseAssemblyMapper_listIdsImpl(BaseAssemblyMapper *am, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
-  Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_listIds");
+  Object_errorUnimplementedMethod((Object*)am, "BaseAssemblyMapper_listIds");
   return NULL;
 }
 
 Vector *BaseAssemblyMapper_listSeqRegionsImpl(BaseAssemblyMapper *am, char *frmSeqRegionName, long frmStart, long frmEnd, CoordSystem *frmCs) {
-  Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_listSeqRegions");
+  Object_errorUnimplementedMethod((Object*)am, "BaseAssemblyMapper_listSeqRegions");
   return NULL;
 }
 
 MapperRangeSet *BaseAssemblyMapper_mapCoordinatesToAssemblyImpl(BaseAssemblyMapper *am, char *contigName, long start, long end, int strand) {
-  Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_mapCoordinatesToAssembly");
+  Object_errorUnimplementedMethod((Object*)am, "BaseAssemblyMapper_mapCoordinatesToAssembly");
   return NULL;
 }
 
 MapperRangeSet *BaseAssemblyMapper_fastToAssemblyImpl(BaseAssemblyMapper *am, char *contigName, long start, long end, int strand) {
-  Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_fastToAssembly");
+  Object_errorUnimplementedMethod((Object*)am, "BaseAssemblyMapper_fastToAssembly");
   return NULL;
 }
 
 MapperRangeSet *BaseAssemblyMapper_mapCoordinatesToRawContigImpl(BaseAssemblyMapper *am, char *chrName, long start, long end, int strand) {
-  Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_mapCoordinatesToRawContig");
+  Object_errorUnimplementedMethod((Object*)am, "BaseAssemblyMapper_mapCoordinatesToRawContig");
   return NULL;
 }
 
 Vector *BaseAssemblyMapper_listContigIdsImpl(BaseAssemblyMapper *am, char *chrName, long start, long end, int strand) {
-  Object_errorUnimplementedMethod(am, "BaseAssemblyMapper_listContigIds");
+  Object_errorUnimplementedMethod((Object*)am, "BaseAssemblyMapper_listContigIds");
   return NULL;
 }
 

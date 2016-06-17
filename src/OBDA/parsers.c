@@ -66,7 +66,6 @@ char *tokenParser(char *header, char *delim, int toknum, char *routine) {
 }
 
 char *prefixParser(char *header, char *delim, char *prefix, char *routine) {
-  int i;
   char *token;
   char workStr[MAXSTRLEN];
   char *retToken;
@@ -260,7 +259,6 @@ char *swallMultiParser(char *header, char **retPos) {
 
 char *BTMultiParser(char *header, char **retPos) {
   static char *terminators[] = {};
-  char *chP;
   char *id;
 
   if (*retPos == NULL) {

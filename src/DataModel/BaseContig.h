@@ -68,5 +68,6 @@ struct BaseContigStruct {
 #define BaseContig_getName(seq) ((seq)->funcs->getName == NULL ? ((seq)->name) : \
                                                                  ((seq)->funcs->getName((seq))))
 
+void BaseContig_freePtrs(BaseContig *bc);
 
 #endif

@@ -48,8 +48,8 @@ ProteinAlignFeatureAdaptor *ProteinAlignFeatureAdaptor_new(DBAdaptor *dba) {
 
   pafa->getTables                  = ProteinAlignFeatureAdaptor_getTables;
   pafa->getColumns                 = ProteinAlignFeatureAdaptor_getColumns;
-  pafa->store                      = ProteinAlignFeatureAdaptor_store;
-  pafa->objectsFromStatementHandle = ProteinAlignFeatureAdaptor_objectsFromStatementHandle;
+  pafa->store                      = (BaseAdaptor_StoreFunc)ProteinAlignFeatureAdaptor_store;
+  pafa->objectsFromStatementHandle = (BaseAdaptor_ObjectsFromStatementHandleFunc)ProteinAlignFeatureAdaptor_objectsFromStatementHandle;
   pafa->leftJoin                   = ProteinAlignFeatureAdaptor_leftJoin;
 
   return pafa;
@@ -190,12 +190,12 @@ int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) 
    my $seq_region_id;
    ($feat, $seq_region_id) = $self->_pre_store($feat);
 */
-    IDType seqRegionId = BaseFeatureAdaptor_preStore(bfa, feat);
+    IDType seqRegionId = BaseFeatureAdaptor_preStore(bfa, (SeqFeature*)feat);
 // Note using SeqRegionStart etc here rather than Start - should have same effect as perl's transfer
     sth->execute(sth, (IDType)seqRegionId,
-                      DNAPepAlignFeature_getSeqRegionStart(feat),
-                      DNAPepAlignFeature_getSeqRegionEnd(feat),
-                      DNAPepAlignFeature_getSeqRegionStrand(feat),
+                 DNAPepAlignFeature_getSeqRegionStart((SeqFeature*)feat),
+                 DNAPepAlignFeature_getSeqRegionEnd((SeqFeature*)feat),
+                 DNAPepAlignFeature_getSeqRegionStrand((SeqFeature*)feat),
                       DNAPepAlignFeature_getHitStart(feat),
                       DNAPepAlignFeature_getHitEnd(feat),
                       DNAPepAlignFeature_getHitSeqName(feat),
@@ -213,6 +213,8 @@ int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) 
   }
 
   sth->finish(sth);
+
+  return 1;
 }
 
 

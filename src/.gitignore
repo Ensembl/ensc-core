@@ -1,0 +1,9 @@
+autom4te.cache
+config.h.in
+configure
+ensc_version.m4
+Makefile.in
+build
+config
+aclocal.m4
+*.dSYM

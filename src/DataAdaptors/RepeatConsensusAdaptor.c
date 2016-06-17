@@ -80,18 +80,32 @@ RepeatConsensus *RepeatConsensusAdaptor_fetchByNameAndClass(RepeatConsensusAdapt
 
 
 Vector *RepeatConsensusAdaptor_fetchByClassAndSeq(RepeatConsensusAdaptor *rca, char *class, char *seq) {
-  char constraintStr[655500];
+  Vector *result = NULL;
+  char *constraintStr = NULL;
+
+  if ((constraintStr = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating constraintStr\n");
+    return result;
+  }
   
   sprintf(constraintStr,"repeat_class = \'%s\' AND repeat_consensus = \'%s\'", class, seq);
-  return RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
+  result = RepeatConsensusAdaptor_genericFetch(rca, constraintStr); 
+  
+  free(constraintStr);
+  return result;
 }
 
 Vector *RepeatConsensusAdaptor_genericFetch(RepeatConsensusAdaptor *rca, char *whereClause) {
   StatementHandle *sth;
   ResultRow *row;
-  char qStr[655500];
+  char *qStr = NULL;
   Vector *consensi;
     
+  if ((qStr = (char *)calloc(655500,sizeof(char))) == NULL) {
+    fprintf(stderr,"Failed allocating qStr\n");
+    return NULL;
+  }
+
   sprintf(qStr,"SELECT repeat_consensus_id, repeat_name,"
                "       repeat_class, LENGTH(repeat_consensus)"
                " FROM repeat_consensus"
@@ -113,6 +127,8 @@ Vector *RepeatConsensusAdaptor_genericFetch(RepeatConsensusAdaptor *rca, char *w
 
     Vector_addElement(consensi, rc);
   }
+
+  free(qStr);
   return consensi;
 }
 

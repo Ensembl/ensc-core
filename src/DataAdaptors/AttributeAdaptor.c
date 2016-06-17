@@ -78,13 +78,13 @@ NOTE: In perl this adaptor is implemented using the horrid AUTOLOAD lazyness. Ob
 =cut
 */
 AttributeAdaptor *AttributeAdaptor_new(DBAdaptor *dba) {
-  AttributeAdaptor *ata; // Note I don't use the normal 'aa' abbreviation here because I find it difficult to see clearly
+  AttributeAdaptor *ata = NULL; // Note I don't use the normal 'aa' abbreviation here because I find it difficult to see clearly
 
   if ((ata = (AttributeAdaptor *)calloc(1,sizeof(AttributeAdaptor))) == NULL) {
     fprintf(stderr, "ERROR: Failed allocating space for AttributeAdaptor\n");
-    exit(1);
+  } else {
+    BaseAdaptor_init((BaseAdaptor *)ata, dba, ATTRIBUTE_ADAPTOR);
   }
-  BaseAdaptor_init((BaseAdaptor *)ata, dba, ATTRIBUTE_ADAPTOR);
 
   return ata;
 }
@@ -141,23 +141,30 @@ void AttributeAdaptor_storeOnTranslationId(AttributeAdaptor *ata, IDType id, Vec
 }
 
 void AttributeAdaptor_storeOnSlice(AttributeAdaptor *ata, Slice *slice, Vector *attributes) {
+  int ok = 1;
   if (slice == NULL) {
     fprintf(stderr,"Error: NULL Slice in AttributeAdaptor_storeOnSlice\n");
-    exit(1);
+    ok = 0;
   }
 
-  DBAdaptor *db = ata->dba;
-      
-  char *type  = "seq_region";
-  char *table = "seq_region";
-  IDType id   = Slice_getSeqRegionId(slice);
+  char *type = NULL;
+  char *table = NULL;
+  IDType id = 0;
 
-  if (!Storable_isStored(&(slice->st), ata->dba)) {
-    fprintf(stderr, "%s is not stored in this database.", type);
-    exit(1);
+  if (ok) {
+    type  = "seq_region";
+    table = "seq_region";
+    id   = Slice_getSeqRegionId(slice);
+
+    if (!Storable_isStored(&(slice->st), ata->dba)) {
+      fprintf(stderr, "%s is not stored in this database.", type);
+      ok = 0;
+    }
   }
 
-  AttributeAdaptor_doStoreAllByTypeAndTableAndID(ata, type, table, id, attributes);
+  if (ok) {
+    AttributeAdaptor_doStoreAllByTypeAndTableAndID(ata, type, table, id, attributes);
+  }
 }
 
 /* MiscFeature NIY
@@ -178,6 +185,7 @@ Vector *AttributeAdaptor_storeOnMiscFeature(AttributeAdaptor *ata, MiscFeature *
 
 // Removed the circular stuff 
 void AttributeAdaptor_doStoreAllByTypeAndTableAndID(AttributeAdaptor *ata, char *type, char *table, IDType objectId, Vector *attributes) {
+  int ok = 1;
   char qStr[1024];
   sprintf(qStr, "INSERT into %s_attrib SET %s_id = %"IDFMTSTR", attrib_type_id = %"IDFMTSTR", value = '%%s'", table, type);
 
@@ -189,7 +197,8 @@ void AttributeAdaptor_doStoreAllByTypeAndTableAndID(AttributeAdaptor *ata, char 
 
     if (attrib == NULL ) {
       fprintf(stderr, "Reference to list of Bio::EnsEMBL::Attribute objects argument expected.\n");
-      exit(1);
+      ok = 0;
+      break;
     }
 
     Class_assertType(CLASS_ATTRIBUTE, attrib->objectType);
@@ -199,7 +208,9 @@ void AttributeAdaptor_doStoreAllByTypeAndTableAndID(AttributeAdaptor *ata, char 
     sth->execute(sth, objectId, atId, Attribute_getValue(attrib));
   }
 
-  sth->finish(sth);
+  if (ok) {
+    sth->finish(sth);
+  }
 
   return;
 }
@@ -283,55 +294,63 @@ sub fetch_all {
 
 // Here I explicitly implement the various fetch functions
 Vector *AttributeAdaptor_fetchAllByGene(AttributeAdaptor *ata, Gene *gene, char *code) {
+  Vector *result = NULL;
   if (gene == NULL) {
     fprintf(stderr,"Error: NULL Gene in AttributeAdaptor_fetchAllByGene\n");
-    exit(1);
+  } else {
+
+    char *type  = "gene";
+    char *table = "gene";
+    IDType id   = Gene_getDbID(gene);
+  
+    result = AttributeAdaptor_doFetchAllByTypeAndTableAndID(ata, type, table, id, code);
   }
-
-  char *type  = "gene";
-  char *table = "gene";
-  IDType id   = Gene_getDbID(gene);
-
-  return AttributeAdaptor_doFetchAllByTypeAndTableAndID(ata, type, table, id, code);
+  return result;
 }
 
 Vector *AttributeAdaptor_fetchAllByTranscript(AttributeAdaptor *ata, Transcript *transcript, char *code) {
+  Vector *result = NULL;
   if (transcript == NULL) {
     fprintf(stderr,"Error: NULL Transcript in AttributeAdaptor_fetchAllByTranscript\n");
-    exit(1);
+  } else {
+
+    char *type  = "transcript";
+    char *table = "transcript";
+    IDType id   = Transcript_getDbID(transcript);
+
+    result = AttributeAdaptor_doFetchAllByTypeAndTableAndID(ata, type, table, id, code);
   }
-
-  char *type  = "transcript";
-  char *table = "transcript";
-  IDType id   = Transcript_getDbID(transcript);
-
-  return AttributeAdaptor_doFetchAllByTypeAndTableAndID(ata, type, table, id, code);
+  return result;
 }
 
 Vector *AttributeAdaptor_fetchAllByTranslation(AttributeAdaptor *ata, Translation *translation, char *code) {
+  Vector *result = NULL;
   if (translation == NULL) {
     fprintf(stderr,"Error: NULL Translation in AttributeAdaptor_fetchAllByTranslation\n");
-    exit(1);
+  } else {
+
+    char *type  = "translation";
+    char *table = "translation";
+    IDType id   = Translation_getDbID(translation);
+
+    result = AttributeAdaptor_doFetchAllByTypeAndTableAndID(ata, type, table, id, code);
   }
-
-  char *type  = "translation";
-  char *table = "translation";
-  IDType id   = Translation_getDbID(translation);
-
-  return AttributeAdaptor_doFetchAllByTypeAndTableAndID(ata, type, table, id, code);
+  return result;
 }
 
 Vector *AttributeAdaptor_fetchAllBySlice(AttributeAdaptor *ata, Slice *slice, char *code) {
+  Vector *result = NULL;
   if (slice == NULL) {
     fprintf(stderr,"Error: NULL Slice in AttributeAdaptor_fetchAllBySlice\n");
-    exit(1);
+  } else {
+
+    char *type  = "seq_region";
+    char *table = "seq_region";
+    IDType id   = Slice_getSeqRegionId(slice);
+
+    result = AttributeAdaptor_doFetchAllByTypeAndTableAndID(ata, type, table, id, code);
   }
-
-  char *type  = "seq_region";
-  char *table = "seq_region";
-  IDType id   = Slice_getSeqRegionId(slice);
-
-  return AttributeAdaptor_doFetchAllByTypeAndTableAndID(ata, type, table, id, code);
+  return result;
 }
 
 /* MiscFeature NIY
@@ -450,7 +469,7 @@ IDType AttributeAdaptor_storeType(AttributeAdaptor *ata, Attribute *attrib) {
     if (!atId) {
       fprintf(stderr, "Could not store or fetch attrib_type code [%s]\n"
 	              "Wrong database user/permissions?\n", Attribute_getCode(attrib));
-      exit(1);
+      return 0;
     }
     sth2->finish(sth2);
   }

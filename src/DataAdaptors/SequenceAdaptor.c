@@ -81,7 +81,7 @@ SequenceAdaptor *SequenceAdaptor_new(DBAdaptor *dba) {
   }
   BaseAdaptor_init((BaseAdaptor *)sa, dba, SEQUENCE_ADAPTOR);
 
-  sa->prepare = SequenceAdaptor_prepare;
+  ((BaseAdaptor*)sa)->prepare = SequenceAdaptor_prepare;
 
   // use an LRU cache to limit the size
   sa->seqCache = LRUCache_new(SEQ_CACHE_MAX);
@@ -198,7 +198,7 @@ char *SequenceAdaptor_fetchBySliceStartEndStrand(SequenceAdaptor *sa,
 char *SequenceAdaptor_fetchBySliceStartEndStrandRecursive(SequenceAdaptor *sa,
                                                           Slice *slice, long start, long end,
                                                           int strand, int *recLev) {
-  *recLev++;
+  (*recLev)++;
 
   if (!slice ) {
     fprintf(stderr,"ERROR: need a slice to work\n");
@@ -342,23 +342,26 @@ char *SequenceAdaptor_fetchBySliceStartEndStrandRecursive(SequenceAdaptor *sa,
 
     IDType seqRegionId = SliceAdaptor_getSeqRegionId(sliceAdaptor, seqSlice);
 
-    char *tmpSeq = SequenceAdaptor_fetchSeq(sa, seqRegionId,
-                                            Slice_getStart(seqSlice), Slice_getLength(seqSlice));
+    if (seqRegionId) {
+      char *tmpSeq = SequenceAdaptor_fetchSeq(sa, seqRegionId,
+                                              Slice_getStart(seqSlice), Slice_getLength(seqSlice));
 
-    // reverse complement on negatively oriented slices
-    if (Slice_getStrand(seqSlice) == -1) {
-      SeqUtil_reverseComplement(tmpSeq, lenSegment);
+      // reverse complement on negatively oriented slices
+      if (Slice_getStrand(seqSlice) == -1) {
+        SeqUtil_reverseComplement(tmpSeq, lenSegment);
+      }
+
+      if (start+lenSegment-1 > Slice_getLength(slice)) { 
+        fprintf(stderr," segment off end of slice start = %ld lenSegment = %ld slice length = %ld len tmpSeq (%ld)\n", 
+                start, lenSegment, Slice_getLength(slice),strlen(tmpSeq));
+      }
+      // Do with memcpy rather than strcpy
+      // Think projection segment from coordinates are slice coordinates so relative to slice and starting at 1
+      memcpy(&(seq[start-1]), tmpSeq, lenSegment);
+      free(tmpSeq);
+    } else {
+      fprintf(stderr, "Error getting sequence region ID for slice");
     }
-
-    if (start+lenSegment-1 > Slice_getLength(slice)) { 
-      fprintf(stderr," segment off end of slice start = %ld lenSegment = %ld slice length = %ld len tmpSeq (%ld)\n", 
-              start, lenSegment, Slice_getLength(slice),strlen(tmpSeq));
-    }
-// Do with memcpy rather than strcpy
-// Think projection segment from coordinates are slice coordinates so relative to slice and starting at 1
-    memcpy(&(seq[start-1]), tmpSeq, lenSegment);
-    free(tmpSeq);
-
 
 // Hopefully OK to free this here
     if (seqSlice != slice) {
@@ -551,7 +554,7 @@ void SequenceAdaptor_rnaEdit(SequenceAdaptor *sa, Slice *slice, char **seqPP, in
 //       Edits may not be different length so is true
   long sEnd   = sStart + Slice_getLength(slice); // length($$seq);
 
-  long lenString = Slice_getLength(slice);
+  //long lenString = Slice_getLength(slice);
 
   Vector *editsVec = IDHash_getValue(sa->rnaEditsCache, Slice_getSeqRegionId(slice));
 
@@ -631,6 +634,7 @@ void SequenceAdaptor_rnaEdit(SequenceAdaptor *sa, Slice *slice, char **seqPP, in
 
 
 char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long start, long length) {
+  int status = 0;
 
   if (length < SEQ_CACHE_MAX) {
     long chunkMin = (start-1) >> SEQ_CHUNK_PWR;
@@ -679,33 +683,42 @@ char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long st
 
         sth->execute(sth);
         ResultRow *row = sth->fetchRow(sth);
-        char *tmpSeq   = row->getStringCopyAt(row, 0);
-//        long lenTmpSeq = row->getLongAt(row, 1);
-        long lenTmpSeq = strlen(tmpSeq);
+
+        if (row) {
+            char *tmpSeq   = row->getStringCopyAt(row, 0);
+            //long lenTmpSeq = row->getLongAt(row, 1);
+            long lenTmpSeq = strlen(tmpSeq);
+
+            // always give back uppercased sequence so it can be properly softmasked
+            //StrUtil_strupr(tmpSeq);
+
+            memcpy(&(entireSeq[min-minChunkMin]), tmpSeq, lenTmpSeq);
+            //StrUtil_appendString(entireSeq,tmpSeq);
+            LRUCache_put(sa->seqCache, chunkKey, tmpSeq, free, lenTmpSeq);
+            //StringHash_add(sa->seqCache, chunkKey, tmpSeq);
+        }
+        else {
+          fprintf(stderr,"Failed to fetch sequence: SQL results empty");
+          status = 1;
+        }
+
         sth->finish(sth);
-
-        // always give back uppercased sequence so it can be properly softmasked
-        //StrUtil_strupr(tmpSeq);
-
-        memcpy(&(entireSeq[min-minChunkMin]), tmpSeq, lenTmpSeq);
-//        StrUtil_appendString(entireSeq,tmpSeq);
-        LRUCache_put(sa->seqCache, chunkKey, tmpSeq, free, lenTmpSeq);
-        //StringHash_add(sa->seqCache, chunkKey, tmpSeq);
-
       }
     }
 
-    // return only the requested portion of the entire sequence
-    long min = ( chunkMin << SEQ_CHUNK_PWR ) + 1;
-    //# my $max = ( $chunk_max + 1 ) << $SEQ_CHUNK_PWR;
+    if (status == 0) {
+        // return only the requested portion of the entire sequence
+        long min = ( chunkMin << SEQ_CHUNK_PWR ) + 1;
+        //# my $max = ( $chunk_max + 1 ) << $SEQ_CHUNK_PWR;
 
-    //seq = substr( $entire_seq, $start - $min, $length );
-    // memmove it down and set '\0' at position length
-    if (start-min != 0) {
-//      memmove(entireSeq, &entireSeq[start-min], length);
-      bcopy(&entireSeq[start-min], entireSeq, length);
+        //seq = substr( $entire_seq, $start - $min, $length );
+        // memmove it down and set '\0' at position length
+        if (start-min != 0) {
+          //memmove(entireSeq, &entireSeq[start-min], length);
+          bcopy(&entireSeq[start-min], entireSeq, length);
+        }
+        entireSeq[length] = '\0';
     }
-    entireSeq[length] = '\0';
 
     return entireSeq;
   } else {
@@ -720,7 +733,11 @@ char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long st
 
     sth->execute(sth);
     ResultRow *row = sth->fetchRow(sth);
-    char *tmpSeq = row->getStringCopyAt(row, 0);
+    char *tmpSeq = NULL;
+    
+    if (row)
+      tmpSeq = row->getStringCopyAt(row, 0);
+
     sth->finish(sth);
     // always give back uppercased sequence so it can be properly softmasked
     //StrUtil_strupr(tmpSeq);

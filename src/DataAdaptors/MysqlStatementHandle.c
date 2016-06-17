@@ -27,6 +27,9 @@
 
 #include "ProcUtil.h"
 
+#include <string.h>
+
+
 StatementHandle *MysqlStatementHandle_new(DBConnection *dbc, char *query) {
   MysqlStatementHandle *sth;
 
@@ -74,17 +77,15 @@ void MysqlStatementHandle_execute(va_alist) {
  */
 unsigned long long MysqlStatementHandle_execute(StatementHandle *sth, ...) {
   va_list args;
-  char statement[655500];
+  char *statement = NULL;
   int qlen;
   MYSQL_RES *results;
   MysqlStatementHandle *m_sth;
 
-/*
   if ((statement = (char *)calloc(655500,sizeof(char))) == NULL) {
     fprintf(stderr,"Failed allocating statment\n");
-    exit(1);
+    return 0;
   }
-*/
 
   Class_assertType(CLASS_MYSQLSTATEMENTHANDLE,sth->objectType);
 
@@ -98,14 +99,14 @@ unsigned long long MysqlStatementHandle_execute(StatementHandle *sth, ...) {
 
   if (qlen < 0 || qlen > 655500) {
     fprintf(stderr, "ERROR: vsnprintf call failed during statement execution (qlen = %d)\n", qlen);
-    exit(1);
+    return 0;
   }
 
   //fprintf(stderr, "Statement after formatting = %s\n",statement);
 
   if (mysql_real_query (m_sth->dbc->mysql, statement, qlen) != 0) {    /* the query failed */
     fprintf(stderr, "Could not execute query %s\n\n", statement);
-    fprintf(stderr, "Query length is %d\n\n", strlen(statement));
+    fprintf(stderr, "Query length is %d\n\n", (int)strlen(statement));
     //fprintf(stderr, "Stack trace:\n");
     //ProcUtil_showBacktrace(EnsC_progName);
     fprintf(stderr, "Database %s host %s user %s pass %s port %d\n", 
@@ -114,6 +115,8 @@ unsigned long long MysqlStatementHandle_execute(StatementHandle *sth, ...) {
             DBConnection_getUser(m_sth->dbc),
             DBConnection_getPass(m_sth->dbc),
             DBConnection_getPort(m_sth->dbc));
+    //if (m_sth->dbc->mysql->net && m_sth->dbc->mysql->net->last_error)
+    //  fprintf(stderr, "Mysql error: %s", m_sth->dbc->mysql->net->last_error);
     
     return 0;
   }
@@ -144,7 +147,8 @@ unsigned long long MysqlStatementHandle_execute(StatementHandle *sth, ...) {
       return 0;
     }
   }
-  //free(statement);
+
+  free(statement);
   return mysql_affected_rows(m_sth->dbc->mysql);
 }
 
@@ -156,6 +160,7 @@ void MysqlStatementHandle_addFlag(StatementHandle *sth, unsigned long flag) {
   
 
 ResultRow *MysqlStatementHandle_fetchRow(StatementHandle *sth) {
+  ResultRow *result = NULL;
   MysqlStatementHandle *m_sth;
   MYSQL_ROW mysql_row;
 
@@ -166,18 +171,18 @@ ResultRow *MysqlStatementHandle_fetchRow(StatementHandle *sth) {
   if (m_sth->results == NULL) {
     fprintf(stderr,"ERROR: Tried to fetch a row for a StatementHandle with no results for %s\n",
             sth->statementFormat);
-    exit(1);
+  }
+  else {
+    mysql_row = mysql_fetch_row(m_sth->results);
+
+    if (mysql_row != NULL) {
+      //m_row = MysqlResultRow_new();
+      m_sth->m_row->mysql_row = mysql_row;
+      result = (ResultRow *)(m_sth->m_row);
+    }
   }
 
-  mysql_row = mysql_fetch_row(m_sth->results);
-
-  if (mysql_row == NULL) {
-    return NULL;
-  }
-  //m_row = MysqlResultRow_new();
-  m_sth->m_row->mysql_row = mysql_row;
-
-  return (ResultRow *)(m_sth->m_row);
+  return result;
 }
 
 unsigned long long MysqlStatementHandle_numRows(StatementHandle *sth) {
@@ -190,7 +195,7 @@ unsigned long long MysqlStatementHandle_numRows(StatementHandle *sth) {
   if (m_sth->results == NULL) {
     fprintf(stderr,"ERROR: Tried to fetch number of rows for a StatementHandle with no results for %s\n",
             sth->statementFormat);
-    exit(1);
+    return 0;
   }
 
   return mysql_num_rows(m_sth->results);

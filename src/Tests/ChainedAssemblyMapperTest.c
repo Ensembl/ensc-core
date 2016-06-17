@@ -74,57 +74,76 @@ int main(int argc, char *argv[]) {
 
   MapperRangeSet *coords;
 
-  fprintf(stderr,"MAP 20->clone\n");
-  coords = ChainedAssemblyMapper_map(asmMapper, "20", 500001, 60000000, 1, chrCs, 0, NULL);
-  ok(testNum++, coords!=NULL);
-  printCoords(coords);
+  if (asmMapper)
+    {
+      fprintf(stderr,"MAP 20->clone\n");
+      coords = ChainedAssemblyMapper_map(asmMapper, "20", 500001, 60000000, 1, chrCs, 0, NULL);
+      ok(testNum++, coords!=NULL);
+      printCoords(coords);
+    }
 
+  if (asmMapper)
+    {
+      fprintf(stderr,"MAP 'AL359765.6'->chromosome\n");
+      coords = ChainedAssemblyMapper_map(asmMapper, "AL359765.6", 1, 13780, 1, clnCs, 0, NULL);
+      ok(testNum++, coords!=NULL);
+      printCoords(coords);
+    }
 
-  fprintf(stderr,"MAP 'AL359765.6'->chromosome\n");
-  coords = ChainedAssemblyMapper_map(asmMapper, "AL359765.6", 1, 13780, 1, clnCs, 0, NULL);
-  ok(testNum++, coords!=NULL);
-  printCoords(coords);
-
-  fprintf(stderr,"MAP 20->supercontig\n");
-  coords = ChainedAssemblyMapper_map(chrSCtgMapper, "20", 500001, 60000000, 1, chrCs, 0, NULL);
-  ok(testNum++, coords!=NULL);
-  printCoords(coords);
-
+  if (chrSCtgMapper)
+    {
+      fprintf(stderr,"MAP 20->supercontig\n");
+      coords = ChainedAssemblyMapper_map(chrSCtgMapper, "20", 500001, 60000000, 1, chrCs, 0, NULL);
+      ok(testNum++, coords!=NULL);
+      printCoords(coords);
+    }
 
   //
   // Test list_seq_regions
   //
   fprintf(stderr,"Starting list tests\n");
-
-  Vector *seqRegions = ChainedAssemblyMapper_listSeqRegions(asmMapper, "20", 500001, 60000000, chrCs);
-  ok(testNum++, seqRegions != NULL);
   int i;
-  for (i=0;i<Vector_getNumElement(seqRegions); i++) {
-    char *regionName = Vector_getElementAt(seqRegions, i);
-    fprintf(stderr, "%s\n",regionName);
-  }
 
-  seqRegions = ChainedAssemblyMapper_listSeqRegions(asmMapper, "AL359765.6", 1, 13780, clnCs);
-  ok(testNum++, seqRegions!=NULL);
-  for (i=0;i<Vector_getNumElement(seqRegions); i++) {
-    char *regionName = Vector_getElementAt(seqRegions, i);
-    fprintf(stderr, "%s\n",regionName);
-  }
+  if (asmMapper)
+    {
+      Vector *seqRegions = ChainedAssemblyMapper_listSeqRegions(asmMapper, "20", 500001, 60000000, chrCs);
+      ok(testNum++, seqRegions != NULL);
+      for (i=0;i<Vector_getNumElement(seqRegions); i++) {
+        char *regionName = Vector_getElementAt(seqRegions, i);
+        fprintf(stderr, "%s\n",regionName);
+      }
+    }
+
+  if (asmMapper)
+    {
+      Vector *seqRegions = ChainedAssemblyMapper_listSeqRegions(asmMapper, "AL359765.6", 1, 13780, clnCs);
+      ok(testNum++, seqRegions!=NULL);
+      for (i=0;i<Vector_getNumElement(seqRegions); i++) {
+        char *regionName = Vector_getElementAt(seqRegions, i);
+        fprintf(stderr, "%s\n",regionName);
+      }
+    }
 
 
-  seqRegions = ChainedAssemblyMapper_listSeqRegions(chrSCtgMapper, "NT_028392", 600000, 1000000, sCtgCs);
-  ok(testNum++, seqRegions!=NULL);
-  for (i=0;i<Vector_getNumElement(seqRegions); i++) {
-    char *regionName = Vector_getElementAt(seqRegions, i);
-    fprintf(stderr, "%s\n",regionName);
-  }
+  if (chrSCtgMapper)
+    {
+      Vector *seqRegions = ChainedAssemblyMapper_listSeqRegions(chrSCtgMapper, "NT_028392", 600000, 1000000, sCtgCs);
+      ok(testNum++, seqRegions!=NULL);
+      for (i=0;i<Vector_getNumElement(seqRegions); i++) {
+        char *regionName = Vector_getElementAt(seqRegions, i);
+        fprintf(stderr, "%s\n",regionName);
+      }
+    }
 
-  seqRegions = ChainedAssemblyMapper_listSeqRegions(chrSCtgMapper, "20", 3000000, 31000000, chrCs);
-  ok(testNum++, seqRegions!=NULL);
-  for (i=0;i<Vector_getNumElement(seqRegions); i++) {
-    char *regionName = Vector_getElementAt(seqRegions, i);
-    fprintf(stderr, "%s\n",regionName);
-  }
+  if (chrSCtgMapper)
+    {
+      Vector *seqRegions = ChainedAssemblyMapper_listSeqRegions(chrSCtgMapper, "20", 3000000, 31000000, chrCs);
+      ok(testNum++, seqRegions!=NULL);
+      for (i=0;i<Vector_getNumElement(seqRegions); i++) {
+        char *regionName = Vector_getElementAt(seqRegions, i);
+        fprintf(stderr, "%s\n",regionName);
+      }
+    }
 
 
 
@@ -132,34 +151,46 @@ int main(int argc, char *argv[]) {
   // Test list_seq_ids
   //
 
-  Vector *seqIds = ChainedAssemblyMapper_listIds(asmMapper, "20", 500001, 60000000, chrCs);
+  if (asmMapper)
+    {
+      Vector *seqIds = ChainedAssemblyMapper_listIds(asmMapper, "20", 500001, 60000000, chrCs);
 
-  ok(testNum++, seqIds!=NULL);
-  for (i=0;i<Vector_getNumElement(seqIds); i++) {
-    IDType regionId = *((IDType *)Vector_getElementAt(seqIds, i));
-    fprintf(stderr, IDFMTSTR"\n",regionId);
-  }
+      ok(testNum++, seqIds!=NULL);
+      for (i=0;i<Vector_getNumElement(seqIds); i++) {
+        IDType regionId = *((IDType *)Vector_getElementAt(seqIds, i));
+        fprintf(stderr, IDFMTSTR"\n",regionId);
+      }
+    }
 
-  seqIds = ChainedAssemblyMapper_listIds(asmMapper, "AL359765.6", 1, 13780, clnCs);
-  ok(testNum++, seqIds!=NULL);
-  for (i=0;i<Vector_getNumElement(seqIds); i++) {
-    IDType regionId = *((IDType *)Vector_getElementAt(seqIds, i));
-    fprintf(stderr, IDFMTSTR"\n",regionId);
-  }
+  if (asmMapper)
+    {
+      Vector *seqIds = ChainedAssemblyMapper_listIds(asmMapper, "AL359765.6", 1, 13780, clnCs);
+      ok(testNum++, seqIds!=NULL);
+      for (i=0;i<Vector_getNumElement(seqIds); i++) {
+        IDType regionId = *((IDType *)Vector_getElementAt(seqIds, i));
+        fprintf(stderr, IDFMTSTR"\n",regionId);
+      }
+    }
 
-  seqIds = ChainedAssemblyMapper_listIds(chrSCtgMapper, "NT_028392", 600000, 1000000, sCtgCs);
-  ok(testNum++, seqIds!=NULL);
-  for (i=0;i<Vector_getNumElement(seqIds); i++) {
-    IDType regionId = *((IDType *)Vector_getElementAt(seqIds, i));
-    fprintf(stderr, IDFMTSTR"\n",regionId);
-  }
+  if (chrSCtgMapper)
+    {
+      Vector *seqIds = ChainedAssemblyMapper_listIds(chrSCtgMapper, "NT_028392", 600000, 1000000, sCtgCs);
+      ok(testNum++, seqIds!=NULL);
+      for (i=0;i<Vector_getNumElement(seqIds); i++) {
+        IDType regionId = *((IDType *)Vector_getElementAt(seqIds, i));
+        fprintf(stderr, IDFMTSTR"\n",regionId);
+      }
+    }
 
-  seqIds = ChainedAssemblyMapper_listIds(chrSCtgMapper, "20", 3000000, 31000000, chrCs);
-  ok(testNum++, seqIds!=NULL);
-  for (i=0;i<Vector_getNumElement(seqIds); i++) {
-    IDType regionId = *((IDType *)Vector_getElementAt(seqIds, i));
-    fprintf(stderr, IDFMTSTR"\n",regionId);
-  }
+  if (chrSCtgMapper)
+    {
+      Vector *seqIds = ChainedAssemblyMapper_listIds(chrSCtgMapper, "20", 3000000, 31000000, chrCs);
+      ok(testNum++, seqIds!=NULL);
+      for (i=0;i<Vector_getNumElement(seqIds); i++) {
+        IDType regionId = *((IDType *)Vector_getElementAt(seqIds, i));
+        fprintf(stderr, IDFMTSTR"\n",regionId);
+      }
+    }
 
   return 0;
   
@@ -168,9 +199,10 @@ int main(int argc, char *argv[]) {
 
 void printCoords(MapperRangeSet *results) {
   int i;
-  for (i=0;i<MapperRangeSet_getNumRange(results);i++) {
-    MapperRange *range = MapperRangeSet_getRangeAt(results, i);
-    switch (range->rangeType) {
+  if (results) {
+    for (i=0;i<MapperRangeSet_getNumRange(results);i++) {
+      MapperRange *range = MapperRangeSet_getRangeAt(results, i);
+      switch (range->rangeType) {
       case MAPPERRANGE_COORD :
         {
           MapperCoordinate *mc = (MapperCoordinate *)range;
@@ -188,6 +220,7 @@ void printCoords(MapperRangeSet *results) {
           fprintf(stderr, "Unhandled range type %d\n",range->rangeType);
         }
         break;
+      }
     }
   }
 }

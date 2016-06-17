@@ -92,6 +92,8 @@ char  *PredictionExon_getSeqString(PredictionExon *exon);
 void PredictionExon_freeImpl(PredictionExon *sf);
 PredictionExon *PredictionExon_shallowCopyImpl(PredictionExon *exon);
 
+void PredictionExon_loadGenomicMapper(Exon *exon, Mapper *mapper, IDType id, int start);
+
 #ifdef __PREDICTIONEXON_MAIN__
  PredictionExonFuncs
    predictionExonFuncs = {

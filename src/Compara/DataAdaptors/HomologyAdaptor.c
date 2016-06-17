@@ -19,13 +19,13 @@
 
 
 HomologyAdaptor *HomologyAdaptor_new(ComparaDBAdaptor *dba) {
-  HomologyAdaptor *ha;
+  HomologyAdaptor *ha = NULL;
 
   if ((ha = (HomologyAdaptor *)calloc(1,sizeof(HomologyAdaptor))) == NULL) {
     fprintf(stderr,"Error: Failed allocating ha\n");
-    exit(1);
+  } else {
+    BaseComparaAdaptor_init((BaseComparaAdaptor *)ha, dba, HOMOLOGY_ADAPTOR);
   }
-  BaseComparaAdaptor_init((BaseComparaAdaptor *)ha, dba, HOMOLOGY_ADAPTOR);
 
   return ha;
 }
@@ -124,7 +124,7 @@ Vector *HomologyAdaptor_fetchHomologuesOfGene(HomologyAdaptor *ha, char *sp, cha
 Vector **HomologyAdaptor_fetchHomologuesByChrStartInSpecies(HomologyAdaptor *ha, 
                    char *sp, char *chr, int start, char *hSp, int num) {
   char qStr[1024];
-  Vector **genesPair;
+  Vector **genesPair = NULL;
   int i;
   char *hSpecies;
   char *species;
@@ -153,22 +153,21 @@ Vector **HomologyAdaptor_fetchHomologuesByChrStartInSpecies(HomologyAdaptor *ha,
 
   if ((genesPair = calloc(2,sizeof(Vector *))) == NULL) {
     fprintf(stderr,"Error: Failed allocating genesPair\n");
-    exit(1);
-  }
+  } else {
+    genesPair[0] = Vector_new();
+    genesPair[1] = Vector_new();
 
-  genesPair[0] = Vector_new();
-  genesPair[1] = Vector_new();
+    for (i=0;i<nRelationship;i++) {
+      Vector *homols;
 
-  for (i=0;i<nRelationship;i++) {
-    Vector *homols;
+      homols = HomologyAdaptor_fetchHomologuesBySpeciesRelationshipId(ha, species, relationshipIds[i]);
+      Vector_append(genesPair[0],homols);
+      Vector_free(homols);
 
-    homols = HomologyAdaptor_fetchHomologuesBySpeciesRelationshipId(ha, species, relationshipIds[i]);
-    Vector_append(genesPair[0],homols);
-    Vector_free(homols);
-
-    homols = HomologyAdaptor_fetchHomologuesBySpeciesRelationshipId(ha, hSpecies, relationshipIds[i]);
-    Vector_append(genesPair[1],homols);
-    Vector_free(homols);
+      homols = HomologyAdaptor_fetchHomologuesBySpeciesRelationshipId(ha, hSpecies, relationshipIds[i]);
+      Vector_append(genesPair[1],homols);
+      Vector_free(homols);
+    }
   }
 
   free(species);
@@ -261,31 +260,36 @@ Vector *HomologyAdaptor_getHomologues(HomologyAdaptor *ha, char *qStr) {
 int HomologyAdaptor_getRelationships(HomologyAdaptor *ha, char *qStr, IDType **idsP) {
   StatementHandle *sth;
   ResultRow *row;
-  Vector *genes;
   int nAlloced = 2;
   int nId = 0;
+  int ok = 1;
 
   sth = ha->prepare((BaseAdaptor *)ha, qStr, strlen(qStr));
   sth->execute(sth);
 
   if ((*idsP = (IDType *)calloc(nAlloced,sizeof(IDType))) == NULL) {
     fprintf(stderr,"Error: Failed allocating idsP\n");
-    exit(1);
+    ok = 0;
   }
 
-
-  while ((row = sth->fetchRow(sth))) {
-    if (nId == nAlloced) {
-      nAlloced = (nAlloced *2);
-      if ((*idsP = (IDType *)realloc(*idsP,nAlloced*sizeof(IDType))) == NULL) {
-        fprintf(stderr,"Error: Failed reallocating idsP\n");
-        exit(1);
+  if (ok) {
+    while ((row = sth->fetchRow(sth))) {
+      if (nId == nAlloced) {
+        nAlloced = (nAlloced *2);
+        if ((*idsP = (IDType *)realloc(*idsP,nAlloced*sizeof(IDType))) == NULL) {
+          fprintf(stderr,"Error: Failed reallocating idsP\n");
+          ok = 0;
+          break;
+        }
       }
-    }
 
-    (*idsP)[nId++] = row->getLongLongAt(row,0); 
+      (*idsP)[nId++] = row->getLongLongAt(row,0); 
+    }
   }
-  sth->finish(sth);
+
+  if (ok) {
+    sth->finish(sth);
+  }
 
   return nId;
 }
