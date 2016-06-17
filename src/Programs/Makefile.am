@@ -3,7 +3,7 @@ include $(top_srcdir)/Makefile.am.common
 
 SUBDIRS = .
 
-bin_PROGRAMS = 
+bin_PROGRAMS = countsnps fastasplit indicate moveperl testdbc
 
 PROG_LIBS = \
 $(top_builddir)/Util/libUtil.la \
@@ -16,8 +16,21 @@ $(top_builddir)/Compara/DataModel/libComparaDataModel.la \
 $(top_builddir)/OBDA/libOBDA.la \
 $(NULL)
 
+countsnps_SOURCES = countsnps.c
+fastasplit_SOURCES = fastasplit.c
+indicate_SOURCES = indicate.c indicate.h
+moveperl_SOURCES = moveperl.c
+testdbc_SOURCES = testdbc.c
+
+countsnps_LDADD = $(PROG_LIBS)
+fastasplit_LDADD = $(PROG_LIBS)
+indicate_LDADD = $(PROG_LIBS)
+moveperl_LDADD = $(PROG_LIBS)
+testdbc_LDADD = $(PROG_LIBS)
+
+
 if HAVE_SAMTOOLS
-  bin_PROGRAMS += bamcount bamcount_exon bamcov bammap countsnps fastasplit indicate moveperl testdbc
+  bin_PROGRAMS += bamcount bamcount_exon bamcov bammap
 
   PROG_LIBS += -lbam -lz
 
@@ -25,21 +38,11 @@ if HAVE_SAMTOOLS
   bamcount_exon_SOURCES = bamcount_exon.c
   bamcov_SOURCES = bamcov.c
   bammap_SOURCES = bammap.c
-  countsnps_SOURCES = countsnps.c
-  fastasplit_SOURCES = fastasplit.c
-  indicate_SOURCES = indicate.c indicate.h
-  moveperl_SOURCES = moveperl.c
-  testdbc_SOURCES = testdbc.c
 
   bamcount_LDADD = $(PROG_LIBS)
   bamcount_exon_LDADD = $(PROG_LIBS)
   bamcov_LDADD = $(PROG_LIBS)
   bammap_LDADD = $(PROG_LIBS)
-  countsnps_LDADD = $(PROG_LIBS)
-  fastasplit_LDADD = $(PROG_LIBS)
-  indicate_LDADD = $(PROG_LIBS)
-  moveperl_LDADD = $(PROG_LIBS)
-  testdbc_LDADD = $(PROG_LIBS)
 
 if HAVE_LIBTCMALLOC
   bin_PROGRAMS += RefineSolexaGenes
