@@ -13,6 +13,13 @@ cd src
 make
 Programs/testdbc
 
-Your make will probably need to be GNU make
+
+Some of the programs will not be compiled if their dependencies
+are not found (runconfig will give a warning if this is the case).
+If dependencies are installed in a non-standard location then 
+you can point runconfig to it as follows:
+
+./runconfig CPPFLAGS="-I/path/to/include" LDFLAGS="-L/path/to/lib"
+
 
 Comments to Steve Searle
