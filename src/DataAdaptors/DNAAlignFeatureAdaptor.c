@@ -178,7 +178,7 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
                     "hcoverage) "
           //"pair_dna_align_feature_id) "
                     "VALUES (%" IDFMTSTR ",%%d,%%d,%%d,%%d,%%d,%%d,'%%s','%%s',%"IDFMTSTR
-                             ",%%s,%%s,%%s,%%s,%%s,%%s)", tableName);
+                             ",%%s,%%s,%%s,%%s,%%s)", tableName);
                             // changed to strings to allow for nulls ",%%f,%%f,%%f,%" IDFMTSTR ",%%f,%" IDFMTSTR ")", tableName);
 
   StatementHandle *sth = bfa->prepare((BaseAdaptor *)bfa, qStr,strlen(qStr));

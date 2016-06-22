@@ -1434,7 +1434,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
                //"source = '%s',"
                //"status = '%s',"
                "is_current = %d,"
-               "canonical_transcript_id = 0," ,
+               "canonical_transcript_id = 0",
                //"canonical_annotation = '%s'", 
                //"canonical_annotation = %%s", 
            analysisId, 
@@ -1458,10 +1458,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
   char statusQStr[1024];
   Gene_getStatus(gene) ? sprintf(statusQStr,"'%s'", Gene_getStatus(gene)) : sprintf(statusQStr, "NULL");
 
-  char canAnnQStr[1024];
-  Gene_getCanonicalAnnotation(gene) ? sprintf(canAnnQStr,"'%s'", Gene_getCanonicalAnnotation(gene)) : sprintf(canAnnQStr, "NULL");
-
-  sprintf(qStr, fmtStr, descQStr, sourceQStr, statusQStr, canAnnQStr);
+  sprintf(qStr, fmtStr, descQStr, sourceQStr, statusQStr);
 
   if (Gene_getStableId(gene)) {
 /* Use FROM_UNIXTIME for now
