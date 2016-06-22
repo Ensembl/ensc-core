@@ -621,13 +621,13 @@ int main(int argc, char *argv[]) {
       char typeName[1024];
       char *typePref = RefineSolexaGenes_getTypePrefix(rsg);
 
-      sprintf(typeName, "best_%sc%d_nc%d", typePref, (int)consLim, (int)nonConsLim);
+      sprintf(typeName, "%s_%sc%d_nc%d", RefineSolexaGenes_getBestScoreType(rsg), typePref, (int)consLim, (int)nonConsLim);
       RefineSolexaGenes_setBestScoreType(rsg, typeName);
 
-      sprintf(typeName, "single_exon_%sc%d_nc%d", typePref, (int)consLim, (int)nonConsLim);
+      sprintf(typeName, "%s_%sc%d_nc%d", RefineSolexaGenes_getSingleExonModelType(rsg), typePref, (int)consLim, (int)nonConsLim);
       RefineSolexaGenes_setSingleExonModelType(rsg, typeName);
 
-      sprintf(typeName, "refine_%sc%d_nc%d", typePref, (int)consLim, (int)nonConsLim);
+      sprintf(typeName, "%s_%sc%d_nc%d", logicName, typePref, (int)consLim, (int)nonConsLim);
       RefineSolexaGenes_setAnalysis(rsg, RefineSolexaGenes_createAnalysisObject(rsg, typeName));
 
       RefineSolexaGenes_fetchInput(rsg);
@@ -698,7 +698,7 @@ int main(int argc, char *argv[]) {
 }
 #endif
 
-int RefineSolexaGenes_dumpOutput(RefineSolexaGenes *rsg) {
+void RefineSolexaGenes_dumpOutput(RefineSolexaGenes *rsg) {
   Vector *output = RefineSolexaGenes_getOutput(rsg);
 
   Vector_sort(output, SeqFeature_startCompFunc);
@@ -1074,13 +1074,12 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
       
       double gc = ((double)overlap / (double)Gene_getLength(gene) * 1000.0) / 10.0;
       double sc =  ((double)overlap / (double)Slice_getLength(slice) * 1000.0) /10.0;
-      if (verbosity > 0) {
-        fprintf(logfp, "Gene (start %ld end %ld) has %lf %% overlap with the slice\n"
-                "Slice (%s) has %lf %% overlap with the gene\n", 
-                Gene_getStart(gene), Gene_getEnd(gene), gc, Slice_getName(slice), sc);
-      }
       if ( gc <= 10 && sc <= 10) {
-        if (verbosity > 0) fprintf(logfp, "Rejecting\n");
+        if (verbosity > 0) {
+          fprintf(logfp, "Gene (start %ld end %ld) has %lf %% overlap with the slice\n"
+                  "Slice (%s) has %lf %% overlap with the gene\n\tREJECTING\n",
+                  Gene_getStart(gene), Gene_getEnd(gene), gc, Slice_getName(slice), sc);
+        }
         continue;
       } 
       Vector_addElement(prelimGenes, gene);
@@ -3862,16 +3861,16 @@ void RefineSolexaGenes_writeOutput(RefineSolexaGenes *rsg) {
   int fails = 0;
   int total = 0;
 //  GENE: 
+  Analysis *anal = RefineSolexaGenes_getAnalysis(rsg);
+  fprintf(stderr,"Analysis set to %s\n", Analysis_getLogicName(anal));
+
   int i;
   for (i=0; i<Vector_getNumElement(output); i++) {
     Gene *gene = Vector_getElementAt(output, i);
-    Analysis *anal = RefineSolexaGenes_getAnalysis(rsg);
 
     Gene_setAnalysis(gene, anal);
     Gene_setSource(gene, Analysis_getLogicName(anal));
     
-    //fprintf(stderr,"Analysis set to %s\n", Analysis_getLogicName(Gene_getAnalysis(gene)));
-
     int j;
     for (j=0; j<Gene_getTranscriptCount(gene); j++) {
       Transcript *tran = Gene_getTranscriptAt(gene, j);
@@ -3910,6 +3909,7 @@ void RefineSolexaGenes_writeOutput(RefineSolexaGenes *rsg) {
     fprintf(stderr, "Not all genes could be written successfully (%d fails out of %d)\n", fails, total);
   }
 
+  if (verbosity > 0) fprintf(stderr, "Writing dna_align_features\n");
   if (RefineSolexaGenes_writeIntrons(rsg)) {
     DNAAlignFeatureAdaptor *intronAdaptor = DBAdaptor_getDNAAlignFeatureAdaptor(outdb);
     fails = 0;
