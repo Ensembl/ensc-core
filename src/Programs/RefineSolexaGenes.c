@@ -364,6 +364,7 @@ void RefineSolexaGenes_usage() {
          "  -i --input_id    Input id (slice name) to run on eg. chromosome:Oar_v3.1:17\n"
          "  -l --logic_name  Logic name for analysis block to run from configuration file\n"
          "  -d --dry_run     If specified, don't write to output db\n"
+         "  -u --ucsc_naming If specified, add chr the name of sequence\n"
          "  -v --verbosity   Verbosity level (int)\n"
          "\n"
 //         "Notes:\n"
@@ -393,6 +394,7 @@ int main(int argc, char *argv[]) {
   char *inputId    = "chromosome:Oar_v3.1:17";
   int   dryRun     = 0;
   int   verbosity  = 1;
+  int   ucsc_naming = 0;
 
   int argNum = 1;
   while (argNum < argc) {
@@ -402,6 +404,8 @@ int main(int argc, char *argv[]) {
 // Ones without a val go here
    if (!strcmp(arg, "-d") || !strcmp(arg,"--dry_run")) {
       dryRun = 1;
+   } else if (!strcmp(arg, "-u") || !strcmp(arg,"--ucsc_naming")) {
+      ucsc_naming = 1;
     } else {
 // Ones with a val go in this block
       if (argNum == argc-1) {
@@ -438,6 +442,7 @@ int main(int argc, char *argv[]) {
   RefineSolexaGenes_setInputId(rsg, inputId);
   RefineSolexaGenes_setDryRun(rsg, dryRun);
   RefineSolexaGenes_setVerbosity(rsg, verbosity);
+  RefineSolexaGenes_setUcscNaming(rsg, ucsc_naming);
 
 
 
@@ -1166,9 +1171,16 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
       if (verbosity > 0) fprintf(stderr,"Opened bam index for %s\n", intronFile);
 
       long long count = 0;
-      sprintf(region,"%s:%ld-%ld", Slice_getSeqRegionName(slice),
-                                   Slice_getSeqRegionStart(slice),
-                                   Slice_getSeqRegionEnd(slice));
+      if (RefineSolexaGenes_getUcscNaming(rsg) == 0) {
+        sprintf(region,"%s:%ld-%ld", Slice_getSeqRegionName(slice),
+                                     Slice_getSeqRegionStart(slice),
+                                     Slice_getSeqRegionEnd(slice));
+      }
+      else {
+        sprintf(region,"chr%s:%ld-%ld", Slice_getSeqRegionName(slice),
+                                        Slice_getSeqRegionStart(slice),
+                                        Slice_getSeqRegionEnd(slice));
+      }
       bam_parse_region(sam->header, region, &ref, &begRange, &endRange);
       if (verbosity > 0) fprintf(stderr,"Parsed region for region %s\n", region);
       if (ref < 0) {
@@ -6262,6 +6274,14 @@ void RefineSolexaGenes_setVerbosity(RefineSolexaGenes *rsg, int verbosity) {
 
 int RefineSolexaGenes_getVerbosity(RefineSolexaGenes *rsg) {
   return rsg->verbosity;
+}
+
+void RefineSolexaGenes_setUcscNaming(RefineSolexaGenes *rsg, int ucsc_naming) {
+  rsg->ucsc_naming = ucsc_naming;
+}
+
+int RefineSolexaGenes_getUcscNaming(RefineSolexaGenes *rsg) {
+  return rsg->ucsc_naming;
 }
 
 void RefineSolexaGenes_setRejectIntronCutoff(RefineSolexaGenes *rsg, double rejectIntronCutoff) {
