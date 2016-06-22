@@ -4798,10 +4798,10 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
 
   Slice *chrSlice = RefineSolexaGenes_getChrSlice(rsg);
   char sliceName[2048];
-  strcpy(sliceName, StrUtil_strReplChr(Slice_getName(chrSlice), '.', '*'));
+  StrUtil_strReplChr(strcpy(sliceName, Slice_getName(chrSlice)), '.', '*');
 
   char sliceRegName[2048];
-  strcpy(sliceRegName, StrUtil_strReplChr(Slice_getSeqRegionName(chrSlice), '.', '*'));
+  StrUtil_strReplChr(strcpy(sliceRegName, Slice_getSeqRegionName(chrSlice)), '.', '*');
 
   Analysis *analysis = RefineSolexaGenes_getAnalysis(rsg);
   CachingSequenceAdaptor *cachingSeqAdaptor = DBAdaptor_getCachingSequenceAdaptor(Slice_getAdaptor(chrSlice)->dba);
@@ -5487,10 +5487,10 @@ void RefineSolexaGenes_dnaToIntronFeatures(RefineSolexaGenes *rsg, long start, l
   Analysis *analysis = RefineSolexaGenes_getAnalysis(rsg);
 
   char sliceName[2048];
-  strcpy(sliceName, StrUtil_strReplChr(Slice_getName(chrSlice), '.', '*'));
+  StrUtil_strReplChr(strcpy(sliceName, Slice_getName(chrSlice)), '.', '*');
 
   char sliceRegName[2048];
-  strcpy(sliceRegName, StrUtil_strReplChr(Slice_getSeqRegionName(chrSlice), '.', '*'));
+  StrUtil_strReplChr(strcpy(sliceRegName, Slice_getSeqRegionName(chrSlice)), '.', '*');
 
   IntronCoords **icArray = StringHash_getValues(idList);
 
