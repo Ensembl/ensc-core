@@ -888,7 +888,7 @@ RefineSolexaGenes *RefineSolexaGenes_new(char *configFile, char *logicName) {
 
   // Hard limit to the number of possible paths to explore
 // SMJS Think maybe raise the start to 100000
-  RefineSolexaGenes_setRecursiveLimit(rsg, 10000);
+  RefineSolexaGenes_setRecursiveLimit(rsg, RefineSolexaGenes_getMaxRecursions(rsg));
 
   // initialise intron feature cash
   // Doesn't seem to be used
@@ -1255,9 +1255,9 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
     int strand;
     for (strand = -1; strand<=1 && !giveUpFlag; strand+=2) {
 // SMJS Maybe raise these defaults to 100000
-      if ( RefineSolexaGenes_getRecursiveLimit(rsg) > 10000 ) {
+      if ( RefineSolexaGenes_getRecursiveLimit(rsg) > RefineSolexaGenes_getMaxRecursions(rsg) ) {
         // set recursion to 10000 in case it was raised for a tricky gene
-        RefineSolexaGenes_setRecursiveLimit(rsg, 10000);
+        RefineSolexaGenes_setRecursiveLimit(rsg, RefineSolexaGenes_getMaxRecursions(rsg));
         fprintf(stderr, "Warning: lowering recursive limit after complex gene\n"); 
       }
 
