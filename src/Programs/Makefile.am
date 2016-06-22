@@ -48,7 +48,7 @@ if HAVE_LIBTCMALLOC
   bin_PROGRAMS += RefineSolexaGenes
   RefineSolexaGenes_SOURCES = RefineSolexaGenes.c RefineSolexaGenes.h 
 
-  PROG_LIBS += $(DEPS_LIBCONFIG_LIBS) -ltcmalloc
+  PROG_LIBS += -lconfig -ltcmalloc
   RefineSolexaGenes_LDADD = $(PROG_LIBS)
 endif
 endif

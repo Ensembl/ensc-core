@@ -40,7 +40,7 @@ Tests/Makefile
 # status in the version info. Otherwise use PACKAGE_VERSION (which will get
 # set from VERSION_NUMBER in version.m4).
 if test -d "$srcdir/../.git" 
-then AC_DEFINE_UNQUOTED([ENSC_VERSION], ["`git describe --abbrev=1`"], ["EnsC package version"])
+then AC_DEFINE_UNQUOTED([ENSC_VERSION], ["`git describe --always --abbrev=1`"], ["EnsC package version"])
 else AC_DEFINE([ENSC_VERSION], [PACKAGE_VERSION], ["EnsC package version"])
 fi
 
@@ -92,8 +92,8 @@ AM_COND_IF([HAVE_SAMTOOLS], [ echo 'samtools_parallel is available' ])
 AM_COND_IF([HAVE_SAMTOOLS], [AC_SUBST([HAVE_SAMTOOLS], ['samtools_parallel is available'])])
 AM_COND_IF([HAVE_SAMTOOLS], [AC_DEFINE([HAVE_SAMTOOLS], [1], [define to 1 if samtools_parallel is available])])
 
-PKG_CHECK_MODULES([DEPS_LIBCONFIG], [libconfig], [HAVE_LIBCONFIG=1], [HAVE_LIBCONFIG=])
-AM_CONDITIONAL([HAVE_LIBCONFIG], [ test -n "$DEPS_LIBCONFIG_LIBS" || test -n "DEPS_LIBCONFIG_CFLAGS" ])
+AC_CHECK_HEADERS([libconfig.h], [HAVE_LIBCONFIG_HEADER=1])
+AM_CONDITIONAL([HAVE_LIBCONFIG], [ test -n "$HAVE_LIBCONFIG_HEADER" ])
 AM_COND_IF([HAVE_LIBCONFIG], [ echo 'libconfig is available' ])
 AM_COND_IF([HAVE_LIBCONFIG], [AC_SUBST([HAVE_LIBCONFIG], ['libconfig is available'])])
 AM_COND_IF([HAVE_LIBCONFIG], [AC_DEFINE([HAVE_LIBCONFIG], [1], [define to 1 if libconfig is available])])
@@ -104,9 +104,6 @@ AM_COND_IF([HAVE_LIBTCMALLOC], [ echo 'libtcmalloc is available' ])
 AM_COND_IF([HAVE_LIBTCMALLOC], [AC_SUBST([HAVE_LIBTCMALLOC], ['libtcmalloc is available'])])
 AM_COND_IF([HAVE_LIBTCMALLOC], [AC_DEFINE([HAVE_LIBTCMALLOC], [1], [define to 1 if libtcmalloc is available])])
 
-
-AC_DEFINE([HAVE_LIBCONFIG], [1], [Define to 1 if libconfig is available])
-AC_DEFINE([HAVE_LIBTCMALLOC], [1], [Define to 1 if libtcmalloc is available])
 
 
 AC_SUBST(PKG_CONFIG)

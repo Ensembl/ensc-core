@@ -111,7 +111,7 @@ $(NULL)
 
 if HAVE_LIBCONFIG
 if HAVE_LIBTCMALLOC
-  TEST_LIBS += $(DEPS_LIBCONFIG_LIBS) -ltcmalloc
+  TEST_LIBS += -lconfig -ltcmalloc
 endif
 endif 
 
