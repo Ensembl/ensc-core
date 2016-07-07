@@ -458,133 +458,6 @@ int main(int argc, char *argv[]) {
   RefineSolexaGenes_setVerbosity(rsg, verbosity);
   RefineSolexaGenes_setUcscNaming(rsg, ucsc_naming);
 
-
-
-//  RefineSolexaGenes *rsg = RefineSolexaGenes_new("/Users/searle/RefineSolexaGenes_rabbit.cfg", logicName);
-
-/*
-  DBAdaptor *refDb = DBAdaptor_new("genebuild1", "ensadmin", "ensembl", "th3_sheep_core", 3306, NULL);
-                     //DBAdaptor_new("genebuild2", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL);
-                     //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_ref", 13382, NULL);
-                     //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_ref", 3306, NULL);
-  StringHash_add(rsg->adaptorAliasHash, "REFERENCE_DB", refDb);
-  StringHash_add(rsg->adaptorAliasHash, "REFINED_DB", 
-                 //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_sheep_refine7", 3306, refDb));
-                 //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_kid_mus_bi_refine", 3306, refDb));
-                 DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_mus_bi_refine", 3306, refDb));
-                 //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
-                 //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_refined", 13386, refDb));
-                 //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
-  StringHash_add(rsg->adaptorAliasHash, "REFINED_TISSUES_5_DB", 
-                 //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_sheep_refine7", 3306, refDb));
-                 //DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_kid_mus_bi_refine", 3306, refDb));
-                 DBAdaptor_new("genebuild3", "ensadmin", "ensembl", "steve_tissue_5_refine", 3306, refDb));
-                 //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
-                 //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_refined", 13386, refDb));
-                 //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_refined", 3306, refDb));
-  StringHash_add(rsg->adaptorAliasHash, "ROUGH_DB", 
-                 //DBAdaptor_new("genebuild6", "ensadmin", "ensembl", "th3_sheep_rough", 3306, refDb));
-                 DBAdaptor_new("genebuild4", "ensadmin", "ensembl", "steve_sheep_rough", 3306, refDb));
-                 //DBAdaptor_new("genebuild5", "ensadmin", "ensembl", "db8_rabbit_rough", 3306, refDb));
-                 //DBAdaptor_new("127.0.0.1", "ensadmin", "ensembl", "db8_rabbit_rough", 13385, refDb));
-                 //DBAdaptor_new("localhost", "ensadmin", "ensembl", "db8_rabbit_rough", 3306, refDb));
-*/
-
-  // Create a DBAdaptor hash
-  // Not used with Bam files  RefineSolexaGenes_setIntronDb(rsg, char *intronDb);
-
-/*
-  RefineSolexaGenes_setOutputDb(rsg, "REFINED_DB");
-  RefineSolexaGenes_setModelDb(rsg, "ROUGH_DB");
-
-  // Create a Vector of bam files
-  Vector *intronBamFiles = Vector_new();
-  
-  // Note can change min depth here (args are file, mixedBam flag, depth, groupNames) 
-  //Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns.bam", 0, 0, NULL));
-  //Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns_ch7.bam", 0, 0, NULL));
-
-  Vector *groupNames = Vector_new();
-  char *tmp;
-  Vector_addElement(groupNames, StrUtil_copyString(&tmp, "kid_muscle_biceps", 0));
-  Vector_addElement(groupNames, StrUtil_copyString(&tmp, "mum_muscle_biceps", 0));
-  Vector_addElement(groupNames, StrUtil_copyString(&tmp, "dad_muscle_biceps", 0));
-  Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns_ch7.bam", 0, 0, groupNames));
-
-  //Vector_addElement(intronBamFiles, IntronBamConfig_new("/lustre/scratch109/ensembl/th3/sheep/rnaseq/introns.bam", 0, 0, NULL));
-  //Vector_addElement(intronBamFiles, IntronBamConfig_new("/Users/searle/rabbit/introns.bam", 0, 0, NULL));
-  //Vector_addElement(intronBamFiles, IntronBamConfig_new("/nfs/ensembl/db8/rabbit_bam/introns.bam", 0, 0, NULL));
-  RefineSolexaGenes_setIntronBamFiles(rsg, intronBamFiles);
-
-  RefineSolexaGenes_setLogicNames(rsg, NULL);
-
-  RefineSolexaGenes_setRetainedIntronPenalty(rsg, 2);
-  RefineSolexaGenes_setMinIntronSize(rsg, 30);
-  RefineSolexaGenes_setMaxIntronSize(rsg, 200000);
-
-// Note perl seems to allow empty string for these as unset - I require NULL
-//  RefineSolexaGenes_setBadModelsType(rsg, NULL);
-//  RefineSolexaGenes_setModelLogicName(rsg, NULL);
-
-// Not sure I should have to set this one
-  RefineSolexaGenes_setOtherIsoformsType(rsg, "");
-
-  RefineSolexaGenes_setOtherNum(rsg, 10);
-  RefineSolexaGenes_setMaxNum(rsg, 1000);
-  RefineSolexaGenes_setMaxRecursions(rsg, 1000000);
-  RefineSolexaGenes_setMinSingleExonLength(rsg, 1000);
-  RefineSolexaGenes_setMinSingleExonCDSPercLength(rsg, 66);
-  RefineSolexaGenes_setStrictInternalSpliceSites(rsg, 1);
-  RefineSolexaGenes_setStrictInternalEndSpliceSites(rsg, 1);
-  RefineSolexaGenes_setWriteIntrons(rsg, 1);
-  RefineSolexaGenes_setTrimUTR(rsg, 1);
-  RefineSolexaGenes_setMax3PrimeExons(rsg, 2);
-  RefineSolexaGenes_setMax3PrimeLength(rsg, 5000);
-  RefineSolexaGenes_setMax5PrimeExons(rsg, 3);
-  RefineSolexaGenes_setMax5PrimeLength(rsg, 1000);
-  RefineSolexaGenes_setRejectIntronCutoff(rsg, 5);
-
-*/
-/* Wasn't set in perl config???
-  RefineSolexaGenes_setFilterOnOverlapThreshold(rsg, int filterOnOverlapThreshold);
-*/
-
-  // Other isoforms type needs to be set even if empty string 
-/*
-  if (RefineSolexaGenes_getOtherIsoformsType(rsg) == NULL) {
-    RefineSolexaGenes_setOtherIsoformsType(rsg, "");
-  }
-*/
-
-  // Get analysis from reference db
-//  AnalysisAdaptor *refAa = DBAdaptor_getAnalysisAdaptor((DBAdaptor *)StringHash_getValue(rsg->adaptorAliasHash, "REFERENCE_DB"));
-
-/* Analysis is now generated in loop - this may change but for now comment out this code to avoid confusion
-  AnalysisAdaptor *refAa = DBAdaptor_getAnalysisAdaptor(BaseGeneBuild_getDbAdaptor(rsg, "REFERENCE_DB", 0, 0));
-  Analysis *analysis = AnalysisAdaptor_fetchByLogicName(refAa, "refine_all");
-  RefineSolexaGenes_setAnalysis(rsg, analysis);
-*/
-
-/*
-  if (argc > 1) {
-    RefineSolexaGenes_setInputId(rsg, argv[1]);
-  } else {
-//    RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:300000:1");
-//    RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:3000000:1");
-//    RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:30000000:1");
-//    RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1100000000:1");
-//    RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:13:1:150000000:1");
-//    RefineSolexaGenes_setInputId(rsg, "chromosome:oryCun2:1:1:250000000:1");
-//    RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:300000:1");
-//    RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:11710000:1");
-//    RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:280000000:1");
-//    RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:1:100000000:1");
-    RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:17");
-//    RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:100000000:120000000:1");
-//    RefineSolexaGenes_setInputId(rsg, "chromosome:Oar_v3.1:1:170000000:190000000:1");
-  }
-*/
-
 //  double consLims[]    = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 20.0, 50.0 };
 //  double nonConsLims[] = { 1.0, 5.0, 10.0, 15.0, 20.0, 50.0 };
 //  double consLims[]    = { 1.0 };
@@ -1218,13 +1091,8 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
   } else {
     // pre fetch all the intron features
     RefineSolexaGenes_dnaToIntronFeatures(rsg, Slice_getStart(slice), Slice_getEnd(slice));
-// NIY ??
-//    $self->intron_slice_adaptor->dbc->disconnect_when_inactive(1);
   }
   fprintf(stderr,"Warning: Disconnect when inactive not implemented yet in C version\n");
-// NIY ??
-//  $self->db->disconnect_when_inactive(1);
-//  $self->gene_slice_adaptor->dbc->disconnect_when_inactive(1);
 }
 
 void  RefineSolexaGenes_run(RefineSolexaGenes *rsg) {
@@ -7527,13 +7395,13 @@ DBAdaptor *BaseGeneBuild_getDbAdaptor(RefineSolexaGenes *rsg, char *alias, int i
           MetaContainer *coreMC = DBAdaptor_getMetaContainer(db);
 
           char *coreDbAsm     = MetaContainer_getDefaultAssembly(coreMC);
-          Species *coreDbSpecies = MetaContainer_getSpecies(coreMC);
+          //Species *coreDbSpecies = MetaContainer_getSpecies(coreMC);
 
           // get the same for dna-db
           MetaContainer *dnaMC = DBAdaptor_getMetaContainer(dnaDb);
 
           char *dnaDbAsm     = MetaContainer_getDefaultAssembly(dnaMC);
-          Species *dnaDbSpecies = MetaContainer_getSpecies(dnaMC);
+          //Species *dnaDbSpecies = MetaContainer_getSpecies(dnaMC);
 
           int dbsAreCompatible = 1;
 
@@ -7546,6 +7414,7 @@ DBAdaptor *BaseGeneBuild_getDbAdaptor(RefineSolexaGenes *rsg, char *alias, int i
             dbsAreCompatible = 0;
           }
 
+          /* If the assemblies are the same why should the species be different?
           if (strcmp(Species_getCommonName(coreDbSpecies), Species_getCommonName(dnaDbSpecies))) {  // species are different
             fprintf(stderr, "You're trying to add a DNA_DB with species %s to "
                             "a core database with speices: %s - this does not work\n"
@@ -7553,8 +7422,9 @@ DBAdaptor *BaseGeneBuild_getDbAdaptor(RefineSolexaGenes *rsg, char *alias, int i
                     Species_getCommonName(dnaDbSpecies), Species_getCommonName(coreDbSpecies));
             dbsAreCompatible = 0;
           }
-          Species_free(dnaDbSpecies);
-          Species_free(coreDbSpecies);
+          */
+          //Species_free(dnaDbSpecies);
+          //Species_free(coreDbSpecies);
           free(coreDbAsm);
           free(dnaDbAsm);
 
