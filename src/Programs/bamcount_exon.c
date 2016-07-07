@@ -49,14 +49,14 @@
 #include "IDHash.h"
 #include "Transcript.h"
 
+#include "bamhelper.h"
 #include "sam.h"
-#include "bam.h"
+#include "hts.h"
 
 void       Bamcount_usage();
 int        bamPosNameCompFunc(const void *one, const void *two);
 int        bamPosCompFunc(const void *one, const void *two);
-int        countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int flags, Vector *genes, IDHash *geneResultsHash, long long countUsableReads, FILE *bedFp);
-long long  countReadsInFile(char *inFName);
+int        countReads(char *fName, Slice *slice, htsFile *in, hts_idx_t *idx, int flags, Vector *genes, IDHash *geneResultsHash, long long countUsableReads, FILE *bedFp);
 bam1_t *   findMateInVector(bam1_t *b, Vector *vec);
 int        findPosInVec(Vector *vec, int pos, char *bqname);
 Vector *   flattenGene(Gene *gene);
@@ -64,7 +64,6 @@ int        geneStartCompFunc(const void *one, const void *two);
 Vector *   getGenes(Slice *slice, int flags);
 IDHash *   makeGeneResultsHash(Vector *genes);
 bam1_t    *mateFoundInVectors(bam1_t *b, Vector **vectors);
-void       printBam(FILE *fp, bam1_t *b, bam_header_t *header);
 
 Vector *Bam_cigarToUngapped(bam1_t *b);
 
@@ -196,25 +195,22 @@ int main(int argc, char *argv[]) {
   }
 
 
-#ifdef _PBGZF_USE
-  bam_set_num_threads_per(5);
-#endif
 //  long long totalUsableReads = countReadsInFile(inFName);
 long long totalUsableReads = 1;
 
   fprintf(stderr, "Have %lld total usable reads\n",totalUsableReads);
 
-#ifdef _PBGZF_USE
-  bam_set_num_threads_per(5);
-#endif
-  samfile_t *in = samopen(inFName, "rb", 0);
+  htsFile *in = hts_open(inFName, "rb");
   if (in == 0) {
     fprintf(stderr, "Fail to open BAM file %s\n", inFName);
     return 1;
   }
 
-  bam_index_t *idx;
-  idx = bam_index_load(inFName); // load BAM index
+#ifdef _PBGZF_USE
+  hts_set_threads(in, 5);
+#endif
+  hts_idx_t *idx;
+  idx = sam_index_load(in, inFName); // load BAM index
   if (idx == 0) {
     fprintf(stderr, "BAM index file is not available.\n");
     return 1;
@@ -237,41 +233,12 @@ long long totalUsableReads = 1;
   }
 
 
-  bam_index_destroy(idx);
-  samclose(in);
+  hts_idx_destroy(idx);
+  hts_close(in);
 
   if (verbosity > 0) fprintf(stderr, "Done\n");
   if (bedFp) fclose(bedFp);
   return 0;
-}
-
-long long countReadsInFile(char *inFName) {
-  samfile_t *in = samopen(inFName, "rb", 0);
-  long long nUsableReads = 0;
-
-  if (in == 0) {
-    fprintf(stderr, "Fail to open BAM file %s\n", inFName);
-    exit(1);
-  }
-
-  bam1_t *b = bam_init1();
-
-  int cnt = 0;
-  while (bam_read1(in->x.bam, b) > 0 && b->core.tid >= 0) {
-    if (!(b->core.flag & (BAM_FUNMAP | BAM_FSECONDARY | BAM_FQCFAIL | BAM_FDUP))) {
-      nUsableReads++;
-    }
-    cnt++;
-    if (!(cnt%1000000)) {
-      fprintf(stderr,".");
-      fflush(stdout);
-    }
-  }
-  fprintf(stderr, "\n");
-
-  samclose(in);
-
-  return nUsableReads;
 }
 
 /*
@@ -312,7 +279,7 @@ int bamPosNameCompFunc(const void *one, const void *two) {
     } else if (b1->core.pos < b2->core.pos) {
       return -1;
     } else {
-      return strcmp(bam1_qname(b1),bam1_qname(b2));
+      return strcmp(bam_get_qname(b1),bam_get_qname(b2));
     }
   }
 }
@@ -332,35 +299,6 @@ int geneStartCompFunc(const void *one, const void *two) {
   return Gene_getStart(g1) - Gene_getStart(g2);
 }
 
-/*
- print out a bam1_t entry, particularly the flags (for debugging)
-*/
-void printBam(FILE *fp, bam1_t *b, bam_header_t *header) {    
-  fprintf(fp, "%s %s %d %d %s (%d) %d %d %d\t\tP %d PP %d U %d MU %d R %d MR %d R1 %d R2 %d S %d QC %d D %d U %d\n",
-                                  bam1_qname(b), 
-                                  header->target_name[b->core.tid], 
-                                  b->core.pos, 
-                                  bam_calend(&b->core,bam1_cigar(b)),
-                                  header->target_name[b->core.mtid], 
-                                  b->core.mtid, 
-                                  b->core.mpos, 
-                                  b->core.isize, 
-                                  bam_cigar2qlen(&(b->core),bam1_cigar(b)),
-                                  b->core.flag & BAM_FPAIRED,
-                                  b->core.flag & BAM_FPROPER_PAIR ? 1 : 0,
-                                  b->core.flag & BAM_FUNMAP ? 1 : 0,
-                                  b->core.flag & BAM_FMUNMAP ? 1 : 0,
-                                  b->core.flag & BAM_FREVERSE ? 1 : 0,
-                                  b->core.flag & BAM_FMREVERSE ? 1 : 0,
-                                  b->core.flag & BAM_FREAD1 ? 1 : 0,
-                                  b->core.flag & BAM_FREAD2 ? 1 : 0,
-                                  b->core.flag & BAM_FSECONDARY ? 1 : 0,
-                                  b->core.flag & BAM_FQCFAIL ? 1 : 0,
-                                  b->core.flag & BAM_FDUP ? 1 : 0,
-                                  b->core.flag & MY_FUSEDFLAG ? 1 : 0
-                                  );
-  fflush(fp);
-}
 
 Vector *getGenes(Slice *slice, int flags) { 
   Vector *genes;
@@ -435,11 +373,12 @@ Vector *flattenGene(Gene *gene) {
   return blockFeatures;
 }
 
-int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int flags, Vector *origGenesVec, IDHash *geneResultsHash, long long countUsableReads, FILE *bedFp) {
+int countReads(char *fName, Slice *slice, htsFile *in, hts_idx_t *idx, int flags, Vector *origGenesVec, IDHash *geneResultsHash, long long countUsableReads, FILE *bedFp) {
   int  ref;
   int  begRange;
   int  endRange;
   char region[1024];
+  char rlocation[64];
   GeneResults *gr; 
   Vector *genes = Vector_copy(origGenesVec);
   //IDHash *transExonHash = IDHash_new(IDHASH_MEDIUM);
@@ -451,30 +390,34 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
   }
 */
   if (flags & M_UCSC_NAMING) {
-    sprintf(region,"chr%s:%ld-%ld", Slice_getSeqRegionName(slice), 
-                                  Slice_getSeqRegionStart(slice), 
-                                  Slice_getSeqRegionEnd(slice));
+    sprintf(region,"chr%s", Slice_getSeqRegionName(slice));
   } else {
-    sprintf(region,"%s:%ld-%ld", Slice_getSeqRegionName(slice), 
-                               Slice_getSeqRegionStart(slice), 
-                               Slice_getSeqRegionEnd(slice));
+    sprintf(region,"%s", Slice_getSeqRegionName(slice));
   }
-  bam_parse_region(in->header, region, &ref, &begRange, &endRange);
+  bam_hdr_t *header = bam_hdr_init();
+  header = bam_hdr_read(in->fp.bgzf);
+  ref = bam_name2id(header, region);
   if (ref < 0) {
-    fprintf(stderr, "Invalid region %s %ld %ld\n", Slice_getSeqRegionName(slice), 
-                                                 Slice_getSeqRegionStart(slice), 
-                                                 Slice_getSeqRegionEnd(slice));
-    return 1;
+    fprintf(stderr, "Invalid region %s\n", region);
+    exit(1);
   }
+  sprintf(rlocation,":%ld-%ld", Slice_getSeqRegionStart(slice),
+                             Slice_getSeqRegionEnd(slice));
+  StrUtil_appendString(region, rlocation);
+  if (hts_parse_reg(region, &begRange, &endRange) == NULL) {
+    fprintf(stderr, "Could not parse %s\n", region);
+    exit(2);
+  }
+  bam_hdr_destroy(header);
 
-  bam_iter_t iter = bam_iter_query(idx, ref, begRange, endRange);
+  hts_itr_t *iter = sam_itr_queryi(idx, ref, begRange, endRange);
   bam1_t *b = bam_init1();
 
   long counter = 0;
   long overlapping = 0;
   long bad = 0;
   int startIndex = 0;
-  while (bam_iter_read(in->x.bam, iter, b) >= 0) {
+  while (bam_itr_next(in, iter, b) >= 0) {
     if (b->core.flag & (BAM_FUNMAP | BAM_FSECONDARY | BAM_FQCFAIL | BAM_FDUP)) {
       bad++;
       continue;
@@ -482,7 +425,8 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
 
     Vector *features = NULL;
     int end;
-    end = bam_calend(&b->core, bam1_cigar(b));
+    //end = bam_calend(&b->core, bam1_cigar(b));
+    end = bam_endpos(b);
 
     // There is a special case for reads which have zero length and start at begRange (so end at begRange ie. before the first base we're interested in).
     // That is the reason for the || end == begRange test
@@ -707,7 +651,7 @@ int countReads(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int f
   printf("Read %ld reads. Num overlapping exons %ld. Number of bad reads (unmapped, qc fail, secondary, dup) %ld\n", counter, overlapping, bad);
 */
 
-  bam_iter_destroy(iter);
+  sam_itr_destroy(iter);
   bam_destroy1(b);
 }
 
@@ -727,7 +671,7 @@ bam1_t *mateFoundInVectors(bam1_t *b, Vector **vectors) {
 }
 
 bam1_t *findMateInVector(bam1_t *b, Vector *vec) {
-  char *bqname = bam1_qname(b);
+  char *bqname = bam_get_qname(b);
   int firstInd = findPosInVec(vec, b->core.mpos, bqname);
   int i;
 
@@ -741,7 +685,7 @@ bam1_t *findMateInVector(bam1_t *b, Vector *vec) {
             b->core.pos == vb->core.mpos &&
             !(vb->core.flag & MY_FUSEDFLAG)) {
             
-          int qnameCmp =  strcmp(bam1_qname(vb),bqname); // Note order of comparison
+          int qnameCmp =  strcmp(bam_get_qname(vb),bqname); // Note order of comparison
           if (!qnameCmp) { // Name match
             return vb;
           } else if (qnameCmp > 0) { // Optimisation: As names in vector are sorted, once string comparison is positive can not be any matches anymore
@@ -772,14 +716,14 @@ int findPosInVec(Vector *vec, int pos, char *bqname) {
     } else if (pos < b->core.pos) {
       imax = imid - 1;
     } else {
-      //int qnameCmp =  strcmp(bqname,bam1_qname(b)); // Note order of comparison
+      //int qnameCmp =  strcmp(bqname,bam_get_qname(b)); // Note order of comparison
       //if (!qnameCmp) {
         // key found at index imid
         // Back up through array to find first index which matches (can be several)
         for (;imid>=0;imid--) {
           bam1_t *vb = Vector_getElementAt(vec,imid);
-       //   if (vb->core.pos != pos || strcmp(bqname,bam1_qname(vb))) {
-          if (vb->core.pos != pos) {// || strcmp(bqname,bam1_qname(vb))) {
+       //   if (vb->core.pos != pos || strcmp(bqname,bam_get_qname(vb))) {
+          if (vb->core.pos != pos) {// || strcmp(bqname,bam_get_qname(vb))) {
             return imid+1;
           }
         }
@@ -799,7 +743,7 @@ Vector *Bam_cigarToUngapped(bam1_t *b) {
   int cigInd;
   int refPos;
   int readPos;
-  uint32_t *cigar = bam1_cigar(b);
+  uint32_t *cigar = bam_get_cigar(b);
 
  Vector *features = Vector_new();
 

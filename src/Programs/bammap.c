@@ -57,8 +57,9 @@
 #include "Slice.h"
 #include "StrUtil.h"
 
+#include "bamhelper.h"
 #include "sam.h"
-#include "bam.h"
+#include "hts.h"
 
 typedef struct mappingStruct {
   Slice *sourceSlice;
@@ -85,25 +86,24 @@ bam1_t *   findMateInVector(bam1_t *b, Vector *vec);
 int        findPosInVec(Vector *vec, int pos, char *bqname);
 Vector *   getDestinationSlices(DBAdaptor *dba, char *assName);
 Vector *   getMappings(DBAdaptor *dba, char *seqName, char *fromAssName, char *toAssName, int rev, int flags);
-Vector **  getMappingVectorsBySourceRegion(DBAdaptor *dba, samfile_t *in, char *sourceName, char *destName, int flags);
+Vector **  getMappingVectorsBySourceRegion(DBAdaptor *dba, htsFile *in, char *sourceName, char *destName, int flags, bam_hdr_t *header);
 bam1_t *   getMateFromRemoteMates(bam1_t *b, Vector **remoteMates);
-int        getPairedMappingFailLists(samfile_t *in, Vector **mappingVectors, Vector ***failedVectorsP, Vector ***remoteMatesP);
-int        mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionStats, samfile_t *in, 
-                  bam_index_t *idx, Vector **mappingVectors, Vector **failedVectors, Vector **remoteMates, int flags);
-int        mapBam_forward(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, Vector **mappingVectors, Vector **failedVectors, Vector **remoteMates, 
-                          int begRange, int endRange, ReadMapStats *regionStats, int newtid, bam_iter_t iter);
-int        mapBam_reverse(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, Vector **mappingVectors, Vector **failedVectors, Vector **remoteMates, 
-                          int begRange, int endRange, ReadMapStats *regionStats, int newtid, bam_iter_t iter);
+int        getPairedMappingFailLists(htsFile *in, Vector **mappingVectors, Vector ***failedVectorsP, Vector ***remoteMatesP, bam_hdr_t *header);
+int        mapBam(char *fName, htsFile *out, Mapping *mapping, ReadMapStats *regionStats, htsFile *in,
+                  hts_idx_t *idx, Vector **mappingVectors, Vector **failedVectors, Vector **remoteMates, int flags, bam_hdr_t *header, bam_hdr_t *outheader);
+int        mapBam_forward(Mapping *mapping, bam1_t *b, htsFile *in, htsFile *out, Vector **mappingVectors, Vector **failedVectors, Vector **remoteMates,
+                          int begRange, int endRange, ReadMapStats *regionStats, int newtid, hts_itr_t *iter, bam_hdr_t *header, bam_hdr_t *outheader);
+int        mapBam_reverse(Mapping *mapping, bam1_t *b, htsFile *in, htsFile *out, Vector **mappingVectors, Vector **failedVectors, Vector **remoteMates,
+                          int begRange, int endRange, ReadMapStats *regionStats, int newtid, hts_itr_t *iter, bam_hdr_t *header, bam_hdr_t *outheader);
 int        mapLocation(Mapping *mapping, int pos);
-int        mapMateLocation(Mapping *mapping, bam1_t *b, int end, samfile_t *in, samfile_t *out, Vector **mappingVectors, 
+int        mapMateLocation(Mapping *mapping, bam1_t *b, int end, htsFile *in, htsFile *out, Vector **mappingVectors,
                            Vector **failedVectors, Vector **remoteMates, Vector *reverseCache, 
-                           ReadMapStats *regionStats, int begRange, int endRange, int newtid, int newpos);
+                           ReadMapStats *regionStats, int begRange, int endRange, int newtid, int newpos, bam_hdr_t *header, bam_hdr_t *outheader);
 int        mapRemoteLocation(Vector **mappingVectors, int seqid, int pos, Mapping **containingMappingP);
 bam1_t    *mateFoundInVectors(bam1_t *b, Vector **vectors);
-void       printBam(FILE *fp, bam1_t *b, bam_header_t *header);
 void       printMapping(FILE *fp, Mapping *mapping);
-int        verifyBam(samfile_t *sam);
-samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlices);
+int        verifyBam(htsFile *sam, bam_hdr_t *header);
+htsFile *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlices);
 
 // Flag values
 #define M_UCSC_NAMING 1
@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
   ResultRow *      row;
   Vector *         destinationSlices;
   Vector *         mappings;
-  samfile_t *      out;
+  htsFile *      out;
 
   int   argNum = 1;
 
@@ -227,40 +227,44 @@ int main(int argc, char *argv[]) {
 
   out = writeBamHeader(inFName,outFName,destinationSlices);
 
-//  bam_flush(out->x.bam);
+//  bam_flush(out->fp.bgzf);
 
-#ifdef _PBGZF_USE
-  bam_set_num_threads_per(5);
-#endif
-  samfile_t *in = samopen(inFName, "rb", 0);
+  htsFile *in = hts_open(inFName, "rb");
   if (in == 0) {
     fprintf(stderr, "Fail to open BAM file %s\n", inFName);
     return 1;
   }
 
-  bam_index_t *idx;
+#ifdef _PBGZF_USE
+  hts_set_threads(in, 5);
+#endif
+  hts_idx_t *idx;
   idx = bam_index_load(inFName); // load BAM index
   if (idx == 0) {
     fprintf(stderr, "BAM index file is not available.\n");
     return 1;
   }
 
+  bam_hdr_t *header = bam_hdr_init();
+  header = bam_hdr_read(in->fp.bgzf);
   // Load all mappings into an array of vectors arranged by source region id
   // Only used for remote mate mapping, where we don't know in advanced which
   // region the mapping will be to
-  Vector **mappingVectors = getMappingVectorsBySourceRegion(dba, in, sourceName, destName, flags);
+  Vector **mappingVectors = getMappingVectorsBySourceRegion(dba, in, sourceName, destName, flags, header);
 
   if (verbosity > 0) printf("Stage 2 - search for reads which don't map\n");
 
   Vector **failedVectors;
   Vector **remoteMates;
   //if (!(flags & M_QUICK)) {
-  getPairedMappingFailLists(in, mappingVectors, &failedVectors, &remoteMates);
+  getPairedMappingFailLists(in, mappingVectors, &failedVectors, &remoteMates, header);
   //} else {
-  //  failedVectors = calloc(in->header->n_targets, sizeof(Vector *));
-  //  remoteMates   = calloc(in->header->n_targets, sizeof(Vector *));
+  //  failedVectors = calloc(header->n_targets, sizeof(Vector *));
+  //  remoteMates   = calloc(header->n_targets, sizeof(Vector *));
   //}
 
+  bam_hdr_t *outheader = bam_hdr_init();
+  outheader = bam_hdr_read(out->fp.bgzf);
 
   if (verbosity > 0) printf("Stage 3 - reading, transforming and writing all mapping reads\n");
   int i;
@@ -278,7 +282,7 @@ int main(int argc, char *argv[]) {
       
       memset(&regionStats, 0, sizeof(ReadMapStats));
 
-      mapBam(inFName, out, mapping, &regionStats, in, idx, mappingVectors, failedVectors, remoteMates, flags);
+      mapBam(inFName, out, mapping, &regionStats, in, idx, mappingVectors, failedVectors, remoteMates, flags, header, outheader);
 
       totalStats.nRead         += regionStats.nRead;
       totalStats.nWritten      += regionStats.nWritten;
@@ -300,20 +304,25 @@ int main(int argc, char *argv[]) {
     printf(" Total reads with unmapped mates              %lld (not written)\n", totalStats.nUnmappedMate);
   }
 
-  samclose(out);
-  bam_index_destroy(idx);
-  samclose(in);
+  bam_hdr_destroy(header);
+  bam_hdr_destroy(outheader);
+  hts_close(out);
+  hts_idx_destroy(idx);
+  hts_close(in);
 
   if (flags & M_VERIFY) {
-    out = samopen(outFName, "rb", 0);
+    out = hts_open(outFName, "rb");
     if (out == 0) {
       fprintf(stderr, "Fail to open BAM file %s\n", outFName);
       return 1;
     }
 
-    verifyBam(out);
+    outheader = bam_hdr_init();
+    outheader = bam_hdr_read(out->fp.bgzf);
+    verifyBam(out, outheader);
 
-    samclose(out);
+    bam_hdr_destroy(outheader);
+    hts_close(out);
   }
 
   if (verbosity > 0) printf("Done\n");
@@ -322,7 +331,7 @@ int main(int argc, char *argv[]) {
 
 
 // Currently just checks that output is in sorted order
-int verifyBam(samfile_t *sam) {
+int verifyBam(htsFile *sam, bam_hdr_t *header) {
   bam1_t *bs[2];
   int firstind  = 0;
   int secondind = 1;
@@ -332,12 +341,12 @@ int verifyBam(samfile_t *sam) {
 
   for (i=0;i<2;i++) bs[i] = bam_init1();
   
-  if (bam_read1(sam->x.bam, bs[0]) <=0 || bs[0]->core.tid < 0) {
+  if (bam_read1(sam->fp.bgzf, bs[0]) <=0 || bs[0]->core.tid < 0) {
     fprintf(stderr,"Failed reading first bam entry from output file in verifyBam\n");
     return 0;
   }
 
-  while (bam_read1(sam->x.bam, bs[secondind]) > 0 && bs[secondind]->core.tid >= 0) {
+  while (bam_read1(sam->fp.bgzf, bs[secondind]) > 0 && bs[secondind]->core.tid >= 0) {
 /*
     if (bs[firstind]->core.tid > bs[secondind]->core.tid || 
         bs[firstind]->core.pos > bs[secondind]->core.pos || 
@@ -346,8 +355,8 @@ int verifyBam(samfile_t *sam) {
 // Note this is the way the comparison is done in bam_sort.c which is why I do it this way
     if (((uint64_t)bs[firstind]->core.tid<<32|(bs[firstind]->core.pos+1)) > ((uint64_t)bs[secondind]->core.tid<<32|(bs[secondind]->core.pos+1))) {
       fprintf(stderr, "bam entries not in sorted order in output file in verifyBam\n");
-      printBam(stderr, bs[firstind],  sam->header);
-      printBam(stderr, bs[secondind], sam->header);
+      printBam(stderr, bs[firstind],  header);
+      printBam(stderr, bs[secondind], header);
         
       return 0;
     }
@@ -369,7 +378,7 @@ void printMapping(FILE *fp, Mapping *mapping) {
                                         mapping->ori);
 }
 
-int getPairedMappingFailLists(samfile_t *in, Vector **mappingVectors, Vector ***failedVectorsP, Vector ***remoteMatesP) {
+int getPairedMappingFailLists(htsFile *in, Vector **mappingVectors, Vector ***failedVectorsP, Vector ***remoteMatesP, bam_hdr_t *header) {
   int i;
 
   int32_t  curtid = -1;
@@ -390,12 +399,12 @@ int getPairedMappingFailLists(samfile_t *in, Vector **mappingVectors, Vector ***
 
   bam1_t *b = bam_init1();
 
-  Vector **unmapped = calloc(in->header->n_targets, sizeof(Vector *));
+  Vector **unmapped = calloc(header->n_targets, sizeof(Vector *));
 
-  Vector **remoteMates = calloc(in->header->n_targets, sizeof(Vector *));
+  Vector **remoteMates = calloc(header->n_targets, sizeof(Vector *));
 
 // don't know why I need to check for b->core.tid >= 0 but I do otherwise I get a bam entry with -1 tid
-  while (bam_read1(in->x.bam, b) > 0 && b->core.tid >= 0) {
+  while (bam_read1(in->fp.bgzf, b) > 0 && b->core.tid >= 0) {
     nRead++;
 
     if ((b->core.flag & (BAM_FREAD1 | BAM_FREAD2)) == (BAM_FREAD1 | BAM_FREAD2)) {
@@ -422,7 +431,7 @@ int getPairedMappingFailLists(samfile_t *in, Vector **mappingVectors, Vector ***
       } else {
         curMapping = NULL;
       }
-      if (verbosity > 0) printf("Finding failed pair and remote mate mappings in '%s' (tid = %d)\n",in->header->target_name[curtid],curtid);
+      if (verbosity > 0) printf("Finding failed pair and remote mate mappings in '%s' (tid = %d)\n",header->target_name[curtid],curtid);
       //printf("curMapping = %d\n",curMapping);
 
       //if (curtid > 1) break;
@@ -430,7 +439,8 @@ int getPairedMappingFailLists(samfile_t *in, Vector **mappingVectors, Vector ***
     
     int end;
 
-    end = bam_calend(&b->core, bam1_cigar(b));
+    //end = bam_calend(&b->core, bam1_cigar(b));
+    end = bam_endpos(b);
 
     // Move to a point where the slice ends after the start of the feature (pos)
     // So now either:
@@ -509,12 +519,12 @@ int getPairedMappingFailLists(samfile_t *in, Vector **mappingVectors, Vector ***
             if (b->core.mtid > b->core.tid || b->core.mpos > b->core.pos) {
   //       Store read in remoteMates vector for curtid
               Vector_addElement(remoteMates[curtid], bam_dup1(b));
-              //printBam(stdout, b,in->header);
+              //printBam(stdout, b,header);
             } else {
   //     else  // so its the second occuring read of the pair (in seqid, pos terms)
   //       Store read in remoteMates vector for curtid
               Vector_addElement(remoteMates[curtid], bam_dup1(b));
-              //printBam(stdout, b,in->header);
+              //printBam(stdout, b,header);
             }
           }
         }
@@ -523,49 +533,49 @@ int getPairedMappingFailLists(samfile_t *in, Vector **mappingVectors, Vector ***
   }
 
 
-  printf("n target = %d\n",in->header->n_targets);
+  printf("n target = %d\n",header->n_targets);
   fflush(stdout);
-  for (i=0;i<in->header->n_targets;i++) {
+  for (i=0;i<header->n_targets;i++) {
     if (!unmapped[i]) {
-      printf("NO VECTOR FOR tid %d (%s)\n",i,in->header->target_name[i]);
+      printf("NO VECTOR FOR tid %d (%s)\n",i,header->target_name[i]);
     } else {
       int j;
-      printf("Number of partially mapped for tid %d (%s) is %d\n",i,in->header->target_name[i],Vector_getNumElement(unmapped[i]));
+      printf("Number of partially mapped for tid %d (%s) is %d\n",i,header->target_name[i],Vector_getNumElement(unmapped[i]));
       if (verbosity > 3) {
         for (j=0;j<Vector_getNumElement(unmapped[i]);j++) {
           bam1_t *b = (bam1_t *) Vector_getElementAt(unmapped[i],j);
-          printBam(stdout, b, in->header);
+          printBam(stdout, b, header);
         }
       }
     }
   }
 
   long long nRemoteMate = 0;
-  for (i=0;i<in->header->n_targets;i++) {
+  for (i=0;i<header->n_targets;i++) {
     if (remoteMates[i]) {
       Vector_sort(remoteMates[i], bamPosNameCompFunc);
       nRemoteMate += Vector_getNumElement(remoteMates[i]);
     }
   }
 
-  for (i=0;i<in->header->n_targets;i++) {
+  for (i=0;i<header->n_targets;i++) {
     if (unmapped[i]) {
       Vector_sort(unmapped[i], bamPosNameCompFunc);
     }
   }
 
-  printf("n target = %d\n",in->header->n_targets);
+  printf("n target = %d\n",header->n_targets);
   fflush(stdout);
-  for (i=0;i<in->header->n_targets;i++) {
+  for (i=0;i<header->n_targets;i++) {
     if (!remoteMates[i]) {
-      printf("NO VECTOR FOR tid %d (%s)\n",i,in->header->target_name[i]);
+      printf("NO VECTOR FOR tid %d (%s)\n",i,header->target_name[i]);
     } else {
       int j;
-      printf("Number of remoteMates for tid %d (%s) is %d\n",i,in->header->target_name[i],Vector_getNumElement(remoteMates[i]));
+      printf("Number of remoteMates for tid %d (%s) is %d\n",i,header->target_name[i],Vector_getNumElement(remoteMates[i]));
       if (verbosity > 3) {
         for (j=0;j<Vector_getNumElement(remoteMates[i]);j++) {
           bam1_t *b = (bam1_t *) Vector_getElementAt(remoteMates[i],j);
-          printBam(stdout, b, in->header);
+          printBam(stdout, b, header);
         }
       }
     }
@@ -614,7 +624,7 @@ int bamPosNameCompFunc(const void *one, const void *two) {
     } else if (b1->core.pos < b2->core.pos) {
       return -1;
     } else {
-      return strcmp(bam1_qname(b1),bam1_qname(b2));
+      return strcmp(bam_get_qname(b1),bam_get_qname(b2));
     }
   }
 }
@@ -624,36 +634,6 @@ int bamPosCompFunc(const void *one, const void *two) {
   bam1_t *b2 = *((bam1_t**)two);
 
   return b1->core.pos - b2->core.pos;
-}
-
-/*
- print out a bam1_t entry, particularly the flags (for debugging)
-*/
-void printBam(FILE *fp, bam1_t *b, bam_header_t *header) {    
-  fprintf(fp, "%s %s %d %d %s (%d) %d %d %d\t\tP %d PP %d U %d MU %d R %d MR %d R1 %d R2 %d S %d QC %d D %d U %d\n",
-                                  bam1_qname(b), 
-                                  header->target_name[b->core.tid], 
-                                  b->core.pos, 
-                                  bam_calend(&b->core,bam1_cigar(b)),
-                                  header->target_name[b->core.mtid], 
-                                  b->core.mtid, 
-                                  b->core.mpos, 
-                                  b->core.isize, 
-                                  bam_cigar2qlen(&(b->core),bam1_cigar(b)),
-                                  b->core.flag & BAM_FPAIRED,
-                                  b->core.flag & BAM_FPROPER_PAIR ? 1 : 0,
-                                  b->core.flag & BAM_FUNMAP ? 1 : 0,
-                                  b->core.flag & BAM_FMUNMAP ? 1 : 0,
-                                  b->core.flag & BAM_FREVERSE ? 1 : 0,
-                                  b->core.flag & BAM_FMREVERSE ? 1 : 0,
-                                  b->core.flag & BAM_FREAD1 ? 1 : 0,
-                                  b->core.flag & BAM_FREAD2 ? 1 : 0,
-                                  b->core.flag & BAM_FSECONDARY ? 1 : 0,
-                                  b->core.flag & BAM_FQCFAIL ? 1 : 0,
-                                  b->core.flag & BAM_FDUP ? 1 : 0,
-                                  b->core.flag & MY_FUSEDFLAG ? 1 : 0
-                                  );
-  fflush(fp);
 }
 
 /*
@@ -688,30 +668,37 @@ void Bammap_usage() {
 /* 
   Take header from input BAM file, replace the seq regions, and then write it out
 */
-samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlices) {
-  bam_header_t *destHeader;
+htsFile *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlices) {
+  bam_hdr_t *destHeader;
   char          out_mode[5];
-  samfile_t *   in;
-  samfile_t *   out;
+  htsFile *   in;
+  htsFile *   out;
   char          line[1024];
   char *        buff = NULL;
   char **       tokens = NULL;
   int           ntoken;
 
-#ifdef _PBGZF_USE
-  bam_set_num_threads_per(1);
-#endif
-  in = samopen(inFName, "rb", 0);
+  in = hts_open(inFName, "rb");
   if (in == 0) {
     fprintf(stderr, "Fail to open BAM file %s\n", inFName);
     return NULL;
   }
 
+#ifdef _PBGZF_USE
+  hts_set_threads(in, 1);
+#endif
+  bam_hdr_t *header = bam_hdr_init();
+  header = bam_hdr_read(in->fp.bgzf);
   // For debugging - these lines print input BAM file header to stdout
   if (verbosity > 2) {
     printf("Input BAM file header:\n");
-    strcpy(out_mode, "wh");
-    samopen("-",out_mode,in->header);
+    strcpy(out_mode, "w");
+    out = hts_open("-",out_mode);
+    if (sam_hdr_write(out, header)) {
+      fprintf(stderr, "Failed writing header on stdout\n");
+      exit(3);
+    }
+    hts_close(out);
   }
 
   /* Create the @SQ lines for the destination set of sequences */
@@ -727,11 +714,11 @@ samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlic
     }
   }
 
-  destHeader = bam_header_init();
+  destHeader = bam_hdr_init();
 
   /* add non @SQ header lines from source header into destination header */
   //fprintf(stderr,"Tokenize\n");
-  StrUtil_tokenizeByDelim(&tokens, &ntoken, in->header->text, "\n");
+  StrUtil_tokenizeByDelim(&tokens, &ntoken, header->text, "\n");
   //fprintf(stderr,"Token loop\n");
   //fprintf(stderr,"ntoken = %d\n",ntoken);
   for (i=0;i<ntoken;i++) {
@@ -767,28 +754,40 @@ samfile_t *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlic
     buff = tmpBuff;
   }
 
-  destHeader->l_text = strlen(buff);
-  destHeader->text   = buff;
   //fprintf(stderr, "header->text = %s\n",buff);
-  sam_header_parse(destHeader);
+  destHeader = sam_hdr_parse(strlen(buff), buff);
 
-  strcpy(out_mode, "wbh");
+  strcpy(out_mode, "wb");
 
+  out = hts_open(outFName,out_mode);
 #ifdef _PBGZF_USE
-  bam_set_num_threads_per(9);
+  hts_set_threads(out, 9);
 #endif
-  out = samopen(outFName,out_mode,destHeader);
 
 /* Need this hash initialised for looking up tids */
-  bam_init_header_hash(out->header);
+  //bam_init_header_hash(out->header);
+  if (sam_hdr_write(out, destHeader)) {
+    fprintf(stderr, "Failed writing header on stdout\n");
+    exit(3);
+  }
 
   if (verbosity > 2) {
     printf("Output BAM file header:\n");
-    strcpy(out_mode, "wh");
-    samopen("-",out_mode,out->header);
+    bam_hdr_t *debugheader = bam_hdr_init();
+    debugheader = bam_hdr_read(out->fp.bgzf);
+    strcpy(out_mode, "w");
+    htsFile *outdebug = hts_open("-",out_mode);
+    if (sam_hdr_write(outdebug, debugheader)) {
+      fprintf(stderr, "Failed writing header on stdout\n");
+      exit(3);
+    }
+    bam_hdr_destroy(debugheader);
+    hts_close(outdebug);
   }
 
-  samclose(in);
+  bam_hdr_destroy(header);
+  hts_close(in);
+  bam_hdr_destroy(destHeader);
 
   return out;
 }
@@ -805,50 +804,53 @@ void clearPairing(bam1_t *b, int end) {
 
 int8_t seq_comp_table[16] = { 0, 8, 4, 12, 2, 10, 9, 14, 1, 6, 5, 13, 3, 11, 7, 15 };
 
-int mapBam(char *fName, samfile_t *out, Mapping *mapping, ReadMapStats *regionStats, 
-           samfile_t *in, bam_index_t *idx, Vector **mappingVectors, Vector **failedVectors, Vector **remoteMates, int flags) {
+int mapBam(char *fName, htsFile *out, Mapping *mapping, ReadMapStats *regionStats,
+           htsFile *in, hts_idx_t *idx, Vector **mappingVectors, Vector **failedVectors, Vector **remoteMates, int flags, bam_hdr_t *header, bam_hdr_t *outheader) {
   int  ref;
   int  begRange;
   int  endRange;
   char region[1024];
 
 
-  sprintf(region,"%s:%ld-%ld", Slice_getChrName(mapping->sourceSlice), 
-                             Slice_getChrStart(mapping->sourceSlice), 
-                             Slice_getChrEnd(mapping->sourceSlice));
-  bam_parse_region(in->header, region, &ref, &begRange, &endRange);
+  ref = bam_name2id(header, Slice_getSeqRegionName(mapping->sourceSlice));
   if (ref < 0) {
-    fprintf(stderr, "Invalid region %s %ld %ld\n", Slice_getChrName(mapping->sourceSlice), 
-                                                 Slice_getChrStart(mapping->sourceSlice), 
-                                                 Slice_getChrEnd(mapping->sourceSlice));
+    fprintf(stderr, "Invalid region %s\n", Slice_getSeqRegionName(mapping->sourceSlice));
     return 1;
   }
+  sprintf(region,"%s:%ld-%ld", Slice_getSeqRegionName(mapping->sourceSlice),
+                             Slice_getSeqRegionStart(mapping->sourceSlice),
+                             Slice_getSeqRegionEnd(mapping->sourceSlice));
+  if (hts_parse_reg(region, &begRange, &endRange) == NULL) {
+    fprintf(stderr, "Could not parse %s\n", region);
+    exit(2);
+  }
 
-  bam_iter_t iter = bam_iter_query(idx, ref, begRange, endRange);
+  hts_itr_t *iter = sam_itr_queryi(idx, ref, begRange, endRange);
   bam1_t *b = bam_init1();
 
-  int32_t newtid = bam_get_tid(out->header, Slice_getChrName(mapping->destSlice));
+  //int32_t newtid = bam_get_tid(out->header, Slice_getChrName(mapping->destSlice));
+  int32_t newtid = bam_name2id(outheader, Slice_getChrName(mapping->destSlice));
 
   if (mapping->ori == 1) {
-    mapBam_forward(mapping, b, in, out, mappingVectors, failedVectors, remoteMates, begRange, endRange, regionStats, newtid, iter);
+    mapBam_forward(mapping, b, in, out, mappingVectors, failedVectors, remoteMates, begRange, endRange, regionStats, newtid, iter, header, outheader);
   } else if (mapping->ori == -1) {
-    mapBam_reverse(mapping, b, in, out, mappingVectors, failedVectors, remoteMates, begRange, endRange, regionStats, newtid, iter);
+    mapBam_reverse(mapping, b, in, out, mappingVectors, failedVectors, remoteMates, begRange, endRange, regionStats, newtid, iter, header, outheader);
   } else {
     fprintf(stderr,"Error: Unknown mapping orientation %d\n", mapping->ori);
   }
 
-  bam_iter_destroy(iter);
+  sam_itr_destroy(iter);
   bam_destroy1(b);
 }
 
 
-int mapBam_reverse(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, Vector **mappingVectors, Vector **failedVectors, Vector **remoteMates, 
-                   int begRange, int endRange, ReadMapStats *regionStats, int newtid, bam_iter_t iter) {
+int mapBam_reverse(Mapping *mapping, bam1_t *b, htsFile *in, htsFile *out, Vector **mappingVectors, Vector **failedVectors, Vector **remoteMates,
+                   int begRange, int endRange, ReadMapStats *regionStats, int newtid, hts_itr_t *iter, bam_hdr_t *header, bam_hdr_t *outheader) {
   Vector *reverseCache = Vector_new();
   Vector *reverseFinal = Vector_new();
   int i;
 
-  while (bam_iter_read(in->x.bam, iter, b) >= 0) {
+  while (bam_itr_next(in, iter, b) >= 0) {
     Vector_addElement(reverseCache,bam_dup1(b));
   }
  
@@ -867,7 +869,8 @@ int mapBam_reverse(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, V
 
     regionStats->nRead++;
 
-    end = bam_calend(&b->core, bam1_cigar(b));
+    //end = bam_calend(&b->core, bam1_cigar(b));
+    end = bam_endpos(b);
 
     // There is a special case for reads which have zero length and start at begRange (so end at begRange ie. before the first base we're interested in).
     // That is the reason for the || end == begRange test
@@ -880,7 +883,7 @@ int mapBam_reverse(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, V
     int newpos = calcNewPos(mapping, b, end);
 
     if (b->core.mtid >= 0) {
-      mapMateLocation(mapping, b, end, in, out, mappingVectors, failedVectors, remoteMates, reverseCache, regionStats, begRange, endRange, newtid, newpos);
+      mapMateLocation(mapping, b, end, in, out, mappingVectors, failedVectors, remoteMates, reverseCache, regionStats, begRange, endRange, newtid, newpos, header, outheader);
     }
 
     b->core.tid = newtid;
@@ -897,8 +900,8 @@ int mapBam_reverse(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, V
 
     uint8_t *seq;
     uint8_t *qual;
-    seq = bam1_seq(b);
-    qual = bam1_qual(b);
+    seq = bam_get_seq(b);
+    qual = bam_get_qual(b);
 
     int i;
     uint8_t *revseq  = calloc(1, (b->core.l_qseq+1)/2 + b->core.l_qseq);
@@ -906,7 +909,7 @@ int mapBam_reverse(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, V
     
     // make rev com seq and reverse qual at same time
     for (i=0;i<b->core.l_qseq;i++) {
-      uint8_t ib = seq_comp_table[bam1_seqi(seq, b->core.l_qseq-i-1)];
+      uint8_t ib = seq_comp_table[bam_seqi(seq, b->core.l_qseq-i-1)];
       revseq[i/2] |= ib << 4*(1-i%2);
       revqual[i] = qual[b->core.l_qseq-i-1];
     }
@@ -915,7 +918,7 @@ int mapBam_reverse(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, V
     free(revseq);
     
     int *revcig = calloc(1,b->core.n_cigar*4);
-    int *cig = bam1_cigar(b);
+    int *cig = bam_get_cigar(b);
     
     for (i=0;i<b->core.n_cigar;i++) {
       revcig[i] = cig[b->core.n_cigar-1-i];
@@ -926,8 +929,11 @@ int mapBam_reverse(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, V
 
     // recalculate bin, not sure if need this for all coords, or just - ori ones
     // Note: Here we are working with the mapped position (pos has been changed)
-    end = bam_calend(&b->core, bam1_cigar(b));
-    b->core.bin = bam_reg2bin(b->core.pos,end);
+    //end = bam_calend(&b->core, bam1_cigar(b));
+    end = bam_endpos(b);
+    //I've added 14 and 5 as it's the values in samtools, but I don't know what I'm doing...
+    //Also I should probably set end = 1 if the read is unmapped
+    b->core.bin = hts_reg2bin(b->core.pos,end, 14, 5);
   
     // For reverse rather than writing straight away, store the transformed entries, so can sort into correct order before writing
     Vector_addElement(reverseFinal, bam_dup1(b));
@@ -937,7 +943,7 @@ int mapBam_reverse(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, V
   for (i=0;i<Vector_getNumElement(reverseFinal);i++) {
     regionStats->nWritten++;
 
-    if (!bam_write1(out->x.bam, Vector_getElementAt(reverseFinal,i))) {
+    if (!bam_write1(out->fp.bgzf, Vector_getElementAt(reverseFinal,i))) {
       fprintf(stderr, "Failed writing bam entry\n");
     }
   }
@@ -957,15 +963,16 @@ int mapBam_reverse(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, V
   return 0;
 }
 
-int mapBam_forward(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, Vector **mappingVectors, Vector **failedVectors, Vector **remoteMates, 
-                   int begRange, int endRange, ReadMapStats *regionStats, int newtid, bam_iter_t iter) {
-  while (bam_iter_read(in->x.bam, iter, b) >= 0) {
+int mapBam_forward(Mapping *mapping, bam1_t *b, htsFile *in, htsFile *out, Vector **mappingVectors, Vector **failedVectors, Vector **remoteMates,
+                   int begRange, int endRange, ReadMapStats *regionStats, int newtid, hts_itr_t *iter, bam_hdr_t *header, bam_hdr_t *outheader) {
+  while (bam_itr_next(in, iter, b) >= 0) {
     int end;
 
   //fprintf(stderr, "HERE3\n");
     regionStats->nRead++;
 
-    end = bam_calend(&b->core, bam1_cigar(b));
+    //end = bam_calend(&b->core, bam1_cigar(b));
+    end = bam_endpos(b);
 
     // There is a special case for reads which have zero length and start at begRange (so end at begRange ie. before the first base we're interested in).
     // That is the reason for the || end == begRange test
@@ -978,7 +985,7 @@ int mapBam_forward(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, V
     int newpos = calcNewPos(mapping, b, end);
 
     if (b->core.mtid >= 0) {
-      mapMateLocation(mapping, b, end, in, out, mappingVectors, failedVectors, remoteMates, NULL, regionStats, begRange, endRange, newtid, newpos);
+      mapMateLocation(mapping, b, end, in, out, mappingVectors, failedVectors, remoteMates, NULL, regionStats, begRange, endRange, newtid, newpos, header, outheader);
     }
 
     b->core.tid = newtid;
@@ -986,12 +993,15 @@ int mapBam_forward(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, V
 
     // recalculate bin, not sure if need this for all coords, or just - ori ones
     // Note: Here we are working with the mapped position (pos has been changed)
-    end = bam_calend(&b->core, bam1_cigar(b));
-    b->core.bin = bam_reg2bin(b->core.pos,end);
+    //end = bam_calend(&b->core, bam1_cigar(b));
+    end = bam_endpos(b);
+    //I've added 14 and 5 as it's the values in samtools, but I don't know what I'm doing...
+    //Also I should probably set end = 1 if the read is unmapped
+    b->core.bin = hts_reg2bin(b->core.pos,end, 14, 5);
 
     regionStats->nWritten++;
 
-    if (!bam_write1(out->x.bam, b)) {
+    if (!bam_write1(out->fp.bgzf, b)) {
       fprintf(stderr, "Failed writing bam entry\n");
     }
   }
@@ -1000,9 +1010,9 @@ int mapBam_forward(Mapping *mapping, bam1_t *b, samfile_t *in, samfile_t *out, V
 }
 
 
-int mapMateLocation(Mapping *mapping, bam1_t *b, int end, samfile_t *in, samfile_t *out, Vector **mappingVectors, 
+int mapMateLocation(Mapping *mapping, bam1_t *b, int end, htsFile *in, htsFile *out, Vector **mappingVectors,
                     Vector **failedVectors, Vector **remoteMates, Vector *reverseCache, 
-                    ReadMapStats *regionStats, int begRange, int endRange, int newtid, int newpos) {
+                    ReadMapStats *regionStats, int begRange, int endRange, int newtid, int newpos, bam_hdr_t *header, bam_hdr_t *outheader) {
 // Mate handling is by far the most complicated part of this process. In summary:
 //    Check if the mate only partially maps (is in failedVector). 
 //       If not then clear mate information for this read and recalculate isize
@@ -1052,16 +1062,17 @@ int mapMateLocation(Mapping *mapping, bam1_t *b, int end, samfile_t *in, samfile
         //printf("containing slice = %s %d %d\n",Slice_getChrName(containingMapping->destSlice),
         //                                       Slice_getChrStart(containingMapping->destSlice),
         //                                       Slice_getChrEnd(containingMapping->destSlice));
-        int32_t newmtid = bam_get_tid(out->header, Slice_getChrName(containingMapping->destSlice));
+        //int32_t newmtid = bam_get_tid(outheader, Slice_getChrName(containingMapping->destSlice));
+        int32_t newmtid = bam_name2id(outheader, Slice_getChrName(containingMapping->destSlice));
 
         //printf("Searching for mate of:\n");
-        //printBam(stdout,b,in->header);
+        //printBam(stdout,b,header);
         bam1_t *mate = getMateFromRemoteMates(b, remoteMates);
 
         if (!mate) {
           // Shouldn't happen, all remote mates should be in remoteMates
-          fprintf(stderr,"Error: Missing remote mate for %s. Shouldn't happen\n", bam1_qname(b));
-          printBam(stderr,b,in->header);
+          fprintf(stderr,"Error: Missing remote mate for %s. Shouldn't happen\n", bam_get_qname(b));
+          printBam(stderr,b,header);
 
           clearPairing(b, end);
         } else {
@@ -1080,19 +1091,20 @@ int mapMateLocation(Mapping *mapping, bam1_t *b, int end, samfile_t *in, samfile
           // Note: We can't freely use mapLocation on mate end position because although we know that
           //       mate isn't in failed mates vector, if the -q flag is used then that vector is not filled
           //       So first thing - check that mate end also maps in containingMapping
-          int tmend = bam_calend(&mate->core, bam1_cigar(mate));
+          //int tmend = bam_calend(&mate->core, bam1_cigar(mate));
+          int tmend = bam_endpos(mate);
 
           if (tmend > Slice_getChrEnd(containingMapping->sourceSlice)) {
-            fprintf(stderr,"Error: Remote mate doesn't cleanly map for %s. Shouldn't happen\n", bam1_qname(b));
+            fprintf(stderr,"Error: Remote mate doesn't cleanly map for %s. Shouldn't happen\n", bam_get_qname(b));
             fprintf(stderr,"  containing slice = %s %ld %ld\n",
                     Slice_getChrName(containingMapping->sourceSlice),
                     Slice_getChrStart(containingMapping->sourceSlice),
                     Slice_getChrEnd(containingMapping->sourceSlice)
                    );
             fprintf(stderr,"  b   : ");
-            printBam(stderr, b,in->header);
+            printBam(stderr, b,header);
             fprintf(stderr,"  mate: ");
-            printBam(stderr, mate,in->header);
+            printBam(stderr, mate,header);
 
             clearPairing(b, end);
           } else {
@@ -1170,27 +1182,28 @@ int mapMateLocation(Mapping *mapping, bam1_t *b, int end, samfile_t *in, samfile
 
       if (!mate) {
         // Shouldn't happen, all local reverse mates should be in rreverseMates
-        fprintf(stderr,"Error: Missing local reverse mate for %s. Shouldn't happen\n", bam1_qname(b));
-        printBam(stderr,b,in->header);
+        fprintf(stderr,"Error: Missing local reverse mate for %s. Shouldn't happen\n", bam_get_qname(b));
+        printBam(stderr,b,header);
   
         clearPairing(b, end);
       } else {
-        int mend = bam_calend(&mate->core, bam1_cigar(mate));
+        //int mend = bam_calend(&mate->core, bam1_cigar(mate));
+        int mend = bam_endpos(mate);
         if (mend > Slice_getChrEnd(mapping->sourceSlice)) {
-          fprintf(stderr,"Error: Reverse local mate doesn't cleanly map for %s. Shouldn't happen\n", bam1_qname(b));
+          fprintf(stderr,"Error: Reverse local mate doesn't cleanly map for %s. Shouldn't happen\n", bam_get_qname(b));
           fprintf(stderr,"  containing slice = %s %ld %ld\n",
                   Slice_getChrName(mapping->sourceSlice),
                   Slice_getChrStart(mapping->sourceSlice),
                   Slice_getChrEnd(mapping->sourceSlice)
                  );
           fprintf(stderr,"  b   : ");
-          printBam(stderr, b,in->header);
+          printBam(stderr, b,header);
           fprintf(stderr,"  mate: ");
-          printBam(stderr, mate,in->header);
+          printBam(stderr, mate,header);
 
           clearPairing(b, end);
         } else {
-          b->core.mpos = calcNewPos(mapping, mate, bam_calend(&mate->core, bam1_cigar(mate)));
+          b->core.mpos = calcNewPos(mapping, mate, bam_endpos(mate));
           b->core.flag ^= BAM_FMREVERSE;
     
           mate->core.flag |= MY_FUSEDFLAG;
@@ -1240,7 +1253,7 @@ bam1_t *mateFoundInVectors(bam1_t *b, Vector **vectors) {
 }
 
 bam1_t *findMateInVector(bam1_t *b, Vector *vec) {
-  char *bqname = bam1_qname(b);
+  char *bqname = bam_get_qname(b);
   int firstInd = findPosInVec(vec, b->core.mpos, bqname);
   int i;
 
@@ -1254,7 +1267,7 @@ bam1_t *findMateInVector(bam1_t *b, Vector *vec) {
             b->core.pos == vb->core.mpos &&
             !(vb->core.flag & MY_FUSEDFLAG)) {
             
-          int qnameCmp =  strcmp(bam1_qname(vb),bqname); // Note order of comparison
+          int qnameCmp =  strcmp(bam_get_qname(vb),bqname); // Note order of comparison
           if (!qnameCmp) { // Name match
             return vb;
           } else if (qnameCmp > 0) { // Optimisation: As names in vector are sorted, once string comparison is positive can not be any matches anymore
@@ -1285,14 +1298,14 @@ int findPosInVec(Vector *vec, int pos, char *bqname) {
     } else if (pos < b->core.pos) {
       imax = imid - 1;
     } else {
-      //int qnameCmp =  strcmp(bqname,bam1_qname(b)); // Note order of comparison
+      //int qnameCmp =  strcmp(bqname,bam_get_qname(b)); // Note order of comparison
       //if (!qnameCmp) {
         // key found at index imid
         // Back up through array to find first index which matches (can be several)
         for (;imid>=0;imid--) {
           bam1_t *vb = Vector_getElementAt(vec,imid);
-       //   if (vb->core.pos != pos || strcmp(bqname,bam1_qname(vb))) {
-          if (vb->core.pos != pos) {// || strcmp(bqname,bam1_qname(vb))) {
+       //   if (vb->core.pos != pos || strcmp(bqname,bam_get_qname(vb))) {
+          if (vb->core.pos != pos) {// || strcmp(bqname,bam_get_qname(vb))) {
             return imid+1;
           }
         }
@@ -1367,18 +1380,18 @@ inline int mapLocation(Mapping *mapping, int pos) {
 }
 
 
-Vector **getMappingVectorsBySourceRegion(DBAdaptor *dba, samfile_t *in, char *sourceName, char *destName, int flags) {
+Vector **getMappingVectorsBySourceRegion(DBAdaptor *dba, htsFile *in, char *sourceName, char *destName, int flags, bam_hdr_t *header) {
   int i;
   int str_offset = 0;
   char *MT = "MT";
 
   if (flags & M_UCSC_NAMING) str_offset = 3;
 
-  Vector **mappingVectors = calloc(in->header->n_targets, sizeof(Vector *));
+  Vector **mappingVectors = calloc(header->n_targets, sizeof(Vector *));
 
-  for (i=0;i<in->header->n_targets;i++) {
+  for (i=0;i<header->n_targets;i++) {
 // For UCSC naming chop off 'chr' prefix
-    char *seqName = &(in->header->target_name[i][str_offset]);
+    char *seqName = &(header->target_name[i][str_offset]);
 
 // UCSC MT
     if (flags & M_UCSC_NAMING && !strcmp(seqName,"M")) seqName = MT;

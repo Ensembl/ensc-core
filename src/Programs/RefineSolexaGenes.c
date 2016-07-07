@@ -43,8 +43,9 @@
 #include "libconfig.h"
 #include "gperftools/tcmalloc.h"
 
+#include "kstring.h"
 #include "sam.h"
-#include "bam.h"
+#include "hts.h"
 /*
 =head1 DESCRIPTION
 
@@ -1146,23 +1147,24 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
       IntronBamConfig *intronBamConf = Vector_getElementAt(intronBamFiles, i);
       char *intronFile = intronBamConf->fileName;
       char region[2048];
+      char rlocation[64];
       int ref;
       int begRange;
       int endRange;
     
 //#undef _PBGZF_USE
-#ifdef _PBGZF_USE
-      bam_set_num_threads_per(5);
-#endif
-      samfile_t *sam = samopen(intronFile, "rb", 0);
+      htsFile *sam = hts_open(intronFile, "rb");
       if (sam == NULL) {
         fprintf(stderr, "Bam file %s not found\n", intronFile);
         exit(1);
       }
       fprintf(stderr,"Opened bam file %s\n", intronFile);
 
-      bam_index_t *idx;
-      idx = bam_index_load(intronFile); // load BAM index
+#ifdef _PBGZF_USE
+      hts_set_threads(sam, 5);
+#endif
+      hts_idx_t *idx;
+      idx = sam_index_load(sam, intronFile); // load BAM index
       if (idx == 0) {
         fprintf(stderr, "BAM index file is not available.\n");
         exit(1);
@@ -1171,30 +1173,33 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
 
       long long count = 0;
       if (RefineSolexaGenes_getUcscNaming(rsg) == 0) {
-        sprintf(region,"%s:%ld-%ld", Slice_getSeqRegionName(slice),
-                                     Slice_getSeqRegionStart(slice),
-                                     Slice_getSeqRegionEnd(slice));
+        sprintf(region,"chr%s", Slice_getSeqRegionName(slice));
+      } else {
+        sprintf(region,"%s", Slice_getSeqRegionName(slice));
       }
-      else {
-        sprintf(region,"chr%s:%ld-%ld", Slice_getSeqRegionName(slice),
-                                        Slice_getSeqRegionStart(slice),
-                                        Slice_getSeqRegionEnd(slice));
-      }
-      bam_parse_region(sam->header, region, &ref, &begRange, &endRange);
-      if (verbosity > 0) fprintf(stderr,"Parsed region for region %s\n", region);
+      bam_hdr_t *header = bam_hdr_init();
+      header = bam_hdr_read(sam->fp.bgzf);
+      ref = bam_name2id(header, region);
       if (ref < 0) {
-        fprintf(stderr, "Invalid region %s %ld %ld\n", Slice_getSeqRegionName(slice),
-                                                       Slice_getSeqRegionStart(slice),
-                                                       Slice_getSeqRegionEnd(slice));
+        fprintf(stderr, "Invalid region %s\n", region);
         exit(1);
       }
+      sprintf(rlocation,":%ld-%ld", Slice_getSeqRegionStart(slice),
+                                 Slice_getSeqRegionEnd(slice));
+      StrUtil_appendString(region, rlocation);
+      if (hts_parse_reg(region, &begRange, &endRange) == NULL) {
+        fprintf(stderr, "Could not parse %s\n", region);
+        exit(2);
+      }
+      if (verbosity > 0) fprintf(stderr,"Parsed region for region %s\n", region);
 
       // need to seamlessly merge here with the dna2simplefeatures code
-      RefineSolexaGenes_bamToIntronFeatures(rsg, intronBamConf, sam, idx, ref, begRange, endRange);
+      RefineSolexaGenes_bamToIntronFeatures(rsg, intronBamConf, sam, header, idx, ref, begRange, endRange);
 
-      bam_index_destroy(idx);
+      hts_idx_destroy(idx);
+      bam_hdr_destroy(header);
       if (verbosity > 1) fprintf(stderr,"after index destroy\n");
-      samclose(sam);
+      hts_close(sam);
       if (verbosity > 1) fprintf(stderr,"after sam close\n");
     }
   } else {
@@ -4624,7 +4629,7 @@ Exon *RefineSolexaGenes_binSearchForOverlap(RefineSolexaGenes *rsg, Vector *exon
 
 =cut
 */
-void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConfig *intronBamConf, samfile_t *sam, bam_index_t *idx, int ref, int begRange, int endRange) {
+void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConfig *intronBamConf, htsFile *sam, bam_hdr_t *header, hts_idx_t *idx, int ref, int begRange, int endRange) {
   SliceAdaptor *sliceAdaptor = RefineSolexaGenes_getGeneSliceAdaptor(rsg);
   Vector *ifs = Vector_new();
   StringHash *extraExons = RefineSolexaGenes_getExtraExons(rsg);
@@ -4652,13 +4657,13 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
     fprintf(logfp, "\n");
   }
 
-  bam_iter_t iter = bam_iter_query(idx, ref, begRange, endRange);
+  hts_itr_t *iter = sam_itr_queryi(idx, ref, begRange, endRange);
   bam1_t *read = bam_init1();
 
   int firstRead = 1;
   char name[1024];
   fprintf(stderr,"before bam read loop\n");
-  while (bam_iter_read(sam->x.bam, iter, read) >= 0) {
+  while (bam_itr_next(sam, iter, read) >= 0) {
 
 //READ:  
     char spliced;
@@ -4684,7 +4689,7 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
     }
 
     // Vector *mates = RefineSolexaGenes_getUngappedFeatures(rsg, read);
-    nMate = RefineSolexaGenes_getUngappedFeatures(rsg, sam->header, read, mates);
+    nMate = RefineSolexaGenes_getUngappedFeatures(rsg, header, read, mates);
 
     //qsort(mates, nMate, sizeof(CigarBlock *), CigarBlock_startCompFunc);
 
@@ -4734,7 +4739,7 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
 
     //my $strand = $read->target->strand;
 //    int strand = bam1_strand(read) == 0 ? -1 : 1;
-    int strand = bam1_strand(read) == 1 ? -1 : 1;
+    int strand = bam_is_rev(read) == 1 ? -1 : 1;
     if (intronBamConf->mixedBam) {
       if (spliced == '+') strand = 1;
       if (spliced == '-') strand = -1;
@@ -4742,7 +4747,7 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
 
 // Moved name setting out of loop
     if (firstRead == 1) {
-      strcpy(name, sam->header->target_name[read->core.tid]);
+      strcpy(name, header->target_name[read->core.tid]);
       StrUtil_strReplChr(name, '.', '*');
       //fprintf(stderr,"got target name %s\n", name);
       firstRead = 0;
@@ -4778,6 +4783,7 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
 //    Vector_setFreeFunc(mates, CigarBlock_free);
 //    Vector_free(mates);
   }
+  sam_itr_destroy(iter);
 
   if (readGroups != NULL) StringHash_free(readGroups, NULL);
 
@@ -5050,12 +5056,12 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
 */
 // NOTE: I think this method assumed that there were no cases with multiple 'M' blocks between two introns eg 20M 100N 20M D 20M 1000N 20M
 //       I've added a check to make sure that assumption is true.
-int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam_header_t *header, bam1_t *b, CigarBlock **ugfs) {
+int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam_hdr_t *header, bam1_t *b, CigarBlock **ugfs) {
   CigarBlock *lastMatchBlock;
   int         hadIntron = 0;
   int         nIntron = 0;
   CigarBlock *currentBlock = NULL;
-  uint32_t *  cigar = bam1_cigar(b);
+  uint32_t *  cigar = bam_get_cigar(b);
   int         nBlock = 0;
   CigarBlock  tmpBlock;
 
@@ -5110,7 +5116,9 @@ int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam_header_t *
     }
   }
   if (hadIntron) {
-    fprintf(stderr,"Error parsing cigar string - don't have two M regions surrounding an N region (intron).\nBam entry = %s\n", bam_format1(header, b));
+    kstring_t *bamline;
+    sam_format1(header, b, bamline);
+    fprintf(stderr,"Error parsing cigar string - don't have two M regions surrounding an N region (intron).\nBam entry = %s\n", bamline);
     exit(1);
   } 
   //if (currentBlock) {
