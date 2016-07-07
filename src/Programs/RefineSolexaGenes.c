@@ -366,6 +366,9 @@ void RefineSolexaGenes_usage() {
          "  -l --logic_name  Logic name for analysis block to run from configuration file\n"
          "  -d --dry_run     If specified, don't write to output db\n"
          "  -u --ucsc_naming If specified, add chr the name of sequence\n"
+#ifdef _PBGZF_USE
+         "  -t --threads     Number of threads to use when reading the BAM files, default is 1\n"
+#endif
          "  -v --verbosity   Verbosity level (int)\n"
          "\n"
 //         "Notes:\n"
@@ -394,6 +397,9 @@ int main(int argc, char *argv[]) {
   char *configFile = "RefineSolexaGenes_sheep.cfg";
   char *inputId    = "chromosome:Oar_v3.1:17";
   int   dryRun     = 0;
+#ifdef _PBGZF_USE
+  int   threads  = 1;
+#endif
   int   verbosity  = 1;
   int   ucsc_naming = 0;
 
@@ -423,6 +429,10 @@ int main(int argc, char *argv[]) {
         StrUtil_copyString(&inputId,val,0);
       } else if (!strcmp(arg, "-l") || !strcmp(arg,"--logic_name")) {
         StrUtil_copyString(&logicName,val,0);
+#ifdef _PBGZF_USE
+      } else if (!strcmp(arg, "-t") || !strcmp(arg,"--threads")) {
+        threads = atoi(val);
+#endif
       } else if (!strcmp(arg, "-v") || !strcmp(arg,"--verbosity")) {
         verbosity = atoi(val);
       } else {
@@ -442,6 +452,9 @@ int main(int argc, char *argv[]) {
   RefineSolexaGenes *rsg = RefineSolexaGenes_new(configFile, logicName);
   RefineSolexaGenes_setInputId(rsg, inputId);
   RefineSolexaGenes_setDryRun(rsg, dryRun);
+#ifdef _PBGZF_USE
+  RefineSolexaGenes_setThreads(rsg, threads);
+#endif
   RefineSolexaGenes_setVerbosity(rsg, verbosity);
   RefineSolexaGenes_setUcscNaming(rsg, ucsc_naming);
 
@@ -1161,7 +1174,7 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
       fprintf(stderr,"Opened bam file %s\n", intronFile);
 
 #ifdef _PBGZF_USE
-      hts_set_threads(sam, 5);
+      hts_set_threads(sam, RefineSolexaGenes_getThreads(rsg));
 #endif
       hts_idx_t *idx;
       idx = sam_index_load(sam, intronFile); // load BAM index
@@ -6283,6 +6296,16 @@ void RefineSolexaGenes_setVerbosity(RefineSolexaGenes *rsg, int verbosity) {
 int RefineSolexaGenes_getVerbosity(RefineSolexaGenes *rsg) {
   return rsg->verbosity;
 }
+
+#ifdef _PBGZF_USE
+void RefineSolexaGenes_setThreads(RefineSolexaGenes *rsg, int threads) {
+  rsg->threads = threads;
+}
+
+int RefineSolexaGenes_getThreads(RefineSolexaGenes *rsg) {
+  return rsg->threads;
+}
+#endif
 
 void RefineSolexaGenes_setUcscNaming(RefineSolexaGenes *rsg, int ucsc_naming) {
   rsg->ucsc_naming = ucsc_naming;

@@ -270,6 +270,11 @@ int RefineSolexaGenes_isDryRun(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setVerbosity(RefineSolexaGenes *rsg, int verbosity);
 int RefineSolexaGenes_getVerbosity(RefineSolexaGenes *rsg);
 
+#ifdef _PBGZF_USE
+void RefineSolexaGenes_setThreads(RefineSolexaGenes *rsg, int threads);
+int RefineSolexaGenes_getThreads(RefineSolexaGenes *rsg);
+#endif
+
 void RefineSolexaGenes_setUcscNaming(RefineSolexaGenes *rsg, int ucsc_naming);
 int RefineSolexaGenes_getUcscNaming(RefineSolexaGenes *rsg);
 
