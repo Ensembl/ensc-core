@@ -47,13 +47,12 @@
 #include "IDHash.h"
 
 #include "sam.h"
-#include "bam.h"
+#include "hts.h"
 
 void       Bamcov_usage();
-int        calcCoverage(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int flags);
+int        calcCoverage(char *fName, Slice *slice, htsFile *in, hts_idx_t *idx, int flags);
 int        geneStartCompFunc(const void *one, const void *two);
 Vector *   getGenes(Slice *slice, int flags);
-void       printBam(FILE *fp, bam1_t *b, bam_header_t *header);
 
 typedef struct CoverageStruct {
   long  coverage;
@@ -74,7 +73,7 @@ int main(int argc, char *argv[]) {
   ResultRow *      row;
   Vector *         slices;
   int              nSlices;
-  samfile_t *      out;
+  htsFile *      out;
 
   int   argNum = 1;
 
@@ -168,16 +167,16 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-#ifdef _PBGZF_USE
-  bam_set_num_threads_per(5);
-#endif
-  samfile_t *in = samopen(inFName, "rb", 0);
+  htsFile *in = hts_open(inFName, "rb");
   if (in == 0) {
     fprintf(stderr, "Fail to open BAM file %s\n", inFName);
     return 1;
   }
 
-  bam_index_t *idx;
+#ifdef _PBGZF_USE
+  hts_set_threads(in, 5);
+#endif
+  hts_idx_t *idx;
   idx = bam_index_load(inFName); // load BAM index
   if (idx == 0) {
     fprintf(stderr, "BAM index file is not available.\n");
@@ -198,8 +197,8 @@ int main(int argc, char *argv[]) {
   }
 
 
-  bam_index_destroy(idx);
-  samclose(in);
+  hts_idx_destroy(idx);
+  hts_close(in);
 
   if (verbosity > 0) printf("Done\n");
   return 0;
@@ -235,36 +234,6 @@ int geneStartCompFunc(const void *one, const void *two) {
   return Gene_getStart(g1) - Gene_getStart(g2);
 }
 
-/*
- print out a bam1_t entry, particularly the flags (for debugging)
-*/
-void printBam(FILE *fp, bam1_t *b, bam_header_t *header) {    
-  fprintf(fp, "%s %s %d %d %s (%d) %d %d %d\t\tP %d PP %d U %d MU %d R %d MR %d R1 %d R2 %d S %d QC %d D %d U %d\n",
-                                  bam1_qname(b), 
-                                  header->target_name[b->core.tid], 
-                                  b->core.pos, 
-                                  bam_calend(&b->core,bam1_cigar(b)),
-                                  header->target_name[b->core.mtid], 
-                                  b->core.mtid, 
-                                  b->core.mpos, 
-                                  b->core.isize, 
-                                  bam_cigar2qlen(&(b->core),bam1_cigar(b)),
-                                  b->core.flag & BAM_FPAIRED,
-                                  b->core.flag & BAM_FPROPER_PAIR ? 1 : 0,
-                                  b->core.flag & BAM_FUNMAP ? 1 : 0,
-                                  b->core.flag & BAM_FMUNMAP ? 1 : 0,
-                                  b->core.flag & BAM_FREVERSE ? 1 : 0,
-                                  b->core.flag & BAM_FMREVERSE ? 1 : 0,
-                                  b->core.flag & BAM_FREAD1 ? 1 : 0,
-                                  b->core.flag & BAM_FREAD2 ? 1 : 0,
-                                  b->core.flag & BAM_FSECONDARY ? 1 : 0,
-                                  b->core.flag & BAM_FQCFAIL ? 1 : 0,
-                                  b->core.flag & BAM_FDUP ? 1 : 0,
-                                  b->core.flag & MY_FUSEDFLAG ? 1 : 0
-                                  );
-  fflush(fp);
-}
-
 Vector *getGenes(Slice *slice, int flags) { 
   Vector *genes;
   genes = Slice_getAllGenes(slice, NULL, NULL, 1, NULL, NULL);
@@ -274,11 +243,12 @@ Vector *getGenes(Slice *slice, int flags) {
   return genes;
 }
 
-int calcCoverage(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int flags) {
+int calcCoverage(char *fName, Slice *slice, htsFile *in, hts_idx_t *idx, int flags) {
   int  ref;
   int  begRange;
   int  endRange;
   char region[1024];
+  char rlocation[64];
 
 
   if (Slice_getChrStart(slice) != 1) {
@@ -286,24 +256,28 @@ int calcCoverage(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int
     return 1;
   }
   if (flags & M_UCSC_NAMING) {
-    sprintf(region,"chr%s:%ld-%ld", Slice_getChrName(slice), 
-                                  Slice_getChrStart(slice), 
-                                  Slice_getChrEnd(slice));
+    sprintf(region,"chr%s", Slice_getSeqRegionName(slice));
   } else {
-    sprintf(region,"%s:%ld-%ld", Slice_getChrName(slice), 
-                               Slice_getChrStart(slice), 
-                               Slice_getChrEnd(slice));
+    sprintf(region,"%s", Slice_getSeqRegionName(slice));
   }
-  bam_parse_region(in->header, region, &ref, &begRange, &endRange);
+  bam_hdr_t *header = bam_hdr_init();
+  header = bam_hdr_read(in->fp.bgzf);
+  ref = bam_name2id(header, region);
   if (ref < 0) {
-    fprintf(stderr, "Invalid region %s %ld %ld\n", Slice_getChrName(slice), 
-                                                 Slice_getChrStart(slice), 
-                                                 Slice_getChrEnd(slice));
-    return 1;
+    fprintf(stderr, "Invalid region %s\n", region);
+    exit(1);
   }
+  sprintf(rlocation,":%ld-%ld", Slice_getSeqRegionStart(slice),
+                             Slice_getSeqRegionEnd(slice));
+  StrUtil_appendString(region, rlocation);
+  if (hts_parse_reg(region, &begRange, &endRange) == NULL) {
+    fprintf(stderr, "Could not parse %s\n", region);
+    exit(2);
+  }
+  bam_hdr_destroy(header);
 
 
-  bam_iter_t iter = bam_iter_query(idx, ref, begRange, endRange);
+  hts_itr_t *iter = sam_itr_queryi(idx, ref, begRange, endRange);
   bam1_t *b = bam_init1();
 
   Coverage *coverage = calloc(Slice_getLength(slice),sizeof(Coverage));
@@ -312,14 +286,15 @@ int calcCoverage(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int
   long overlapping = 0;
   long bad = 0;
   int startIndex = 0;
-  while (bam_iter_read(in->x.bam, iter, b) >= 0) {
+  while (bam_itr_next(in, iter, b) >= 0) {
     if (b->core.flag & (BAM_FUNMAP | BAM_FSECONDARY | BAM_FQCFAIL | BAM_FDUP)) {
       bad++;
       continue;
     }
 
     int end;
-    end = bam_calend(&b->core, bam1_cigar(b));
+    //end = bam_calend(&b->core, bam1_cigar(b));
+    end = bam_endpos(b);
 
     // There is a special case for reads which have zero length and start at begRange (so end at begRange ie. before the first base we're interested in).
     // That is the reason for the || end == begRange test
@@ -337,7 +312,7 @@ int calcCoverage(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int
     int cigInd;
     int refPos;
     int readPos;
-    uint32_t *cigar = bam1_cigar(b);
+    uint32_t *cigar = bam_get_cigar(b);
     for (cigInd = readPos = 0, refPos = b->core.pos; cigInd < b->core.n_cigar; ++cigInd) {
       int k;
       int lenCigBlock = cigar[cigInd]>>4;
@@ -467,7 +442,7 @@ int calcCoverage(char *fName, Slice *slice, samfile_t *in, bam_index_t *idx, int
     printf("%ld %ld\n", i+1, coverage[i].coverage);
   }
 
-  bam_iter_destroy(iter);
+  sam_itr_destroy(iter);
   bam_destroy1(b);
 
 

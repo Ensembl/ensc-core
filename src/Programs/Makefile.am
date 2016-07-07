@@ -32,12 +32,12 @@ testdbc_LDADD = $(PROG_LIBS)
 if HAVE_SAMTOOLS
   bin_PROGRAMS += bamcount bamcount_exon bamcov bammap
 
-  PROG_LIBS += -lbam -lz
+  PROG_LIBS += -lhts -lz
 
-  bamcount_SOURCES = bamcount.c
-  bamcount_exon_SOURCES = bamcount_exon.c
+  bamcount_SOURCES = bamcount.c bamhelper.h
+  bamcount_exon_SOURCES = bamcount_exon.c bamhelper.h
   bamcov_SOURCES = bamcov.c
-  bammap_SOURCES = bammap.c
+  bammap_SOURCES = bammap.c bamhelper.h
 
   bamcount_LDADD = $(PROG_LIBS)
   bamcount_exon_LDADD = $(PROG_LIBS)

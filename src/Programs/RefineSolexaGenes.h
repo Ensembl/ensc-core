@@ -26,7 +26,7 @@
 #include "Transcript.h"
 
 #include "sam.h"
-#include "bam.h"
+#include "hts.h"
 
 #include "libconfig.h"
 
@@ -167,8 +167,8 @@ StringHash *RefineSolexaGenes_processPaths(RefineSolexaGenes *rsg, Vector *exons
 Vector *RefineSolexaGenes_makeModelClusters(RefineSolexaGenes *rsg, Vector *models, int strand);
 Vector *RefineSolexaGenes_mergeExons(RefineSolexaGenes *rsg, Gene *gene, int strand);
 Exon *RefineSolexaGenes_binSearchForOverlap(RefineSolexaGenes *rsg, Vector *exons, int pos);
-void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConfig *intronBamConf, samfile_t *sam, bam_index_t *idx, int ref, int begRange, int endRange);
-int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam_header_t *header, bam1_t *b, CigarBlock **ugfs);
+void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConfig *intronBamConf, htsFile *sam, bam_hdr_t *header, hts_idx_t *idx, int ref, int begRange, int endRange);
+int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam_hdr_t *header, bam1_t *b, CigarBlock **ugfs);
 void RefineSolexaGenes_dnaToIntronFeatures(RefineSolexaGenes *rsg, long start, long end);
 Vector *RefineSolexaGenes_fetchIntronFeatures(RefineSolexaGenes *rsg, long start, long end, long *offsetP);
 Exon *RefineSolexaGenes_makeExon(RefineSolexaGenes *rsg, long start, long end, double score, char *diplayId);
