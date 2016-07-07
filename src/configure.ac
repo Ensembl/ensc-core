@@ -138,17 +138,17 @@ fi
 
 if test -z "$HAVE_SAMTOOLS"
 then
-  echo " samtools not available: some functions will be disabled"; echo
+  echo " samtools not available: bam* programs and RefineSolexaGenes will not be compiled"; echo
 fi
 
 if test -z "$HAVE_LIBCONFIG"
 then
-  echo " libconfig not available: some functions will be disabled"; echo
+  echo " libconfig not available: RefineSolexaGenes will not be compiled"; echo
 fi
 
 if test -z "$HAVE_LIBTCMALLOC"
 then
-  echo " libtcmalloc not available: some functions will be disabled"; echo
+  echo " libtcmalloc not available: RefineSolexaGenes will not be compiled"; echo
 fi
 
 
