@@ -63,6 +63,8 @@ static int limit = 0;
 
 static int nExonClone = 0;
 
+#define ERROR_WRITING 5
+
 FILE *logfp;
 
 #define RSGGENE_KEEP 16
@@ -3786,44 +3788,51 @@ void RefineSolexaGenes_writeOutput(RefineSolexaGenes *rsg) {
 // Can't be any currently, but maybe should be possible to trap errors
   if (fails > 0) {
     fprintf(stderr, "Not all genes could be written successfully (%d fails out of %d)\n", fails, total);
+    exit(ERROR_WRITING);
   }
 
   if (verbosity > 0) fprintf(stderr, "Writing dna_align_features\n");
   if (RefineSolexaGenes_writeIntrons(rsg)) {
-    DNAAlignFeatureAdaptor *intronAdaptor = DBAdaptor_getDNAAlignFeatureAdaptor(outdb);
-    fails = 0;
-    total = 0;
-   
     Vector *intronFeatures = RefineSolexaGenes_getIntronFeatures(rsg);
   
-    for (i=0; i<Vector_getNumElement(intronFeatures); i++) {
-      DNAAlignFeature *intron = Vector_getElementAt(intronFeatures, i);
-  
-  // SMJS If want to edge match in apollo comment out these two lines
-      DNAAlignFeature_setStart(intron, DNAAlignFeature_getStart(intron) + 1);
-      DNAAlignFeature_setEnd(intron, DNAAlignFeature_getEnd(intron) - 1);
-  //    eval {
-  // tmpVec is just so can use _store method which takes a vector not a feature
-  /* SMJS Perl did one at a time - I'm going to do all in one go after loop, so I don't have to make these temporary vectors
-      Vector *tmpVec = Vector_new();
-      Vector_addElement(tmpVec, intron);
-      DNAAlignFeatureAdaptor_store(intronAdaptor, tmpVec);
-      Vector_free(tmpVec);
-  */
-  //    };
-  
-  //    if ($@){
-  //      warning("Unable to store DnaAlignFeature!!\n$@");
-  //      $fails++;
-  //    }
-      total++;
+    if (Vector_getNumElement(intronFeatures) > 1) {
+      DNAAlignFeatureAdaptor *intronAdaptor = DBAdaptor_getDNAAlignFeatureAdaptor(outdb);
+      fails = 0;
+      total = 0;
+
+      for (i=0; i<Vector_getNumElement(intronFeatures); i++) {
+        DNAAlignFeature *intron = Vector_getElementAt(intronFeatures, i);
+
+    // SMJS If want to edge match in apollo comment out these two lines
+        DNAAlignFeature_setStart(intron, DNAAlignFeature_getStart(intron) + 1);
+        DNAAlignFeature_setEnd(intron, DNAAlignFeature_getEnd(intron) - 1);
+    //    eval {
+    // tmpVec is just so can use _store method which takes a vector not a feature
+    /* SMJS Perl did one at a time - I'm going to do all in one go after loop, so I don't have to make these temporary vectors
+        Vector *tmpVec = Vector_new();
+        Vector_addElement(tmpVec, intron);
+        DNAAlignFeatureAdaptor_store(intronAdaptor, tmpVec);
+        Vector_free(tmpVec);
+    */
+    //    };
+
+    //    if ($@){
+    //      warning("Unable to store DnaAlignFeature!!\n$@");
+    //      $fails++;
+    //    }
+        total++;
+      }
+
+    // SMJS Moved from within loop - store all features in intronFeatures in one call
+      DNAAlignFeatureAdaptor_store(intronAdaptor, intronFeatures);
+
+      if (fails > 0) {
+        fprintf(stderr, "Not all introns could be written successfully (%d fails out of %d)\n", fails, total);
+        exit(ERROR_WRITING);
+      }
     }
-  
-  // SMJS Moved from within loop - store all features in intronFeatures in one call
-    DNAAlignFeatureAdaptor_store(intronAdaptor, intronFeatures);
-  
-    if (fails > 0) {
-      fprintf(stderr, "Not all introns could be written successfully (%d fails out of %d)\n", fails, total);
+    else {
+      fprintf(stderr, "Warning: No intron DNAAlignFeatures to write\n");
     }
   } else {
     fprintf(stderr, "NOTE: Not writing DNAAlignFeatures for introns\n");
