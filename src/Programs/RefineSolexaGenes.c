@@ -366,9 +366,7 @@ void RefineSolexaGenes_usage() {
          "  -l --logic_name  Logic name for analysis block to run from configuration file\n"
          "  -d --dry_run     If specified, don't write to output db\n"
          "  -u --ucsc_naming If specified, add chr the name of sequence\n"
-#ifdef _PBGZF_USE
          "  -t --threads     Number of threads to use when reading the BAM files, default is 1\n"
-#endif
          "  -v --verbosity   Verbosity level (int)\n"
          "\n"
 //         "Notes:\n"
@@ -397,9 +395,7 @@ int main(int argc, char *argv[]) {
   char *configFile = "RefineSolexaGenes_sheep.cfg";
   char *inputId    = "chromosome:Oar_v3.1:17";
   int   dryRun     = 0;
-#ifdef _PBGZF_USE
   int   threads  = 1;
-#endif
   int   verbosity  = 1;
   int   ucsc_naming = 0;
 
@@ -429,10 +425,8 @@ int main(int argc, char *argv[]) {
         StrUtil_copyString(&inputId,val,0);
       } else if (!strcmp(arg, "-l") || !strcmp(arg,"--logic_name")) {
         StrUtil_copyString(&logicName,val,0);
-#ifdef _PBGZF_USE
       } else if (!strcmp(arg, "-t") || !strcmp(arg,"--threads")) {
         threads = atoi(val);
-#endif
       } else if (!strcmp(arg, "-v") || !strcmp(arg,"--verbosity")) {
         verbosity = atoi(val);
       } else {
@@ -452,9 +446,7 @@ int main(int argc, char *argv[]) {
   RefineSolexaGenes *rsg = RefineSolexaGenes_new(configFile, logicName);
   RefineSolexaGenes_setInputId(rsg, inputId);
   RefineSolexaGenes_setDryRun(rsg, dryRun);
-#ifdef _PBGZF_USE
   RefineSolexaGenes_setThreads(rsg, threads);
-#endif
   RefineSolexaGenes_setVerbosity(rsg, verbosity);
   RefineSolexaGenes_setUcscNaming(rsg, ucsc_naming);
 
@@ -1033,12 +1025,11 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
       IntronBamConfig *intronBamConf = Vector_getElementAt(intronBamFiles, i);
       char *intronFile = intronBamConf->fileName;
       char region[2048];
-      char rlocation[64];
+      char region_name[1024];
       int ref;
       int begRange;
       int endRange;
     
-//#undef _PBGZF_USE
       htsFile *sam = hts_open(intronFile, "rb");
       if (sam == NULL) {
         fprintf(stderr, "Bam file %s not found\n", intronFile);
@@ -1046,9 +1037,8 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
       }
       fprintf(stderr,"Opened bam file %s\n", intronFile);
 
-#ifdef _PBGZF_USE
       hts_set_threads(sam, RefineSolexaGenes_getThreads(rsg));
-#endif
+      if (verbosity > 0) fprintf(stderr,"Setting number of threads to %d\n", RefineSolexaGenes_getThreads(rsg));
       hts_idx_t *idx;
       idx = sam_index_load(sam, intronFile); // load BAM index
       if (idx == 0) {
@@ -1059,20 +1049,20 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
 
       long long count = 0;
       if (RefineSolexaGenes_getUcscNaming(rsg) == 0) {
-        sprintf(region,"chr%s", Slice_getSeqRegionName(slice));
+        sprintf(region_name,"%s", Slice_getSeqRegionName(slice));
       } else {
-        sprintf(region,"%s", Slice_getSeqRegionName(slice));
+        sprintf(region_name,"chr%s", Slice_getSeqRegionName(slice));
       }
       bam_hdr_t *header = bam_hdr_init();
       header = bam_hdr_read(sam->fp.bgzf);
-      ref = bam_name2id(header, region);
+      ref = bam_name2id(header, region_name);
       if (ref < 0) {
-        fprintf(stderr, "Invalid region %s\n", region);
+        fprintf(stderr, "Invalid region %s\n", region_name);
         exit(1);
       }
-      sprintf(rlocation,":%ld-%ld", Slice_getSeqRegionStart(slice),
+      sprintf(region,"%s:%ld-%ld", region_name, Slice_getSeqRegionStart(slice),
                                  Slice_getSeqRegionEnd(slice));
-      StrUtil_appendString(region, rlocation);
+
       if (hts_parse_reg(region, &begRange, &endRange) == NULL) {
         fprintf(stderr, "Could not parse %s\n", region);
         exit(2);
@@ -6165,7 +6155,6 @@ int RefineSolexaGenes_getVerbosity(RefineSolexaGenes *rsg) {
   return rsg->verbosity;
 }
 
-#ifdef _PBGZF_USE
 void RefineSolexaGenes_setThreads(RefineSolexaGenes *rsg, int threads) {
   rsg->threads = threads;
 }
@@ -6173,7 +6162,6 @@ void RefineSolexaGenes_setThreads(RefineSolexaGenes *rsg, int threads) {
 int RefineSolexaGenes_getThreads(RefineSolexaGenes *rsg) {
   return rsg->threads;
 }
-#endif
 
 void RefineSolexaGenes_setUcscNaming(RefineSolexaGenes *rsg, int ucsc_naming) {
   rsg->ucsc_naming = ucsc_naming;

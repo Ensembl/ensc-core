@@ -145,6 +145,7 @@ int main(int argc, char *argv[]) {
 //  char *destName   = "Nleu_3.0";
 
   int flags = 0;
+  int   threads  = 1;
 
   ReadMapStats totalStats;
   ReadMapStats regionStats;
@@ -191,6 +192,8 @@ int main(int argc, char *argv[]) {
         StrUtil_copyString(&dbName,val,0);
       } else if (!strcmp(arg, "-u") || !strcmp(arg,"--user")) {
         StrUtil_copyString(&dbUser,val,0);
+      } else if (!strcmp(arg, "-t") || !strcmp(arg,"--threads")) {
+        threads = atoi(val);
       } else if (!strcmp(arg, "-s") || !strcmp(arg,"--source_ass")) {
         StrUtil_copyString(&sourceName,val,0);
       } else if (!strcmp(arg, "-d") || !strcmp(arg,"--dest_ass")) {
@@ -235,9 +238,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-#ifdef _PBGZF_USE
-  hts_set_threads(in, 5);
-#endif
+  hts_set_threads(in, threads);
   hts_idx_t *idx;
   idx = bam_index_load(inFName); // load BAM index
   if (idx == 0) {
@@ -263,6 +264,7 @@ int main(int argc, char *argv[]) {
   //  remoteMates   = calloc(header->n_targets, sizeof(Vector *));
   //}
 
+  hts_set_threads(out, threads);
   bam_hdr_t *outheader = bam_hdr_init();
   outheader = bam_hdr_read(out->fp.bgzf);
 
@@ -684,9 +686,7 @@ htsFile *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlices
     return NULL;
   }
 
-#ifdef _PBGZF_USE
   hts_set_threads(in, 1);
-#endif
   bam_hdr_t *header = bam_hdr_init();
   header = bam_hdr_read(in->fp.bgzf);
   // For debugging - these lines print input BAM file header to stdout
@@ -760,9 +760,6 @@ htsFile *writeBamHeader(char *inFName, char *outFName, Vector *destinationSlices
   strcpy(out_mode, "wb");
 
   out = hts_open(outFName,out_mode);
-#ifdef _PBGZF_USE
-  hts_set_threads(out, 9);
-#endif
 
 /* Need this hash initialised for looking up tids */
   //bam_init_header_hash(out->header);
