@@ -93,6 +93,7 @@ int main(int argc, char *argv[]) {
 
 
   int flags = 0;
+  int   threads  = 1;
 
   initEnsC(argc, argv);
 
@@ -125,6 +126,8 @@ int main(int argc, char *argv[]) {
         StrUtil_copyString(&dbName,val,0);
       } else if (!strcmp(arg, "-u") || !strcmp(arg,"--user")) {
         StrUtil_copyString(&dbUser,val,0);
+      } else if (!strcmp(arg, "-t") || !strcmp(arg,"--threads")) {
+        threads = atoi(val);
       } else if (!strcmp(arg, "-a") || !strcmp(arg,"--assembly")) {
         StrUtil_copyString(&assName,val,0);
       } else if (!strcmp(arg, "-v") || !strcmp(arg,"--verbosity")) {
@@ -173,9 +176,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-#ifdef _PBGZF_USE
-  hts_set_threads(in, 5);
-#endif
+  hts_set_threads(in, threads);
   hts_idx_t *idx;
   idx = bam_index_load(inFName); // load BAM index
   if (idx == 0) {
@@ -248,7 +249,7 @@ int calcCoverage(char *fName, Slice *slice, htsFile *in, hts_idx_t *idx, int fla
   int  begRange;
   int  endRange;
   char region[1024];
-  char rlocation[64];
+  char region_name[512];
 
 
   if (Slice_getChrStart(slice) != 1) {
@@ -267,9 +268,9 @@ int calcCoverage(char *fName, Slice *slice, htsFile *in, hts_idx_t *idx, int fla
     fprintf(stderr, "Invalid region %s\n", region);
     exit(1);
   }
-  sprintf(rlocation,":%ld-%ld", Slice_getSeqRegionStart(slice),
+  sprintf(region,"%s:%ld-%ld", region_name,
+                             Slice_getSeqRegionStart(slice),
                              Slice_getSeqRegionEnd(slice));
-  StrUtil_appendString(region, rlocation);
   if (hts_parse_reg(region, &begRange, &endRange) == NULL) {
     fprintf(stderr, "Could not parse %s\n", region);
     exit(2);
