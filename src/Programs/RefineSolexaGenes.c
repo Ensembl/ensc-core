@@ -361,7 +361,7 @@ void SetFuncData_free(SetFuncData *sfd) {
 #define RSG_DRIVER
 #ifdef RSG_DRIVER
 
-void RefineSolexaGenes_usage() {
+void RefineSolexaGenes_usage(int exit_code) {
   printf("RefineSolexaGenes \n"
          "  -c --config_file RefineSolexaGenes configuration file to read from\n"
          "  -i --input_id    Input id (slice name) to run on eg. chromosome:Oar_v3.1:17\n"
@@ -370,14 +370,16 @@ void RefineSolexaGenes_usage() {
          "  -u --ucsc_naming If specified, add chr the name of sequence\n"
          "  -t --threads     Number of threads to use when reading the BAM files, default is 1\n"
          "  -v --verbosity   Verbosity level (int)\n"
+         "  -h --help        This help...\n"
          "\n"
 //         "Notes:\n"
 //         "  -v Default verbosity level is 1. You can make it quieter by setting this to 0, or noisier by setting it > 1.\n"
          );
-  exit(1);
+  exit(exit_code);
 }
 
 int main(int argc, char *argv[]) {
+  if (argc == 1) RefineSolexaGenes_usage(1);
   initEnsC(argc, argv);
 
   logfp = stderr;
@@ -407,7 +409,10 @@ int main(int argc, char *argv[]) {
     char *val;
 
 // Ones without a val go here
-   if (!strcmp(arg, "-d") || !strcmp(arg,"--dry_run")) {
+   if (!strcmp(arg, "-h") || !strcmp(arg,"--help")) {
+     RefineSolexaGenes_usage(1);
+   }
+   else if (!strcmp(arg, "-d") || !strcmp(arg,"--dry_run")) {
       dryRun = 1;
    } else if (!strcmp(arg, "-u") || !strcmp(arg,"--ucsc_naming")) {
       ucsc_naming = 1;
@@ -415,7 +420,7 @@ int main(int argc, char *argv[]) {
 // Ones with a val go in this block
       if (argNum == argc-1) {
         fprintf(stderr, "Error: Expected a value after last command line argument\n");
-        RefineSolexaGenes_usage();
+        RefineSolexaGenes_usage(1);
       }
 
       val = argv[++argNum];
@@ -433,7 +438,7 @@ int main(int argc, char *argv[]) {
         verbosity = atoi(val);
       } else {
         fprintf(stderr,"Error in command line at %s\n\n",arg);
-        RefineSolexaGenes_usage();
+        RefineSolexaGenes_usage(1);
       }
     }
 
