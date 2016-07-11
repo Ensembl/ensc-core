@@ -403,9 +403,9 @@ int main(int argc, char *argv[]) {
   }
 */
 
-  char *logicName  = "refine_all";
-  char *configFile = "RefineSolexaGenes_sheep.cfg";
-  char *inputId    = "chromosome:Oar_v3.1:17";
+  char *logicName;
+  char *configFile;
+  char *inputId;
   int   dryRun     = 0;
   int   threads  = 1;
   int   verbosity  = 1;
@@ -5923,6 +5923,9 @@ ExtraExonData **RefineSolexaGenes_getExtraExonsValues(RefineSolexaGenes *rsg) {
 
 void RefineSolexaGenes_setIntronDb(RefineSolexaGenes *rsg, char *intronDb) {
   if (intronDb[0] != '\0') {
+    if (rsg->intronDb != NULL) {
+      free(rsg->intronDb);
+    }
     rsg->intronDb = StrUtil_copyString(&rsg->intronDb, intronDb, 0);
   }
 }
@@ -5933,6 +5936,9 @@ char *RefineSolexaGenes_getIntronDb(RefineSolexaGenes *rsg) {
 
 void RefineSolexaGenes_setOutputDb(RefineSolexaGenes *rsg, char *outputDb) {
   if (outputDb[0] != '\0') {
+    if (rsg->outputDb != NULL) {
+      free(rsg->outputDb);
+    }
     rsg->outputDb = StrUtil_copyString(&rsg->outputDb, outputDb, 0);
   }
 }
@@ -5943,6 +5949,9 @@ char *RefineSolexaGenes_getOutputDb(RefineSolexaGenes *rsg) {
 
 void RefineSolexaGenes_setModelDb(RefineSolexaGenes *rsg, char *modelDb) {
   if (modelDb[0] != '\0') {
+    if (rsg->modelDb != NULL) {
+      free(rsg->modelDb);
+    }
     rsg->modelDb = StrUtil_copyString(&rsg->modelDb, modelDb, 0);
   }
 }
@@ -6009,6 +6018,9 @@ int RefineSolexaGenes_getMaxIntronSize(RefineSolexaGenes *rsg) {
 
 void RefineSolexaGenes_setBestScoreType(RefineSolexaGenes *rsg, char *bestScoreType) {
   if (bestScoreType[0] != '\0') {
+    if (rsg->bestScoreType != NULL) {
+      free(rsg->bestScoreType);
+    }
     rsg->bestScoreType = StrUtil_copyString(&rsg->bestScoreType, bestScoreType, 0);
   }
 }
@@ -6026,6 +6038,9 @@ int RefineSolexaGenes_getOtherNum(RefineSolexaGenes *rsg) {
 }
 
 void RefineSolexaGenes_setOtherIsoformsType(RefineSolexaGenes *rsg, char *otherIsoformsType) {
+    if (rsg->otherIsoformsType != NULL) {
+      free(rsg->otherIsoformsType);
+    }
   rsg->otherIsoformsType = StrUtil_copyString(&rsg->otherIsoformsType, otherIsoformsType, 0);
 }
 
@@ -6035,6 +6050,9 @@ char *RefineSolexaGenes_getOtherIsoformsType(RefineSolexaGenes *rsg) {
 
 void RefineSolexaGenes_setModelLogicName(RefineSolexaGenes *rsg, char *modelLN) {
   if (modelLN[0] != '\0') {
+    if (rsg->modelLogicName != NULL) {
+      free(rsg->modelLogicName);
+    }
     rsg->modelLogicName = StrUtil_copyString(&rsg->modelLogicName, modelLN, 0);
   }
 }
@@ -6045,6 +6063,9 @@ char *RefineSolexaGenes_getModelLogicName(RefineSolexaGenes *rsg) {
 
 void RefineSolexaGenes_setBadModelsType(RefineSolexaGenes *rsg, char *badModelsType) {
   if (badModelsType[0] != '\0') {
+    if (rsg->badModelsType != NULL) {
+      free(rsg->badModelsType);
+    }
     rsg->badModelsType = StrUtil_copyString(&rsg->badModelsType, badModelsType, 0);
   }
 }
@@ -6087,6 +6108,9 @@ double RefineSolexaGenes_getMinSingleExonCDSPercLength(RefineSolexaGenes *rsg) {
 
 void RefineSolexaGenes_setSingleExonModelType(RefineSolexaGenes *rsg, char *singleExonModelType) {
   if (singleExonModelType[0] != '\0') {
+    if (rsg->singleExonModelType != NULL) {
+      free(rsg->singleExonModelType);
+    }
     rsg->singleExonModelType = StrUtil_copyString(&rsg->singleExonModelType, singleExonModelType, 0);
   }
 }
@@ -6240,6 +6264,9 @@ DBAdaptor *RefineSolexaGenes_getDb(RefineSolexaGenes *rsg) {
 }
 
 void RefineSolexaGenes_setInputId(RefineSolexaGenes *rsg, char *inputId) {
+    if (rsg->inputId != NULL) {
+      free(rsg->inputId);
+    }
   rsg->inputId = StrUtil_copyString(&rsg->inputId, inputId, 0);
 }
 
@@ -6248,6 +6275,9 @@ char *RefineSolexaGenes_getInputId(RefineSolexaGenes *rsg) {
 }
 
 void RefineSolexaGenes_setTypePrefix(RefineSolexaGenes *rsg, char *typePrefix) {
+    if (rsg->typePrefix != NULL) {
+      free(rsg->typePrefix);
+    }
   rsg->typePrefix = StrUtil_copyString(&rsg->typePrefix, typePrefix, 0);
 }
 
