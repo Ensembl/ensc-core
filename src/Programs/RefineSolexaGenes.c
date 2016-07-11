@@ -5018,8 +5018,11 @@ int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam_hdr_t *hea
   }
   if (hadIntron) {
     kstring_t *bamline;
-    sam_format1(header, b, bamline);
-    fprintf(stderr,"Error parsing cigar string - don't have two M regions surrounding an N region (intron).\nBam entry = %s\n", bamline);
+    if (sam_format1(header, b, bamline)) {
+      fprintf(stderr, "Could not parse cigar line for %s\n", bam_get_qname(b));
+      exit(3);
+    };
+    fprintf(stderr,"Error parsing cigar string - don't have two M regions surrounding an N region (intron).\nBam entry = %s\n", ks_str(bamline));
     exit(1);
   } 
   //if (currentBlock) {
@@ -7158,7 +7161,7 @@ void ConfigConverter_wrapArraySetCall(RefineSolexaGenes *rsg, SetFuncData *setFu
     int i;
     for (i=0; i<config_setting_length(setting); i++) {
       const char *val = config_setting_get_string_elem(setting, i);
-      Vector_addElement(results, StrUtil_copyString(&tmp, val, 0));
+      Vector_addElement(results, StrUtil_copyString(&tmp, (char*)val, 0));
     }
   } else if (setFuncData->subType == CONFIG_TYPE_FLOAT) {
     int i;
@@ -7210,7 +7213,7 @@ void RefineSolexaGenes_parseIntronBamFilesConfig(RefineSolexaGenes *rsg, config_
       int j;
       for (j=0; j<config_setting_length(groupNameSetting); j++) {
         const char *val = config_setting_get_string_elem(groupNameSetting, j);
-        Vector_addElement(groupNames, StrUtil_copyString(&tmp, val, 0));
+        Vector_addElement(groupNames, StrUtil_copyString(&tmp, (char *)val, 0));
       }
     }
     Vector_addElement(intronBamFiles, IntronBamConfig_new(file, mixedBam, depth, groupNames));
