@@ -67,6 +67,7 @@ static int nExonClone = 0;
 
 FILE *logfp;
 
+#define RSGVERSION "0.2"
 #define RSGGENE_KEEP 16
 int dumpGenes(Vector *genes, int withSupport);
 
@@ -370,12 +371,18 @@ void RefineSolexaGenes_usage(int exit_code) {
          "  -u --ucsc_naming If specified, add chr the name of sequence\n"
          "  -t --threads     Number of threads to use when reading the BAM files, default is 1\n"
          "  -v --verbosity   Verbosity level (int)\n"
+         "  -V --version     Version of RefineSolexaGenes\n"
          "  -h --help        This help...\n"
          "\n"
 //         "Notes:\n"
 //         "  -v Default verbosity level is 1. You can make it quieter by setting this to 0, or noisier by setting it > 1.\n"
          );
   exit(exit_code);
+}
+
+void RefineSolexaGenes_version() {
+  printf("Version: %s\n", RSGVERSION);
+  exit(0);
 }
 
 int main(int argc, char *argv[]) {
@@ -409,7 +416,10 @@ int main(int argc, char *argv[]) {
     char *val;
 
 // Ones without a val go here
-   if (!strcmp(arg, "-h") || !strcmp(arg,"--help")) {
+   if (!strcmp(arg, "-V") || !strcmp(arg,"--version")) {
+     RefineSolexaGenes_version();
+   }
+   else if (!strcmp(arg, "-h") || !strcmp(arg,"--help")) {
      RefineSolexaGenes_usage(1);
    }
    else if (!strcmp(arg, "-d") || !strcmp(arg,"--dry_run")) {
@@ -447,7 +457,8 @@ int main(int argc, char *argv[]) {
 
   if (verbosity > 0) {
     printf("Program for generating transcript models from RNASeq read alignments\n"
-           "Steve M.J. Searle.  searle@sanger.ac.uk  Last update Aug 2013.\n");
+           "Steve M.J. Searle.  searle@sanger.ac.uk  Last update Aug 2013.\n"
+           "Thibaut Hourlier                         Last update %s\n", __DATE__);
   }
 
   RefineSolexaGenes *rsg = RefineSolexaGenes_new(configFile, logicName);
