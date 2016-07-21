@@ -281,6 +281,8 @@ void RefineSolexaGenes_usage(int exit_code);
 
 void RefineSolexaGenes_dumpConfig(RefineSolexaGenes *rsg);
 
+void RefineSolexaGenes_filterGenes(RefineSolexaGenes *rsg);
+
 // To move
   Transcript *TranslationUtils_addORFToTranscript(ORFRange *orf, Transcript *transcript);
   Transcript *TranslationUtils_computeTranslation(Transcript *tran);

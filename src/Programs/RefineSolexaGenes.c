@@ -1094,6 +1094,72 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
 
 void  RefineSolexaGenes_run(RefineSolexaGenes *rsg) {
   RefineSolexaGenes_refineGenes(rsg);
+  RefineSolexaGenes_filterGenes(rsg);
+}
+
+void RefineSolexaGenes_filterGenes(RefineSolexaGenes *rsg) {
+  int verbosity = RefineSolexaGenes_getVerbosity(rsg);
+  Vector *genes = RefineSolexaGenes_getOutput(rsg);
+  int to_delete[Vector_getNumElement(genes)];
+  Vector *new_genes = Vector_new();
+  int i;
+  int to_delete_index = 0;
+  int last_gene_index = 0;
+  Vector_sort(genes, SeqFeature_startEndCompFunc);
+  Gene *last_gene = Vector_getElementAt(genes, 0);
+  for (i=1; i<Vector_getNumElement(genes); i++) {
+    Gene *gene = Vector_getElementAt(genes, i);
+    if (Gene_getStrand(gene) == Gene_getStrand(last_gene)
+      && Gene_getStart(gene) == Gene_getStart(last_gene)
+      && Gene_getEnd(gene) == Gene_getEnd(last_gene)) {
+      Transcript *t = Gene_getTranscriptAt(gene, 0);
+      Transcript *lt = Gene_getTranscriptAt(last_gene, 0);
+      int num_exon = Transcript_getExonCount(t);
+      int lnum_exon = Transcript_getExonCount(lt);
+      if (num_exon == lnum_exon) {
+        int j = num_exon-1;
+        int duplicate = 1;
+        do {
+          Exon *e = Transcript_getExonAt(t, j);
+          Exon *le = Transcript_getExonAt(lt, j);
+          if (Exon_getStart(e) != Exon_getStart(le)
+            || Exon_getEnd(e) != Exon_getEnd(le)) {
+            j = 0;
+            duplicate = 0;
+          }
+          --j;
+        } while (j > 0);
+        if (duplicate) {
+          if (strcmp(Gene_getBiotype(gene), RefineSolexaGenes_getBestScoreType(rsg)) == 0) {
+            int biotype_length = strlen(Gene_getBiotype(last_gene));
+            char new_biotype[biotype_length+5];
+            sprintf(new_biotype, "%s_dup", Gene_getBiotype(last_gene));
+            Gene_setBiotype(last_gene, new_biotype);
+            last_gene_index = i;
+            last_gene = Vector_getElementAt(genes, last_gene_index);
+            Vector_setElementAt(new_genes, last_gene_index, gene);
+          }
+          else {
+            int biotype_length = strlen(Gene_getBiotype(gene));
+            char new_biotype[biotype_length+5];
+            sprintf(new_biotype, "%s_dup", Gene_getBiotype(gene));
+            Gene_setBiotype(gene, new_biotype);
+          }
+        }
+      }
+    }
+    else {
+      last_gene_index = i;
+      last_gene = Vector_getElementAt(genes, last_gene_index);
+      Vector_addElement(new_genes, Vector_getElementAt(genes, last_gene_index));
+    }
+  }
+  //A little bit hacky, I probably should have a clean function
+  rsg->output = NULL;
+  for (i = 0; i < Vector_getNumElement(new_genes); i++) {
+    RefineSolexaGenes_addToOutput(rsg, Vector_getElementAt(new_genes, i));
+  }
+  Vector_free(new_genes);
 }
 
 /*
