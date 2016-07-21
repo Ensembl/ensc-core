@@ -279,6 +279,7 @@ int RefineSolexaGenes_getUcscNaming(RefineSolexaGenes *rsg);
 
 void RefineSolexaGenes_usage(int exit_code);
 
+void RefineSolexaGenes_dumpConfig(RefineSolexaGenes *rsg);
 
 // To move
   Transcript *TranslationUtils_addORFToTranscript(ORFRange *orf, Transcript *transcript);

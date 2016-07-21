@@ -68,9 +68,9 @@ struct ExonStruct {
 #define Exon_getFlags(exon) SeqFeature_getFlags(exon)
 #define Exon_removeFlag(exon, f) SeqFeature_removeFlag((exon), (f))
 
-#define Exon_getSeqRegionStart(exon) SeqFeature_getSeqRegionStart((exon))
-#define Exon_getSeqRegionEnd(exon) SeqFeature_getSeqRegionEnd((exon))
-#define Exon_getSeqRegionStrand(exon) SeqFeature_getSeqRegionStrand((exon))
+#define Exon_getSeqRegionStart(exon) SeqFeature_getSeqRegionStart((SeqFeature *)(exon))
+#define Exon_getSeqRegionEnd(exon) SeqFeature_getSeqRegionEnd((SeqFeature *)(exon))
+#define Exon_getSeqRegionStrand(exon) SeqFeature_getSeqRegionStrand((SeqFeature *)(exon))
 
 #define Exon_setIsCurrent(exon,isC)  StableIdInfo_setIsCurrent(&((exon)->si),(isC))
 #define Exon_getIsCurrent(exon)  StableIdInfo_getIsCurrent(&((exon)->si))

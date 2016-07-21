@@ -129,9 +129,9 @@ int DNAAlignFeature_getQueryUnit(void);
 #define DNAAlignFeature_transformToRawContig(fp) BaseAlignFeature_transformToRawContig((fp))
 #define DNAAlignFeature_transformToSlice(fp,slice) BaseAlignFeature_transformToSlice((fp),(slice))
 
-#define DNAAlignFeature_getSeqRegionStart(daf) SeqFeature_getSeqRegionStart((daf))
-#define DNAAlignFeature_getSeqRegionEnd(daf) SeqFeature_getSeqRegionEnd((daf))
-#define DNAAlignFeature_getSeqRegionStrand(daf) SeqFeature_getSeqRegionStrand((daf))
+#define DNAAlignFeature_getSeqRegionStart(daf) SeqFeature_getSeqRegionStart((SeqFeature *)(daf))
+#define DNAAlignFeature_getSeqRegionEnd(daf) SeqFeature_getSeqRegionEnd((SeqFeature *)(daf))
+#define DNAAlignFeature_getSeqRegionStrand(daf) SeqFeature_getSeqRegionStrand((SeqFeature *)(daf))
 
 #define DNAAlignFeature_free(fp) BaseAlignFeature_free((fp))
 // Why go down the inheritance tree here??

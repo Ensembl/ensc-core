@@ -818,7 +818,7 @@ void RunnableDB_readAndCheckConfig(RefineSolexaGenes *rsg, char *configFile, cha
     exit(1);
   }
   const char *databasesFile = config_setting_get_string(databasesFileSetting);
-  RunnableDB_readDatabaseConfig(rsg, databasesFile); 
+  RunnableDB_readDatabaseConfig(rsg, (char *)databasesFile);
 
   cfgBlock = config_lookup(&cfg, blockName);
   if (cfgBlock == NULL) {
@@ -2918,7 +2918,7 @@ Vector *RefineSolexaGenes_makeModels(RefineSolexaGenes *rsg, StringHash *paths, 
         for (k=0;k<Vector_getNumElement(newExons); k++) {
           SeqFeature *sf = Vector_getElementAt(newExons,k);
           if (sf->objectType == CLASS_EXON) {
-            Exon_freeImpl(sf);
+            Exon_freeImpl((Exon *)sf);
           }
         }
         Vector_free(newExons);
@@ -2953,7 +2953,7 @@ Vector *RefineSolexaGenes_makeModels(RefineSolexaGenes *rsg, StringHash *paths, 
         for (k=0;k<Vector_getNumElement(newExons); k++) {
           SeqFeature *sf = Vector_getElementAt(newExons,k);
           if (sf->objectType == CLASS_EXON) {
-            Exon_freeImpl(sf);
+            Exon_freeImpl((Exon *)sf);
           }
         }
         Vector_free(newExons);
@@ -6759,7 +6759,7 @@ Transcript *TranslationUtils_addORFToTranscript(ORFRange *orf, Transcript *trans
 
   if (!translationStart || !translationEnd || !translationStartExon || !translationEndExon) {
     char idStr[1024];
-    fprintf(stderr,"problems making the translation for %s\n", GeneBuildUtils_getId(transcript, idStr));
+    fprintf(stderr,"problems making the translation for %s\n", GeneBuildUtils_getId((SeqFeature *)transcript, idStr));
     fprintf(stderr,"translationStart %ld translationEnd %ld translationStartExon %p translationEndExon %p\n",
             translationStart, translationEnd, translationStartExon, translationEndExon);
     return transcript;
@@ -7247,7 +7247,7 @@ void RefineSolexaGenes_parseIntronBamFilesConfig(RefineSolexaGenes *rsg, config_
         Vector_addElement(groupNames, StrUtil_copyString(&tmp, (char *)val, 0));
       }
     }
-    Vector_addElement(intronBamFiles, IntronBamConfig_new(file, mixedBam, depth, groupNames));
+    Vector_addElement(intronBamFiles, IntronBamConfig_new((char *)file, mixedBam, depth, groupNames));
   }
 
   RefineSolexaGenes_setIntronBamFiles(rsg, intronBamFiles);
@@ -7418,7 +7418,7 @@ DBAdaptor *BaseGeneBuild_getDbAdaptor(RefineSolexaGenes *rsg, char *alias, int i
 */
         const char *pass;
         config_setting_lookup_string(section, "pass", &pass);
-        db = DBAdaptor_new(host, user,  pass, dbName, port, NULL);
+        db = DBAdaptor_new((char *)host, (char *)user, (char *)pass, (char *)dbName, port, NULL);
        // $db = Bio::EnsEMBL::DBSQL::DBAdaptor->new(%$constructor_args);
         // it's a core db so try to attach dna_db
         tryToAttachDnaDb = 1;
@@ -7443,7 +7443,7 @@ DBAdaptor *BaseGeneBuild_getDbAdaptor(RefineSolexaGenes *rsg, char *alias, int i
             fprintf(stderr, "You're using an empty string as dna_dbname in your Databases config file\n"); 
             exit(1);
           } 
-          DBAdaptor *dnaDb = BaseGeneBuild_getDbAdaptor(rsg, DNA_DBNAME, 0, 0);
+          DBAdaptor *dnaDb = BaseGeneBuild_getDbAdaptor(rsg, (char *)DNA_DBNAME, 0, 0);
 
           // try to get default asm+ species name for OTHER db - does not work
           // for comapra database
