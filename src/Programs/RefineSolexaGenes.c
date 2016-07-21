@@ -411,7 +411,7 @@ int main(int argc, char *argv[]) {
      RefineSolexaGenes_version();
    }
    else if (!strcmp(arg, "-h") || !strcmp(arg,"--help")) {
-     RefineSolexaGenes_usage(1);
+     RefineSolexaGenes_usage(0);
    }
    else if (!strcmp(arg, "-d") || !strcmp(arg,"--dry_run")) {
       dryRun = 1;
@@ -510,14 +510,15 @@ int main(int argc, char *argv[]) {
       char typeName[1024];
       char *typePref = RefineSolexaGenes_getTypePrefix(rsg);
 
-      sprintf(typeName, "%s_%sc%d_nc%d", RefineSolexaGenes_getBestScoreType(rsg), typePref, (int)consLim, (int)nonConsLim);
-      RefineSolexaGenes_setBestScoreType(rsg, typeName);
+      //sprintf(typeName, "%s_%sc%d_nc%d", RefineSolexaGenes_getBestScoreType(rsg), typePref, (int)consLim, (int)nonConsLim);
+      //RefineSolexaGenes_setBestScoreType(rsg, typeName);
 
-      sprintf(typeName, "%s_%sc%d_nc%d", RefineSolexaGenes_getSingleExonModelType(rsg), typePref, (int)consLim, (int)nonConsLim);
-      RefineSolexaGenes_setSingleExonModelType(rsg, typeName);
+      //sprintf(typeName, "%s_%sc%d_nc%d", RefineSolexaGenes_getSingleExonModelType(rsg), typePref, (int)consLim, (int)nonConsLim);
+      //RefineSolexaGenes_setSingleExonModelType(rsg, typeName);
 
-      sprintf(typeName, "%s_%sc%d_nc%d", logicName, typePref, (int)consLim, (int)nonConsLim);
-      RefineSolexaGenes_setAnalysis(rsg, RefineSolexaGenes_createAnalysisObject(rsg, typeName));
+      //sprintf(typeName, "%s_%sc%d_nc%d", logicName, typePref, (int)consLim, (int)nonConsLim);
+      //RefineSolexaGenes_setAnalysis(rsg, RefineSolexaGenes_createAnalysisObject(rsg, typeName));
+      RefineSolexaGenes_setAnalysis(rsg, RefineSolexaGenes_createAnalysisObject(rsg, logicName));
 
       RefineSolexaGenes_fetchInput(rsg);
       RefineSolexaGenes_run(rsg);
