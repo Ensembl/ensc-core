@@ -393,16 +393,6 @@ int main(int argc, char *argv[]) {
   logfp = stderr;
 
 
-/*
-  char *defaultLogicName = "refine_all";
-  char *logicName;
-  if (argc > 2) {
-    logicName = argv[2];
-  } else {
-    logicName = defaultLogicName;
-  }
-*/
-
   char *logicName;
   char *configFile;
   char *inputId;
@@ -931,7 +921,6 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
   // we want to fetch and store all the rough transcripts at the beginning - speeds things up
   // also we want to take out tiny introns - merge them into longer structures
   if (RefineSolexaGenes_getPrelimGenes(rsg) == NULL) {
-  //if (1) {
     Slice *geneSlice =  SliceAdaptor_fetchByRegion(RefineSolexaGenes_getGeneSliceAdaptor(rsg),
                                                    "toplevel",
                                                    Slice_getSeqRegionName(slice),
@@ -1094,9 +1083,7 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
 
       hts_idx_destroy(idx);
       bam_hdr_destroy(header);
-      if (verbosity > 1) fprintf(stderr,"after index destroy\n");
       hts_close(sam);
-      if (verbosity > 1) fprintf(stderr,"after sam close\n");
     }
   } else {
     // pre fetch all the intron features
@@ -1172,17 +1159,6 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
       Vector *exons = RefineSolexaGenes_mergeExons(rsg, gene, strand);
       Vector_sort(exons, SeqFeature_startCompFunc);
 
-/*
-#      foreach my $exon ( @exons ) {
-#        print  "EXTRAEXON: " . 
-#          $exon->seq_region_name ." " .
-#            ($exon->start +20) ." " .
-#              ($exon->end -20)." " .
-#                ( $exon->end - $exon->start -40)  ."\n"
-#                  if $exon->{"_extra"} ;
-#      }
-*/
-   
       int exonCount = Vector_getNumElement(exons);
 // Doesn't seem to be used      Vector *fakeIntrons = Vector_new();
       StringHash *knownExons = StringHash_new(STRINGHASH_SMALL);
@@ -1267,7 +1243,6 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
             // left and right in order to determine whether to put in 
             // a non consensus intron
             if (DNAAlignFeature_getEnd(intron) <= Exon_getEnd(exon)) {
-              //if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) {
               if (DNAAlignFeature_getFlags(intron) & RSGINTRON_NONCANON) {
                 if (DNAAlignFeature_getScore(intron) > 1) {
                   Vector_addElement(leftNonConsIntrons, intron);
@@ -1277,7 +1252,6 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
               }
             }
             if (DNAAlignFeature_getStart(intron) >= Exon_getStart(exon)) {
-              //if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical")) {
               if (DNAAlignFeature_getFlags(intron) & RSGINTRON_NONCANON) {
                 if (DNAAlignFeature_getScore(intron) > 1) {
                   Vector_addElement(rightNonConsIntrons, intron);
@@ -1394,14 +1368,6 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
           }
         }
 
-/* Does nothing
-        if ( scalar(@left_c_introns)  == 0 && scalar(@left_nc_introns)  > 0) {
-         # print STDERR "using " . scalar(@left_nc_introns) . " NC left \n";
-        } 
-        if ( scalar(@right_c_introns)  == 0 && scalar(@right_nc_introns)  > 0 ) {
-         # print STDERR "using " . scalar(@right_nc_introns) . " NC right \n";
-        }
-*/
         //fprintf(stderr, "Have %d exons %d filteredIntrons and %d retainedIntrons\n",  Vector_getNumElement(exons),
        //      Vector_getNumElement(filteredIntrons),
        //      Vector_getNumElement(retainedIntrons));
@@ -1475,22 +1441,6 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
 
           // sort first by start then by end where start is the same
           Vector_sort(retainedIntrons, SeqFeature_startEndCompFunc);
-/* This is just sorting by end after doing the start sort, so do that in one in the sort func
-          int m;
-// Think need the -1
-          for (m=0; m < Vector_getNumElement(retainedIntrons)-1; m++) {
-            DNAAlignFeature *retainedIntron = Vector_getElementAt(retainedIntrons, m);
-            DNAAlignFeature *retainedIntronP1 = Vector_getElementAt(retainedIntrons, m+1);
-
-            if (DNAAlignFeature_getStart(retainedIntron) == DNAAlignFeature_getStart(retainedIntronP1) &&
-                DNAAlignFeature_getEnd(retainedIntron) > DNAAlignFeature_getEnd(retainedIntronP1)) {
-              // reverse the order
-              my $temp =  $retained_introns[m];
-              $retained_introns[m] = $retained_introns[m+1];
-              $retained_introns[m+1] = $temp;
-            }
-          }
-*/
 
           // now lets deal with any retained introns we have
 //  RETAINED: 
@@ -1589,17 +1539,6 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
               Vector_insertElementAt(exons, j+k, ex);
               //fprintf(stderr,"Adding exon %p %ld %ld at %d\n", ex, Exon_getStart(ex), Exon_getEnd(ex), j+k);
             }
-/*  Doesn't seem to do anything
-            for ( my $i = 0 ; $i<= $#exons ; $i++ ) {
-              my $e = $exons[$i];
-            }
-*/
-/*
-            for (k=j; k<j+Vector_getNumElement(newExons);k++) {
-              Exon *ex = Vector_getElementAt(exons, k);
-              fprintf(stderr,"Added exon %ld %ld at %d\n", Exon_getStart(ex), Exon_getEnd(ex), k);
-            }
-*/
             //fprintf(logfp, "ADDED %d new exons\n", Vector_getNumElement(newExons));
             exonCount += (Vector_getNumElement(newExons) -1); // was $#new_exons;
             // make sure they are all stil sorted
@@ -1649,14 +1588,6 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
 
           int nPath = StringHash_getNumValues(paths);
 
-/*
-          int m;
-          IDType totLen = 0;
-          for (m=0;m<StringHash_getNumValues(paths);m++) {
-            totLen+=strlen(pathKeys[m])+1;
-          }
-          fprintf(stderr,"Total length of path strings  = "IDFMTSTR"\n", totLen);
-*/
 
           // Note reason for making this array to store the paths to delete is to save space - the path strings can take up a lot of memory
           // so making a copy of the keys is expensive in both space and time terms. It's difficult to use the uncopied strings because we're
@@ -1770,9 +1701,6 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
             }
           }
 
-          //for (k=0; k<nPath; k++) {
-          //  free(pathKeys[k]);
-          //}
           free(pathKeys);
           free(pathsToRemove);
           
@@ -1842,12 +1770,6 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
       
       // filter to identify 'best', 'other' and 'bad' models
       //fprintf(stderr,"XXXXXXXXXXXXX Have %d in cleanClusters\n", Vector_getNumElement(cleanClusters));
-//      int nFinal = 0;
-//      int x;
-//      for (x=0;x<Vector_getNumElement(cleanClusters);x++) {
-//        ModelCluster *mc = Vector_getElementAt(cleanClusters, x);
-//        if (mc->finalModels) nFinal += Vector_getNumElement(mc->finalModels);
-//      }
       //fprintf(stderr,"Number of final models in CLEAN clusters = %d\n", nFinal);
 
       RefineSolexaGenes_filterModels(rsg, cleanClusters);
@@ -1983,12 +1905,6 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
 // NIY: Do we need to free models contents too??
     Vector_setFreeFunc(models, ModelCluster_free);
     //fprintf(stderr,"XXXXXXXXXXXXXXX Have %d in models\n", Vector_getNumElement(models));
-//    int nFinal = 0;
-//    int x;
-//    for (x=0;x<Vector_getNumElement(models);x++) {
-//      ModelCluster *mc = Vector_getElementAt(models, x);
-//      if (mc->finalModels) nFinal += Vector_getNumElement(mc->finalModels);
-//    }
     //fprintf(stderr,"Number of final models in all clusters = %d\n", nFinal);
     Vector_free(models);
     MallocExtension_ReleaseFreeMemory();
@@ -4093,7 +4009,6 @@ StringHash *RefineSolexaGenes_processPaths(RefineSolexaGenes *rsg, Vector *exons
     if (verbosity > 0) fprintf(stderr, "variants is NULL\n");
   }
   
-// ??? why &! rather than && ! if ($strict &! $removed ) {
   if (strict && !removed) {
     Exon *firstExon = Vector_getElementAt(exons, 0);
 
@@ -4601,14 +4516,11 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
     // if mates > 2 then we have a possibility of adding in some extra exons into our rough models
     // as the read has spliced into and out of an exon
     // lets make them unique
-//    if (Vector_getNumElement(mates) > 2) {
     if (nMate > 2) {
       char keyString[2048]; keyString[0]='\0';
       long coords[1024]; // Hopefully won't have more than this!
       int nCoord = 0;
 
-      //for (i=0; i<Vector_getNumElement(mates); i++) {
-      //  CigarBlock *mate = Vector_getElementAt(mates, i);
       for (i=0; i<nMate; i++) {
         CigarBlock *mate = mates[i];
 
@@ -4620,7 +4532,6 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
           sprintf(keyString, "%s%ld:", keyString, start);
           coords[nCoord++] = start;
         }
-//        if (i < Vector_getNumElement(mates)-1) {
         if (i < nMate-1) {
           sprintf(keyString,"%s%ld:", keyString, end);
           coords[nCoord++] = end;
@@ -4984,9 +4895,6 @@ int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam_hdr_t *hea
         //Vector_addElement(ugfs, block);
         currentBlock = NULL;
       } else {
-        //if (currentBlock) {
-        //  CigarBlock_free(currentBlock);
-        //}
         currentBlock = block;
       }
 
@@ -5026,10 +4934,6 @@ int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam_hdr_t *hea
     fprintf(stderr,"Error parsing cigar string - don't have two M regions surrounding an N region (intron).\nBam entry = %s\n", ks_str(bamline));
     exit(1);
   } 
-  //if (currentBlock) {
-  //  CigarBlock_free(currentBlock);
-  //}
-  //if (Vector_getNumElement(ugfs) != nIntron+1) {
   if (nBlock != nIntron+1  && nIntron > 0) {
     fprintf(stderr,"Error parsing cigar string - don't have the expected number of blocks (%d) for %d introns (have %d)\n", 
             nIntron+1, nIntron, nBlock);
