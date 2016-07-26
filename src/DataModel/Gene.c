@@ -299,14 +299,16 @@ char *Gene_setDescription(Gene *g, char *description) {
 }
 
 char *Gene_setCanonicalAnnotation(Gene *g, char *canonicalAnnotation) {
-  if ((g->canonicalAnnotation = (char *)malloc(strlen(canonicalAnnotation)+1)) == NULL) {
-    fprintf(stderr,"ERROR: Failed allocating space for canonicalAnnotation\n");
-    return NULL;
-  }
-
-  strcpy(g->canonicalAnnotation,canonicalAnnotation);
-
-  return g->canonicalAnnotation;
+  fprintf(stderr, "DEPRECATED: This column has been removed in 74.\n  It does not set anything and it just returns NULL\n");
+  return NULL;
+//  if ((g->canonicalAnnotation = (char *)malloc(strlen(canonicalAnnotation)+1)) == NULL) {
+//    fprintf(stderr,"ERROR: Failed allocating space for canonicalAnnotation\n");
+//    return NULL;
+//  }
+//
+//  strcpy(g->canonicalAnnotation,canonicalAnnotation);
+//
+//  return g->canonicalAnnotation;
 }
 
 
