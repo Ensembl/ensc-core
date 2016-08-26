@@ -285,6 +285,8 @@ void RefineSolexaGenes_usage(int exit_code);
 void RefineSolexaGenes_dumpConfig(RefineSolexaGenes *rsg);
 
 int SeqFeat_lengthCompFunc(const void *a, const void *b);
+void updateDuplicatedGeneBiotype(Gene *gene);
+int isGeneDuplicated(RefineSolexaGenes *rsg, Vector *indexes, Vector *genes, Gene *gene);
 void RefineSolexaGenes_filterGenes(RefineSolexaGenes *rsg);
 
 // To move
