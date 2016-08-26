@@ -5545,121 +5545,123 @@ int RefineSolexaGenes_binSearchIntrons(RefineSolexaGenes *rsg, Vector *introns, 
 Vector *RefineSolexaGenes_fetchIntronFeatures(RefineSolexaGenes *rsg, long start, long end, long *offsetP) {
   Vector *sfs = RefineSolexaGenes_getIntronFeatures(rsg);
 
-  long intronStart = 0;
-  if (*offsetP) { 
-    intronStart = *offsetP;
-  } else {
-    intronStart = RefineSolexaGenes_binSearchIntrons(rsg, sfs, start);
-  }
+  Vector *filteredIntrons = Vector_new();
+  if (Vector_getNumElement(sfs)) {
+    long intronStart = 0;
+    if (*offsetP) {
+      intronStart = *offsetP;
+    } else {
+      intronStart = RefineSolexaGenes_binSearchIntrons(rsg, sfs, start);
+    }
 
-  int index = -1;
+    int index = -1;
 
-  Vector *chosenSf = Vector_new();
+    Vector *chosenSf = Vector_new();
 
-  Vector_setBatchSize(chosenSf, 200);
+    Vector_setBatchSize(chosenSf, 200);
 
-  //fprintf(stderr, "Have %d intron features in fetchIntronFeatures. OffsetP = %ld intronStart = %ld\n", Vector_getNumElement(sfs), *offsetP, intronStart);
+    //fprintf(stderr, "Have %d intron features in fetchIntronFeatures. OffsetP = %ld intronStart = %ld\n", Vector_getNumElement(sfs), *offsetP, intronStart);
 
-  // sfs is a sorted array
-  int i;
-  for (i=intronStart; i<Vector_getNumElement(sfs); i++) {
-    DNAAlignFeature *intron = Vector_getElementAt(sfs, i);
+    // sfs is a sorted array
+    int i;
+    for (i=intronStart; i<Vector_getNumElement(sfs); i++) {
+      DNAAlignFeature *intron = Vector_getElementAt(sfs, i);
 
-/*
-    fprintf(stderr, " in first loop %ld %ld %d %f %s\n", 
-            DNAAlignFeature_getStart(intron),
-            DNAAlignFeature_getEnd(intron),
-            DNAAlignFeature_getStrand(intron),
-            DNAAlignFeature_getScore(intron),
-            DNAAlignFeature_getHitSeqName(intron));
-*/
+  /*
+      fprintf(stderr, " in first loop %ld %ld %d %f %s\n",
+              DNAAlignFeature_getStart(intron),
+              DNAAlignFeature_getEnd(intron),
+              DNAAlignFeature_getStrand(intron),
+              DNAAlignFeature_getScore(intron),
+              DNAAlignFeature_getHitSeqName(intron));
+  */
 
-    if (DNAAlignFeature_getStart(intron) > end) break;
+      if (DNAAlignFeature_getStart(intron) > end) break;
 
-    if (DNAAlignFeature_getStart(intron) <= end && DNAAlignFeature_getEnd(intron) >= start) {
-      Vector_addElement(chosenSf, intron);
+      if (DNAAlignFeature_getStart(intron) <= end && DNAAlignFeature_getEnd(intron) >= start) {
+        Vector_addElement(chosenSf, intron);
 
-      // remember the position of the 1st intron to overlap
-      // this exon - we will start counting from here next time
-// Note perl used unless $index so 0 is ignored - I've put in index==0 to emulate that but its a bit horrid and probably a bug
-// in the perl
-//      if (index == -1 || index == 0) {
-// Do as <1 for now (hopefully faster) - but take note of above note about perl behaviour
-      if (index < 1) {
- //       fprintf(stderr,"Setting index to %d\n", index);
-        index = i;
+        // remember the position of the 1st intron to overlap
+        // this exon - we will start counting from here next time
+  // Note perl used unless $index so 0 is ignored - I've put in index==0 to emulate that but its a bit horrid and probably a bug
+  // in the perl
+  //      if (index == -1 || index == 0) {
+  // Do as <1 for now (hopefully faster) - but take note of above note about perl behaviour
+        if (index < 1) {
+   //       fprintf(stderr,"Setting index to %d\n", index);
+          index = i;
+        }
       }
     }
-  }
 
-  Vector *filteredIntrons = Vector_new();
-// INTRON: 
-  int startCompInd = 0;
-  for (i=0; i<Vector_getNumElement(chosenSf); i++) {
-    DNAAlignFeature *intron = Vector_getElementAt(chosenSf, i);
+  // INTRON:
+    int startCompInd = 0;
+    for (i=0; i<Vector_getNumElement(chosenSf); i++) {
+      DNAAlignFeature *intron = Vector_getElementAt(chosenSf, i);
 
-/*
-    fprintf(stderr, " in loop %ld %ld %d %f %s\n", 
-            DNAAlignFeature_getStart(intron),
-            DNAAlignFeature_getEnd(intron),
-            DNAAlignFeature_getStrand(intron),
-            DNAAlignFeature_getScore(intron),
-            DNAAlignFeature_getHitSeqName(intron));
-*/
+  /*
+      fprintf(stderr, " in loop %ld %ld %d %f %s\n",
+              DNAAlignFeature_getStart(intron),
+              DNAAlignFeature_getEnd(intron),
+              DNAAlignFeature_getStrand(intron),
+              DNAAlignFeature_getScore(intron),
+              DNAAlignFeature_getHitSeqName(intron));
+  */
 
-//    if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical"))
-    if (DNAAlignFeature_getFlags(intron) & RSGINTRON_NONCANON) {
-      // check it has no overlap with any consensus introns
-      // unless it out scores a consensus intron
-      int done = 0;
-      int j;
-      for (j=startCompInd; j<Vector_getNumElement(chosenSf) && !done; j++) {
-        DNAAlignFeature *compIntron = Vector_getElementAt(chosenSf, j);
+  //    if (strstr(DNAAlignFeature_getHitSeqName(intron), "non canonical"))
+      if (DNAAlignFeature_getFlags(intron) & RSGINTRON_NONCANON) {
+        // check it has no overlap with any consensus introns
+        // unless it out scores a consensus intron
+        int done = 0;
+        int j;
+        for (j=startCompInd; j<Vector_getNumElement(chosenSf) && !done; j++) {
+          DNAAlignFeature *compIntron = Vector_getElementAt(chosenSf, j);
 
-        // Optimisation - break out of loop once there can no longer be overlap (start of compIntron > end of intron) - remember introns are sorted
-        // Doesn't seem to help performance much in tests but I think maybe in extreme cases it will help so leave for now
-        if (DNAAlignFeature_getEnd(intron) < DNAAlignFeature_getStart(compIntron)) break;
+          // Optimisation - break out of loop once there can no longer be overlap (start of compIntron > end of intron) - remember introns are sorted
+          // Doesn't seem to help performance much in tests but I think maybe in extreme cases it will help so leave for now
+          if (DNAAlignFeature_getEnd(intron) < DNAAlignFeature_getStart(compIntron)) break;
 
-        //if (strstr(DNAAlignFeature_getHitSeqName(compIntron), "non canonical") == NULL) 
-        if (!(DNAAlignFeature_getFlags(compIntron) & RSGINTRON_NONCANON)) {
-          if (DNAAlignFeature_getStrand(intron) == DNAAlignFeature_getStrand(compIntron) &&
-              DNAAlignFeature_getEnd(intron)    >  DNAAlignFeature_getStart(compIntron) && 
-              DNAAlignFeature_getStart(intron)  <  DNAAlignFeature_getEnd(compIntron)) {
-            // Done flag replaces thisnext INTRON if $intron->score <= $i->score;
-            if (DNAAlignFeature_getScore(intron) <= DNAAlignFeature_getScore(compIntron)) {
-              done = 1;
+          //if (strstr(DNAAlignFeature_getHitSeqName(compIntron), "non canonical") == NULL)
+          if (!(DNAAlignFeature_getFlags(compIntron) & RSGINTRON_NONCANON)) {
+            if (DNAAlignFeature_getStrand(intron) == DNAAlignFeature_getStrand(compIntron) &&
+                DNAAlignFeature_getEnd(intron)    >  DNAAlignFeature_getStart(compIntron) &&
+                DNAAlignFeature_getStart(intron)  <  DNAAlignFeature_getEnd(compIntron)) {
+              // Done flag replaces thisnext INTRON if $intron->score <= $i->score;
+              if (DNAAlignFeature_getScore(intron) <= DNAAlignFeature_getScore(compIntron)) {
+                done = 1;
+              }
             }
           }
         }
-      }
-      if (!done) {
+        if (!done) {
+          Vector_addElement(filteredIntrons, intron);
+        }
+      } else {
         Vector_addElement(filteredIntrons, intron);
       }
-    } else {
-      Vector_addElement(filteredIntrons, intron);
     }
+
+    //fprintf(stderr,"index = %d\n",index);
+    if (index != -1) {
+      *offsetP = index;
+    }
+
+
+    //fprintf(stderr,"filteredIntrons :\n");
+  /*
+    for (i=0; i<Vector_getNumElement(filteredIntrons); i++) {
+      DNAAlignFeature *intron = Vector_getElementAt(filteredIntrons, i);
+      fprintf(stderr, " %ld %ld %d %f %s\n",
+              DNAAlignFeature_getStart(intron),
+              DNAAlignFeature_getEnd(intron),
+              DNAAlignFeature_getStrand(intron),
+              DNAAlignFeature_getScore(intron),
+              DNAAlignFeature_getHitSeqName(intron));
+    }
+  */
+
+    Vector_free(chosenSf);
   }
-
-  //fprintf(stderr,"index = %d\n",index);
-  if (index != -1) {
-    *offsetP = index;
-  }
-
-
-  //fprintf(stderr,"filteredIntrons :\n");
-/*
-  for (i=0; i<Vector_getNumElement(filteredIntrons); i++) {
-    DNAAlignFeature *intron = Vector_getElementAt(filteredIntrons, i);
-    fprintf(stderr, " %ld %ld %d %f %s\n", 
-            DNAAlignFeature_getStart(intron),
-            DNAAlignFeature_getEnd(intron),
-            DNAAlignFeature_getStrand(intron),
-            DNAAlignFeature_getScore(intron),
-            DNAAlignFeature_getHitSeqName(intron));
-  }
-*/
-
-  Vector_free(chosenSf);
   
   return filteredIntrons;
 }
