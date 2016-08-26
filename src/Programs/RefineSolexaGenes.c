@@ -1103,8 +1103,11 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
 }
 
 void  RefineSolexaGenes_run(RefineSolexaGenes *rsg) {
+//  fprintf(stderr, "RUN\n");
   RefineSolexaGenes_refineGenes(rsg);
+//  fprintf(stderr, "FILTER\n");
   RefineSolexaGenes_filterGenes(rsg);
+//  fprintf(stderr, "DONE\n");
 }
 
 int isGeneDuplicated(RefineSolexaGenes *rsg, Vector *indexes, Vector *genes, Gene *gene) {
@@ -2763,7 +2766,7 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
   Vector_free(fwd);
   Vector_free(rev);
 
-  //fprintf(stderr, " got %d model clusters\n", Vector_getNumElement(models));
+  fprintf(stderr, " got %d model clusters\n", Vector_getNumElement(models));
 
   for (i=0; i<Vector_getNumElement(models); i++) {
     ModelCluster *cluster = Vector_getElementAt(models, i);
