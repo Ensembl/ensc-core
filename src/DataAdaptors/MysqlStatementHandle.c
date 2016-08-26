@@ -212,8 +212,11 @@ IDType MysqlStatementHandle_getInsertId(StatementHandle *sth) {
   insertId = mysql_insert_id(m_sth->dbc->mysql);
 
   if (insertId == 0) {
-    fprintf(stderr, "Warning: Insert id was 0\n");
-    //ProcUtil_showBacktrace(EnsC_progName);
+    //If we do a INSERT IGNORE and insertId equals 0, it just means that the row already exists
+    if (strncmp(sth->statementFormat, "INSERT IGNORE", sizeof(char)*13)) {
+      fprintf(stderr, "Warning: Insert id was 0\n%s\n", sth->statementFormat);
+      //ProcUtil_showBacktrace(EnsC_progName);
+    }
   }
 
   return insertId;
