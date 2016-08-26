@@ -773,11 +773,7 @@ RefineSolexaGenes *RefineSolexaGenes_new(char *configFile, char *logicName) {
 
   rsg->adaptorAliasHash = StringHash_new(STRINGHASH_SMALL);
 
-// Hack for now to allow me to run without configuration 
   if (configFile) {
-//    fprintf(stderr, "Error: Config file specified but config reading not implemented - bye!\n");
-//    exit(1);
-// HACK: For now pass in a logicName rather than doing through analysis
     RunnableDB_readAndCheckConfig(rsg, configFile, "Config.REFINESOLEXAGENES_CONFIG_BY_LOGIC", logicName);
   } else {
     fprintf(stderr, "WARNING: Running without reading config (config reading not implemented)\n");
@@ -6154,7 +6150,6 @@ void RefineSolexaGenes_setIntronFeatures(RefineSolexaGenes *rsg, Vector *feature
   int verbosity = RefineSolexaGenes_getVerbosity(rsg);
   if (rsg->intronFeatures != NULL) {
     if (verbosity > 0) fprintf(stderr, "Trying to set intronFeatures when its already set - may want append behaviour which isn't implemented - assuming you want replace, so freeing old set\n");
-//    exit(1);
     Vector_setFreeFunc(rsg->intronFeatures, DNAAlignFeature_freeImpl);
     Vector_free(rsg->intronFeatures);
   }
