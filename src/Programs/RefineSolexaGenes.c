@@ -7511,3 +7511,15 @@ void RunnableDB_readDatabaseConfig(RefineSolexaGenes *rsg, char *configFile) {
   RefineSolexaGenes_setDatabaseConfig(rsg, cfgBlock);
 }
 
+int SeqFeat_lengthCompFunc(const void *a, const void *b) {
+  SeqFeature *e1 = *((SeqFeature **)a);
+  SeqFeature *e2 = *((SeqFeature **)b);
+
+  if (SeqFeature_getLength(e1) > SeqFeature_getLength(e2)) {
+    return 1;
+  } else if (SeqFeature_getLength(e1) < SeqFeature_getLength(e2)) {
+    return -1;
+  } else {
+    return 0;
+  }
+}

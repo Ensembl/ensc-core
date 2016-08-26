@@ -281,6 +281,7 @@ void RefineSolexaGenes_usage(int exit_code);
 
 void RefineSolexaGenes_dumpConfig(RefineSolexaGenes *rsg);
 
+int SeqFeat_lengthCompFunc(const void *a, const void *b);
 void RefineSolexaGenes_filterGenes(RefineSolexaGenes *rsg);
 
 // To move
