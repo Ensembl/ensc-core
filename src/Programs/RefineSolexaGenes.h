@@ -109,7 +109,8 @@ typedef struct RefineSolexaGenesStruct {
   double restartNonConsLim;
 
   
-  double filterOnOverlapThreshold;
+  int filterOnOverlapThreshold;
+  int isOneThreshold;
   double minSingleExonCDSPercLength;
   double rejectIntronCutoff;
   double retainedIntronPenalty;
@@ -244,6 +245,8 @@ void RefineSolexaGenes_setMax5PrimeLength(RefineSolexaGenes *rsg, int max5PrimeL
 int RefineSolexaGenes_getMax5PrimeLength(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setFilterOnOverlapThreshold(RefineSolexaGenes *rsg, int filterOnOverlapThreshold);
 int RefineSolexaGenes_getFilterOnOverlapThreshold(RefineSolexaGenes *rsg);
+void RefineSolexaGenes_setIsOneThreshold(RefineSolexaGenes *rsg, int isOneThreshold);
+int RefineSolexaGenes_getIsOneThreshold(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setRejectIntronCutoff(RefineSolexaGenes *rsg, double rejectIntronCutoff);
 double RefineSolexaGenes_getRejectIntronCutoff(RefineSolexaGenes *rsg);
 

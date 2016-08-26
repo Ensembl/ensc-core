@@ -640,6 +640,8 @@ void RefineSolexaGenes_initSetFuncs(RefineSolexaGenes *rsg) {
   StringHash_add(rsg->funcHash, "RETAINED_INTRON_PENALTY", SetFuncData_new(RefineSolexaGenes_setRetainedIntronPenalty, CONFIG_TYPE_FLOAT));
   StringHash_add(rsg->funcHash, "MIN_INTRON_SIZE", SetFuncData_new(RefineSolexaGenes_setMinIntronSize, CONFIG_TYPE_INT));
   StringHash_add(rsg->funcHash, "MAX_INTRON_SIZE", SetFuncData_new(RefineSolexaGenes_setMaxIntronSize, CONFIG_TYPE_INT));
+  StringHash_add(rsg->funcHash, "INTRON_OVERLAP_THRESHOLD", SetFuncData_new(RefineSolexaGenes_setFilterOnOverlapThreshold, CONFIG_TYPE_INT));
+  StringHash_add(rsg->funcHash, "IS_ONE_THRESHOLD", SetFuncData_new(RefineSolexaGenes_setIsOneThreshold, CONFIG_TYPE_INT));
   StringHash_add(rsg->funcHash, "SINGLE_EXON_MODEL", SetFuncData_new(RefineSolexaGenes_setSingleExonModelType, CONFIG_TYPE_STRING));
   StringHash_add(rsg->funcHash, "MIN_SINGLE_EXON", SetFuncData_new(RefineSolexaGenes_setMinSingleExonLength, CONFIG_TYPE_INT));
   StringHash_add(rsg->funcHash, "SINGLE_EXON_CDS", SetFuncData_new(RefineSolexaGenes_setMinSingleExonCDSPercLength, CONFIG_TYPE_FLOAT));
@@ -6187,6 +6189,14 @@ void RefineSolexaGenes_setFilterOnOverlapThreshold(RefineSolexaGenes *rsg, int f
 
 int RefineSolexaGenes_getFilterOnOverlapThreshold(RefineSolexaGenes *rsg) {
   return rsg->filterOnOverlapThreshold;
+}
+
+void RefineSolexaGenes_setIsOneThreshold(RefineSolexaGenes *rsg, int isOneThreshold) {
+  rsg->isOneThreshold = isOneThreshold;
+}
+
+int RefineSolexaGenes_getIsOneThreshold(RefineSolexaGenes *rsg) {
+  return rsg->isOneThreshold;
 }
 
 void RefineSolexaGenes_setVerbosity(RefineSolexaGenes *rsg, int verbosity) {
