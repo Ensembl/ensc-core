@@ -4705,6 +4705,7 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
   Analysis *analysis = RefineSolexaGenes_getAnalysis(rsg);
   CachingSequenceAdaptor *cachingSeqAdaptor = DBAdaptor_getCachingSequenceAdaptor(Slice_getAdaptor(chrSlice)->dba);
 
+  int min_intron_size = RefineSolexaGenes_getMinIntronSize(rsg)-1;
   for (i=0; i<StringHash_getNumValues(idList); i++) {
     IntronCoords *ic = icArray[i];
 
@@ -4718,7 +4719,8 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
     long length =  ic->nextExonStart - ic->prevExonEnd -1;
 
     char name[2048];
-    if (length > 0) {
+    //I may loose some introns here but as they are smaller than the minimum intron size
+    if (length > min_intron_size) {
       //sprintf(name,"%s:%ld:%ld:%d:", sliceName,
       sprintf(name,"%s:%ld:%ld:%d:", sliceRegName,
                                      ic->prevExonEnd+1,
@@ -4822,40 +4824,75 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
   if (RefineSolexaGenes_getFilterOnOverlapThreshold(rsg)) {
     Vector *tmpArray = Vector_new();
     int threshold = RefineSolexaGenes_getFilterOnOverlapThreshold(rsg);
+    int is_one_threshold = RefineSolexaGenes_getIsOneThreshold(rsg);;
 
     int arrayLength = Vector_getNumElement(ifs);
     if (arrayLength > 1) {
       int j;
       for (j=0; j<arrayLength-1; j++) {
         DNAAlignFeature *ifj = Vector_getElementAt(ifs, j);
-        int k = 0;
-        int count = 1;
-        int overlappedSupport = 0;
-        while (1) {
-          ++k;
-          DNAAlignFeature *ifjpk = Vector_getElementAt(ifs, j+k);
+        if (DNAAlignFeature_getScore(ifj) > threshold) {
+          Vector_addElement(tmpArray, ifj);
+        }
+        else {
+          int k = 0;
+          int overlappedSupport = 0;
+          int is_one = DNAAlignFeature_getScore(ifj) <= is_one_threshold;
+          int add = 0;
+          int count = 0;
+          while (add == 0) {
+            ++k;
+            DNAAlignFeature *ifjpk = Vector_getElementAt(ifs, j+k);
 
-          if (count > threshold) {
-            if (overlappedSupport < DNAAlignFeature_getScore(ifj)) {
-//#            print STDERR "\t",$ifs[$j+$k]->hseqname, ': ', $ifs[$j+$k]->start, ':', $ifs[$j+$k]->end, "\n";
-              Vector_addElement(tmpArray, ifj);
-            } else {
-//#          print STDERR 'THROWING: ', $ifs[$j]->hseqname, ': ', $ifs[$j]->start, ':', $ifs[$j]->end, "\n";
+            if (((j+k) == arrayLength-1) || (DNAAlignFeature_getEnd(ifj) < DNAAlignFeature_getStart(ifjpk))) {
+              //test the other side
+              add = 2;
             }
-            break;
+            else {
+              if (DNAAlignFeature_getStrand(ifj) != DNAAlignFeature_getStrand(ifjpk)) {
+                continue;
+              }
+              if (DNAAlignFeature_getScore(ifj) < DNAAlignFeature_getScore(ifjpk)*0.05) {
+                add = 1;
+              }
+              overlappedSupport += DNAAlignFeature_getScore(ifjpk);
+              ++count;
+            }
+            //If the intron has only one read and it is overlapping intron with 50 reads or more, we skip it
+            if (is_one && DNAAlignFeature_getScore(ifjpk) > 49) {
+              add = 1;
+            }
           }
-          overlappedSupport += DNAAlignFeature_getScore(ifjpk);
+          if (add == 2) {
+            k = 0;
+            while ((j-k) > 0) {
+              ++k;
+              DNAAlignFeature *ifjpk = Vector_getElementAt(ifs, j-k);
 
-          if ((DNAAlignFeature_getEnd(ifj) < DNAAlignFeature_getStart(ifjpk)) || ((j+k) == arrayLength-1)) {
-//#          print STDERR "\t",$ifs[$j+$k]->hseqname, ': ', $ifs[$j+$k]->start, ':', $ifs[$j+$k]->end, "\n";
-            Vector_addElement(tmpArray, ifj);
-            break;
+              if (DNAAlignFeature_getStrand(ifj) != DNAAlignFeature_getStrand(ifjpk)) {
+                continue;
+              }
+              if ((DNAAlignFeature_getEnd(ifj) >= DNAAlignFeature_getStart(ifjpk)) &&
+                (DNAAlignFeature_getStart(ifj) <= DNAAlignFeature_getEnd(ifjpk))) {
+                if (DNAAlignFeature_getScore(ifj) < DNAAlignFeature_getScore(ifjpk)*0.05) {
+                  add = 1;
+                  k = j;
+                }
+                else {
+                  overlappedSupport += DNAAlignFeature_getScore(ifjpk);
+                  ++count;
+                }
+              }
+              //If the intron has only one read and it is overlapping intron with 50 reads or more, we skip it
+              if (is_one && DNAAlignFeature_getScore(ifjpk) > 49) {
+                add = 1;
+                k = j;
+              }
+            }
+            if (add == 2) {
+              Vector_addElement(tmpArray, ifj);
+            }
           }
-//#        print STDERR $ifs[$j+$k]->hseqname, "\n";
-          if (DNAAlignFeature_getStrand(ifj) != DNAAlignFeature_getStrand(ifjpk)) {
-            continue;
-          }
-          ++count;
         }
       }
 // NIY: Free old ifs??
