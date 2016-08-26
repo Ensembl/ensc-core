@@ -2905,15 +2905,23 @@ void RefineSolexaGenes_filterModels(RefineSolexaGenes *rsg, Vector *clusters) {
         if (strcmp(Gene_getBiotype(gene), "duplicate")) {
           if (!strcmp(Gene_getBiotype(gene), RefineSolexaGenes_getBestScoreType(rsg))) {
             // trim the UTR
-            RefineSolexaGenes_pruneUTR(rsg, gene);
-            RefineSolexaGenes_addToOutput(rsg, gene);
+            if (RefineSolexaGenes_pruneUTR(rsg, gene) == 0) {
+              RefineSolexaGenes_addToOutput(rsg, gene);
+            }
+//            else {
+//              Gene_free(gene);
+//            }
             //Vector_setElementAt(finalModels, g, NULL);
           } else {
 // Note here checking for whether other isoforms type is null, other places assume its not null
             if (RefineSolexaGenes_getOtherNum(rsg) && RefineSolexaGenes_getOtherIsoformsType(rsg) != NULL && strlen(RefineSolexaGenes_getOtherIsoformsType(rsg)) != 0 && count <= RefineSolexaGenes_getOtherNum(rsg)) {
               // trim the UTR
-              RefineSolexaGenes_pruneUTR(rsg, gene);
-              RefineSolexaGenes_addToOutput(rsg, gene);
+              if (RefineSolexaGenes_pruneUTR(rsg, gene) == 0) {
+                RefineSolexaGenes_addToOutput(rsg, gene);
+              }
+//            else {
+//              Gene_free(gene);
+//            }
               //Vector_setElementAt(finalModels, g, NULL);
             } else { // Free it
               //Gene_free(gene);
@@ -3464,17 +3472,18 @@ Gene *TranscriptUtils_convertToGene(Transcript *t, Analysis *analysis, char *bio
 }
 
 
-Gene *RefineSolexaGenes_pruneUTR(RefineSolexaGenes *rsg, Gene *gene) {
+//We return 0 if the gene is OK, 1 if the gene failed a test
+int RefineSolexaGenes_pruneUTR(RefineSolexaGenes *rsg, Gene *gene) {
   int verbosity = RefineSolexaGenes_getVerbosity(rsg);
   //fprintf(stderr, "pruneUTR called\n");
   if (!RefineSolexaGenes_trimUTR(rsg)) {
-    return gene;
+    return 0;
   } 
 
   Transcript *transcript = Gene_getTranscriptAt(gene, 0);
   if (!Transcript_getTranslation(transcript)) {
     if (verbosity > 0) fprintf(stderr,"No translation so returning gene unchanged\n");
-    return gene;
+    return 0;
   }
  
   // fetch introns 
@@ -3563,7 +3572,7 @@ Gene *RefineSolexaGenes_pruneUTR(RefineSolexaGenes *rsg, Gene *gene) {
 
     Vector_free(features);
     Vector_free(exons);
-    return gene;
+    return 0;
   }
 
   // first calculate the average
@@ -3891,10 +3900,26 @@ Gene *RefineSolexaGenes_pruneUTR(RefineSolexaGenes *rsg, Gene *gene) {
 
   gene->transcripts = Vector_new();
   Gene_addTranscript(gene, trimmedTran);
+  // filter single exon genes that may have been made through UTR trimming
+//  if (Gene_getExonCount(gene) == 1) {
+//    if (RefineSolexaGenes_getSingleExonModelType(rsg)) {
+//      Exon *exon = Transcript_getExonAt(Gene_getTranscriptAt(gene, 0), 0);
+//      if (Exon_getLength(exon) < RefineSolexaGenes_getMinSingleExonLength(rsg)) {
+//        if (verbosity > 0) fprintf(stderr, "Skipping single exon gene after UTR pruning - length less than MinSingleExonLength\n");
+//        //We don't want to store the gene so we return 1
+//        return 1;
+//      }
+//      Gene_setBiotype(gene, RefineSolexaGenes_getSingleExonModelType(rsg));
+//    } else {
+//      if (verbosity > 0) fprintf(stderr, "Skipping single exon gene after UTR pruning - no SingleExonModelType defined\n");
+//      //We don't want to store the gene so we return 1
+//      return 1;
+//    }
+//  }
 
 // NIY: Free up everything!
 
-  return gene;
+  return 0;
 }
 
 

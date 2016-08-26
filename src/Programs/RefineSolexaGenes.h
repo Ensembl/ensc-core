@@ -174,7 +174,7 @@ int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam_hdr_t *hea
 void RefineSolexaGenes_dnaToIntronFeatures(RefineSolexaGenes *rsg, long start, long end);
 Vector *RefineSolexaGenes_fetchIntronFeatures(RefineSolexaGenes *rsg, long start, long end, long *offsetP);
 Exon *RefineSolexaGenes_makeExon(RefineSolexaGenes *rsg, long start, long end, double score, char *diplayId);
-Gene *RefineSolexaGenes_pruneUTR(RefineSolexaGenes *rsg, Gene *gene);
+int RefineSolexaGenes_pruneUTR(RefineSolexaGenes *rsg, Gene *gene);
 void RefineSolexaGenes_setRecursiveLimit(RefineSolexaGenes *rsg, int limit);
 int RefineSolexaGenes_getRecursiveLimit(RefineSolexaGenes *rsg);
 SliceAdaptor *RefineSolexaGenes_getGeneSliceAdaptor(RefineSolexaGenes *rsg);
