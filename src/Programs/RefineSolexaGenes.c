@@ -66,7 +66,7 @@ static int limit = 0;
 static int nExonClone = 0;
 
 #define EXIT_MEMORY 11
-#define NO_GENES_WRITTEN 2
+#define NO_GENES_WRITTEN 42
 
 FILE *logfp;
 
@@ -448,6 +448,7 @@ int main(int argc, char *argv[]) {
 
     argNum++;
   }
+  int exit_code = EXIT_SUCCESS;
 
   if (verbosity > 0) {
     printf("Program for generating transcript models from RNASeq read alignments\n"
@@ -570,6 +571,9 @@ int main(int argc, char *argv[]) {
         Vector_setFreeFunc(rsg->output, Gene_free);
         Vector_free(rsg->output);
       }
+      else {
+        exit_code = NO_GENES_WRITTEN;
+      }
       //Vector_addElement(outputSets, rsg->output);
       rsg->output = NULL;
     }
@@ -587,7 +591,7 @@ int main(int argc, char *argv[]) {
   //EcoString_getInfo(ecoSTable);
 */
   if (verbosity > 0) tc_malloc_stats();
-  return 0;
+  return exit_code;
 }
 #endif
 
