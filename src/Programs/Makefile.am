@@ -44,13 +44,14 @@ if HAVE_SAMTOOLS
   bamcov_LDADD = $(PROG_LIBS)
   bammap_LDADD = $(PROG_LIBS)
 
-if HAVE_LIBTCMALLOC
 if HAVE_LIBCONFIG
   bin_PROGRAMS += RefineSolexaGenes
   RefineSolexaGenes_SOURCES = RefineSolexaGenes.c RefineSolexaGenes.h 
 
-  PROG_LIBS += -lconfig -ltcmalloc
+  PROG_LIBS += -lconfig
   RefineSolexaGenes_LDADD = $(PROG_LIBS)
+if HAVE_LIBTCMALLOC
+  PROG_LIBS += -ltcmalloc
 endif
 endif
 endif
