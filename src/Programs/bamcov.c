@@ -46,8 +46,8 @@
 #include "StrUtil.h"
 #include "IDHash.h"
 
-#include "sam.h"
-#include "hts.h"
+#include "htslib/sam.h"
+#include "htslib/hts.h"
 
 void       Bamcov_usage();
 int        calcCoverage(char *fName, Slice *slice, htsFile *in, hts_idx_t *idx, int flags);

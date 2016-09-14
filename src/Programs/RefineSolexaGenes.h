@@ -25,8 +25,8 @@
 #include "Analysis.h"
 #include "Transcript.h"
 
-#include "sam.h"
-#include "hts.h"
+#include "htslib/sam.h"
+#include "htslib/hts.h"
 
 #include "libconfig.h"
 

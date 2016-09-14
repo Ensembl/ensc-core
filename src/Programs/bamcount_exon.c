@@ -50,8 +50,8 @@
 #include "Transcript.h"
 
 #include "bamhelper.h"
-#include "sam.h"
-#include "hts.h"
+#include "htslib/sam.h"
+#include "htslib/hts.h"
 
 void       Bamcount_usage();
 int        bamPosNameCompFunc(const void *one, const void *two);

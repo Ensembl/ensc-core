@@ -45,9 +45,9 @@
 #include "gperftools/tcmalloc.h"
 #endif
 
-#include "kstring.h"
-#include "sam.h"
-#include "hts.h"
+#include "htslib/kstring.h"
+#include "htslib/sam.h"
+#include "htslib/hts.h"
 /*
 =head1 DESCRIPTION
 
