@@ -86,7 +86,7 @@ AM_COND_IF([HAVE_MYSQL], [ echo 'mysql is available' ])
 AM_COND_IF([HAVE_MYSQL], [AC_SUBST(HAVE_MYSQL, 'mysql is available')])
 AM_COND_IF([HAVE_MYSQL], [AC_DEFINE(HAVE_MYSQL, [1], [define to 1 if mysql is available])])
 
-AC_CHECK_HEADERS([hstlib/sam.h hstlib/hts.h], [HAVE_SAMTOOLS_HEADER=1])
+AC_CHECK_HEADERS([htslib/sam.h htslib/hts.h], [HAVE_SAMTOOLS_HEADER=1])
 AM_CONDITIONAL([HAVE_SAMTOOLS], [ test -n "$HAVE_SAMTOOLS_HEADER" ])
 AM_COND_IF([HAVE_SAMTOOLS], [ echo 'htslib is available' ])
 AM_COND_IF([HAVE_SAMTOOLS], [AC_SUBST([HAVE_SAMTOOLS], ['htslib is available'])])
