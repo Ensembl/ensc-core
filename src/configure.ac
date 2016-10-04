@@ -148,7 +148,7 @@ fi
 
 if test -z "$HAVE_LIBTCMALLOC"
 then
-  echo " libtcmalloc not available: RefineSolexaGenes will not be compiled"; echo
+  echo " libtcmalloc not available: RefineSolexaGenes will be compiled using malloc"; echo
 fi
 
 
