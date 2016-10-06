@@ -58,8 +58,8 @@
 #include "StrUtil.h"
 
 #include "bamhelper.h"
-#include "sam.h"
-#include "hts.h"
+#include "htslib/sam.h"
+#include "htslib/hts.h"
 
 typedef struct mappingStruct {
   Slice *sourceSlice;

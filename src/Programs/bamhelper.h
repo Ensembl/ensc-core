@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "sam.h"
+#include "htslib/sam.h"
 #define MY_FUSEDFLAG 32768
 /*
  print out a bam1_t entry, particularly the flags (for debugging)

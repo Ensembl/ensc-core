@@ -41,11 +41,13 @@
 #include "MetaContainer.h"
 
 #include "libconfig.h"
+#ifdef HAVE_LIBTCMALLOC
 #include "gperftools/tcmalloc.h"
+#endif
 
-#include "kstring.h"
-#include "sam.h"
-#include "hts.h"
+#include "htslib/kstring.h"
+#include "htslib/sam.h"
+#include "htslib/hts.h"
 /*
 =head1 DESCRIPTION
 
@@ -520,13 +522,17 @@ int main(int argc, char *argv[]) {
           dumpGenes(RefineSolexaGenes_getOutput(rsg), 1);
         }
         //fprintf(stderr,"malloc stats before write\n");
+        //#ifdef HAVE_LIBTCMALLOC
         //tc_malloc_stats();
+        //#endif
         if ( ! RefineSolexaGenes_isDryRun(rsg)) {
           RefineSolexaGenes_writeOutput(rsg);
         } else {
           fprintf(stderr,"DRY RUN mode - NOT writing genes to output db\n");
         }
+#ifdef HAVE_LIBTCMALLOC
         tc_malloc_stats();
+#endif
         ProcUtil_timeInfo("end of loop iter");
         if (verbosity > 0) fprintf(stderr,"Number of exon clone calls = %d\n",nExonClone);
 
@@ -572,7 +578,9 @@ int main(int argc, char *argv[]) {
   }
   //EcoString_getInfo(ecoSTable);
 */
+#ifdef HAVE_LIBTCMALLOC
   tc_malloc_stats();
+#endif
   return 0;
 }
 #endif
@@ -1972,7 +1980,9 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
 //    }
     //fprintf(stderr,"Number of final models in all clusters = %d\n", nFinal);
     Vector_free(models);
+#ifdef HAVE_LIBTCMALLOC
     MallocExtension_ReleaseFreeMemory();
+#endif
   }
 }
 
