@@ -48,12 +48,7 @@ int main(int argc, char *argv[]) {
   initEnsC(argc, argv);
 
   printf("Opening connection ...");
-  //dba = DBAdaptor_new("localhost","root",NULL,"test_ensembl",3306,NULL);
-  //dba = DBAdaptor_new("kaka.sanger.ac.uk","anonymous",NULL,"homo_sapiens_core_12_31",3306,NULL);
-  //dba = DBAdaptor_new("localhost","root",NULL,"homo_sapiens_core_18_34",3306,NULL);
-  //dba = DBAdaptor_new("ecs2d.internal.sanger.ac.uk","ensro",NULL,"homo_sapiens_core_14_31",3306,NULL);
-  //dba = DBAdaptor_new("ecs2d.internal.sanger.ac.uk","ensro",NULL,"rattus_norvegicus_core_15_2",3306,NULL);
-  dba = DBAdaptor_new("ens-staging.internal.sanger.ac.uk","ensro",NULL,"homo_sapiens_core_70_37",3306,NULL);
+  dba = DBAdaptor_new("ensembldb.ensembl.org","anonymous",NULL,"homo_sapiens_core_86_38",3306,NULL);
   printf(" Done\n");
 
   printf("Assembly type %s\n",DBAdaptor_getAssemblyType(dba));
