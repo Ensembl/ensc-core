@@ -3,7 +3,7 @@ include $(top_srcdir)/Makefile.am.common
 
 SUBDIRS = .
 
-bin_PROGRAMS = countsnps fastasplit indicate moveperl testdbc
+bin_PROGRAMS = countsnps fastasplit indicate moveperl testdbc translate
 
 PROG_LIBS = \
 $(top_builddir)/Util/libUtil.la \
@@ -21,12 +21,14 @@ fastasplit_SOURCES = fastasplit.c
 indicate_SOURCES = indicate.c indicate.h
 moveperl_SOURCES = moveperl.c
 testdbc_SOURCES = testdbc.c
+translate_SOURCES = translate_main.c
 
 countsnps_LDADD = $(PROG_LIBS)
 fastasplit_LDADD = $(PROG_LIBS)
 indicate_LDADD = $(PROG_LIBS)
 moveperl_LDADD = $(PROG_LIBS)
 testdbc_LDADD = $(PROG_LIBS)
+translate_LDADD = $(PROG_LIBS)
 
 
 if HAVE_SAMTOOLS
