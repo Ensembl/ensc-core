@@ -277,7 +277,7 @@ int RefineSolexaGenes_getThreads(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setUcscNaming(RefineSolexaGenes *rsg, int ucsc_naming);
 int RefineSolexaGenes_getUcscNaming(RefineSolexaGenes *rsg);
 
-void RefineSolexaGenes_usage();
+void RefineSolexaGenes_usage(int exit_code);
 
 
 // To move
