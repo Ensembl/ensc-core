@@ -89,9 +89,9 @@ char *IntronSupportingEvidence_setHitName(IntronSupportingEvidence *ise, char *s
 
 void IntronSupportingEvidence_freeImpl(IntronSupportingEvidence *ise);
 
-#define IntronSupportingEvidence_getSeqRegionStart(ise) SeqFeature_getSeqRegionStart((ise))
-#define IntronSupportingEvidence_getSeqRegionEnd(ise) SeqFeature_getSeqRegionEnd((ise))
-#define IntronSupportingEvidence_getSeqRegionStrand(ise) SeqFeature_getSeqRegionStrand((ise))
+#define IntronSupportingEvidence_getSeqRegionStart(ise) SeqFeature_getSeqRegionStart((SeqFeature *)(ise))
+#define IntronSupportingEvidence_getSeqRegionEnd(ise) SeqFeature_getSeqRegionEnd((SeqFeature *)(ise))
+#define IntronSupportingEvidence_getSeqRegionStrand(ise) SeqFeature_getSeqRegionStrand((SeqFeature *)(ise))
 
 IntronSupportingEvidence *IntronSupportingEvidence_shallowCopyImpl(IntronSupportingEvidence *ise);
 #define IntronSupportingEvidence_shallowCopy(ise) SeqFeature_shallowCopy((ise))

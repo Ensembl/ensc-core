@@ -109,7 +109,8 @@ typedef struct RefineSolexaGenesStruct {
   double restartNonConsLim;
 
   
-  double filterOnOverlapThreshold;
+  int filterOnOverlapThreshold;
+  int isOneThreshold;
   double minSingleExonCDSPercLength;
   double rejectIntronCutoff;
   double retainedIntronPenalty;
@@ -173,7 +174,7 @@ int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam_hdr_t *hea
 void RefineSolexaGenes_dnaToIntronFeatures(RefineSolexaGenes *rsg, long start, long end);
 Vector *RefineSolexaGenes_fetchIntronFeatures(RefineSolexaGenes *rsg, long start, long end, long *offsetP);
 Exon *RefineSolexaGenes_makeExon(RefineSolexaGenes *rsg, long start, long end, double score, char *diplayId);
-Gene *RefineSolexaGenes_pruneUTR(RefineSolexaGenes *rsg, Gene *gene);
+int RefineSolexaGenes_pruneUTR(RefineSolexaGenes *rsg, Gene *gene);
 void RefineSolexaGenes_setRecursiveLimit(RefineSolexaGenes *rsg, int limit);
 int RefineSolexaGenes_getRecursiveLimit(RefineSolexaGenes *rsg);
 SliceAdaptor *RefineSolexaGenes_getGeneSliceAdaptor(RefineSolexaGenes *rsg);
@@ -244,6 +245,8 @@ void RefineSolexaGenes_setMax5PrimeLength(RefineSolexaGenes *rsg, int max5PrimeL
 int RefineSolexaGenes_getMax5PrimeLength(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setFilterOnOverlapThreshold(RefineSolexaGenes *rsg, int filterOnOverlapThreshold);
 int RefineSolexaGenes_getFilterOnOverlapThreshold(RefineSolexaGenes *rsg);
+void RefineSolexaGenes_setIsOneThreshold(RefineSolexaGenes *rsg, int isOneThreshold);
+int RefineSolexaGenes_getIsOneThreshold(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setRejectIntronCutoff(RefineSolexaGenes *rsg, double rejectIntronCutoff);
 double RefineSolexaGenes_getRejectIntronCutoff(RefineSolexaGenes *rsg);
 
@@ -277,8 +280,14 @@ int RefineSolexaGenes_getThreads(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setUcscNaming(RefineSolexaGenes *rsg, int ucsc_naming);
 int RefineSolexaGenes_getUcscNaming(RefineSolexaGenes *rsg);
 
-void RefineSolexaGenes_usage();
+void RefineSolexaGenes_usage(int exit_code);
 
+void RefineSolexaGenes_dumpConfig(RefineSolexaGenes *rsg);
+
+int SeqFeat_lengthCompFunc(const void *a, const void *b);
+void updateDuplicatedGeneBiotype(Gene *gene);
+int isGeneDuplicated(RefineSolexaGenes *rsg, Vector *indexes, Vector *genes, Gene *gene);
+void RefineSolexaGenes_filterGenes(RefineSolexaGenes *rsg);
 
 // To move
   Transcript *TranslationUtils_addORFToTranscript(ORFRange *orf, Transcript *transcript);
