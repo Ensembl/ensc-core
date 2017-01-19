@@ -1,13 +1,12 @@
 #!/usr/bin/perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2017] EMBL-European Bioinformatics Institute
-#
+# Copyright [1999-2017] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-#
+# 
 #      http://www.apache.org/licenses/LICENSE-2.0
-#
+# 
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +17,8 @@
 # Script for adding new c source files to the jalview Makefile.
 # SMJS 2/01
 #
-# NOTES:
-#   1. If you add new directories to the Jalview hierarchy this
+# NOTES: 
+#   1. If you add new directories to the Jalview hierarchy this 
 #      script will need changing.
 
 use strict;
@@ -67,7 +66,7 @@ my @Files;
 while (defined($line = <MFILE>)) {
    chomp $line;
    if ($insect == 1) {
-      if ( $line =~ /^$/) {
+      if ( $line =~ /^$/) { 
          $insect = 2;
       } else {
          if ($line !~ /\\$/) {
@@ -77,7 +76,7 @@ while (defined($line = <MFILE>)) {
          $line =~ s/ *\\ *$//;
          push @Files,$line;
       }
-   }
+   } 
    if ($insect == 0) {
       push @Before,$line;
    }
@@ -147,7 +146,7 @@ if (! $opt_p) {
    my @pruned_files;
    foreach my $file (sort @Files) {
       my $srcfile = toAbsSrcFile($file,$SrcDir);
-
+   
       if (! -e $srcfile ) {
          print STDERR "File $srcfile doesn't exist - pruning from Makefile\n";
       } else {
@@ -167,7 +166,7 @@ foreach my $file (sort @Files) {
    }
    if ($count) {
       print MFILE " \\";
-   }
+   }  
    print MFILE "\n";
    $count--;
 }
@@ -185,7 +184,7 @@ foreach my $file (@Files) {
 
 print MFILE "$DepLineStr\n\n";
 
-close MFILE;
+close MFILE;   
 print STDERR "Finished writing to $SrcDir/Makefile\n";
 
 sub toAbsSrcFile {
@@ -201,10 +200,10 @@ sub toSrcFile {
 
   $srcname =~ s/^objectfiles\///;
   $srcname =~ s/\.o/.c/;
-
+ 
   return $srcname;
 }
-
+ 
 sub toObjectFile {
   my $srcname = shift;
   my $objectname = $srcname;
@@ -217,10 +216,10 @@ sub toObjectFile {
 
 sub fakePath {
    my $file = shift;
-
+   
 #   return File::PathConvert::rel2abs($file)
    return rel2abs($file)
-
+  
 }
 
 sub usage {
