@@ -174,6 +174,11 @@ int RepeatConsensusAdaptor_store(RepeatConsensusAdaptor *rca, Vector *consensi) 
     sth->execute(sth, name, class, type, seq);
     
     dbID = sth->getInsertId(sth);
+    if (!dbID) {
+      // Not sure it's correct to finish here, but it's probably better than not doing it
+      sth->finish(sth);
+      exit(1);
+    }
     
     RepeatConsensus_setDbID(rc, dbID);
     RepeatConsensus_setAdaptor(rc, (BaseAdaptor *)rca);

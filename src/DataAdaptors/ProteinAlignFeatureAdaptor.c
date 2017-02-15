@@ -209,6 +209,11 @@ int ProteinAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) 
 
 
     DNAPepAlignFeature_setDbID(feat,sth->getInsertId(sth));
+    if (!DNAPepAlignFeature_getDbID(feat)) {
+      // Not sure it's correct to finish here, but it's probably better than not doing it
+      sth->finish(sth);
+      exit(1);
+    }
     DNAPepAlignFeature_setAdaptor(feat, (BaseAdaptor *)bfa);
   }
 

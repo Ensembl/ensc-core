@@ -1474,6 +1474,10 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
   IDType geneId = sth->getInsertId(sth);
 
   sth->finish(sth);
+  // I'll let the connection to finish before killing the Adaptor if the table_id is 0
+  if (!geneId) {
+    exit(1);
+  }
 
 
   // store the dbentries associated with this gene

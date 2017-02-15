@@ -412,6 +412,10 @@ IDType TranslationAdaptor_store(TranslationAdaptor *tlna, Translation *translati
 
   sth->finish(sth);
 
+  // I'll let the connection to finish before killing the Adaptor if the table_id is 0
+  if (!translDbID) {
+    exit(1);
+  }
   //
   // store object xref mappings to translations
   //

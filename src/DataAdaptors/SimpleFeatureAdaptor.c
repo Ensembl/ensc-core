@@ -176,6 +176,11 @@ int SimpleFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
                       SimpleFeature_getScore(feat));
     
     SimpleFeature_setDbID(feat,sth->getInsertId(sth));
+    if (!SimpleFeature_getDbID(feat)) {
+      // Not sure it's correct to finish here, but it's probably better than not doing it
+      sth->finish(sth);
+      exit(1);
+    }
     SimpleFeature_setAdaptor(feat, (BaseAdaptor *)bfa);
   }
 
