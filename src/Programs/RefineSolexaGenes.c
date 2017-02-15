@@ -71,7 +71,7 @@ static int nExonClone = 0;
 
 FILE *logfp;
 
-#define RSGVERSION "0.3.1"
+#define RSGVERSION "0.3.2"
 #define RSGGENE_KEEP 16
 #define RSG_DUPLICATE 32
 int dumpGenes(Vector *genes, int withSupport);
@@ -4056,7 +4056,7 @@ void RefineSolexaGenes_writeOutput(RefineSolexaGenes *rsg) {
     Gene *gene = Vector_getElementAt(output, i);
 
     Gene_setAnalysis(gene, anal);
-    Gene_setSource(gene, Analysis_getLogicName(anal));
+    Gene_setSource(gene, RefineSolexaGenes_getBestScoreType(rsg));
     
     int j;
     for (j=0; j<Gene_getTranscriptCount(gene); j++) {
