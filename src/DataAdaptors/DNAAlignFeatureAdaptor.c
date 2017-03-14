@@ -258,6 +258,11 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
     char pairDNAAlignIDString[1024];
     DNAAlignFeature_getPairDNAAlignFeatureId(feat) != 0 ? sprintf(pairDNAAlignIDString,IDFMTSTR,DNAAlignFeature_getPairDNAAlignFeatureId(feat)) : sprintf(pairDNAAlignIDString,"NULL");
 
+#ifdef MYSQL_STRICT
+    char hitName[HIT_NAME_LENGTH];
+    snprintf(hitName, HIT_NAME_LENGTH, "%s",DNAAlignFeature_getHitSeqName(feat));
+#endif
+
 // Note using SeqRegionStart etc here rather than Start - should have same effect as perl's transfer
     
     sth->execute(sth, (IDType)seqRegionId,
@@ -267,7 +272,11 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
                       DNAAlignFeature_getHitStart(feat),
                       DNAAlignFeature_getHitEnd(feat),
                       DNAAlignFeature_getHitStrand(feat),
+#ifdef MYSQL_STRICT
+                      hitName,
+#else
                       DNAAlignFeature_getHitSeqName(feat),
+#endif
                       cigarString,
                       (IDType)Analysis_getDbID(analysis),
                       scoreString,
