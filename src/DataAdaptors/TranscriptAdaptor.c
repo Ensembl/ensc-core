@@ -1110,6 +1110,10 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
   IDType transcDbID = tst->getInsertId(tst);
 
   tst->finish(tst);
+  // I'll let the connection to finish before killing the Adaptor if the table_id is 0
+  if (!transcDbID) {
+    exit(1);
+  }
   // 
   // Store translation
   //

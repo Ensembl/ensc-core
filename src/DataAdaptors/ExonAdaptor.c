@@ -385,6 +385,10 @@ IDType ExonAdaptor_store(ExonAdaptor *ea, Exon *exon) {
 
   exonId = sth->getInsertId(sth);
   sth->finish(sth);
+  // I'll let the connection to finish before killing the Adaptor if the table_id is 0
+  if (!exonId) {
+    exit(1);
+  }
 
   // Now the supporting evidence
   SupportingFeatureAdaptor *esfAdaptor = DBAdaptor_getSupportingFeatureAdaptor(db);

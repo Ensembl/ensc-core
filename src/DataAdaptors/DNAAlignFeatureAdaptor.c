@@ -297,6 +297,12 @@ int DNAAlignFeatureAdaptor_store(BaseFeatureAdaptor *bfa, Vector *features) {
 
 
     DNAAlignFeature_setDbID(feat,sth->getInsertId(sth));
+    // I'll let the connection to finish before killing the Adaptor if the table_id is 0
+    if (!DNAAlignFeature_getDbID(feat)) {
+      // Not sure it's correct to finish here, but it's probably better than not doing it
+      sth->finish(sth);
+      exit(1);
+    }
     DNAAlignFeature_setAdaptor(feat, (BaseAdaptor *)bfa);
   }
 
