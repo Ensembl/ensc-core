@@ -140,6 +140,7 @@ typedef struct ModelClusterStruct {
 
 
 typedef struct IntronBamConfigStruct {
+  int isStranded;
   int depth;
   int mixedBam;
   Vector *groupNames;

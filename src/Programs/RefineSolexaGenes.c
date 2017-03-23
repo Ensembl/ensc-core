@@ -148,7 +148,7 @@ void CigarBlock_free(CigarBlock *block) {
   free(block);
 }
 
-IntronBamConfig *IntronBamConfig_new(char *fileName, int mixedBam, int depth, Vector *groupNames) {
+IntronBamConfig *IntronBamConfig_new(char *fileName, int mixedBam, int depth, Vector *groupNames, int isStranded) {
   IntronBamConfig *ibc;
 
   if ((ibc = (IntronBamConfig *)calloc(1,sizeof(IntronBamConfig))) == NULL) {
@@ -159,6 +159,7 @@ IntronBamConfig *IntronBamConfig_new(char *fileName, int mixedBam, int depth, Ve
   ibc->mixedBam   = mixedBam;
   ibc->depth      = depth;
   ibc->groupNames = groupNames;
+  ibc->isStranded = isStranded;
 
   return ibc;
 }
@@ -4929,7 +4930,15 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
 
     //my $strand = $read->target->strand;
 //    int strand = bam1_strand(read) == 0 ? -1 : 1;
-    int strand = bam_is_rev(read) == 1 ? -1 : 1;
+    int strand = bam1_strand(read) == 1 ? -1 : 1;
+    if (intronBamConf->isStranded) {
+      if ((read->core.flag&BAM_FREAD1) != 0) {
+        strand = bam1_strand(read) == 1 ? 1 : -1;
+      }
+      else {
+        strand = bam1_strand(read) == 1 ? -1 : 1;
+      }
+    }
     if (intronBamConf->mixedBam) {
       if (spliced == '+') strand = 1;
       if (spliced == '-') strand = -1;
@@ -7559,6 +7568,7 @@ void RefineSolexaGenes_parseIntronBamFilesConfig(RefineSolexaGenes *rsg, config_
     const char *file;
     int mixedBam;
     int depth;
+    int isStranded = 0;
     char *tmp;
     if (!(config_setting_lookup_string(section, "FILE", &file) &&
           config_setting_lookup_int(section, "MIXED_BAM", &mixedBam) &&
@@ -7566,6 +7576,7 @@ void RefineSolexaGenes_parseIntronBamFilesConfig(RefineSolexaGenes *rsg, config_
       fprintf(stderr,"Error: Missing at least one required arg (FILE, MIXED_BAM or DEPTH) in INTRON_BAM_FILES config block\n");
       exit(EX_DATAERR);
     }
+    config_setting_lookup_int(section, "ISSTRANDED", &isStranded);
 
     Vector *groupNames = NULL;
     config_setting_t *groupNameSetting = config_setting_get_member(section, "GROUPNAME");
@@ -7584,7 +7595,7 @@ void RefineSolexaGenes_parseIntronBamFilesConfig(RefineSolexaGenes *rsg, config_
         Vector_addElement(groupNames, StrUtil_copyString(&tmp, (char *)val, 0));
       }
     }
-    Vector_addElement(intronBamFiles, IntronBamConfig_new((char *)file, mixedBam, depth, groupNames));
+    Vector_addElement(intronBamFiles, IntronBamConfig_new(file, mixedBam, depth, groupNames, isStranded));
   }
 
   RefineSolexaGenes_setIntronBamFiles(rsg, intronBamFiles);
