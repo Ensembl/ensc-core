@@ -5333,6 +5333,7 @@ int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam_hdr_t *hea
         CigarBlock_copy(ugfs[nBlock++], currentBlock);
         currentBlock = NULL;
       }
+      if (lenCigBlock < RefineSolexaGenes_getMinIntronSize(rsg)) fprintf(stderr, "WARNING: length is %i at %i\n", lenCigBlock, refPos);
       refPos += lenCigBlock;
     } else {
       fprintf(stderr,"Cigar block type %d not supported\n", op);
