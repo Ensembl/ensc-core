@@ -87,6 +87,7 @@ typedef struct RefineSolexaGenesStruct {
   int threads;
   int ucsc_naming;
   int writeIntrons;
+  char *mergeBAMFile;
 
   SliceAdaptor *geneSliceAdaptor;
   SliceAdaptor *intronSliceAdaptor;
@@ -253,6 +254,8 @@ int RefineSolexaGenes_getIsOneThreshold(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setRejectIntronCutoff(RefineSolexaGenes *rsg, double rejectIntronCutoff);
 double RefineSolexaGenes_getRejectIntronCutoff(RefineSolexaGenes *rsg);
 
+char *RefineSolexaGenes_getMergedBAMFile(RefineSolexaGenes *rsg);
+void *RefineSolexaGenes_setMergedBAMFile(RefineSolexaGenes *rsg, char *file);
 void RefineSolexaGenes_setLongestIntronLength(RefineSolexaGenes *rsg, long maxLength);
 long RefineSolexaGenes_getLongestIntronLength(RefineSolexaGenes *rsg);
 
@@ -291,6 +294,7 @@ int SeqFeat_lengthCompFunc(const void *a, const void *b);
 void updateDuplicatedGeneBiotype(Gene *gene);
 int isGeneDuplicated(RefineSolexaGenes *rsg, Vector *indexes, Vector *genes, Gene *gene);
 void RefineSolexaGenes_filterGenes(RefineSolexaGenes *rsg);
+void RefineSolexaGenes_checkExonCoverage(RefineSolexaGenes *rsg, hts_idx_t *idx, Vector *exons, Slice *slice, htsFile *sam, bam_hdr_t *header, regex_t *regex);
 
 // To move
   Transcript *TranslationUtils_addORFToTranscript(ORFRange *orf, Transcript *transcript);

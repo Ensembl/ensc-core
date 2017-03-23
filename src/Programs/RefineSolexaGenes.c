@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <regex.h>
 #include "RefineSolexaGenes.h"
 #include <stdio.h>
 
@@ -668,6 +669,7 @@ void RefineSolexaGenes_initSetFuncs(RefineSolexaGenes *rsg) {
   StringHash_add(rsg->funcHash, "MAX_5PRIME_LENGTH", SetFuncData_new(RefineSolexaGenes_setMax5PrimeLength, CONFIG_TYPE_INT));
   StringHash_add(rsg->funcHash, "REJECT_INTRON_CUTOFF", SetFuncData_new(RefineSolexaGenes_setRejectIntronCutoff, CONFIG_TYPE_FLOAT));
   StringHash_add(rsg->funcHash, "TYPE_PREFIX", SetFuncData_new(RefineSolexaGenes_setTypePrefix, CONFIG_TYPE_STRING));
+  StringHash_add(rsg->funcHash, "MERGE_BAM_FILE", SetFuncData_new(RefineSolexaGenes_setMergedBAMFile, CONFIG_TYPE_STRING));
 
   SetFuncData *consLimsFuncData = SetFuncData_new(RefineSolexaGenes_setConsLims, CONFIG_TYPE_ARRAY);
   consLimsFuncData->subType = CONFIG_TYPE_FLOAT;
@@ -1459,7 +1461,30 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
   Vector *prelimGenes = RefineSolexaGenes_getPrelimGenes(rsg);
   int verbosity = RefineSolexaGenes_getVerbosity(rsg);
 
+  char *mergedFile = RefineSolexaGenes_getMergedBAMFile(rsg);
+  htsFile *sam = hts_open(mergedFile, "rb");
+  if (sam == NULL) {
+    fprintf(stderr, "Bam file %s not found\n", mergedFile);
+    exit(1);
+  }
+  if (verbosity > 0) fprintf(stderr,"Opened bam file %s\n", mergedFile);
+
+  hts_set_threads(sam, RefineSolexaGenes_getThreads(rsg));
+  if (verbosity > 0) fprintf(stderr,"Setting number of threads to %d\n", RefineSolexaGenes_getThreads(rsg));
+  hts_idx_t *idx;
+  idx = sam_index_load(sam, mergedFile); // load BAM index
+  if (idx == 0) {
+    fprintf(stderr, "BAM index file is not available.\n");
+    exit(1);
+  }
+  bam_hdr_t *header = bam_hdr_init();
+  header = bam_hdr_read(sam->fp.bgzf);
+  if (verbosity > 0) fprintf(stderr,"Opened bam index for %s\n", mergedFile);
   int i;
+  regex_t *regex = calloc(1, sizeof(regex_t));
+  if (regcomp(regex, "A*A\{9\}..$", 0)) {
+    exit(10);
+  }
 // GENE:
   for (i=0; i<Vector_getNumElement(prelimGenes); i++) {
 
@@ -1504,6 +1529,7 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
       if (verbosity > 1) fprintf(stderr, "Gene %s : %ld %ld:\n", Gene_getStableId(gene), Gene_getStart(gene), Gene_getEnd(gene));
 
       Vector *exons = RefineSolexaGenes_mergeExons(rsg, gene, strand);
+      RefineSolexaGenes_checkExonCoverage(rsg, idx, exons, Gene_getSlice(gene), sam, header, regex);
       Vector_sort(exons, SeqFeature_startCompFunc);
 
       int exonCount = Vector_getNumElement(exons);
@@ -2258,6 +2284,11 @@ void RefineSolexaGenes_refineGenes(RefineSolexaGenes *rsg) {
     MallocExtension_ReleaseFreeMemory();
 #endif
   }
+  regfree(regex);
+  free(regex);
+  hts_idx_destroy(idx);
+  bam_hdr_destroy(header);
+  hts_close(sam);
 }
 
 void RefineSolexaGenes_addToOutput(RefineSolexaGenes *rsg, Gene *gene) {
@@ -6173,6 +6204,19 @@ Vector *RefineSolexaGenes_getIntronFeatures(RefineSolexaGenes *rsg) {
   return rsg->intronFeatures;
 }
 
+
+char *RefineSolexaGenes_getMergedBAMFile(RefineSolexaGenes *rsg) {
+  return rsg->mergeBAMFile;
+}
+
+void *RefineSolexaGenes_setMergedBAMFile(RefineSolexaGenes *rsg, char *file) {
+  if (file != '\0') {
+    if (rsg->mergeBAMFile != NULL) {
+      free(rsg->mergeBAMFile);
+    }
+    rsg->mergeBAMFile = StrUtil_copyString(&rsg->mergeBAMFile, file, 0);
+  }
+}
 // The perl implemenetation (see below) allowed appending to the array, but I don't think that was used so I've not implemented it
 void RefineSolexaGenes_setIntronFeatures(RefineSolexaGenes *rsg, Vector *features) {
   int verbosity = RefineSolexaGenes_getVerbosity(rsg);
@@ -7887,5 +7931,66 @@ int SeqFeat_lengthCompFunc(const void *a, const void *b) {
     return -1;
   } else {
     return 0;
+  }
+}
+
+void RefineSolexaGenes_checkExonCoverage(RefineSolexaGenes *rsg, hts_idx_t *idx, Vector *exons, Slice *slice, htsFile *sam, bam_hdr_t *header, regex_t *regex) {
+  char region[1024];
+  char region_name[1024];
+  int begRange;
+  int endRange;
+  int ref;
+  char read_seq[256];
+  if (RefineSolexaGenes_getUcscNaming(rsg) == 0) {
+    sprintf(region_name,"%s", Slice_getSeqRegionName(slice));
+  } else {
+    sprintf(region_name,"chr%s", Slice_getSeqRegionName(slice));
+  }
+  ref = bam_name2id(header, region_name);
+  if (ref < 0) {
+    fprintf(stderr, "Invalid region %s\n", region_name);
+    exit(1);
+  }
+  fprintf(stderr, "Looking at %s\n", region_name);
+  int i;
+  for (i = 0; i < Vector_getNumElement(exons); i++) {
+    sprintf(region,"%s:%ld-%ld", region_name, Exon_getStart((Exon *)Vector_getElementAt(exons, i)),
+                               Exon_getEnd((Exon *)Vector_getElementAt(exons, i)));
+
+    if (hts_parse_reg(region, &begRange, &endRange) == NULL) {
+      fprintf(stderr, "Could not parse %s\n", region);
+      exit(2);
+    }
+
+    hts_itr_t *iter = sam_itr_queryi(idx, ref, begRange, endRange);
+    bam1_t *read = bam_init1();
+    fprintf(stderr, "Looking at %s\n", region);
+    while (bam_itr_next(sam, iter, read) >= 0) {
+      if (read->core.flag & BAM_FUNMAP) {
+        //fprintf(stderr, "%s\n", bam_get_qname(read));
+      }
+      else {
+        int j;
+        for (j = 0; j< read->core.l_qseq-1; j++) {
+          read_seq[j] = seq_nt16_str[bam_seqi(bam_get_seq(read), j)];
+        }
+        read_seq[j+1] = '\0';
+        regmatch_t *match;
+        fprintf(stdout, "%s\n", read_seq);
+        int res = regexec(regex, read_seq, 1, match, 0);
+        if (res == 0) {
+          fprintf(stderr, "MATCH: %s\n", read_seq);
+        }
+        else if (res == REG_NOMATCH) {
+          //fprintf(stderr, "NO MATCH: %s\n", read_seq);
+          //Do nothing
+        }
+        else {
+          exit(11);
+        }
+      }
+    }
+    sam_itr_destroy(iter);
+    bam_destroy1(read);
   }
 }
