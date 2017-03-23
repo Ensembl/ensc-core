@@ -5286,6 +5286,7 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
 int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam_hdr_t *header, bam1_t *b, CigarBlock **ugfs) {
   CigarBlock *lastMatchBlock;
   int         hadIntron = 0;
+  //int         hadDeletion = 0;
   int         nIntron = 0;
   CigarBlock *currentBlock = NULL;
   uint32_t *  cigar = bam_get_cigar(b);
@@ -5308,6 +5309,9 @@ int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam_hdr_t *hea
         CigarBlock_copy(ugfs[nBlock++], block);
         //Vector_addElement(ugfs, block);
         currentBlock = NULL;
+      /*} else if (hadDeletion) {
+        hadDeletion = 0;
+        ugfs[nBlock]->end = block->end;*/
       } else {
         currentBlock = block;
       }
@@ -5316,6 +5320,10 @@ int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam_hdr_t *hea
 // D
     } else if (op == BAM_CDEL) {
       refPos += lenCigBlock;
+      /*if (currentBlock) {
+        currentBlock->end += lenCigBlock;
+      }
+      hadDeletion = 1;*/
 // S
     } else if (op == BAM_CSOFT_CLIP) {
       readPos += lenCigBlock;
@@ -5324,6 +5332,7 @@ int RefineSolexaGenes_getUngappedFeatures(RefineSolexaGenes *rsg, bam_hdr_t *hea
 // I
     } else if (op == BAM_CINS) {
       readPos += lenCigBlock;
+      //hadDeletion = 1;
 // N
     } else if (op == BAM_CREF_SKIP) {
       hadIntron = 1;
