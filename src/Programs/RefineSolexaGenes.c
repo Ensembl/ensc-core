@@ -645,6 +645,7 @@ void RefineSolexaGenes_initSetFuncs(RefineSolexaGenes *rsg) {
   StringHash_add(rsg->funcHash, "INTRON_BAM_FILES", intronBamFilesFuncData);
 
   StringHash_add(rsg->funcHash, "MODEL_LN", SetFuncData_new(RefineSolexaGenes_setModelLogicName, CONFIG_TYPE_STRING));
+  StringHash_add(rsg->funcHash, "ALIGNMENT_BAM", SetFuncData_new(RefineSolexaGenes_setAlignmentBamFile, CONFIG_TYPE_STRING));
   StringHash_add(rsg->funcHash, "RETAINED_INTRON_PENALTY", SetFuncData_new(RefineSolexaGenes_setRetainedIntronPenalty, CONFIG_TYPE_FLOAT));
   StringHash_add(rsg->funcHash, "MIN_INTRON_SIZE", SetFuncData_new(RefineSolexaGenes_setMinIntronSize, CONFIG_TYPE_INT));
   StringHash_add(rsg->funcHash, "MAX_INTRON_SIZE", SetFuncData_new(RefineSolexaGenes_setMaxIntronSize, CONFIG_TYPE_INT));
@@ -918,6 +919,7 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
 
   Slice *chrSlice = NULL;
   if (RefineSolexaGenes_getChrSlice(rsg) == NULL) {
+      if (verbosity > 0) fprintf(stderr, "Got %d genes\n", __LINE__);
     chrSlice = SliceAdaptor_fetchByRegion(DBAdaptor_getSliceAdaptor(db), 
                                                  "toplevel", 
                                                  Slice_getSeqRegionName(slice),
@@ -927,14 +929,20 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
                                                  NULL,
                                                  0);
   
+      if (verbosity > 0) fprintf(stderr, "Got %d genes\n", __LINE__);
     RefineSolexaGenes_setChrSlice(rsg, chrSlice);
+      if (verbosity > 0) fprintf(stderr, "Got %d genes\n", __LINE__);
   } else {
+      if (verbosity > 0) fprintf(stderr, "Got %d genes\n", __LINE__);
     chrSlice = RefineSolexaGenes_getChrSlice(rsg);
+      if (verbosity > 0) fprintf(stderr, "Got %d genes\n", __LINE__);
   }
+      if (verbosity > 0) fprintf(stderr, "Got %d genes\n", __LINE__);
 
   // we want to fetch and store all the rough transcripts at the beginning - speeds things up
   // also we want to take out tiny introns - merge them into longer structures
   if (RefineSolexaGenes_getPrelimGenes(rsg) == NULL) {
+      if (verbosity > 0) fprintf(stderr, "Got %d genes\n", __LINE__);
     Slice *geneSlice =  SliceAdaptor_fetchByRegion(RefineSolexaGenes_getGeneSliceAdaptor(rsg),
                                                    "toplevel",
                                                    Slice_getSeqRegionName(slice),
@@ -943,18 +951,24 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
                                                    1,
                                                    NULL,
                                                    0);
+      if (verbosity > 0) fprintf(stderr, "Got %d  %s genes\n", __LINE__, Slice_getName(geneSlice));
     Vector *genes;
+      if (verbosity > 0) fprintf(stderr, "Got %d genes\n", __LINE__);
     char *modelLogicName = RefineSolexaGenes_getModelLogicName(rsg);
     if (modelLogicName != NULL) {
+      if (verbosity > 0) fprintf(stderr, "Got %d genes\n", __LINE__);
       genes = Slice_getAllGenes(geneSlice, modelLogicName, NULL, 1, NULL, NULL);
       if (verbosity > 0) fprintf(stderr,"Got %d genes with logic name %s\n", Vector_getNumElement(genes), modelLogicName);
     } else {
+      if (verbosity > 0) fprintf(stderr, "Got %d genes\n", __LINE__);
       genes = Slice_getAllGenes(geneSlice, NULL, NULL, 1, NULL, NULL);
       if (verbosity > 0) fprintf(stderr, "Got %d genes\n",Vector_getNumElement(genes));
     }
+      if (verbosity > 0) fprintf(stderr, "Got %d genes\n", __LINE__);
   
     Vector *prelimGenes = Vector_new();
     int i;
+      if (verbosity > 0) fprintf(stderr, "Got %d genes\n", __LINE__);
     for (i=0; i<Vector_getNumElement(genes); i++) {
       Gene *gene = Vector_getElementAt(genes, i);
   
@@ -1044,11 +1058,16 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
 
   if (Vector_getNumElement(intronBamFiles) > 0) {
     int i;
+    char region_name[1024];
+    if (RefineSolexaGenes_getUcscNaming(rsg) == 0) {
+      sprintf(region_name,"%s", Slice_getSeqRegionName(slice));
+    } else {
+      sprintf(region_name,"chr%s", Slice_getSeqRegionName(slice));
+    }
     for (i=0; i<Vector_getNumElement(intronBamFiles); i++) {
       IntronBamConfig *intronBamConf = Vector_getElementAt(intronBamFiles, i);
       char *intronFile = intronBamConf->fileName;
       char region[2048];
-      char region_name[1024];
       int ref;
       int begRange;
       int endRange;
@@ -1071,11 +1090,6 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
       if (verbosity > 0) fprintf(stderr,"Opened bam index for %s\n", intronFile);
 
       long long count = 0;
-      if (RefineSolexaGenes_getUcscNaming(rsg) == 0) {
-        sprintf(region_name,"%s", Slice_getSeqRegionName(slice));
-      } else {
-        sprintf(region_name,"chr%s", Slice_getSeqRegionName(slice));
-      }
       bam_hdr_t *header = bam_hdr_init();
       header = bam_hdr_read(sam->fp.bgzf);
       ref = bam_name2id(header, region_name);
@@ -3393,6 +3407,23 @@ Vector *RefineSolexaGenes_makeModels(RefineSolexaGenes *rsg, StringHash *paths, 
     //      last MODEL if scalar(@trans)  >= ( $self->MAX_NUM +1 )  ;
         }
       }
+    Translation *tmp_tln = Transcript_getTranslation(tran);
+    Vector *exons = Transcript_getAllExons(tran);
+    Exon *startExon = Translation_getStartExon(tmp_tln);
+    Exon *endExon = Translation_getEndExon(tmp_tln);
+    int m;
+    int startRank;
+    int endRank;
+    for (m = 0; m < Vector_getNumElement(exons); m++) {
+      if (startExon == Vector_getElementAt(exons, m)) {
+        startRank = m;
+      }
+      if (endExon == Vector_getElementAt(exons, m)) {
+        endRank = m;
+        break;
+      }
+    }
+    fprintf(stderr, "TIBO S %d %ld %ld E %d %ld %ld\n", startRank, Exon_getStart(startExon), Exon_getStart(startExon), endRank, Exon_getStart(endExon), Exon_getStart(endExon));
     }
 
     Vector_free(modelsByScore);
@@ -3774,6 +3805,9 @@ int RefineSolexaGenes_pruneUTR(RefineSolexaGenes *rsg, Gene *gene) {
   if (verbosity > 0) fprintf(logfp, "THREE P\n");
 
 // THREEP:   
+  long new_exonEnd;
+  long end;
+  long start;
   for (i = 0; i < Vector_getNumElement(threeP); i++) {
     SeqFeature *f = Vector_getElementAt(threeP, i);
 
@@ -3797,6 +3831,15 @@ int RefineSolexaGenes_pruneUTR(RefineSolexaGenes *rsg, Gene *gene) {
       }
 
       if (verbosity > 0) fprintf(logfp, "\tCDS END %ld\t", cdsEnd);
+      if (SeqFeature_getStrand(f) == 1) {
+        start = cdsEnd;
+        end = SeqFeature_getEnd(f);
+      }
+      else {
+        start = SeqFeature_getStart(f);
+        end = cdsEnd;
+      }
+      new_exonEnd = RefineSolexaGenes_has_polyA_signal(rsg, (Exon *)f, start, end);
 
       if (Transcript_getStrand(transcript) == -1) {
         threePLen = cdsEnd - SeqFeature_getStart(f) + 1;
@@ -3806,6 +3849,24 @@ int RefineSolexaGenes_pruneUTR(RefineSolexaGenes *rsg, Gene *gene) {
 
       // is the coding exon too long
       if (threePLen > RefineSolexaGenes_getMax3PrimeLength(rsg)) {
+          if (new_exonEnd) {
+            if (Transcript_getStrand(transcript) == -1) {
+              threePLen = cdsEnd - new_exonEnd + 1;
+            } else {
+              threePLen = new_exonEnd - cdsEnd + 1;
+            }
+            if (threePLen < RefineSolexaGenes_getMax3PrimeLength(rsg)) {
+              if (SeqFeature_getStrand(f) == 1) {
+                SeqFeature_setEnd(f, new_exonEnd);
+              }
+              else {
+                SeqFeature_setStart(f, new_exonEnd);
+              }
+              fprintf(logfp, "Cutting current at %ld to avoid - rejected 3' length\n", new_exonEnd);
+              Vector_addElement(newThreeP, f);
+              break;
+            }
+          }
         // replace it with the cds
 // Not sure there's anything in newThreeP at this point
         Vector_removeAll(newThreeP);
@@ -3825,12 +3886,57 @@ int RefineSolexaGenes_pruneUTR(RefineSolexaGenes *rsg, Gene *gene) {
         // does it break the NMD rule?
         if (nmd > 55) {
           if (verbosity > 0) fprintf(logfp, " splice is after %ld bp from stop codon - rejected on NMD rule of maximum 55 bp\n", nmd);
+          if (new_exonEnd) {
+            fprintf(logfp, "Cutting previous at %ld to avoid - rejected on NMD rule of maximum 55 bp %ld\n", new_exonEnd, nmd);
+            SeqFeature *feat = Vector_getElementAt(newThreeP, 0);
+            if (SeqFeature_getStrand(feat) == 1) {
+              SeqFeature_setEnd(feat, new_exonEnd);
+            }
+            else {
+              SeqFeature_setStart(feat, new_exonEnd);
+            }
+          }
+          else {
+            Vector_removeAll(newThreeP);
+
+            Vector_addElement(newThreeP, threePCDS);
+          }
+          //last THREEP;
+          break;
+        }
+        if (SeqFeature_getStrand(f) == 1) {
+          start = SeqFeature_getStart(f);
+          end = SeqFeature_getEnd(f);
+        }
+        else {
+          start = SeqFeature_getStart(f);
+          end = SeqFeature_getEnd(f);
+        }
+        // is it too many exons?
+        if (threePc > RefineSolexaGenes_getMax3PrimeExons(rsg)) {
+          // dont add it
+          if (verbosity > 0) fprintf(logfp, " too many 3p  %d cut them all as we are not sure\n", threePc);
+          if (new_exonEnd) {
+            SeqFeature *feat = Vector_getElementAt(newThreeP, 0);
+            if (SeqFeature_getStart(f) < new_exonEnd) {
+              if (SeqFeature_getStrand(feat) == 1) {
+                SeqFeature_setEnd(feat, new_exonEnd);
+              }
+              else {
+                SeqFeature_setStart(feat, new_exonEnd);
+              }
+              fprintf(logfp, "Cutting current at %ld to avoid - rejected 3' number of exon\n", new_exonEnd);
+              break;
+            }
+          }
+
           Vector_removeAll(newThreeP);
 
           Vector_addElement(newThreeP, threePCDS);
           //last THREEP;
           break;
         }
+        new_exonEnd = RefineSolexaGenes_has_polyA_signal(rsg, (Exon *)f, start, end);
         threePc++;
         threePLen += SeqFeature_getLength(f);
 
@@ -3838,17 +3944,25 @@ int RefineSolexaGenes_pruneUTR(RefineSolexaGenes *rsg, Gene *gene) {
         if (threePLen > RefineSolexaGenes_getMax3PrimeLength(rsg)) {
           // dont add it
           if (verbosity > 0) fprintf(logfp, " 3p too long %ld\n", threePLen);
-          //last THREEP;
-          break;
-        }
-        // is it too many exons?
-        if (threePc > RefineSolexaGenes_getMax3PrimeExons(rsg)) {
-          // dont add it
-          if (verbosity > 0) fprintf(logfp, " too many 3p  %d cut them all as we are not sure\n", threePc);
-
-          Vector_removeAll(newThreeP);
-
-          Vector_addElement(newThreeP, threePCDS);
+          if (new_exonEnd) {
+            threePLen -= SeqFeature_getLength(f);
+            if (Transcript_getStrand(transcript) == -1) {
+              threePLen += SeqFeature_getEnd(f) - new_exonEnd + 1;
+            } else {
+              threePLen = new_exonEnd - SeqFeature_getStart(f) + 1;
+            }
+            if (threePLen < RefineSolexaGenes_getMax3PrimeLength(rsg)) {
+              fprintf(logfp, "Cutting current at %ld to avoid - rejected 3' length\n", new_exonEnd);
+              if (SeqFeature_getStrand(f) == 1) {
+                SeqFeature_setEnd(f, new_exonEnd);
+              }
+              else {
+                SeqFeature_setStart(f, new_exonEnd);
+              }
+            }
+            Vector_addElement(newThreeP, f);
+            break;
+          }
           //last THREEP;
           break;
         }
@@ -4033,6 +4147,186 @@ Transcript *RefineSolexaGenes_modifyTranscript(RefineSolexaGenes *rsg, Transcrip
   Transcript_free(tran);
   return t;
 }
+
+bam_hdr_t *RefineSolexaGenes_getAlignmentBamHeader(RefineSolexaGenes *rsg) {
+  if (rsg->alignment_header == NULL) {
+    char *bamFile = RefineSolexaGenes_getAlignmentBamFile(rsg);
+    rsg->alignment_sam = hts_open(bamFile, "rb");
+    if (rsg->alignment_sam == NULL) {
+      fprintf(stderr, "Bam file %s not found\n", bamFile);
+      exit(EX_NOINPUT);
+    }
+    fprintf(stderr,"Opened bam file %s\n", bamFile);
+
+    rsg->alignment_idx = sam_index_load(rsg->alignment_sam, bamFile); // load BAM index
+    if (rsg->alignment_idx == 0) {
+      fprintf(stderr, "BAM index file is not available.\n");
+      exit(EX_NOINPUT);
+    }
+    fprintf(stderr,"Opened bam index for %s\n", bamFile);
+
+    rsg->alignment_header = bam_hdr_init();
+    rsg->alignment_header = bam_hdr_read(rsg->alignment_sam->fp.bgzf);
+  }
+  return rsg->alignment_header;
+}
+
+hts_idx_t *RefineSolexaGenes_getAlignmentBamIndex(RefineSolexaGenes *rsg) {
+  return rsg->alignment_idx;
+}
+
+void RefineSolexaGenes_cleanPolyAcheck(RefineSolexaGenes *rsg) {
+  if (rsg->alignment_header != NULL) {
+    hts_idx_destroy(rsg->alignment_idx);
+    bam_hdr_destroy(rsg->alignment_header);
+    hts_close(rsg->alignment_sam);
+  }
+}
+
+long RefineSolexaGenes_has_polyA_signal(RefineSolexaGenes *rsg, Exon *exon, long start, long end) {
+    fprintf(stderr, "Working on %ld %ld\n", start, end);
+  Slice *slice = Exon_getSlice(exon);
+  CachingSequenceAdaptor *cachingSeqAdaptor = DBAdaptor_getCachingSequenceAdaptor(Slice_getAdaptor(slice)->dba);
+  int strand = Exon_getStrand(exon);
+  char *seq = CachingSequenceAdaptor_fetchBySliceStartEndStrand(cachingSeqAdaptor, 
+                                                                          slice,
+                                                                          start,
+                                                                          end,
+                                                                          strand);
+  char region[2048];
+  char region_name[1024];
+  int ref;
+  int begRange;
+  int endRange;
+  long cdsend = 0;
+  long pos = 0;
+  long lastpos = 0;
+  char *res = strstr(seq, "AATAAA");
+  if (RefineSolexaGenes_getUcscNaming(rsg) == 0) {
+    sprintf(region_name,"%s", Slice_getSeqRegionName(slice));
+  } else {
+    sprintf(region_name,"chr%s", Slice_getSeqRegionName(slice));
+  }
+  bam_hdr_t *header = RefineSolexaGenes_getAlignmentBamHeader(rsg);
+  ref = bam_name2id(header, region_name);
+  if (ref < 0) {
+    fprintf(stderr, "Invalid region %s\n", region_name);
+    exit(EX_DATAERR);
+  }
+  bam1_t *read = bam_init1();
+  while (res != NULL) {
+    pos = (long)(res-seq)+start;
+    fprintf( stderr, "Found AATAAA at position %ld\n%s\n", pos, res);
+    sprintf(region,"%s:%ld-%ld", region_name, pos,
+                               pos+40);
+
+    if (hts_parse_reg(region, &begRange, &endRange) == NULL) {
+      fprintf(stderr, "Could not parse %s\n", region);
+      exit(EX_DATAERR);
+    }
+    fprintf(stderr,"Parsed region for region %s\n", region);
+
+    // need to seamlessly merge here with the dna2simplefeatures code
+//    StringHash *readGroups = NULL;
+//    readGroups = StringHash_new(STRINGHASH_SMALL);
+//    for (i=0; i<Vector_getNumElement(intronBamConf->groupNames); i++) {
+//      char *group = Vector_getElementAt(intronBamConf->groupNames, i);
+//      if (verbosity > 0) fprintf(logfp, " %s", group);
+//      StringHash_add(readGroups, group, &trueVal); 
+//    }
+//    if (verbosity > 0) fprintf(logfp, "\n");
+
+    hts_itr_t *iter = sam_itr_queryi(RefineSolexaGenes_getAlignmentBamIndex(rsg), ref, begRange, endRange);
+
+    fprintf(stderr,"before bam read loop... ");
+    long counter[40];
+    int j;
+    for (j = 0; j < 40; j++) {
+      counter[j] = 0;
+    }
+    while (bam_itr_next(rsg->alignment_sam, iter, read) >= 0) {
+      if ((read->core.flag&BAM_FUNMAP) == 0) {
+        uint8_t nm = bam_aux2A(bam_aux_get(read, "NM"));
+        if (nm < 5) {
+          if ((strand == 1 && !bam_is_rev(read)) || (strand == -1 && bam_is_rev(read))) {
+  //          if (readGroups != NULL) { 
+  //            uint8_t *rga = bam_aux_get(read,"RG");
+  //            if (rga) {
+  //              char *rg = bam_aux2Z(rga);
+  //              if (!StringHash_contains(readGroups, rg)) {
+  //                continue;
+  //              }
+  //            }
+  //          }
+            int32_t read_start = read->core.pos+1;
+            int32_t read_end = bam_endpos(read)+1;
+            int32_t real_start = 0;
+            int32_t real_end = 40;
+            if (read_start > pos) {
+              real_start = read_start-pos+1;
+            }
+            if (real_end < pos+40) {
+              real_end = read_end-pos+1;
+            }
+            for (int32_t i = real_start; i < real_end; i++) {
+              ++counter[i];
+            }
+          }
+        }
+      }
+    }
+    fprintf(stderr,"Done\n");
+    long max_count = counter[0];
+    int max_index = 0;
+    int low_index = 0;
+    long low_count = counter[0];
+    int i;
+    fprintf(stderr, "%ld", counter[0]);
+    for (i = 1; i < 60; i++) {
+      fprintf(stderr, "\t%ld", counter[i]);
+      if (counter[i] < low_count) {
+        low_count = counter[i];
+        low_index = i;
+      }
+      else if (counter[i] > max_count) {
+        max_count = counter[i];
+        max_index = i;
+      }
+    }
+    fprintf(stderr, "\n");
+    if (strand == 1) {
+      lastpos = i+pos;
+    }
+    else {
+      lastpos = pos-i;
+    }
+    if (low_index > max_index && low_index > 15) {
+      if (low_count < (max_count*.5)) {
+        printf(stderr, "Found end of 3'UTR at %ld low:%d max:%d\n", lastpos, low_count, max_count);
+        if (strand == 1) {
+          Exon_setEnd(exon, lastpos);
+        }
+        else {
+          Exon_setStart(exon, lastpos);
+        }
+        bam_destroy1(read);
+        sam_itr_destroy(iter);
+        return lastpos;
+      }
+      else {
+        printf(stderr, "Found possible end of 3'UTR at %ld low:%d max:%d\n", lastpos, low_count, max_count);
+      }
+    }
+    else {
+      printf(stderr, "Found possible end of 3'UTR at %ld low:%d max:%d\n", lastpos, low_count, max_count);
+    }
+    sam_itr_destroy(iter);
+    res = strstr(res+6, "AATAAA");
+  }
+  bam_destroy1(read);
+  return lastpos;
+}
+
 
 void RefineSolexaGenes_writeOutput(RefineSolexaGenes *rsg) {
   DBAdaptor *outdb = BaseGeneBuild_getDbAdaptor(rsg, RefineSolexaGenes_getOutputDb(rsg), 0, 0);
@@ -4305,7 +4599,7 @@ StringHash *RefineSolexaGenes_processPaths(RefineSolexaGenes *rsg, Vector *exons
   
           for (j=0; j<Vector_getNumElement(intronGroup); j++) {
             DNAAlignFeature *intron = Vector_getElementAt(intronGroup, j);
-            //fprintf(stderr, "%d %s %.0f\n", i, DNAAlignFeature_getHitSeqName(intron), DNAAlignFeature_getScore(intron));
+            fprintf(stderr, "INTRON %d %s %ld %ld %d %.0f\n", i, DNAAlignFeature_getHitSeqName(intron), DNAAlignFeature_getStart(intron), DNAAlignFeature_getEnd(intron), DNAAlignFeature_getStrand(intron), DNAAlignFeature_getScore(intron));
           }
   
           if (Vector_getNumElement(intronGroup) > 1) {
@@ -4346,21 +4640,21 @@ StringHash *RefineSolexaGenes_processPaths(RefineSolexaGenes *rsg, Vector *exons
                 //# store the possible paths as a hash (splice)variants
                 char *hseqname = DNAAlignFeature_getHitSeqName(intron);
   
- //               fprintf(stderr,"adding variant for %s and %s\n", iStr, hseqname);
-                //fprintf(stderr,"adding to variants %s hash value %s\n", iStr, hseqname);
+                fprintf(stderr,"adding variant for %s and %s %.0f\n", iStr, hseqname, DNAAlignFeature_getScore(intron));
+                fprintf(stderr,"adding to variants %s hash value %s %.0f\n", iStr, hseqname, DNAAlignFeature_getScore(intron));
                 //$variants->{$i}->{$intron->hseqname} = 1;
                 if (!StringHash_contains(variants, iStr)) {
                   StringHash_add(variants, iStr, StringHash_new(STRINGHASH_SMALL));
                 }
-//                fprintf(stderr,"adding to variants %s hash value %s\n",iStr, hseqname);
+                fprintf(stderr,"adding to variants %s hash value %s %.0f\n",iStr, hseqname, DNAAlignFeature_getScore(intron));
                 StringHash *varEHash = StringHash_getValue(variants, iStr);
                 if (!StringHash_contains(varEHash, hseqname)) {
                   StringHash_add(varEHash, hseqname, &trueVal);
                 } else {
-                  //fprintf(stderr,"Warning: already added variant %s to %s\n", hseqname, iStr);
+                  fprintf(stderr,"Warning: varEHash already added variant %s to %s %.0f\n", hseqname, iStr, DNAAlignFeature_getScore(intron));
                 }
   
-                //fprintf(stderr,"adding to variants %s hash value %s\n", hseqname, exonIndStr);
+                fprintf(stderr,"adding to variants %s hash value %s %.0f\n", hseqname, exonIndStr, DNAAlignFeature_getScore(intron));
                 //$variants->{$intron->hseqname}->{$exon} = 1;
                 if (!StringHash_contains(variants, hseqname)) {
                   StringHash_add(variants, hseqname, StringHash_new(STRINGHASH_SMALL));
@@ -4370,7 +4664,7 @@ StringHash *RefineSolexaGenes_processPaths(RefineSolexaGenes *rsg, Vector *exons
                 if (!StringHash_contains(varIHash, exonIndStr)) {
                   StringHash_add(varIHash, exonIndStr, &trueVal);
                 } else {
-                  //fprintf(stderr,"Warning: already added variant %s to %s\n", exonIndStr, hseqname);
+                  fprintf(stderr,"Warning: varIHash already added variant %s to %s %.0f\n", exonIndStr, hseqname, DNAAlignFeature_getScore(intron));
                 }
               }
             }
@@ -6462,6 +6756,19 @@ Vector *RefineSolexaGenes_getIntronBamFiles(RefineSolexaGenes *rsg) {
   return rsg->intronBamFiles;
 }
 
+void RefineSolexaGenes_setAlignmentBamFile(RefineSolexaGenes *rsg, char *alignmentBamFile) {
+  if (alignmentBamFile[0] != '\0') {
+    if (rsg->alignmentBamFile != NULL) {
+      free(rsg->alignmentBamFile);
+    }
+    rsg->alignmentBamFile = StrUtil_copyString(&rsg->alignmentBamFile, alignmentBamFile, 0);
+  }
+}
+
+char *RefineSolexaGenes_getAlignmentBamFile(RefineSolexaGenes *rsg) {
+  return rsg->alignmentBamFile;
+}
+
 void RefineSolexaGenes_setWriteIntrons(RefineSolexaGenes *rsg, int writeIntrons) {
   rsg->writeIntrons = writeIntrons;
 }
@@ -6786,6 +7093,7 @@ Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMe
               start = -1 * (start - lenmRNA - 1);
               end = start - len * 3 + 1;
             }
+            fprintf(stderr, "S: %ld E: %ld T: %s\n", start, end, orf);
   
             if (orf + len != endAaSeq[frame]) { // happens when the strtok found a '*' - add 3 to end to include it in translation range
               //Vector_addElement(otherOrfRanges, ORFRange_new(len, start, end+3));
@@ -6873,6 +7181,8 @@ Vector *TranslationUtils_generateORFRanges(Transcript *transcript, int requireMe
 // Sort by length
 //  Vector_sort(metOrfRanges, ORFRange_reverseLengthCompFunc);
 //  Vector_sort(otherOrfRanges, ORFRange_reverseLengthCompFunc);
+  if (bestMetORF) fprintf(stderr, "BM S: %ld E: %ld\n", bestOtherORF->start, bestOtherORF->end);
+  if (bestOtherORF) fprintf(stderr, "BO S: %ld E: %ld\n", bestOtherORF->start, bestOtherORF->end);
   if (bestMetORF) Vector_addElement(metOrfRanges, bestMetORF);
   if (bestOtherORF) Vector_addElement(otherOrfRanges, bestOtherORF);
 
@@ -7065,6 +7375,8 @@ Transcript *TranslationUtils_addORFToTranscript(ORFRange *orf, Transcript *trans
   long pos = 1;
 
   int i;
+    fprintf(stderr, "Transcript %s start:%ld end:%ld CRS:%ld CRE:%ld CDS:%ld CDE:%ld NE:%ld\n", 
+    Transcript_getStableId(transcript), Transcript_getStart(transcript), Transcript_getEnd(transcript), Transcript_getCodingRegionStart(transcript), Transcript_getCodingRegionEnd(transcript), Transcript_getcDNACodingStart(transcript), Transcript_getcDNACodingEnd(transcript), Transcript_getExonCount(transcript));
   for (i=0; i<Transcript_getExonCount(transcript); i++) {
     Exon *exon = Transcript_getExonAt(transcript, i);
     exonCount++;
@@ -7074,10 +7386,14 @@ Transcript *TranslationUtils_addORFToTranscript(ORFRange *orf, Transcript *trans
 */
 
     if (orfStart >= pos && orfStart <= pos + Exon_getLength(exon) - 1) {
+    fprintf(stderr, "S exon:%d exon_length:%ld pos:%ld orf_start:%ld orf_end:%ld pos+:%ld\n",
+            exonCount, Exon_getLength(exon), pos, orfStart, orfEnd, pos + Exon_getLength(exon) - 1);
       translationStart = orfStart - pos + 1;
       translationStartExon = exon;
     }
     if (orfEnd >= pos && orfEnd <= pos + Exon_getLength(exon) - 1) {
+    fprintf(stderr, "E exon:%d exon_length:%ld pos:%ld orf_start:%ld orf_end:%ld pos+:%ld\n",
+            exonCount, Exon_getLength(exon), pos, orfStart, orfEnd, pos + Exon_getLength(exon) - 1);
       translationEnd     = orfEnd - pos + 1;
       translationEndExon = exon;
     }

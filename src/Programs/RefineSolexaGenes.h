@@ -67,6 +67,7 @@ typedef struct RefineSolexaGenesStruct {
   char *otherIsoformsType;
   char *singleExonModelType;
   char *typePrefix;
+  char *alignmentBamFile;
 
   int dryRun;
   int max3PrimeExons;
@@ -87,6 +88,9 @@ typedef struct RefineSolexaGenesStruct {
   int threads;
   int ucsc_naming;
   int writeIntrons;
+  bam_hdr_t *alignment_header;
+  htsFile *alignment_sam;
+  hts_idx_t *alignment_idx;
 
   SliceAdaptor *geneSliceAdaptor;
   SliceAdaptor *intronSliceAdaptor;
@@ -233,6 +237,8 @@ void RefineSolexaGenes_setStrictInternalEndSpliceSites(RefineSolexaGenes *rsg, i
 int RefineSolexaGenes_strictInternalEndSpliceSites(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setIntronBamFiles(RefineSolexaGenes *rsg, Vector *intronBamFiles);
 Vector *RefineSolexaGenes_getIntronBamFiles(RefineSolexaGenes *rsg);
+void RefineSolexaGenes_setAlignmentBamFile(RefineSolexaGenes *rsg, char *alignmentBamFile);
+char *RefineSolexaGenes_getAlignmentBamFile(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setWriteIntrons(RefineSolexaGenes *rsg, int writeIntrons);
 int RefineSolexaGenes_writeIntrons(RefineSolexaGenes *rsg);
 void RefineSolexaGenes_setTrimUTR(RefineSolexaGenes *rsg, int trimUtr);
@@ -348,4 +354,8 @@ void RefineSolexaGenes_filterGenes(RefineSolexaGenes *rsg);
 
   DBAdaptor *BaseGeneBuild_getDbAdaptor(RefineSolexaGenes *rsg, char *alias, int isNonStandard, int dontUseDnaDb);
   void RunnableDB_readDatabaseConfig(RefineSolexaGenes *rsg, char *configFile);
+void RefineSolexaGenes_cleanPolyAcheck(RefineSolexaGenes *rsg);
+hts_idx_t *RefineSolexaGenes_getAlignmentBamIndex(RefineSolexaGenes *rsg);
+bam_hdr_t *RefineSolexaGenes_getAlignmentBamHeader(RefineSolexaGenes *rsg);
+long RefineSolexaGenes_has_polyA_signal(RefineSolexaGenes *rsg, Exon *exon, long start, long end);
 #endif
