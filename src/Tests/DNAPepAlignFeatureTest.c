@@ -25,6 +25,7 @@
 #include "BaseRODBTest.h"
 
 int main(int argc, char *argv[]) {
+  int failedTests = 0;
   DBAdaptor *dba;
   ProteinAlignFeatureAdaptor *pafa;
   Slice *slice;
@@ -38,16 +39,16 @@ int main(int argc, char *argv[]) {
 
   slice = Test_getStandardSlice(dba);
 
-  ok(1, slice!=NULL);
+  failedTests += ok(1, slice!=NULL);
 
   pafa = DBAdaptor_getProteinAlignFeatureAdaptor(dba);
 
-  ok(2, pafa!=NULL);
+  failedTests += ok(2, pafa!=NULL);
 
   features =  Slice_getAllProteinAlignFeatures(slice,NULL,NULL,NULL,NULL);
 
-  ok(3, features!=NULL);
-  ok(4, Vector_getNumElement(features)!=0);
+  failedTests += ok(3, features!=NULL);
+  failedTests += ok(4, Vector_getNumElement(features)!=0);
 
   failed = 0;
   for (i=0;i<Vector_getNumElement(features) && !failed;i++) {
@@ -68,7 +69,7 @@ int main(int argc, char *argv[]) {
       failed = 1;
     }
   }
-  ok(5, !failed);
+  failedTests += ok(5, !failed);
 
   failed = 0;
   for (i=0;i<Vector_getNumElement(features) && !failed;i++) {
@@ -102,12 +103,12 @@ int main(int argc, char *argv[]) {
       }
     }
   }
-  ok(6, !failed);
+  failedTests += ok(6, !failed);
 
   Vector_free(features);
 
   ProcUtil_mallInfo();
 
 
-  return 0;
+  return failedTests;
 }

@@ -25,6 +25,7 @@
 #include "BaseRODBTest.h"
 
 int main(int argc, char *argv[]) {
+  int failedTests = 0;
   DBAdaptor *dba;
   SimpleFeatureAdaptor *sfa;
   Slice *slice;
@@ -38,16 +39,16 @@ int main(int argc, char *argv[]) {
 
   slice = Test_getStandardSlice(dba);
 
-  ok(1, slice!=NULL);
+  failedTests += ok(1, slice!=NULL);
 
   sfa = DBAdaptor_getSimpleFeatureAdaptor(dba);
 
-  ok(2, sfa!=NULL);
+  failedTests += ok(2, sfa!=NULL);
 
   features =  Slice_getAllSimpleFeatures(slice, NULL, NULL, NULL);
 
-  ok(3, features!=NULL);
-  ok(4, Vector_getNumElement(features)!=0);
+  failedTests += ok(3, features!=NULL);
+  failedTests += ok(4, Vector_getNumElement(features)!=0);
 
   fprintf(stderr,"Number of features is %d\n", Vector_getNumElement(features));
 
@@ -79,6 +80,6 @@ int main(int argc, char *argv[]) {
       }
     }
   }
-  ok(5, !failed);
-  return 0;
+  failedTests += ok(5, !failed);
+  return failedTests;
 }

@@ -28,12 +28,14 @@ void Test_failAndDie(char *message) {
   exit(1);
 }
 
-void ok(int testNum, int isOk) {
+int ok(int testNum, int isOk) {
   fprintf(stderr, "Test %d: ",testNum);
   if (isOk) {
     fprintf(stderr, "OK\n");
+    return 0;
   } else {
     fprintf(stderr, "Failed\n");
+    return 1;
   }
 }
 

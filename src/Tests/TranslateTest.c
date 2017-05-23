@@ -19,6 +19,7 @@
 #include "BaseTest.h"
 
 int main(int argc, char *argv[]) {
+  int failedTests = 0;
   char *frm[6];
   int lengths[6];
   int i;
@@ -32,5 +33,5 @@ int main(int argc, char *argv[]) {
     printf("frm %d = %s\n", i+1, frm[i]);
   }
 
-  return 0;
+  return failedTests;
 }

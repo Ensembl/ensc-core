@@ -22,13 +22,14 @@
 #include "BaseTest.h"
 
 int main(int argc, char *argv[]) {
+  int failedTests = 0;
   DBAdaptor *dba;
 
   initEnsC(argc, argv);
 
   dba = DBAdaptor_new("ensembldb.ensembl.org","anonymous",NULL,"homo_sapiens_core_70_37",3306,NULL);
 
-  ok(1,!strcmp("GRCh37",DBAdaptor_getAssemblyType(dba)));
+  failedTests += ok(1,!strcmp("GRCh37",DBAdaptor_getAssemblyType(dba)));
 
-  return 0;
+  return failedTests;
 }

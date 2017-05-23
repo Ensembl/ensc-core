@@ -32,6 +32,7 @@ int loadSGPDump(Mapper *mapper, int reverse);
 int testTransform(Mapper *mapper, int srcId, int srcStart, int srcEnd, int srcStrand, char *srcType, int dest[][4], int nDest );
 
 int main(int argc, char *argv[]) {
+  int failedTests = 0;
 
   initEnsC(argc, argv);
 
@@ -39,7 +40,7 @@ int main(int argc, char *argv[]) {
   int nToLoad = loadSGPDump(mapper, 0 );
 
   // loading done successfully
-  ok(1,  nToLoad == 100);
+  failedTests += ok(1,  nToLoad == 100);
 
 
   {
@@ -199,7 +200,7 @@ int main(int argc, char *argv[]) {
     testTransform(mapper, 1, 100, 200, 1, "asm1", testOutput, NumOutput(testOutput));
   }
   
-  return 0;
+  return failedTests;
 }
 
 

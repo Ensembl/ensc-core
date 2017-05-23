@@ -26,6 +26,7 @@
 char *TestStr1 = "Test string 123";
 
 int main(int argc, char **argv) {
+  int failedTests = 0;
   FILE *fp;
   char str[1024];
 
@@ -37,18 +38,18 @@ int main(int argc, char **argv) {
   if (!FileUtil_exists("Hist.log")) {
     Test_failAndDie("Failed setting up streams\n");
   }
-  ok(1,1);
+  failedTests += ok(1,1);
 
   Stream_setFile("OutStream","out.out");
   fp = FileUtil_open("out.out","r","main");
-  ok(2,fp!=NULL);
+  failedTests += ok(2,fp!=NULL);
 
   Stream_fprintf(OutStream,TestStr1);
   Stream_flush(OutStream);
 
   FileUtil_getStrippedLine(str,1024,fp);
-  ok(3,!strcmp(str,TestStr1));
+  failedTests += ok(3,!strcmp(str,TestStr1));
 
-  return 0;
+  return failedTests;
 }
 

@@ -25,7 +25,7 @@
 ComparaDBAdaptor *Test_initComparaDB() {
   ComparaDBAdaptor *cdba;
 
-  cdba = ComparaDBAdaptor_new("kaka.sanger.ac.uk","anonymous",NULL,"ensembl_compara_14_1",3306,"Tests/Compara.conf");
+  cdba = ComparaDBAdaptor_new("ensembldb.ensembl.org","anonymous",NULL,"ensembl_compara_24_1",4306,"Tests/Compara.conf");
 
   return cdba;
 }
@@ -33,7 +33,7 @@ ComparaDBAdaptor *Test_initComparaDB() {
 Slice *Test_getStandardSlice(ComparaDBAdaptor *cdba) {
   Slice *slice;
   SliceAdaptor *sa;
-  DBAdaptor *dba = ComparaDBAdaptor_getDBAdaptor(cdba,"Homo sapiens", "NCBI31");
+  DBAdaptor *dba = ComparaDBAdaptor_getDBAdaptor(cdba,"Homo sapiens", "NCBI34");
 
   sa = DBAdaptor_getSliceAdaptor(dba);
 

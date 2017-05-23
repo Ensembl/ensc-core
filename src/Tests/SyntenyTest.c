@@ -24,6 +24,7 @@
 #include "BaseComparaDBTest.h"
 
 int main(int argc, char *argv[]) {
+  int failedTests = 0;
   ComparaDBAdaptor *cdba;
   SyntenyAdaptor *sa;
   Slice *slice = NULL;
@@ -37,18 +38,18 @@ int main(int argc, char *argv[]) {
 
   //slice = Test_getStandardSlice(dba);
 
-  ok(1, slice!=NULL);
+  failedTests += ok(1, slice!=NULL);
 
   sa = ComparaDBAdaptor_getSyntenyAdaptor(cdba);
 
-  ok(2, sa!=NULL);
+  failedTests += ok(2, sa!=NULL);
 
   SyntenyAdaptor_setSpecies(sa, "homo sapiens","mus musculus");
   
   synRegions =  SyntenyAdaptor_getSyntenyForChromosome(sa,"1",NULL,NULL);
 
-  ok(3, synRegions!=NULL);
-  ok(4, Vector_getNumElement(synRegions)!=0);
+  failedTests += ok(3, synRegions!=NULL);
+  failedTests += ok(4, Vector_getNumElement(synRegions)!=0);
 
   for (i=0; i<Vector_getNumElement(synRegions); i++) {
     SyntenyRegion *sr = Vector_getElementAt(synRegions,i);
@@ -60,5 +61,5 @@ int main(int argc, char *argv[]) {
                                        SyntenyRegion_getHitChrEnd(sr));
   }
 
-  return 0;
+  return failedTests;
 }

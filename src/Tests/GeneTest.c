@@ -30,6 +30,7 @@
 #define UNW_LOCAL_ONLY
 
 int main(int argc, char *argv[]) {
+  int failedTests = 0;
   DBAdaptor *dba;
   GeneAdaptor *ga;
   Slice *slice = NULL;
@@ -44,15 +45,13 @@ int main(int argc, char *argv[]) {
   dba = Test_initROEnsDB();
   slice = Test_getStandardSlice(dba);
 
-//  DBAdaptor *seqdba = DBAdaptor_new("genebuild6.internal.sanger.ac.uk","ensadmin","ensembl","steve_chicken_rnaseq_missing_reference",3306,NULL);
-//  dba = DBAdaptor_new("genebuild1.internal.sanger.ac.uk","ensadmin","ensembl","steve_chicken_rnaseq_missing_refined",3306,seqdba);
 
-  ok(1, slice!=NULL);
+  failedTests += ok(1, slice!=NULL);
 
   ga = DBAdaptor_getGeneAdaptor(dba);
   SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
 
-  ok(2, ga!=NULL);
+  failedTests += ok(2, ga!=NULL);
 
   slice = SliceAdaptor_fetchByRegion(sa,"chromosome","20",10000000,50000000,1,NULL,0);
 //  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","17",1000000,5000000,1,NULL,0);
@@ -63,11 +62,11 @@ int main(int argc, char *argv[]) {
   genes =  Slice_getAllGenes(slice, NULL, NULL, 1, NULL, NULL);
 
   fprintf(stdout, "Have %d genes\n", Vector_getNumElement(genes));
-  ok(3, genes!=NULL);
-  ok(4, Vector_getNumElement(genes)!=0);
+  failedTests += ok(3, genes!=NULL);
+  failedTests += ok(4, Vector_getNumElement(genes)!=0);
 
   failed = dumpGenes(genes, 1);
-  ok(5, !failed);
+  failedTests += ok(5, !failed);
 
   //Vector *toplevelSlices = SliceAdaptor_fetchAll(sa, "toplevel", NULL, 0);
   Vector *toplevelSlices = SliceAdaptor_fetchAll(sa, "chromosome", NULL, 0);
@@ -88,7 +87,7 @@ int main(int argc, char *argv[]) {
   fprintf(stderr,"\n");
   ProcUtil_timeInfo("at end of GeneTest");
 
-  return 0;
+  return failedTests;
 }
 
 int dumpGenes(Vector *genes, int withSupport) {

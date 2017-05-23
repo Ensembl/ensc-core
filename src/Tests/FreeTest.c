@@ -26,6 +26,7 @@
 #include "gperftools/tcmalloc.h"
 
 int main(int argc, char *argv[]) {
+  int failedTests = 0;
   DBAdaptor *dba;
   DNAAlignFeatureAdaptor *dafa;
   Slice *slice;
@@ -39,16 +40,16 @@ int main(int argc, char *argv[]) {
 
   slice = Test_getStandardSlice(dba);
 
-  ok(1, slice!=NULL);
+  failedTests += ok(1, slice!=NULL);
 
   dafa = DBAdaptor_getDNAAlignFeatureAdaptor(dba);
 
-  ok(2, dafa!=NULL);
+  failedTests += ok(2, dafa!=NULL);
 
   features =  Slice_getAllDNAAlignFeatures(slice,NULL,NULL,NULL,NULL);
 
-  ok(3, features!=NULL);
-  ok(4, Vector_getNumElement(features)!=0);
+  failedTests += ok(3, features!=NULL);
+  failedTests += ok(4, Vector_getNumElement(features)!=0);
 
   unsigned long long totNameLen=0;
   unsigned long long totHitNameLen=0;
@@ -80,7 +81,7 @@ int main(int argc, char *argv[]) {
   fprintf(stderr, "Average hit name len = "IDFMTSTR"\n", totHitNameLen/nFeat);
   fprintf(stderr, "Average name len = "IDFMTSTR"\n", totNameLen/nFeat);
   fprintf(stderr, "Average cigar len = "IDFMTSTR"\n", totCigarLen/nFeat);
-  ok(5, !failed);
+  failedTests += ok(5, !failed);
 
   printf("Before calling Vector_free on features\n");
   tc_malloc_stats();
@@ -97,5 +98,5 @@ int main(int argc, char *argv[]) {
   tc_malloc_stats();
 
   printf(" I THINK THERE's SOMETHING WRONG IN THE WAY THE ABOVE FREEs AND CLEARS ARE WORKING\n");
-  return 0;
+  return failedTests;
 }

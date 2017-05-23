@@ -34,6 +34,7 @@ int main(int argc, char *argv[]) {
   DBAdaptor *dba;
   AssemblyMapperAdaptor *asma;
   int testNum = 1;
+  int failedTests = 0;
 
   initEnsC(argc, argv);
 
@@ -44,7 +45,7 @@ int main(int argc, char *argv[]) {
   //
   asma = DBAdaptor_getAssemblyMapperAdaptor(dba);
 
-  ok(testNum++, asma!=NULL);
+  failedTests += ok(testNum++, asma!=NULL);
 
   //
   // Test fetch_by_CoordSystems
@@ -61,8 +62,8 @@ int main(int argc, char *argv[]) {
   TopLevelAssemblyMapper *clnToplevelMapper = (TopLevelAssemblyMapper *)AssemblyMapperAdaptor_fetchByCoordSystems(asma, toplevelCs, clnCs);
   TopLevelAssemblyMapper *superctgToplevelMapper = (TopLevelAssemblyMapper *)AssemblyMapperAdaptor_fetchByCoordSystems(asma, toplevelCs, superctgCs);
 
-  ok(testNum++, clnToplevelMapper!=NULL); //  && $cln_toplevel_mapper->isa('Bio::EnsEMBL::TopLevelAssemblyMapper'));
-  ok(testNum++, superctgToplevelMapper!=NULL); //  && $cln_toplevel_mapper->isa('Bio::EnsEMBL::TopLevelAssemblyMapper'));
+  failedTests += ok(testNum++, clnToplevelMapper!=NULL); //  && $cln_toplevel_mapper->isa('Bio::EnsEMBL::TopLevelAssemblyMapper'));
+  failedTests += ok(testNum++, superctgToplevelMapper!=NULL); //  && $cln_toplevel_mapper->isa('Bio::EnsEMBL::TopLevelAssemblyMapper'));
 
 
 //
@@ -78,14 +79,14 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "MAP 'AL359765.6'->toplevel\n");
     coords = TopLevelAssemblyMapper_map(clnToplevelMapper,"AL359765.6", 1, 13780, 1, clnCs,  0, NULL);
     printCoords(coords);
-    ok(testNum++, coords!=NULL);
+    failedTests += ok(testNum++, coords!=NULL);
   }
 
   if (superctgToplevelMapper) {
       fprintf(stderr, "MAP NT_028392->toplevel\n");
       coords = TopLevelAssemblyMapper_map(superctgToplevelMapper, "NT_028392", 600000, 1000000, 1, superctgCs, 0, NULL);
       printCoords(coords);
-      ok(testNum++, coords!=NULL);
+      failedTests += ok(testNum++, coords!=NULL);
     }
 
 
@@ -97,7 +98,7 @@ int main(int argc, char *argv[]) {
     
   if (clnToplevelMapper) {
     seqRegions = TopLevelAssemblyMapper_listSeqRegions(clnToplevelMapper, "AL359765.6", 1, 13780, clnCs);
-    ok(testNum++, seqRegions!=NULL && Vector_getNumElement(seqRegions) == 1 && !strcmp("20", Vector_getElementAt(seqRegions,0)));
+    failedTests += ok(testNum++, seqRegions!=NULL && Vector_getNumElement(seqRegions) == 1 && !strcmp("20", Vector_getElementAt(seqRegions,0)));
     for (i=0;i<Vector_getNumElement(seqRegions); i++) {
       char *regionName = Vector_getElementAt(seqRegions, i);
       fprintf(stderr, "%s\n",regionName);
@@ -106,7 +107,7 @@ int main(int argc, char *argv[]) {
 
   if (superctgToplevelMapper) {
     seqRegions = TopLevelAssemblyMapper_listSeqRegions(superctgToplevelMapper, "NT_028392", 600000, 1000000, superctgCs);
-    ok(testNum++, seqRegions!=NULL && Vector_getNumElement(seqRegions) == 1 && !strcmp("20", Vector_getElementAt(seqRegions,0)));
+    failedTests += ok(testNum++, seqRegions!=NULL && Vector_getNumElement(seqRegions) == 1 && !strcmp("20", Vector_getElementAt(seqRegions,0)));
     for (i=0;i<Vector_getNumElement(seqRegions); i++) {
       char *regionName = Vector_getElementAt(seqRegions, i);
       fprintf(stderr, "%s\n",regionName);
@@ -120,7 +121,7 @@ int main(int argc, char *argv[]) {
 
   if (clnToplevelMapper) {
     ids = TopLevelAssemblyMapper_listIds(clnToplevelMapper, "AL359765.6", 1, 13780, clnCs);
-    ok(testNum++, ids!=NULL && Vector_getNumElement(ids) == 1 && *((IDType *)Vector_getElementAt(ids,0)) == 469283 );
+    failedTests += ok(testNum++, ids!=NULL && Vector_getNumElement(ids) == 1 && *((IDType *)Vector_getElementAt(ids,0)) == 469283 );
     for (i=0;i<Vector_getNumElement(ids); i++) {
       IDType id = *((IDType *)Vector_getElementAt(ids, i));
       fprintf(stderr, IDFMTSTR"\n",id);
@@ -129,7 +130,7 @@ int main(int argc, char *argv[]) {
 
   if (superctgToplevelMapper) {
     ids = TopLevelAssemblyMapper_listIds(superctgToplevelMapper, "NT_028392", 600000, 1000000, superctgCs);
-    ok(testNum++, ids!=NULL && Vector_getNumElement(ids) == 1 && *((IDType *)Vector_getElementAt(ids,0)) == 469283 );
+    failedTests += ok(testNum++, ids!=NULL && Vector_getNumElement(ids) == 1 && *((IDType *)Vector_getElementAt(ids,0)) == 469283 );
     for (i=0;i<Vector_getNumElement(ids); i++) {
       IDType id = *((IDType *)Vector_getElementAt(ids, i));
       fprintf(stderr, IDFMTSTR"\n",id);
@@ -139,7 +140,7 @@ int main(int argc, char *argv[]) {
 // Test for a not implemented method
 //  seqRegions = TopLevelAssemblyMapper_listContigIds(clnToplevelMapper, "AL359765.6", 1, 13780, 1);
 
-  return 0;
+  return failedTests;
 }
 
 void printCoords(MapperRangeSet *results) {

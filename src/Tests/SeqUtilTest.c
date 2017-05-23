@@ -20,10 +20,11 @@
 #include "EnsC.h"
 
 int main(int argc, char *argv[]) {
+  int failedTests = 0;
   char transTab[4][4][4];
 
   initEnsC(argc, argv);
   SeqUtil_readTransTab("../data/trans0.txt",transTab);
 
-  return 0;
+  return failedTests;
 }

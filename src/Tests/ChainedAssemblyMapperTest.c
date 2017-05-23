@@ -35,6 +35,7 @@ int main(int argc, char *argv[]) {
   DBAdaptor *dba;
   AssemblyMapperAdaptor *asma;
   int testNum = 1;
+  int failedTests = 0;
   
   initEnsC(argc, argv);
 
@@ -45,7 +46,7 @@ int main(int argc, char *argv[]) {
   //
   asma = DBAdaptor_getAssemblyMapperAdaptor(dba);
 
-  ok(testNum++, asma!=NULL);
+  failedTests += ok(testNum++, asma!=NULL);
 
 
   //
@@ -62,11 +63,11 @@ int main(int argc, char *argv[]) {
 
   ChainedAssemblyMapper *asmMapper =  (ChainedAssemblyMapper *)AssemblyMapperAdaptor_fetchByCoordSystems(asma, clnCs, chrCs);
 
-  ok(testNum++,  asmMapper!=NULL); // Need to make it an object before can do this && asmMapper->objectType == ( "Bio::EnsEMBL::ChainedAssemblyMapper" ));
+  failedTests += ok(testNum++,  asmMapper!=NULL); // Need to make it an object before can do this && asmMapper->objectType == ( "Bio::EnsEMBL::ChainedAssemblyMapper" ));
   
   ChainedAssemblyMapper *chrSCtgMapper = (ChainedAssemblyMapper *)AssemblyMapperAdaptor_fetchByCoordSystems(asma, chrCs, sCtgCs);
 
-  ok(testNum++, chrSCtgMapper!=NULL);// && $chr_sctg_mapper->isa('Bio::EnsEMBL::ChainedAssemblyMapper'));
+  failedTests += ok(testNum++, chrSCtgMapper!=NULL);// && $chr_sctg_mapper->isa('Bio::EnsEMBL::ChainedAssemblyMapper'));
 
 //
 // test db has chr 20  (50KB -> 62MB)
@@ -78,7 +79,7 @@ int main(int argc, char *argv[]) {
     {
       fprintf(stderr,"MAP 20->clone\n");
       coords = ChainedAssemblyMapper_map(asmMapper, "20", 500001, 60000000, 1, chrCs, 0, NULL);
-      ok(testNum++, coords!=NULL);
+      failedTests += ok(testNum++, coords!=NULL);
       printCoords(coords);
     }
 
@@ -86,7 +87,7 @@ int main(int argc, char *argv[]) {
     {
       fprintf(stderr,"MAP 'AL359765.6'->chromosome\n");
       coords = ChainedAssemblyMapper_map(asmMapper, "AL359765.6", 1, 13780, 1, clnCs, 0, NULL);
-      ok(testNum++, coords!=NULL);
+      failedTests += ok(testNum++, coords!=NULL);
       printCoords(coords);
     }
 
@@ -94,7 +95,7 @@ int main(int argc, char *argv[]) {
     {
       fprintf(stderr,"MAP 20->supercontig\n");
       coords = ChainedAssemblyMapper_map(chrSCtgMapper, "20", 500001, 60000000, 1, chrCs, 0, NULL);
-      ok(testNum++, coords!=NULL);
+      failedTests += ok(testNum++, coords!=NULL);
       printCoords(coords);
     }
 
@@ -107,7 +108,7 @@ int main(int argc, char *argv[]) {
   if (asmMapper)
     {
       Vector *seqRegions = ChainedAssemblyMapper_listSeqRegions(asmMapper, "20", 500001, 60000000, chrCs);
-      ok(testNum++, seqRegions != NULL);
+      failedTests += ok(testNum++, seqRegions != NULL);
       for (i=0;i<Vector_getNumElement(seqRegions); i++) {
         char *regionName = Vector_getElementAt(seqRegions, i);
         fprintf(stderr, "%s\n",regionName);
@@ -117,7 +118,7 @@ int main(int argc, char *argv[]) {
   if (asmMapper)
     {
       Vector *seqRegions = ChainedAssemblyMapper_listSeqRegions(asmMapper, "AL359765.6", 1, 13780, clnCs);
-      ok(testNum++, seqRegions!=NULL);
+      failedTests += ok(testNum++, seqRegions!=NULL);
       for (i=0;i<Vector_getNumElement(seqRegions); i++) {
         char *regionName = Vector_getElementAt(seqRegions, i);
         fprintf(stderr, "%s\n",regionName);
@@ -127,8 +128,8 @@ int main(int argc, char *argv[]) {
 
   if (chrSCtgMapper)
     {
-      Vector *seqRegions = ChainedAssemblyMapper_listSeqRegions(chrSCtgMapper, "NT_028392", 600000, 1000000, sCtgCs);
-      ok(testNum++, seqRegions!=NULL);
+      Vector *seqRegions = ChainedAssemblyMapper_listSeqRegions(chrSCtgMapper, "HSCHR20_CTG2", 600000, 1000000, sCtgCs);
+      failedTests += ok(testNum++, seqRegions!=NULL);
       for (i=0;i<Vector_getNumElement(seqRegions); i++) {
         char *regionName = Vector_getElementAt(seqRegions, i);
         fprintf(stderr, "%s\n",regionName);
@@ -138,7 +139,7 @@ int main(int argc, char *argv[]) {
   if (chrSCtgMapper)
     {
       Vector *seqRegions = ChainedAssemblyMapper_listSeqRegions(chrSCtgMapper, "20", 3000000, 31000000, chrCs);
-      ok(testNum++, seqRegions!=NULL);
+      failedTests += ok(testNum++, seqRegions!=NULL);
       for (i=0;i<Vector_getNumElement(seqRegions); i++) {
         char *regionName = Vector_getElementAt(seqRegions, i);
         fprintf(stderr, "%s\n",regionName);
@@ -155,7 +156,7 @@ int main(int argc, char *argv[]) {
     {
       Vector *seqIds = ChainedAssemblyMapper_listIds(asmMapper, "20", 500001, 60000000, chrCs);
 
-      ok(testNum++, seqIds!=NULL);
+      failedTests += ok(testNum++, seqIds!=NULL);
       for (i=0;i<Vector_getNumElement(seqIds); i++) {
         IDType regionId = *((IDType *)Vector_getElementAt(seqIds, i));
         fprintf(stderr, IDFMTSTR"\n",regionId);
@@ -165,7 +166,7 @@ int main(int argc, char *argv[]) {
   if (asmMapper)
     {
       Vector *seqIds = ChainedAssemblyMapper_listIds(asmMapper, "AL359765.6", 1, 13780, clnCs);
-      ok(testNum++, seqIds!=NULL);
+      failedTests += ok(testNum++, seqIds!=NULL);
       for (i=0;i<Vector_getNumElement(seqIds); i++) {
         IDType regionId = *((IDType *)Vector_getElementAt(seqIds, i));
         fprintf(stderr, IDFMTSTR"\n",regionId);
@@ -174,8 +175,8 @@ int main(int argc, char *argv[]) {
 
   if (chrSCtgMapper)
     {
-      Vector *seqIds = ChainedAssemblyMapper_listIds(chrSCtgMapper, "NT_028392", 600000, 1000000, sCtgCs);
-      ok(testNum++, seqIds!=NULL);
+      Vector *seqIds = ChainedAssemblyMapper_listIds(chrSCtgMapper, "HSCHR20_CTG2", 600000, 1000000, sCtgCs);
+      failedTests += ok(testNum++, seqIds!=NULL);
       for (i=0;i<Vector_getNumElement(seqIds); i++) {
         IDType regionId = *((IDType *)Vector_getElementAt(seqIds, i));
         fprintf(stderr, IDFMTSTR"\n",regionId);
@@ -185,14 +186,14 @@ int main(int argc, char *argv[]) {
   if (chrSCtgMapper)
     {
       Vector *seqIds = ChainedAssemblyMapper_listIds(chrSCtgMapper, "20", 3000000, 31000000, chrCs);
-      ok(testNum++, seqIds!=NULL);
+      failedTests += ok(testNum++, seqIds!=NULL);
       for (i=0;i<Vector_getNumElement(seqIds); i++) {
         IDType regionId = *((IDType *)Vector_getElementAt(seqIds, i));
         fprintf(stderr, IDFMTSTR"\n",regionId);
       }
     }
 
-  return 0;
+  return failedTests;
   
 }
 

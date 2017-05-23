@@ -21,11 +21,12 @@
 #include "BaseTest.h"
 
 int main(int argc, char **argv) {
-  ok(1, Class_isDescendent(CLASS_OBJECT,CLASS_FEATUREPAIR));
-  ok(2,!Class_isDescendent(CLASS_FEATURESET,CLASS_OBJECT));
-  ok(3, Class_isDescendent(CLASS_ENSROOT,CLASS_GENE));
-  ok(4,!Class_isDescendent(CLASS_STATEMENTHANDLE,CLASS_GENE));
+  int failedTests = 0;
+  failedTests += ok(1, Class_isDescendent(CLASS_OBJECT,CLASS_FEATUREPAIR));
+  failedTests += ok(2,!Class_isDescendent(CLASS_FEATURESET,CLASS_OBJECT));
+  failedTests += ok(3, Class_isDescendent(CLASS_ENSROOT,CLASS_GENE));
+  failedTests += ok(4,!Class_isDescendent(CLASS_STATEMENTHANDLE,CLASS_GENE));
 
-  return 0;
+  return failedTests;
 }
 

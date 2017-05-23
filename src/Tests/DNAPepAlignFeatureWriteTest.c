@@ -26,6 +26,7 @@
 #include "BaseRWDBTest.h"
 
 int main(int argc, char *argv[]) {
+  int failedTests = 0;
   DBAdaptor *dba;
   DBAdaptor *writeDba;
   ProteinAlignFeatureAdaptor *pafa;
@@ -42,12 +43,12 @@ int main(int argc, char *argv[]) {
 
   slice = Test_getStandardSlice(dba);
 
-  ok(1, slice!=NULL);
+  failedTests += ok(1, slice!=NULL);
 
   pafa = DBAdaptor_getProteinAlignFeatureAdaptor(writeDba);
   SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
 
-  ok(2, pafa!=NULL);
+  failedTests += ok(2, pafa!=NULL);
 
   //features =  Slice_getAllDNAPepAlignFeatures(slice,NULL,NULL, NULL,NULL);
 
@@ -55,10 +56,10 @@ int main(int argc, char *argv[]) {
   Slice *slice2 = SliceAdaptor_fetchByRegion(sa,"chromosome","1",1000000,4000000,1,NULL,0);
   features =  Slice_getAllProteinAlignFeatures(slice2,NULL,NULL, NULL,NULL);
 
-  ok(3, features!=NULL);
-  ok(4, Vector_getNumElement(features)!=0);
+  failedTests += ok(3, features!=NULL);
+  failedTests += ok(4, Vector_getNumElement(features)!=0);
 
   ProteinAlignFeatureAdaptor_store((BaseFeatureAdaptor*)pafa, features);
 
-  return 0;
+  return failedTests;
 }

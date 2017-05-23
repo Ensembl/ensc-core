@@ -24,6 +24,7 @@
 #include "BaseRODBTest.h"
 
 int main(int argc, char *argv[]) {
+  int failedTests = 0;
   DBAdaptor *dba;
   PredictionTranscriptAdaptor *pta;
   Slice *slice;
@@ -37,16 +38,16 @@ int main(int argc, char *argv[]) {
 
   slice = Test_getStandardSlice(dba);
 
-  ok(1, slice!=NULL);
+  failedTests += ok(1, slice!=NULL);
 
   pta = DBAdaptor_getPredictionTranscriptAdaptor(dba);
 
-  ok(2, pta!=NULL);
+  failedTests += ok(2, pta!=NULL);
 
   features =  Slice_getAllPredictionTranscripts(slice,NULL,1, NULL);
 
-  ok(3, features!=NULL);
-  ok(4, Vector_getNumElement(features)!=0);
+  failedTests += ok(3, features!=NULL);
+  failedTests += ok(4, Vector_getNumElement(features)!=0);
 
   failed = 0;
   for (i=0;i<Vector_getNumElement(features) && !failed;i++) {
@@ -59,6 +60,6 @@ int main(int argc, char *argv[]) {
            PredictionTranscript_getExonCount(pt));
     fprintf(stderr, " translation = %s\n",PredictionTranscript_translate(pt));
   }
-  ok(5, !failed);
-  return 0;
+  failedTests += ok(5, !failed);
+  return failedTests;
 }

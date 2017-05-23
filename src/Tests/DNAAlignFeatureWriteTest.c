@@ -34,6 +34,7 @@ int main(int argc, char *argv[]) {
   Vector *features;
   int i;
   int failed;
+  int failedTests = 0;
   
   initEnsC(argc, argv);
 
@@ -43,12 +44,12 @@ int main(int argc, char *argv[]) {
 
   slice = Test_getStandardSlice(dba);
 
-  ok(1, slice!=NULL);
+  failedTests += ok(1, slice!=NULL);
 
   dafa = DBAdaptor_getDNAAlignFeatureAdaptor(writeDba);
   SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
 
-  ok(2, dafa!=NULL);
+  failedTests += ok(2, dafa!=NULL);
 
   //features =  Slice_getAllDNAAlignFeatures(slice,NULL,NULL, NULL,NULL);
 
@@ -56,10 +57,10 @@ int main(int argc, char *argv[]) {
   Slice *slice2 = SliceAdaptor_fetchByRegion(sa,"chromosome","1",1000000,4000000,1,NULL,0);
   features =  Slice_getAllDNAAlignFeatures(slice2,NULL,NULL, NULL,NULL);
 
-  ok(3, features!=NULL);
-  ok(4, Vector_getNumElement(features)!=0);
+  failedTests += ok(3, features!=NULL);
+  failedTests += ok(4, Vector_getNumElement(features)!=0);
 
   DNAAlignFeatureAdaptor_store(dafa, features);
 
-  return 0;
+  return failedTests;
 }
