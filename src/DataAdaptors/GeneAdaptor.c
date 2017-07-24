@@ -120,7 +120,6 @@ char *Gene_cols[] = {
                 "g.biotype",
                 "g.display_xref_id",
                 "g.description",
-                "g.status",
                 "g.source",
                 "g.is_current",
                 "g.canonical_transcript_id",
@@ -1428,7 +1427,6 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
                "biotype = '%s',"
                "description = %%s,"
                "source = %%s,"
-               "status = %%s,"
                //"description = '%s',"
                //"source = '%s',"
                //"status = '%s',"
@@ -1451,10 +1449,7 @@ IDType GeneAdaptor_store(GeneAdaptor *ga, Gene *gene, int ignoreRelease)  {
   char sourceQStr[1024];
   Gene_getSource(gene) ? sprintf(sourceQStr,"'%s'", Gene_getSource(gene)) : sprintf(sourceQStr, "NULL");
 
-  char statusQStr[1024];
-  Gene_getStatus(gene) ? sprintf(statusQStr,"'%s'", Gene_getStatus(gene)) : sprintf(statusQStr, "NULL");
-
-  sprintf(qStr, fmtStr, descQStr, sourceQStr, statusQStr);
+  sprintf(qStr, fmtStr, descQStr, sourceQStr);
 
   if (Gene_getStableId(gene)) {
 /* Use FROM_UNIXTIME for now
@@ -1899,26 +1894,25 @@ Vector *GeneAdaptor_objectsFromStatementHandle(GeneAdaptor *ga,
     char *biotype =                row->getStringAt(row,6);
     IDType displayXrefId =         row->getLongLongAt(row,7);
     char *geneDescription =        row->getStringAt(row,8);
-    char *status =                 row->getStringAt(row,9);
-    char *source =                 row->getStringAt(row,10);
-    int isCurrent =                row->getIntAt(row,11);
-    IDType canonicalTranscriptId = row->getLongLongAt(row,12);
-    char *stableId =               row->getStringAt(row,13);
-    int version =                  row->getIntAt(row,14);
-    int createdDate =              row->getIntAt(row,15);
-    int modifiedDate =             row->getIntAt(row,16);
+    char *source =                 row->getStringAt(row,9);
+    int isCurrent =                row->getIntAt(row,10);
+    IDType canonicalTranscriptId = row->getLongLongAt(row,11);
+    char *stableId =               row->getStringAt(row,12);
+    int version =                  row->getIntAt(row,13);
+    int createdDate =              row->getIntAt(row,14);
+    int modifiedDate =             row->getIntAt(row,15);
 // Changed from perl xrefDisplayId  to xrefDisplayLabel to match Transcript version
-    char *xrefDisplayLabel =       row->getStringAt(row,17);
-    char *xrefPrimaryAcc =         row->getStringAt(row,18);
-    char *xrefDesc =               row->getStringAt(row,19);
-    char *xrefVersion =            row->getStringAt(row,20);
-    char *externalDb =             row->getStringAt(row,21);
-    char *externalStatus =         row->getStringAt(row,22);
-    char *externalRelease =        row->getStringAt(row,23);
-    char *externalDbName =         row->getStringAt(row,24);
+    char *xrefDisplayLabel =       row->getStringAt(row,16);
+    char *xrefPrimaryAcc =         row->getStringAt(row,17);
+    char *xrefDesc =               row->getStringAt(row,18);
+    char *xrefVersion =            row->getStringAt(row,19);
+    char *externalDb =             row->getStringAt(row,20);
+    char *externalStatus =         row->getStringAt(row,21);
+    char *externalRelease =        row->getStringAt(row,22);
+    char *externalDbName =         row->getStringAt(row,23);
 // Added xref prefix to info* var names to match Transcript version
-    char *xrefInfoType =           row->getStringAt(row,25);
-    char *xrefInfoText =           row->getStringAt(row,26);
+    char *xrefInfoType =           row->getStringAt(row,24);
+    char *xrefInfoText =           row->getStringAt(row,25);
 
     // get the analysis object
     Analysis *analysis = AnalysisAdaptor_fetchByDbID(aa, analysisId);
@@ -2115,7 +2109,6 @@ Vector *GeneAdaptor_objectsFromStatementHandle(GeneAdaptor *ga,
     Gene_setExternalDb    (gene, externalDb);
     Gene_setExternalStatus(gene, externalStatus);
     Gene_setDisplayXref   (gene, displayXref);
-    Gene_setStatus        (gene, status);
     Gene_setSource        (gene, source);
     Gene_setIsCurrent     (gene, isCurrent);
     Gene_setCanonicalTranscriptId(gene, canonicalTranscriptId);

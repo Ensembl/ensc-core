@@ -95,9 +95,6 @@ ECOSTRING Gene_setExternalDb(Gene *gene, char *externalDb);
 #define Gene_getExternalDb(gene)  (gene)->externalDb
 
 
-ECOSTRING Gene_setStatus(Gene *gene, char *status);
-#define Gene_getStatus(gene)  (gene)->status
-
 ECOSTRING Gene_setSource(Gene *gene, char *source);
 #define Gene_getSource(gene)  (gene)->source
 

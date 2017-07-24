@@ -315,17 +315,6 @@ ECOSTRING Gene_setBiotype(Gene *g, char *biotype) {
   return g->biotype;
 }
 
-ECOSTRING Gene_setStatus(Gene *g, char *status) {
-  EcoString_copyStr(ecoSTable, &(g->status),status,0);
-
-  if (g->status == NULL) {
-    fprintf(stderr,"ERROR: Failed allocating space for status\n");
-    return NULL;
-  }
-
-  return g->status;
-}
-
 ECOSTRING Gene_setSource(Gene *g, char *source) {
   EcoString_copyStr(ecoSTable, &(g->source),source,0);
 

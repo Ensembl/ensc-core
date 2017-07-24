@@ -487,17 +487,6 @@ ECOSTRING Transcript_getBiotype(Transcript *t) {
   }
 }
 
-ECOSTRING Transcript_setStatus(Transcript *t, char *status) {
-  EcoString_copyStr(ecoSTable, &(t->status),status,0);
-
-  if (t->status == NULL) {
-    fprintf(stderr,"ERROR: Failed allocating space for status\n");
-    return NULL;
-  }
-
-  return t->status;
-}
-
 char *Transcript_setDescription(Transcript *t, char *description) {
   if ((t->description = (char *)malloc(strlen(description)+1)) == NULL) {
     fprintf(stderr,"ERROR: Failed allocating space for description\n");

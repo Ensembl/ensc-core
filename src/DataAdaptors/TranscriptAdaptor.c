@@ -125,7 +125,6 @@ char *Transcript_cols[] = {
                            "UNIX_TIMESTAMP(t.modified_date)",
                            "t.description",
                            "t.biotype",
-                           "t.status",
                            "exdb.db_name",
                            "exdb.status",
                            "exdb.db_display_name",
@@ -1051,7 +1050,6 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
                     "seq_region_end = %ld, "
                     "seq_region_strand = %d, " 
                     "biotype = %%s, "
-                    "status = %%s, "
                     "description = %%s, "
                     //"biotype = '%s', "
                     //"status = '%s', "
@@ -1075,12 +1073,6 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
   } else {
     sprintf(bioTypeQStr, "NULL");
   }
-  char statusQStr[1024];
-  if (Transcript_getStatus(transcript)) {
-    sprintf(statusQStr,"'%s'", Transcript_getStatus(transcript));
-  } else {
-    sprintf(statusQStr, "NULL");
-  }
   char descQStr[1024];
   if (Transcript_getDescription(transcript)) {
     sprintf(descQStr,"'%s'", Transcript_getDescription(transcript));
@@ -1088,7 +1080,7 @@ IDType TranscriptAdaptor_store(TranscriptAdaptor *ta, Transcript *transcript, ID
     sprintf(descQStr, "NULL");
   }
 
-  sprintf(qStr, fmtStr, bioTypeQStr, statusQStr, descQStr);
+  sprintf(qStr, fmtStr, bioTypeQStr, descQStr);
 
   if (Transcript_getStableId(transcript)) {
 /* Use FROM_UNIXTIME for now
@@ -1822,21 +1814,20 @@ Vector *TranscriptAdaptor_objectsFromStatementHandle(TranscriptAdaptor *ta,
     int modifiedDate =       row->getIntAt(row,11);
     char *description =      row->getStringAt(row,12);
     char *biotype =          row->getStringAt(row,13);
-    char *status =           row->getStringAt(row,14);
-    char *externalDb =       row->getStringAt(row,15);
-    char *externalStatus =   row->getStringAt(row,16);
-    char *externalDbName =   row->getStringAt(row,17);
+    char *externalDb =       row->getStringAt(row,14);
+    char *externalStatus =   row->getStringAt(row,15);
+    char *externalDbName =   row->getStringAt(row,16);
 // Note changed from xrefId to displayXrefId to match GeneAdaptor version of this code
-    IDType displayXrefId =   row->getLongLongAt(row,18);
-    char *xrefDisplayLabel = row->getStringAt(row,19);
-    char *xrefPrimaryAcc =   row->getStringAt(row,20);
-    char *xrefVersion =      row->getStringAt(row,21);
+    IDType displayXrefId =   row->getLongLongAt(row,17);
+    char *xrefDisplayLabel = row->getStringAt(row,18);
+    char *xrefPrimaryAcc =   row->getStringAt(row,19);
+    char *xrefVersion =      row->getStringAt(row,20);
 // Note changed from xrefDescription to xrefDesc to match GeneAdaptor version of this code
-    char *xrefDesc =         row->getStringAt(row,22);
-    char *xrefInfoType =     row->getStringAt(row,23);
-    char *xrefInfoText =     row->getStringAt(row,24);
+    char *xrefDesc =         row->getStringAt(row,21);
+    char *xrefInfoType =     row->getStringAt(row,22);
+    char *xrefInfoText =     row->getStringAt(row,23);
 // Added externalRelease to be consistent with Gene version
-    char *externalRelease =  row->getStringAt(row,25);
+    char *externalRelease =  row->getStringAt(row,24);
 
     Analysis *analysis = AnalysisAdaptor_fetchByDbID(aa, analysisId);
 
@@ -2058,7 +2049,6 @@ Vector *TranscriptAdaptor_objectsFromStatementHandle(TranscriptAdaptor *ta,
     Transcript_setExternalDb    (transcript, externalDb);
     Transcript_setExternalStatus(transcript, externalStatus);
     Transcript_setDisplayXref   (transcript, displayXref);
-    Transcript_setStatus        (transcript, status);
     Transcript_setIsCurrent     (transcript, isCurrent);
     Transcript_setEditsEnabled  (transcript, 1);
 

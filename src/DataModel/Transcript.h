@@ -167,9 +167,6 @@ Translation *Transcript_getTranslation(Transcript *trans);
 char *Transcript_setDescription(Transcript *t, char *description);
 #define Transcript_getDescription(transcript)  (transcript)->description
 
-ECOSTRING Transcript_setStatus(Transcript *t, char *status);
-#define Transcript_getStatus(transcript)  (transcript)->status
-
 ECOSTRING Transcript_setExternalDb(Transcript *t, char *externalDb);
 ECOSTRING Transcript_setExternalStatus(Transcript *t, char *externalStatus);
 char *Transcript_setExternalName(Transcript *t, char *externalName);
