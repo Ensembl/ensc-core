@@ -113,7 +113,6 @@ char *DNAAlign_cols[] = {
             "daf.score",
             "daf.external_db_id",
             "daf.hcoverage",
-	    "daf.external_data",
 	    //"daf.pair_dna_align_feature_id",
 	    "exdb.db_name",
 	    "exdb.db_display_name",
@@ -499,7 +498,6 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
     double score                 = row->getDoubleAt(row,i); ++i;
     IDType externalDbId          = row->getLongLongAt(row,i); ++i;
     double hCoverage             = row->getDoubleAt(row,i); ++i;
-    char *extraData              = row->getStringAt(row,i); ++i;
     //IDType pairDnaAlignFeatureId = row->getLongLongAt(row,i); ++i;
     char *externalDbName         = row->getStringAt(row,i); ++i;
     char *externalDbDisplayName  = row->getStringAt(row,i); ++i;
@@ -613,7 +611,6 @@ Vector *DNAAlignFeatureAdaptor_objectsFromStatementHandle(BaseFeatureAdaptor *bf
     DNAAlignFeature_setExternalDbID(daf, externalDbId);
     if (row->col(row, 15) != NULL) DNAAlignFeature_sethCoverage(daf, hCoverage);
     // Unevaled in C           'extra_data'     => $evalled_extra_data,
-    DNAAlignFeature_setExtraData(daf, extraData);
     DNAAlignFeature_setDbName(daf, externalDbName);
     DNAAlignFeature_setDbDisplayName(daf, externalDbDisplayName);
 
