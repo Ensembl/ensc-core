@@ -71,7 +71,7 @@ static int nExonClone = 0;
 
 FILE *logfp;
 
-#define RSGVERSION "0.3.2"
+#define RSGVERSION "0.3.3"
 #define RSGGENE_KEEP 16
 #define RSG_DUPLICATE 32
 int dumpGenes(Vector *genes, int withSupport);
@@ -1113,332 +1113,183 @@ void  RefineSolexaGenes_run(RefineSolexaGenes *rsg) {
 //  fprintf(stderr, "DONE\n");
 }
 
-int isGeneDuplicated(RefineSolexaGenes *rsg, Vector *indexes, Vector *genes, Gene *gene) {
-  int i;
-  int no_duplicate = 0;
-  Gene *last_gene;
-  Transcript *t;
-  Transcript *lt;
-  Exon *e;
-  Exon *le;
-  int num_exon;
-  int lnum_exon;
-  int j;
-  for (i = 0; i< Vector_getNumElement(indexes); i++) {
-    last_gene = Vector_getElementAt(genes, *(int *)Vector_getElementAt(indexes, i));
-//    fprintf(stderr, "DEBUG: gene start %ld %ld %s\tLast: %ld %ld %s %d\n", Gene_getStart(gene), Gene_getEnd(gene), Gene_getBiotype(gene), Gene_getStart(last_gene), Gene_getEnd(last_gene), Gene_getBiotype(last_gene), *(int *)Vector_getElementAt(indexes, i));
-    if (Gene_getStrand(gene) == Gene_getStrand(last_gene)
-      && Gene_getStart(gene) == Gene_getStart(last_gene)
-      && Gene_getEnd(gene) == Gene_getEnd(last_gene)) {
-      t = Gene_getTranscriptAt(gene, 0);
-      lt = Gene_getTranscriptAt(last_gene, 0);
-      num_exon = Transcript_getExonCount(t);
-      lnum_exon = Transcript_getExonCount(lt);
-      if (num_exon == lnum_exon) {
-        j = num_exon-1;
-        do {
-          e = Transcript_getExonAt(t, j);
-          le = Transcript_getExonAt(lt, j);
-          if (Exon_getStart(e) != Exon_getStart(le)
-            || Exon_getEnd(e) != Exon_getEnd(le)) {
-//            fprintf(stderr, "NOT DUPLICATE CHECK 2\n");
-            ++no_duplicate;
-            break;
-          }
-          --j;
-        } while (j > 0);
-        if (i > no_duplicate) {
-//          fprintf(stderr, "DUPLICATE CHECK 2\n");
-          if (strcmp(Gene_getBiotype(gene), RefineSolexaGenes_getBestScoreType(rsg)) == 0) {
-//            fprintf(stderr, "UPDATE BIOTYPE FOR OLD GENE\n");
-            updateDuplicatedGeneBiotype(last_gene);
-            return *(int *)Vector_getElementAt(indexes, i);
-          }
-          else {
-//            fprintf(stderr, "UPDATE BIOTYPE FOR GENE\n");
-            updateDuplicatedGeneBiotype(gene);
-          }
-          return -1;
-        }
-      }
-    }
-  }
-  return -2;
-}
 
 void updateDuplicatedGeneBiotype(Gene *gene) {
+//  fprintf(stderr, "\t\tFLAGS  %i | ", gene->flags);
   if (!(gene->flags & RSG_DUPLICATE)) {
-  //  int biotype_length = strlen(Gene_getBiotype(gene));
-  //  char new_biotype[biotype_length+4];
-  //  sprintf(new_biotype, "%s_dup", Gene_getBiotype(gene));
     gene->flags |= RSG_DUPLICATE;
     gene->flags ^= RSGGENE_KEEP;
-  //  Gene_setBiotype(gene, new_biotype);
   }
+//  fprintf(stderr, "%i\n", gene->flags);
 }
 
 void RefineSolexaGenes_filterGenes(RefineSolexaGenes *rsg) {
-  int verbosity = RefineSolexaGenes_getVerbosity(rsg);
+//  int verbosity = RefineSolexaGenes_getVerbosity(rsg);
   Vector *genes = RefineSolexaGenes_getOutput(rsg);
   int i = 0;
-  int to_delete_index = 0;
-  int last_gene_index = 0;
   if (genes != NULL) {
-    Vector_sort(genes, SeqFeature_startEndCompFunc);
-    Gene *last_gene = Vector_getElementAt(genes, i);
-    Transcript *t;
-    Transcript *lt;
-    int num_exon = 0;
-    int lnum_exon = 0;
-    int j;
-    int duplicate;
-    Exon *e;
-    Exon *le;
-    int biotype_length;
-    Gene *gene;
-    Vector *not_duplicate = Vector_new();
-    Vector_addElement(not_duplicate, &i);
-    for (i=1; i<Vector_getNumElement(genes); i++) {
-      gene = Vector_getElementAt(genes, i);
-  //    fprintf(stderr, "DEBUG: gene start %ld %ld %i %s\tLast: %ld %ld %i %s %d\n", Gene_getStart(gene), Gene_getEnd(gene), Gene_getStrand(gene), Gene_getBiotype(gene), Gene_getStart(last_gene), Gene_getEnd(last_gene), Gene_getStrand(last_gene), Gene_getBiotype(last_gene), last_gene_index);
-      duplicate = -2;
-      if (Gene_getStrand(gene) == Gene_getStrand(last_gene)
-        && Gene_getStart(gene) == Gene_getStart(last_gene)
-        && Gene_getEnd(gene) == Gene_getEnd(last_gene)) {
-        t = Gene_getTranscriptAt(gene, 0);
-        lt = Gene_getTranscriptAt(last_gene, 0);
-        num_exon = Transcript_getExonCount(t);
-        lnum_exon = Transcript_getExonCount(lt);
-        if (num_exon == lnum_exon) {
-          j = num_exon-1;
-          duplicate = -1;
-          do {
-            e = Transcript_getExonAt(t, j);
-            le = Transcript_getExonAt(lt, j);
-            if (Exon_getStart(e) != Exon_getStart(le)
-              || Exon_getEnd(e) != Exon_getEnd(le)) {
-  //            fprintf(stderr, "NOT DUPLICATE\n");
-              if (Vector_getNumElement(not_duplicate) > 1) {
-  //              fprintf(stderr, "Checking other genes in the cluster\n");
-                duplicate = isGeneDuplicated(rsg, not_duplicate, genes, gene);
+    Vector_sort(genes, SeqFeature_startRevEndCompFunc);
+    for (i=0; i < Vector_getNumElement(genes); i++) {
+      Gene *gene = Vector_getElementAt(genes, i);
+//      fprintf(stderr, "\t\tFLAGS %i\n", gene->flags);
+      if (!(gene->flags & RSG_DUPLICATE)) {
+        Transcript *t;
+        Transcript *ttp;
+        int num_exon = 0;
+        int num_exon_tp = 0;
+        int j = i+1;
+        Exon *exon;
+        Exon *exon_tp;
+        int biotype_length;
+        Gene *gene_to_process;
+        for (j=i+1; j < Vector_getNumElement(genes); j++) {
+          gene_to_process = Vector_getElementAt(genes, j);
+//          fprintf(stderr, "\t\tFLAGS TP %i\n", gene->flags);
+          if (!(gene_to_process->flags & RSG_DUPLICATE)) {
+//            fprintf(stderr, "DEBUG: gene %i %ld %ld %i %s\tProcessing: %ld %ld %i %s %i\n", i, Gene_getStart(gene), Gene_getEnd(gene), Gene_getStrand(gene), Gene_getBiotype(gene), Gene_getStart(gene_to_process), Gene_getEnd(gene_to_process), Gene_getStrand(gene_to_process), Gene_getBiotype(gene_to_process), j);
+            if (Gene_getStrand(gene) == Gene_getStrand(gene_to_process)) {
+              if (Gene_getEnd(gene) < Gene_getStart(gene_to_process)) {
+                // Go next gene
+//                fprintf(stderr, "\tDEBUG: END < END_PROCESS\n");
+                break;
+              }
+              else if (Gene_getStart(gene) > Gene_getEnd(gene_to_process)) {
+                // Go next gene_to_process
+//                fprintf(stderr, "\tDEBUG: START > START_PROCESS\n");
               }
               else {
-                duplicate = -2;
+                // We overlap
+                t = Gene_getTranscriptAt(gene, 0);
+                ttp = Gene_getTranscriptAt(gene_to_process, 0);
+                num_exon = Transcript_getExonCount(t);
+                num_exon_tp = Transcript_getExonCount(ttp);
+                int exon_index = 0;
+                int exon_index_tp = 0;
+                int count_exon_equal = 0;
+                int count_adjacent_exon = 0;
+                int max_adjacent_exon = 0;
+                int last_exon_tp = 0;
+                Vector *exons = Transcript_getAllExons(t);
+                Vector_sort(exons, SeqFeature_startCompFunc);
+                Vector *exons_tp = Transcript_getAllExons(ttp);
+                Vector_sort(exons_tp, SeqFeature_startCompFunc);
+//                fprintf(stderr, "\t\tDEBUG: num exon %i num exon tp %i\n", num_exon, num_exon_tp);
+                for (exon_index = 0; exon_index < num_exon; exon_index++) {
+                  exon = Vector_getElementAt(exons, exon_index);
+                  for (exon_index_tp = last_exon_tp; exon_index_tp < num_exon_tp; exon_index_tp++) {
+                    exon_tp = Vector_getElementAt(exons_tp, exon_index_tp);
+                    if (Exon_getStart(exon) <= Exon_getEnd(exon_tp) && Exon_getEnd(exon) >= Exon_getStart(exon_tp)) {
+//                      fprintf(stderr, "\t\t\tOVERLAP: Exon %ld %ld %i Exon tp %ld %ld %i\n", Exon_getStart(exon), Exon_getEnd(exon), exon_index, Exon_getStart(exon_tp), Exon_getEnd(exon_tp), exon_index_tp);
+                      if (Exon_getStart(exon) == Exon_getStart(exon_tp) && Exon_getEnd(exon) == Exon_getEnd(exon_tp)) {
+                        ++count_exon_equal;
+                        ++count_adjacent_exon;
+                      }
+                      else if (exon_index_tp == 0) {
+                        if (Exon_getStart(exon) < Exon_getStart(exon_tp) && Exon_getEnd(exon) == Exon_getEnd(exon_tp)) {
+                          ++count_exon_equal;
+                          ++count_adjacent_exon;
+                        }
+                        else if (num_exon_tp == 1 && Exon_getStart(exon) < Exon_getStart(exon_tp) && Exon_getEnd(exon) > Exon_getEnd(exon_tp)) {
+                          ++count_exon_equal;
+                          ++count_adjacent_exon;
+                        }
+                        else if (exon_index > 0 && Exon_getStart(exon) > Exon_getStart(exon_tp) && Exon_getEnd(exon) == Exon_getEnd(exon_tp)) {
+                          Vector *introns = Transcript_getAllIntronSupportingEvidence(t);
+                          Vector_sort(introns, SeqFeature_startCompFunc);
+                          int num_intron = Vector_getNumElement(introns);
+                          if (num_intron > exon_index) {
+                            if (IntronSupportingEvidence_getScore((IntronSupportingEvidence *)Vector_getElementAt(introns, exon_index-1)) > (IntronSupportingEvidence_getScore((IntronSupportingEvidence *)Vector_getElementAt(introns, exon_index))*0.5)) {
+                              ++count_exon_equal;
+                              ++count_adjacent_exon;
+//                              fprintf(stderr, "\t\t\tGOOD INTRON Exon %ld %ld %i Exon tp %ld %ld %i Intron %f %f\n", Exon_getStart(exon), Exon_getEnd(exon), exon_index, Exon_getStart(exon_tp), Exon_getEnd(exon_tp), exon_index_tp, IntronSupportingEvidence_getScore((IntronSupportingEvidence *)Vector_getElementAt(introns, exon_index-1)), IntronSupportingEvidence_getScore((IntronSupportingEvidence *)Vector_getElementAt(introns, exon_index)));
+                            }
+                            else {
+//                              fprintf(stderr, "\t\t\tBAD INTRON Exon %ld %ld %i Exon tp %ld %ld %i Intron %f %f\n", Exon_getStart(exon), Exon_getEnd(exon), exon_index, Exon_getStart(exon_tp), Exon_getEnd(exon_tp), exon_index_tp, IntronSupportingEvidence_getScore((IntronSupportingEvidence *)Vector_getElementAt(introns, exon_index-1)), IntronSupportingEvidence_getScore((IntronSupportingEvidence *)Vector_getElementAt(introns, exon_index)));
+                            }
+                          }
+                          else {
+//                              fprintf(stderr, "\t\t\tLAST INTRON %i %i\n", exon_index, num_intron);
+                          }
+                        }
+                      }
+                      else if (exon_index_tp == num_exon_tp-1) {
+                        if (Exon_getStart(exon) == Exon_getStart(exon_tp) && Exon_getEnd(exon) > Exon_getEnd(exon_tp)) {
+                          ++count_exon_equal;
+                          ++count_adjacent_exon;
+                        }
+                        else if (exon_index < num_exon-1 && Exon_getStart(exon) == Exon_getStart(exon_tp) && Exon_getEnd(exon) < Exon_getEnd(exon_tp)) {
+                          Vector *introns = Transcript_getAllIntronSupportingEvidence(t);
+                          Vector_sort(introns, SeqFeature_startCompFunc);
+                          int num_intron = Vector_getNumElement(introns);
+                          if (num_intron > exon_index) {
+                            if (IntronSupportingEvidence_getScore((IntronSupportingEvidence *)Vector_getElementAt(introns, exon_index)) > (IntronSupportingEvidence_getScore((IntronSupportingEvidence *)Vector_getElementAt(introns, exon_index-1))*0.5)) {
+                              ++count_exon_equal;
+                              ++count_adjacent_exon;
+//                              fprintf(stderr, "\t\t\tGOOD INTRON Exon %ld %ld %i Exon tp %ld %ld %i Intron %f %f\n", Exon_getStart(exon), Exon_getEnd(exon), exon_index, Exon_getStart(exon_tp), Exon_getEnd(exon_tp), exon_index_tp, IntronSupportingEvidence_getScore((IntronSupportingEvidence *)Vector_getElementAt(introns, exon_index-1)), IntronSupportingEvidence_getScore((IntronSupportingEvidence *)Vector_getElementAt(introns, exon_index)));
+                            }
+                            else {
+//                              fprintf(stderr, "\t\t\tBAD INTRON Exon %ld %ld %i Exon tp %ld %ld %i Intron %f %f\n", Exon_getStart(exon), Exon_getEnd(exon), exon_index, Exon_getStart(exon_tp), Exon_getEnd(exon_tp), exon_index_tp, IntronSupportingEvidence_getScore((IntronSupportingEvidence *)Vector_getElementAt(introns, exon_index-1)), IntronSupportingEvidence_getScore((IntronSupportingEvidence *)Vector_getElementAt(introns, exon_index)));
+                            }
+                          }
+                          else {
+//                              fprintf(stderr, "\t\t\tLAST INTRON %i %i\n", exon_index, num_intron);
+                          }
+                        }
+                      }
+                      else {
+//                      fprintf(stderr, "\t\t\tBAD OVERLAP: Exon %ld %ld %i Exon tp %ld %ld %i ADJ %i %i NUM %i %i\n", Exon_getStart(exon), Exon_getEnd(exon), exon_index, Exon_getStart(exon_tp), Exon_getEnd(exon_tp), exon_index_tp, count_adjacent_exon, max_adjacent_exon, num_exon, num_exon_tp);
+                        if (count_adjacent_exon > max_adjacent_exon) {
+                          max_adjacent_exon = count_adjacent_exon;
+                        }
+                        count_adjacent_exon = 0;
+                      }
+                      last_exon_tp = exon_index_tp+1;
+                      break;
+                    }
+                    else {
+//                      fprintf(stderr, "\t\t\tNO OVERLAP: Exon %ld %ld %i Exon tp %ld %ld %i ADJ %i %i\n", Exon_getStart(exon), Exon_getEnd(exon), exon_index, Exon_getStart(exon_tp), Exon_getEnd(exon_tp), exon_index_tp, count_adjacent_exon, max_adjacent_exon);
+                      if (count_adjacent_exon > max_adjacent_exon) {
+                        max_adjacent_exon = count_adjacent_exon;
+                      }
+                      count_adjacent_exon = 0;
+                    }
+                  }
+                }
+//                fprintf(stderr, "\t\tCE %i NE %i NT %i NA %i\n", count_exon_equal, num_exon, num_exon_tp, max_adjacent_exon);
+                if (count_adjacent_exon > max_adjacent_exon) {
+                  max_adjacent_exon = count_adjacent_exon;
+                }
+                if (num_exon == count_exon_equal && num_exon_tp == count_exon_equal) {
+//                  fprintf(stderr, "\t\tEXACT MATCH\n");
+                  updateDuplicatedGeneBiotype(gene_to_process);
+                }
+                else if ((num_exon == count_exon_equal && max_adjacent_exon == num_exon && num_exon_tp != count_exon_equal )
+                       || num_exon != count_exon_equal && max_adjacent_exon == num_exon_tp && num_exon_tp == count_exon_equal ) {
+//                  fprintf(stderr, "\t\tSMALLER MATCH\n");
+                  updateDuplicatedGeneBiotype(gene_to_process);
+                }
               }
-              break;
             }
-            --j;
-          } while (j > 0);
-  //        fprintf(stderr, "WE HAVE %i\n", duplicate);
-          if (duplicate == -1) {
-  //          fprintf(stderr, "DUPLICATE\n");
-            if (strcmp(Gene_getBiotype(gene), RefineSolexaGenes_getBestScoreType(rsg)) == 0) {
-              updateDuplicatedGeneBiotype(last_gene);
-  //            fprintf(stderr, "REMOVING %s %ld %ld score %f index %i\n", Gene_getBiotype(last_gene), Gene_getStart(last_gene), Gene_getEnd(last_gene), Transcript_getScore(lt), last_gene_index);
-  //            fprintf(stderr, "NEW IS BEST score %f index %i\t", Transcript_getScore(t), i);
-              last_gene_index = i;
-              last_gene = Vector_getElementAt(genes, last_gene_index);
-  //            fprintf(stderr, "PROCESSED\n");
-            }
-            else {
-  //            fprintf(stderr, "REMOVING %s %ld %ld score %f index %i\n", Gene_getBiotype(gene), Gene_getStart(gene), Gene_getEnd(gene), Transcript_getScore(t), i);
-              updateDuplicatedGeneBiotype(gene);
-            }
-          }
-          else if (duplicate > -1) {
-  //          fprintf(stderr, "NEW BEST IS score %f index %i\t", Transcript_getScore(t), duplicate);
-            last_gene_index = duplicate;
-            last_gene = Vector_getElementAt(genes, last_gene_index);
-  //          fprintf(stderr, "PROCESSED\n");
           }
           else {
-  //          fprintf(stderr, "ADDING TO NOT DUPLICATE %i\t", i);
-            Vector_addElement(not_duplicate, &i);
-  //          fprintf(stderr, "PROCESSED\n");
+//            fprintf(stderr, "DUPLICATE TP %ld %ld %i %s %i\n", Gene_getStart(gene_to_process), Gene_getEnd(gene_to_process), Gene_getStrand(gene_to_process), Gene_getBiotype(gene_to_process), j);
           }
-        }
-        else {
-              if (Vector_getNumElement(not_duplicate)) {
-  //              fprintf(stderr, "Checking other genes in the cluster\n");
-                duplicate = isGeneDuplicated(rsg, not_duplicate, genes, gene);
-                if (duplicate > -1) {
-  //                fprintf(stderr, "NEW BEST IS score %f index %i\t", Transcript_getScore(t), duplicate);
-                  last_gene_index = duplicate;
-                  last_gene = Vector_getElementAt(genes, last_gene_index);
-  //                fprintf(stderr, "PROCESSED\n");
-                }
-                else {
-  //                fprintf(stderr, "ADDING TO NOT DUPLICATE %i\t", i);
-                  Vector_addElement(not_duplicate, &i);
-  //                fprintf(stderr, "PROCESSED\n");
-                }
-              }
-              else {
-  //              fprintf(stderr, "not_duplicate has %i elements\n", Vector_getNumElement(not_duplicate));
-              }
         }
       }
       else {
-        last_gene_index = i;
-        last_gene = Vector_getElementAt(genes, last_gene_index);
-        Vector_free(not_duplicate);
-        not_duplicate = Vector_new();
-        Vector_addElement(not_duplicate, &i);
-  //      fprintf(stderr, "BEST IS %s %ld %ld score %f index %i\n", Gene_getBiotype(gene), Gene_getStart(gene), Gene_getEnd(gene), Transcript_getScore(Gene_getTranscriptAt(gene, 0)), i);
+//        fprintf(stderr, "DUPLICATE %ld %ld %i %s %i\n", Gene_getStart(gene), Gene_getEnd(gene), Gene_getStrand(gene), Gene_getBiotype(gene), i);
       }
     }
-    int k;
-    int l;
-    int min_exons = 0;
-    Vector *clusters = Vector_new();
-    int num_clusters = 0;
-    int num_genes = 0;
-    int model_added = 0;
-    int m = 0;
-    ModelCluster *cluster;
-    for (i = 0; i < Vector_getNumElement(genes); i++) {
-      gene = Vector_getElementAt(genes, i);
-      if (gene->flags & RSG_DUPLICATE) {
-        continue;
-      }
-      num_clusters = Vector_getNumElement(clusters);
-      model_added = 0;
-  //    fprintf(stderr, "DEBUG Index %i: %s %ld %ld %i\n", i, Gene_getBiotype(gene), Gene_getStart(gene), Gene_getEnd(gene), Gene_getStrand(gene));
-      for (j = num_clusters-1; j > -1; j--) {
-        cluster = Vector_getElementAt(clusters, j);
-  //      fprintf(stderr, "DEBUG Cluster %i: %ld %ld %i\n", j, cluster->start, cluster->end, cluster->strand);
-        num_genes = Vector_getNumElement(cluster->models);
-        if (cluster->strand == Gene_getStrand(gene)) {
-          if (cluster->start <= Gene_getEnd(gene) && cluster->end >= Gene_getStart(gene)) {
-            // Gene overlaps, let's test the exons
-            t = Gene_getTranscriptAt(gene, 0);
-            for (k = 0; k < num_genes; k++) {
-              last_gene = Vector_getElementAt(cluster->models, k);
-              lt = Gene_getTranscriptAt(last_gene, 0);
-              for (l = 0; l < Transcript_getExonCount(t); l++) {
-                e = Transcript_getExonAt(t, l);
-                for (m = 0; m < Transcript_getExonCount(lt); m++) {
-                  le = Transcript_getExonAt(lt, m);
-                  if (Exon_getEnd(e) < Exon_getStart(le)) {
-                    break;
-                  }
-                  else if ((Exon_getStart(e) <= Exon_getEnd(le)) && (Exon_getEnd(e) >= Exon_getStart(le))) {
-                    Vector_addElement(cluster->models, gene);
-                    if (cluster->start > Gene_getStart(gene))
-                      cluster->start = Gene_getStart(gene);
-                    if (cluster->end < Gene_getEnd(gene))
-                      cluster->end = Gene_getEnd(gene);
-                    model_added = 1;
-  //                  fprintf(stderr, "DEBUG ADDING %ld %ld %i to %i %ld %ld %i\n", Gene_getStart(gene), Gene_getEnd(gene), Gene_getStrand(gene), j, cluster->start, cluster->end, cluster->strand);
-                    break;
-                  }
-                }
-                if (model_added)
-                  break;
-              }
-              if (model_added)
-                break;
-            }
-            if (model_added)
-              break;
-          }
-        }
-      }
-      if (!model_added) {
-        cluster = ModelCluster_new();
-        cluster->start = Gene_getStart(gene);
-        cluster->end = Gene_getEnd(gene);
-        cluster->strand = Gene_getStrand(gene);
-        cluster->models = Vector_new();
-        Vector_addElement(cluster->models, gene);
-        Vector_addElement(clusters, cluster);
-  //      fprintf(stderr, "DEBUG NEW %i %ld %ld %i\n", Vector_getNumElement(clusters)+1, cluster->start, cluster->end, cluster->strand);
-      }
-    }
-  //  for (i = 0; i < Vector_getNumElement(clusters); i++) {
-  //    cluster = Vector_getElementAt(clusters, i);
-  //    fprintf(stderr, " Done\n");
-  //    fprintf(stderr, "Cluster %i: %ld %ld %i\n", i, cluster->start, cluster->end, cluster->strand);
-  //    for (j = 0; j < Vector_getNumElement(cluster->models); j++) {
-  //      gene = Vector_getElementAt(cluster->models, j);
-  //      fprintf(stderr, "Index %i: %ld %ld %i\n", j, Gene_getStart(gene), Gene_getEnd(gene), Gene_getStrand(gene));
-  //    }
-  //  }
-    for (i = 0; i < Vector_getNumElement(clusters); i++) {
-      cluster = Vector_getElementAt(clusters, i);
-      Vector_sort(cluster->models, SeqFeat_lengthCompFunc);
-  //    fprintf(stderr, "Num of models in cluster %i: %i\n", i, Vector_getNumElement(cluster->models));
-      for (j = 0; j < Vector_getNumElement(cluster->models)-1; j++) {
-        gene = Vector_getElementAt(cluster->models, j);
-  //      fprintf(stderr, "WORKING ON %ld %ld %i\n", Gene_getStart(gene), Gene_getEnd(gene), Gene_getStrand(gene));
-        for (k = j+1; k < Vector_getNumElement(cluster->models); k++) {
-          t = Gene_getTranscriptAt(gene, 0);
-          lt = Gene_getTranscriptAt((Gene *)Vector_getElementAt(cluster->models, k), 0);
-          e = Transcript_getEndExon(t);
-  //      fprintf(stderr, "%ld %ld ON %ld %ld %i\n", Exon_getStart(e), Exon_getEnd(e), Transcript_getStart(lt), Transcript_getEnd(lt), Transcript_getStrand(lt));
-  //        fprintf(stderr, "last exon %i: %ld %ld %i\n", Transcript_getExonCount(t), Exon_getStart(e), Exon_getEnd(e), Exon_getStrand(e));
-  //        fprintf(stderr, "Num of exon in model %i: %i\n", k, Transcript_getExonCount(lt));
-          for (l = Transcript_getExonCount(lt)-2; l > -1; l--) {
-            le = Transcript_getExonAt(lt, l);
-            if (Exon_getStart(e) == Exon_getStart(le) && Exon_getEnd(e) >= Exon_getEnd(le)) {
-              if(gene->flags & RSGGENE_KEEP) {
-  //            fprintf(stderr, "END RETAINED %ld %ld %i\n", Gene_getStart(gene), Gene_getEnd(gene), Gene_getStrand(gene));
-    //            biotype_length = strlen(Gene_getBiotype(gene));
-    //            char new_biotype[biotype_length+4];
-    //            sprintf(new_biotype, "%s_ret", Gene_getBiotype(gene));
-    //            Gene_setBiotype(gene, new_biotype);
-                gene->flags ^= RSGGENE_KEEP;
-                // Set k to size of vector so for loop ends
-                k = Vector_getNumElement(cluster->models);
-                break;
-              }
-            }
-            else if (Exon_getStart(e) > Exon_getStart(le)) {
-  //            fprintf(stderr, "DONE %ld %ld %i\n", Exon_getStart(le), Exon_getEnd(le), Exon_getStrand(le));
-              break;
-            }
-          }
-          e = Transcript_getStartExon(t);
-          for (l = 1; l < Transcript_getExonCount(lt)-1; l++) {
-            le = Transcript_getExonAt(lt, l);
-            if (Exon_getStart(e) <= Exon_getStart(le) && Exon_getEnd(e) == Exon_getEnd(le)) {
-              if(gene->flags & RSGGENE_KEEP) {
-  //              fprintf(stderr, "START RETAINED %ld %ld %i\n", Gene_getStart(gene), Gene_getEnd(gene), Gene_getStrand(gene));
-    //            biotype_length = strlen(Gene_getBiotype(gene));
-    //            char new_biotype[biotype_length+4];
-    //            sprintf(new_biotype, "%s_ret", Gene_getBiotype(gene));
-    //            Gene_setBiotype(gene, new_biotype);
-                gene->flags ^= RSGGENE_KEEP;
-                // Set k to size of vector so for loop ends
-                k = Vector_getNumElement(cluster->models);
-                break;
-              }
-            }
-            else if (Exon_getEnd(e) < Exon_getEnd(le)) {
-  //            fprintf(stderr, "DONE %ld %ld %i\n", Exon_getStart(le), Exon_getEnd(le), Exon_getStrand(le));
-              break;
-            }
-          }
-        }
-      }
-    }
-    //A little bit hacky, I probably should have a clean function
-    Vector *new_genes = Vector_new();
-    for (i = 0; i < Vector_getNumElement(genes); i++) {
-  //    RefineSolexaGenes_addToOutput(rsg, Vector_getElementAt(new_genes, i));
-      gene = Vector_getElementAt(genes, i);
-      if (gene->flags & RSGGENE_KEEP) {
-        Vector_addElement(new_genes, Vector_getElementAt(genes, i));
-  //      fprintf(stderr, "KEEPING %ld %ld %s\n", Gene_getStart((Gene *)Vector_getElementAt(genes, i)), Gene_getEnd((Gene *)Vector_getElementAt(genes, i)), Gene_getBiotype((Gene *)Vector_getElementAt(genes, i)));
-      }
-      else {
-  //      fprintf(stderr, "DELETING %ld %ld %s\n", Gene_getStart((Gene *)Vector_getElementAt(genes, i)), Gene_getEnd((Gene *)Vector_getElementAt(genes, i)), Gene_getBiotype((Gene *)Vector_getElementAt(genes, i)));
-        Gene_free(gene);
-      }
-    }
-    Vector_free(genes);
-    rsg->output = new_genes;
   }
+  Vector *filtered_genes = Vector_new();
+  for (i = 0; i < Vector_getNumElement(genes);i++) {
+    Gene *gene = Vector_getElementAt(genes, i);
+    if (!(gene->flags & RSG_DUPLICATE)) {
+      Vector_addElement(filtered_genes, gene);
+    }
+  }
+  Vector_free(rsg->output);
+  rsg->output = filtered_genes;
 }
 
 /*
