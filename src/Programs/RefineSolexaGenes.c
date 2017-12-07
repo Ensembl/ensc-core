@@ -71,7 +71,7 @@ static int nExonClone = 0;
 
 FILE *logfp;
 
-#define RSGVERSION "0.3.3"
+#define RSGVERSION "0.3.3-2"
 #define RSGGENE_KEEP 16
 #define RSG_DUPLICATE 32
 int dumpGenes(Vector *genes, int withSupport);
@@ -1280,16 +1280,16 @@ void RefineSolexaGenes_filterGenes(RefineSolexaGenes *rsg) {
 //        fprintf(stderr, "DUPLICATE %ld %ld %i %s %i\n", Gene_getStart(gene), Gene_getEnd(gene), Gene_getStrand(gene), Gene_getBiotype(gene), i);
       }
     }
-  }
-  Vector *filtered_genes = Vector_new();
-  for (i = 0; i < Vector_getNumElement(genes);i++) {
-    Gene *gene = Vector_getElementAt(genes, i);
-    if (!(gene->flags & RSG_DUPLICATE)) {
-      Vector_addElement(filtered_genes, gene);
+    Vector *filtered_genes = Vector_new();
+    for (i = 0; i < Vector_getNumElement(genes);i++) {
+      Gene *gene = Vector_getElementAt(genes, i);
+      if (!(gene->flags & RSG_DUPLICATE)) {
+        Vector_addElement(filtered_genes, gene);
+      }
     }
+    Vector_free(rsg->output);
+    rsg->output = filtered_genes;
   }
-  Vector_free(rsg->output);
-  rsg->output = filtered_genes;
 }
 
 /*
