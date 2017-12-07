@@ -1106,11 +1106,18 @@ void RefineSolexaGenes_fetchInput(RefineSolexaGenes *rsg) {
 }
 
 void  RefineSolexaGenes_run(RefineSolexaGenes *rsg) {
-//  fprintf(stderr, "RUN\n");
+  int verbosity = RefineSolexaGenes_getVerbosity(rsg);
+  if (verbosity > 2) {
+    fprintf(stderr, "RUN\n");
+  }
   RefineSolexaGenes_refineGenes(rsg);
-//  fprintf(stderr, "FILTER\n");
+  if (verbosity > 2) {
+    fprintf(stderr, "FILTER\n");
+  }
   RefineSolexaGenes_filterGenes(rsg);
-//  fprintf(stderr, "DONE\n");
+  if (verbosity > 2) {
+    fprintf(stderr, "DONE\n");
+  }
 }
 
 
@@ -1124,7 +1131,6 @@ void updateDuplicatedGeneBiotype(Gene *gene) {
 }
 
 void RefineSolexaGenes_filterGenes(RefineSolexaGenes *rsg) {
-//  int verbosity = RefineSolexaGenes_getVerbosity(rsg);
   Vector *genes = RefineSolexaGenes_getOutput(rsg);
   int i = 0;
   if (genes != NULL) {
