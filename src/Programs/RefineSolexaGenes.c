@@ -1176,9 +1176,11 @@ void RefineSolexaGenes_filterGenes(RefineSolexaGenes *rsg) {
                 int max_adjacent_exon = 0;
                 int last_exon_tp = 0;
                 Vector *exons = Transcript_getAllExons(t);
-                Vector_sort(exons, SeqFeature_startCompFunc);
                 Vector *exons_tp = Transcript_getAllExons(ttp);
-                Vector_sort(exons_tp, SeqFeature_startCompFunc);
+                if (Transcript_getStrand(t) == -1) {
+                  Vector_sort(exons, SeqFeature_startCompFunc);
+                  Vector_sort(exons_tp, SeqFeature_startCompFunc);
+                }
 //                fprintf(stderr, "\t\tDEBUG: num exon %i num exon tp %i\n", num_exon, num_exon_tp);
                 for (exon_index = 0; exon_index < num_exon; exon_index++) {
                   exon = Vector_getElementAt(exons, exon_index);
@@ -1201,7 +1203,9 @@ void RefineSolexaGenes_filterGenes(RefineSolexaGenes *rsg) {
                         }
                         else if (exon_index > 0 && Exon_getStart(exon) > Exon_getStart(exon_tp) && Exon_getEnd(exon) == Exon_getEnd(exon_tp)) {
                           Vector *introns = Transcript_getAllIntronSupportingEvidence(t);
-                          Vector_sort(introns, SeqFeature_startCompFunc);
+                          if (Transcript_getStrand(t) == -1) {
+                            Vector_sort(introns, SeqFeature_startCompFunc);
+                          }
                           int num_intron = Vector_getNumElement(introns);
                           if (num_intron > exon_index) {
                             if (IntronSupportingEvidence_getScore((IntronSupportingEvidence *)Vector_getElementAt(introns, exon_index-1)) > (IntronSupportingEvidence_getScore((IntronSupportingEvidence *)Vector_getElementAt(introns, exon_index))*0.5)) {
@@ -1216,6 +1220,9 @@ void RefineSolexaGenes_filterGenes(RefineSolexaGenes *rsg) {
                           else {
 //                              fprintf(stderr, "\t\t\tLAST INTRON %i %i\n", exon_index, num_intron);
                           }
+                          if (Transcript_getStrand(t) == -1) {
+                            Vector_sort(introns, SeqFeature_reverseStartCompFunc);
+                          }
                         }
                       }
                       else if (exon_index_tp == num_exon_tp-1) {
@@ -1225,7 +1232,9 @@ void RefineSolexaGenes_filterGenes(RefineSolexaGenes *rsg) {
                         }
                         else if (exon_index < num_exon-1 && Exon_getStart(exon) == Exon_getStart(exon_tp) && Exon_getEnd(exon) < Exon_getEnd(exon_tp)) {
                           Vector *introns = Transcript_getAllIntronSupportingEvidence(t);
-                          Vector_sort(introns, SeqFeature_startCompFunc);
+                          if (Transcript_getStrand(t) == -1) {
+                            Vector_sort(introns, SeqFeature_startCompFunc);
+                          }
                           int num_intron = Vector_getNumElement(introns);
                           if (num_intron > exon_index) {
                             if (IntronSupportingEvidence_getScore((IntronSupportingEvidence *)Vector_getElementAt(introns, exon_index)) > (IntronSupportingEvidence_getScore((IntronSupportingEvidence *)Vector_getElementAt(introns, exon_index-1))*0.5)) {
@@ -1239,6 +1248,9 @@ void RefineSolexaGenes_filterGenes(RefineSolexaGenes *rsg) {
                           }
                           else {
 //                              fprintf(stderr, "\t\t\tLAST INTRON %i %i\n", exon_index, num_intron);
+                          }
+                          if (Transcript_getStrand(t) == -1) {
+                            Vector_sort(introns, SeqFeature_reverseStartCompFunc);
                           }
                         }
                       }
@@ -1260,6 +1272,10 @@ void RefineSolexaGenes_filterGenes(RefineSolexaGenes *rsg) {
                       count_adjacent_exon = 0;
                     }
                   }
+                }
+                if (Transcript_getStrand(t) == -1) {
+                  Vector_sort(exons, SeqFeature_reverseStartCompFunc);
+                  Vector_sort(exons_tp, SeqFeature_reverseStartCompFunc);
                 }
 //                fprintf(stderr, "\t\tCE %i NE %i NT %i NA %i\n", count_exon_equal, num_exon, num_exon_tp, max_adjacent_exon);
                 if (count_adjacent_exon > max_adjacent_exon) {
