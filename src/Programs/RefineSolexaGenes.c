@@ -71,7 +71,7 @@ static int nExonClone = 0;
 
 FILE *logfp;
 
-#define RSGVERSION "0.3.3-2"
+#define RSGVERSION "0.3.3-91"
 #define RSGGENE_KEEP 16
 #define RSG_DUPLICATE 32
 int dumpGenes(Vector *genes, int withSupport);
