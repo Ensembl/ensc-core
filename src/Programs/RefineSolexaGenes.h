@@ -122,6 +122,8 @@ typedef struct RefineSolexaGenesStruct {
   StringHash *adaptorAliasHash;
 
   Analysis *analysis;
+  Analysis *analysisIntrons;
+  Analysis *analysisISE;
 
   DBAdaptor *db;
 
@@ -312,6 +314,11 @@ void RefineSolexaGenes_filterGenes(RefineSolexaGenes *rsg);
   void RefineSolexaGenes_setAnalysis(RefineSolexaGenes *rsg, Analysis *analysis);
   Analysis *RefineSolexaGenes_getAnalysis(RefineSolexaGenes *rsg);
 
+  void RefineSolexaGenes_setIntronsAnalysis(RefineSolexaGenes *rsg, char *intronsLn);
+  Analysis *RefineSolexaGenes_getIntronsAnalysis(RefineSolexaGenes *rsg);
+
+  void RefineSolexaGenes_setISEAnalysis(RefineSolexaGenes *rsg, char *iseLn);
+  Analysis *RefineSolexaGenes_getISEAnalysis(RefineSolexaGenes *rsg);
 
 
   typedef (*IntSetFunc)(RefineSolexaGenes *rsg, int val);

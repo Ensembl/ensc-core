@@ -71,7 +71,7 @@ static int nExonClone = 0;
 
 FILE *logfp;
 
-#define RSGVERSION "0.3.3-91"
+#define RSGVERSION "0.3.4-91"
 #define RSGGENE_KEEP 16
 #define RSG_DUPLICATE 32
 int dumpGenes(Vector *genes, int withSupport);
@@ -667,6 +667,8 @@ void RefineSolexaGenes_initSetFuncs(RefineSolexaGenes *rsg) {
   StringHash_add(rsg->funcHash, "MAX_5PRIME_LENGTH", SetFuncData_new(RefineSolexaGenes_setMax5PrimeLength, CONFIG_TYPE_INT));
   StringHash_add(rsg->funcHash, "REJECT_INTRON_CUTOFF", SetFuncData_new(RefineSolexaGenes_setRejectIntronCutoff, CONFIG_TYPE_FLOAT));
   StringHash_add(rsg->funcHash, "TYPE_PREFIX", SetFuncData_new(RefineSolexaGenes_setTypePrefix, CONFIG_TYPE_STRING));
+  StringHash_add(rsg->funcHash, "INTRONS_LOGIC_NAME", SetFuncData_new(RefineSolexaGenes_setIntronsAnalysis, CONFIG_TYPE_STRING));
+  StringHash_add(rsg->funcHash, "ISE_LOGIC_NAME", SetFuncData_new(RefineSolexaGenes_setISEAnalysis, CONFIG_TYPE_STRING));
 
   SetFuncData *consLimsFuncData = SetFuncData_new(RefineSolexaGenes_setConsLims, CONFIG_TYPE_ARRAY);
   consLimsFuncData->subType = CONFIG_TYPE_FLOAT;
@@ -4872,7 +4874,7 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
   char sliceRegName[2048];
   StrUtil_strReplChr(strcpy(sliceRegName, Slice_getSeqRegionName(chrSlice)), '.', '*');
 
-  Analysis *analysis = RefineSolexaGenes_getAnalysis(rsg);
+  Analysis *analysisIntrons = RefineSolexaGenes_getIntronsAnalysis(rsg);
   CachingSequenceAdaptor *cachingSeqAdaptor = DBAdaptor_getCachingSequenceAdaptor(Slice_getAdaptor(chrSlice)->dba);
 
   int min_intron_size = RefineSolexaGenes_getMinIntronSize(rsg)-1;
@@ -4906,7 +4908,7 @@ void RefineSolexaGenes_bamToIntronFeatures(RefineSolexaGenes *rsg, IntronBamConf
       DNAAlignFeature_setHitEnd     (intFeat, length);
       DNAAlignFeature_setHitStrand  (intFeat, 1);
       DNAAlignFeature_setSlice      (intFeat, chrSlice);
-      DNAAlignFeature_setAnalysis   (intFeat, analysis);
+      DNAAlignFeature_setAnalysis   (intFeat, analysisIntrons);
       DNAAlignFeature_setScore      (intFeat, ic->score);
 // Moved down      DNAAlignFeature_setHitSeqName (intFeat, name);
       char cigStr[256];
@@ -5589,7 +5591,7 @@ void RefineSolexaGenes_dnaToIntronFeatures(RefineSolexaGenes *rsg, long start, l
 
 
   Vector *intFeats = Vector_new();
-  Analysis *analysis = RefineSolexaGenes_getAnalysis(rsg);
+  Analysis *analysisISE = RefineSolexaGenes_getISEAnalysis(rsg);
 
   char sliceName[2048];
   StrUtil_strReplChr(strcpy(sliceName, Slice_getName(chrSlice)), '.', '*');
@@ -5620,7 +5622,7 @@ void RefineSolexaGenes_dnaToIntronFeatures(RefineSolexaGenes *rsg, long start, l
       DNAAlignFeature_setHitEnd     (intFeat, length);
       DNAAlignFeature_setHitStrand  (intFeat, 1);
       DNAAlignFeature_setSlice      (intFeat, chrSlice);
-      DNAAlignFeature_setAnalysis   (intFeat, analysis);
+      DNAAlignFeature_setAnalysis   (intFeat, analysisISE);
       DNAAlignFeature_setScore      (intFeat, ic->score);
       DNAAlignFeature_setHitSeqName (intFeat, name);
       char cigStr[256];
@@ -6483,6 +6485,28 @@ void RefineSolexaGenes_setTypePrefix(RefineSolexaGenes *rsg, char *typePrefix) {
 
 char *RefineSolexaGenes_getTypePrefix(RefineSolexaGenes *rsg) {
   return rsg->typePrefix;
+}
+
+void RefineSolexaGenes_setIntronsAnalysis(RefineSolexaGenes *rsg, char *intronsLn) {
+  if (rsg->analysisIntrons != NULL && Analysis_getDbID((Analysis*)rsg->analysisIntrons) == NULL) {
+    Analysis_free(rsg->analysisIntrons);
+  }
+  rsg->analysisIntrons = RefineSolexaGenes_createAnalysisObject(rsg, intronsLn);
+}
+
+Analysis *RefineSolexaGenes_getIntronsAnalysis(RefineSolexaGenes *rsg) {
+  return rsg->analysisIntrons;
+}
+
+void RefineSolexaGenes_setISEAnalysis(RefineSolexaGenes *rsg, char *iseLn) {
+  if (rsg->analysisISE != NULL && Analysis_getDbID((Analysis*)rsg->analysisISE) == NULL) {
+    Analysis_free(rsg->analysisISE);
+  }
+  rsg->analysisISE = RefineSolexaGenes_createAnalysisObject(rsg, iseLn);
+}
+
+Analysis *RefineSolexaGenes_getISEAnalysis(RefineSolexaGenes *rsg) {
+  return rsg->analysisISE;
 }
 
 Exon *ExonUtils_cloneExon(Exon *exon) {
