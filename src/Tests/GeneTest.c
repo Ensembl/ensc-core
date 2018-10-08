@@ -25,7 +25,9 @@
 
 #include "BaseRODBTest.h"
 
+#ifdef HAVE_LIBTCMALLOC
 #include "gperftools/tcmalloc.h"
+#endif
 #include "ProcUtil.h"
 #define UNW_LOCAL_ONLY
 

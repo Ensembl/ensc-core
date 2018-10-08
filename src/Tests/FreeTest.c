@@ -23,7 +23,9 @@
 #include "DNAAlignFeatureAdaptor.h"
 
 #include "BaseRODBTest.h"
+#ifdef HAVE_LIBTCMALLOC
 #include "gperftools/tcmalloc.h"
+#endif
 
 int main(int argc, char *argv[]) {
   DBAdaptor *dba;
@@ -82,19 +84,25 @@ int main(int argc, char *argv[]) {
   fprintf(stderr, "Average cigar len = "IDFMTSTR"\n", totCigarLen/nFeat);
   ok(5, !failed);
 
+#ifdef HAVE_LIBTCMALLOC
   printf("Before calling Vector_free on features\n");
   tc_malloc_stats();
+#endif
   Vector_free(features);
 
+#ifdef HAVE_LIBTCMALLOC
   MallocExtension_ReleaseFreeMemory();
   printf("After calling Vector_free on features\n");
   tc_malloc_stats();
+#endif
 
   DNAAlignFeatureAdaptor_clearCache(dafa);
 
+#ifdef HAVE_LIBTCMALLOC
   MallocExtension_ReleaseFreeMemory();
   printf("After calling DAFA_cacheClear\n");
   tc_malloc_stats();
+#endif
 
   printf(" I THINK THERE's SOMETHING WRONG IN THE WAY THE ABOVE FREEs AND CLEARS ARE WORKING\n");
   return 0;

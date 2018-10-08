@@ -24,7 +24,9 @@
 
 #include "BaseRODBTest.h"
 #include "BaseRWDBTest.h"
+#ifdef HAVE_LIBTCMALLOC
 #include "gperftools/tcmalloc.h"
+#endif
 
 int main(int argc, char *argv[]) {
   DBAdaptor *dba;
