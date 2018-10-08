@@ -11,7 +11,7 @@ cd src
 ./autogen.sh
 ./runconfig
 make
-Programs/testdbc
+Tests/DBAdaptorTest
 
 
 Some of the programs will not be compiled if their dependencies
