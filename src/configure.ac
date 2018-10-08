@@ -5,7 +5,7 @@ m4_include([./ensc_version.m4])
 m4_include([./ax_lib_mysql.m4])
 
 AC_PREREQ([2.61])
-AC_INIT([EnsC], [VERSION_NUMBER], [annosoft@sanger.ac.uk])
+AC_INIT([EnsC], [VERSION_NUMBER], [dev@ensembl.org])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_SRCDIR([Compara/DataAdaptors/BaseComparaAdaptor.c])
 AM_INIT_AUTOMAKE([1.9 foreign])
