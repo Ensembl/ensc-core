@@ -5,7 +5,7 @@ SUBDIRS = Basic Mapper .
 
 noinst_LTLIBRARIES = libDataModel.la
 
-include_HEADERS = \
+pkginclude_HEADERS = \
 Analysis.h \
 AnnotatedSeqFeature.h \
 AssemblyMapper.h \

@@ -5,7 +5,7 @@ SUBDIRS = .
 
 noinst_LTLIBRARIES = libOBDA.la
 
-include_HEADERS = \
+pkginclude_HEADERS = \
 parsers.h \
 BioIndex.h \
 $(NULL)

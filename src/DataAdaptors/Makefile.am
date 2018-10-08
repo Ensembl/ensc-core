@@ -5,7 +5,7 @@ SUBDIRS = .
 
 noinst_LTLIBRARIES = libDataAdaptors.la
 
-include_HEADERS = \
+pkginclude_HEADERS = \
 AdaptorTypes.h \
 AnalysisAdaptor.h \
 AssemblyMapperAdaptor.h \

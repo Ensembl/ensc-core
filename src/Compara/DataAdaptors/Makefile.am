@@ -5,7 +5,7 @@ SUBDIRS = .
 
 noinst_LTLIBRARIES = libComparaDataAdaptors.la
 
-include_HEADERS = \
+pkginclude_HEADERS = \
 BaseComparaAdaptor.h \
 ComparaAdaptorTypes.h \
 ComparaDBAdaptor.h \

@@ -5,7 +5,7 @@ SUBDIRS = .
 
 noinst_LTLIBRARIES = libDataModelBasic.la
 
-include_HEADERS = \
+pkginclude_HEADERS = \
 Vector.h \
 IDHash.h \
 $(NULL)

@@ -5,7 +5,7 @@ SUBDIRS = .
 
 noinst_LTLIBRARIES = libComparaDataModel.la
 
-include_HEADERS = \
+pkginclude_HEADERS = \
 ComparaDataModelTypes.h \
 DNAFrag.h \
 GenomeDB.h \

@@ -5,7 +5,7 @@ SUBDIRS = .
 
 noinst_LTLIBRARIES = libDataModelMapper.la
 
-include_HEADERS = \
+pkginclude_HEADERS = \
 CoordPair.h \
 IndelCoordinate.h \
 MapperCoordinate.h \

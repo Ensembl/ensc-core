@@ -5,7 +5,7 @@ SUBDIRS = .
 
 noinst_LTLIBRARIES = libUtil.la
 
-include_HEADERS = \
+pkginclude_HEADERS = \
 CHash.h \
 Cache.h \
 EcoString.h \
