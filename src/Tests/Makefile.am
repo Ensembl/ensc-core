@@ -96,7 +96,6 @@ $(top_builddir)/DataModel/libDataModel.la \
 $(top_builddir)/DataAdaptors/libDataAdaptors.la \
 $(top_builddir)/Compara/DataAdaptors/libComparaDataAdaptors.la \
 $(top_builddir)/Compara/DataModel/libComparaDataModel.la \
-$(top_builddir)/OBDA/libOBDA.la \
 $(NULL)
 
 if HAVE_LIBTCMALLOC

@@ -3,7 +3,7 @@
 # Process this file with automake to create Makefile.in.
 #
 
-SUBDIRS = Util DataModel DataAdaptors Compara OBDA Programs Tests
+SUBDIRS = Util DataModel DataAdaptors Compara Tests
 
 ACLOCAL_AMFLAGS = -I m4
 
@@ -20,7 +20,6 @@ DataModel/libDataModel.la \
 DataAdaptors/libDataAdaptors.la \
 Compara/DataModel/libComparaDataModel.la \
 Compara/DataAdaptors/libComparaDataAdaptors.la \
-OBDA/libOBDA.la \
 $(NULL)
 
 

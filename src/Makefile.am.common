@@ -13,7 +13,6 @@ $(MYSQL_CFLAGS) \
 -I$(top_srcdir)/DataModel \
 -I$(top_srcdir)/DataModel/Basic \
 -I$(top_srcdir)/DataModel/Mapper \
--I$(top_srcdir)/OBDA \
 -I$(top_srcdir)/Util \
 $(NULL)
 

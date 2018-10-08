@@ -30,7 +30,6 @@ DataAdaptors/Makefile
 DataModel/Makefile
 DataModel/Basic/Makefile
 DataModel/Mapper/Makefile
-OBDA/Makefile
 Util/Makefile
 Programs/Makefile
 Tests/Makefile
