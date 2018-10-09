@@ -34,6 +34,7 @@ int main(int argc, char *argv[]) {
   Vector *features;
   int i;
   int failed = 0;
+  int testResult = 0;
   
   initEnsC(argc, argv);
 
@@ -41,16 +42,16 @@ int main(int argc, char *argv[]) {
 
   slice = Test_getStandardSlice(dba);
 
-  ok(1, slice!=NULL);
+  testResult += ok(1, slice!=NULL);
 
   dafa = DBAdaptor_getDNAAlignFeatureAdaptor(dba);
 
-  ok(2, dafa!=NULL);
+  testResult += ok(2, dafa!=NULL);
 
   features =  Slice_getAllDNAAlignFeatures(slice,NULL,NULL,NULL,NULL);
 
-  ok(3, features!=NULL);
-  ok(4, Vector_getNumElement(features)!=0);
+  testResult += ok(3, features!=NULL);
+  testResult += ok(4, Vector_getNumElement(features)!=0);
 
   unsigned long long totNameLen=0;
   unsigned long long totHitNameLen=0;
@@ -82,20 +83,14 @@ int main(int argc, char *argv[]) {
   fprintf(stderr, "Average hit name len = "IDFMTSTR"\n", totHitNameLen/nFeat);
   fprintf(stderr, "Average name len = "IDFMTSTR"\n", totNameLen/nFeat);
   fprintf(stderr, "Average cigar len = "IDFMTSTR"\n", totCigarLen/nFeat);
-  ok(5, !failed);
+  testResult += ok(5, !failed);
 
 #ifdef HAVE_LIBTCMALLOC
   printf("Before calling Vector_free on features\n");
   tc_malloc_stats();
 #endif
-  Vector_free(features);
 
-#ifdef HAVE_LIBTCMALLOC
-  MallocExtension_ReleaseFreeMemory();
-  printf("After calling Vector_free on features\n");
-  tc_malloc_stats();
-#endif
-
+  Vector_setFreeFunc(features, Object_freeImpl);
   DNAAlignFeatureAdaptor_clearCache(dafa);
 
 #ifdef HAVE_LIBTCMALLOC
@@ -105,5 +100,5 @@ int main(int argc, char *argv[]) {
 #endif
 
   printf(" I THINK THERE's SOMETHING WRONG IN THE WAY THE ABOVE FREEs AND CLEARS ARE WORKING\n");
-  return 0;
+  return testResult;
 }

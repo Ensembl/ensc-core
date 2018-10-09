@@ -38,6 +38,7 @@ int main(int argc, char *argv[]) {
   Vector *genes = NULL;
   int i = 0;
   int failed = 0;
+  int testResult = 0;
   
   initEnsC(argc, argv);
 
@@ -46,43 +47,39 @@ int main(int argc, char *argv[]) {
   dba = Test_initROEnsDB();
   slice = Test_getStandardSlice(dba);
 
-//  DBAdaptor *seqdba = DBAdaptor_new("genebuild6.internal.sanger.ac.uk","ensadmin","ensembl","steve_chicken_rnaseq_missing_reference",3306,NULL);
-//  dba = DBAdaptor_new("genebuild1.internal.sanger.ac.uk","ensadmin","ensembl","steve_chicken_rnaseq_missing_refined",3306,seqdba);
-
-  ok(1, slice!=NULL);
+  testResult += ok(1, slice!=NULL);
 
   ga = DBAdaptor_getGeneAdaptor(dba);
   SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
 
-  ok(2, ga!=NULL);
+  testResult += ok(2, ga!=NULL);
 
-  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","20",10000000,50000000,1,NULL,0);
-//  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","17",1000000,5000000,1,NULL,0);
-//  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","17",1,5000000,1,NULL,0);
 // Has a seleno
 //  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","1",1000000,27000000,1,NULL,0);
 //  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","MT",1,17000,1,NULL,0);
   genes =  Slice_getAllGenes(slice, NULL, NULL, 1, NULL, NULL);
 
   fprintf(stdout, "Have %d genes\n", Vector_getNumElement(genes));
-  ok(3, genes!=NULL);
-  ok(4, Vector_getNumElement(genes)!=0);
+  testResult += ok(3, genes!=NULL);
+  testResult += ok(4, Vector_getNumElement(genes)!=0);
 
-  failed = dumpGenes(genes, 1);
-  ok(5, !failed);
+//  failed = dumpGenes(genes, 1);
+//  testResult += ok(5, !failed);
 
   //Vector *toplevelSlices = SliceAdaptor_fetchAll(sa, "toplevel", NULL, 0);
-  Vector *toplevelSlices = SliceAdaptor_fetchAll(sa, "chromosome", NULL, 0);
+//  Vector *toplevelSlices = SliceAdaptor_fetchAll(sa, "chromosome", NULL, 0);
+//
+//  for (i=0;i<Vector_getNumElement(toplevelSlices) && !failed;i++) {
+//    Slice *tlSlice = Vector_getElementAt(toplevelSlices, i);
+//    fprintf(stderr, "Slice %s\n", Slice_getName(tlSlice));
+//    genes =  Slice_getAllGenes(tlSlice, NULL, NULL, 1, NULL, NULL);
+//    fprintf(stderr, "Got %d genes on %s\n", Vector_getNumElement(genes), Slice_getName(tlSlice));
+//    failed = dumpGenes(genes, 0);
+//  }
 
-  for (i=0;i<Vector_getNumElement(toplevelSlices) && !failed;i++) {
-    Slice *tlSlice = Vector_getElementAt(toplevelSlices, i);
-    fprintf(stderr, "Slice %s\n", Slice_getName(tlSlice));
-    genes =  Slice_getAllGenes(tlSlice, NULL, NULL, 1, NULL, NULL);
-    fprintf(stderr, "Got %d genes on %s\n", Vector_getNumElement(genes), Slice_getName(tlSlice));
-    failed = dumpGenes(genes, 0);
-  }
-
-  //tc_malloc_stats();
+#ifdef HAVE_LIBTCMALLOC
+  tc_malloc_stats();
+#endif
 
   fprintf(stderr,"\nEcostring table stats:\n");
   EcoString_getInfo(ecoSTable);
@@ -90,7 +87,7 @@ int main(int argc, char *argv[]) {
   fprintf(stderr,"\n");
   ProcUtil_timeInfo("at end of GeneTest");
 
-  return 0;
+  return testResult;
 }
 
 int dumpGenes(Vector *genes, int withSupport) {

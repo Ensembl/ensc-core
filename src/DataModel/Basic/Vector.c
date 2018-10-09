@@ -250,9 +250,7 @@ void Vector_removeAll(Vector *v) {
 void Vector_free(Vector *v) {
   int i;
 
-  //printf("Vector free called\n");
   if (v->isSpecial) {
-    //printf(" - special vector so returning\n");
     return;
   }
 
@@ -267,7 +265,6 @@ void Vector_free(Vector *v) {
 
 
   if (v->freeElement) {
-    //printf(" - freeing vector ELEMENTS\n");
     for (i=0;i<v->nElement;i++) {
       if (v->elements[i]) {
         v->freeElement(v->elements[i]);
@@ -276,5 +273,4 @@ void Vector_free(Vector *v) {
   }
   free(v->elements);
   free(v);
-  //printf(" - done freeing vector\n");
 }

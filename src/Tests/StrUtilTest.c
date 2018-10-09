@@ -22,6 +22,7 @@ char *testStr1 = "the cat sat on the mat";
 char *testStr2 = "pog sog grog hog";
 
 int main(int argc, char *argv[]) {
+  int testResult = 0;
   int count;
   char token[MAXSTRLEN];
   char *chP;
@@ -29,7 +30,7 @@ int main(int argc, char *argv[]) {
   chP = testStr1;
 
   StrUtil_gettok(token,&chP,chP,MAXSTRLEN);
-  ok(1, !strcmp(token,"the"));
+  testResult += ok(1, !strcmp(token,"the"));
 
-  return 0;
+  return testResult;
 }

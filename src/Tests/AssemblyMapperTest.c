@@ -34,7 +34,8 @@ void printCoords(MapperRangeSet *results);
 int main(int argc, char *argv[]) {
   DBAdaptor *dba;
   AssemblyMapperAdaptor *asma;
-  int testNum = 1;
+  int testNum = 0;
+  int testResult = 0;
   
   initEnsC(argc, argv);
 
@@ -45,7 +46,7 @@ int main(int argc, char *argv[]) {
   //
   asma = DBAdaptor_getAssemblyMapperAdaptor(dba);
 
-  ok(testNum++, asma!=NULL);
+  testResult += ok(++testNum, asma!=NULL);
 
 
   //
@@ -56,71 +57,32 @@ int main(int argc, char *argv[]) {
   CoordSystem *ctgCs  = CoordSystemAdaptor_fetchByName(csa, "contig", NULL);
   CoordSystem *chrCs  = CoordSystemAdaptor_fetchByName(csa, "chromosome", NULL);
   CoordSystem *clnCs  = CoordSystemAdaptor_fetchByName(csa, "clone", NULL);
-  CoordSystem *chnkCs = CoordSystemAdaptor_fetchByName(csa, "chunk", NULL);
-  
-  AssemblyMapper *asmMapper =  AssemblyMapperAdaptor_fetchByCoordSystems(asma, chnkCs, chrCs);
-
-  ok(testNum++,  asmMapper!=NULL); // Need to make it an object before can do this && asmMapper->objectType == ( "Bio::EnsEMBL::ChainedAssemblyMapper" ));
-
   MapperRangeSet *coords = NULL ;
 
-  if (asmMapper)
-    {
-      // 
-      // Test if the multi mapping works (meta_key=assembly.mapping entry with #)
-      // 
-  
-      // SMJS Note for now need to explicit use the ChainedAssemblyMapper - should be polymorphic, but I haven't done that bit yet
-      coords =  ChainedAssemblyMapper_map((ChainedAssemblyMapper *)asmMapper, "1", 1, 50, 1, chrCs, 0, NULL );
-      {
-        int testOutput[][4] = {{965905, 10, 59, 1}};
-        ok(testNum++, compareTransform(coords, testOutput, NumOutput(testOutput)));
-      }
-  
-      /*
-        ok(testNum++, coords[0]->id() == 965905);
-        ok(testNum++, $coords[0]->start() == 10 );
-        ok(testNum++, $coords[0]->end() == 59 );
-        ok(testNum++, $coords[0]->strand() == 1 );
-      */
-  
-      coords = ChainedAssemblyMapper_map((ChainedAssemblyMapper *)asmMapper, "multimap_testregion", 100, 800, 1, chnkCs, 0, NULL );
-
-      {
-        int testOutput[][4] = {
-          {469271, 91, 200, 1},
-          {0, 210, 400, 0}, // Gap coords added by me - weren't in perl test
-          {469271, 201, 400, -1},
-          {0, 601, 700, 0}, // Gap coords added by me - weren't in perl test
-          {469282,  1, 100, -1}
-        };
-        ok(testNum++, compareTransform(coords, testOutput, NumOutput(testOutput)));
-      }
-    }
 
 /*
-  ok(testNum++, $coords[0]->id() == 469271 );  #seq_region_id not name now.
-  ok(testNum++, $coords[0]->start() == 91 );
-  ok(testNum++, $coords[0]->end() == 200 );
-  ok(testNum++, $coords[0]->strand() == 1 );
-  
-  ok(testNum++, $coords[1]->isa( "Bio::EnsEMBL::Mapper::Gap" ) );
-  
-  ok(testNum++, $coords[2]->id() == 469271);
-  ok(testNum++, $coords[2]->start() == 201 );
-  ok(testNum++, $coords[2]->end() == 400 );
-  ok(testNum++, $coords[2]->strand() == -1 );
-  
-  ok(testNum++, $coords[4]->id() == 469282);
-  ok(testNum++, $coords[4]->start() == 1 );
-  ok(testNum++, $coords[4]->end() == 100 );
-  ok(testNum++, $coords[4]->strand() == -1 );
+  testResult += ok(++testNum, $coords[0]->id() == 469271 );  #seq_region_id not name now.
+  testResult += ok(++testNum, $coords[0]->start() == 91 );
+  testResult += ok(++testNum, $coords[0]->end() == 200 );
+  testResult += ok(++testNum, $coords[0]->strand() == 1 );
+
+  testResult += ok(++testNum, $coords[1]->isa( "Bio::EnsEMBL::Mapper::Gap" ) );
+
+  testResult += ok(++testNum, $coords[2]->id() == 469271);
+  testResult += ok(++testNum, $coords[2]->start() == 201 );
+  testResult += ok(++testNum, $coords[2]->end() == 400 );
+  testResult += ok(++testNum, $coords[2]->strand() == -1 );
+
+  testResult += ok(++testNum, $coords[4]->id() == 469282);
+  testResult += ok(++testNum, $coords[4]->start() == 1 );
+  testResult += ok(++testNum, $coords[4]->end() == 100 );
+  testResult += ok(++testNum, $coords[4]->strand() == -1 );
 */
   
   
-  asmMapper = AssemblyMapperAdaptor_fetchByCoordSystems(asma, ctgCs, chrCs);
+  AssemblyMapper *asmMapper = AssemblyMapperAdaptor_fetchByCoordSystems(asma, ctgCs, chrCs);
 
-  ok(testNum++, asmMapper!=NULL); // && $asmMapper->isa('Bio::EnsEMBL::AssemblyMapper'));
+  testResult += ok(++testNum, asmMapper!=NULL); // && $asmMapper->isa('Bio::EnsEMBL::AssemblyMapper'));
 
   if (asmMapper)
     {
@@ -134,17 +96,17 @@ int main(int argc, char *argv[]) {
       //
   
       coords = AssemblyMapper_map(asmMapper, "20", 500001, 60000000, 1, chrCs, 0, NULL);
-      ok(testNum++, coords!=NULL);
+      testResult += ok(++testNum, coords!=NULL);
       printCoords(coords);
   
   
       coords = AssemblyMapper_map(asmMapper, "AL359765.6.1.13780", 1, 13780, 1, ctgCs, 0, NULL);
-      ok(testNum++, coords!=NULL);
+      testResult += ok(++testNum, coords!=NULL);
       printCoords(coords);
   
       AssemblyMapper *clnMapper = AssemblyMapperAdaptor_fetchByCoordSystems(asma, clnCs, ctgCs);
       coords = AssemblyMapper_map(clnMapper, "AL359765.6", 1, 20000, 1, clnCs, 0, NULL);
-      ok(testNum++, coords!=NULL);
+      testResult += ok(++testNum, coords!=NULL);
       printCoords(coords);
   
   
@@ -154,7 +116,7 @@ int main(int argc, char *argv[]) {
   
       Vector *seqRegions = AssemblyMapper_listSeqRegions(asmMapper, "20", 500001, 60000000, chrCs);
 
-      ok(testNum++, seqRegions != NULL);
+      testResult += ok(++testNum, seqRegions != NULL);
       int i;
       for (i=0;i<Vector_getNumElement(seqRegions); i++) {
         char *regionName = Vector_getElementAt(seqRegions, i);
@@ -162,7 +124,7 @@ int main(int argc, char *argv[]) {
       }
   
       seqRegions = AssemblyMapper_listSeqRegions(asmMapper, "AL359765.6", 1, 13780, ctgCs);
-      ok(testNum++, seqRegions!=NULL);
+      testResult += ok(++testNum, seqRegions!=NULL);
 
       if (seqRegions) {
         for (i=0;i<Vector_getNumElement(seqRegions); i++) {
@@ -178,7 +140,7 @@ int main(int argc, char *argv[]) {
   
       Vector *seqIds = AssemblyMapper_listIds(asmMapper, "20", 500001, 60000000, chrCs);
 
-      ok(testNum++, seqIds!=NULL);
+      testResult += ok(++testNum, seqIds!=NULL);
 
       if (seqIds) {
         for (i=0;i<Vector_getNumElement(seqIds); i++) {
@@ -188,7 +150,7 @@ int main(int argc, char *argv[]) {
       }
   
       seqIds = AssemblyMapper_listIds(asmMapper, "AL359765.6", 1, 13780, ctgCs);
-      ok(testNum++, seqIds!=NULL);
+      testResult += ok(++testNum, seqIds!=NULL);
 
       if (seqIds) {
         for (i=0;i<Vector_getNumElement(seqIds); i++) {
@@ -198,7 +160,7 @@ int main(int argc, char *argv[]) {
       }
     }
   
-  return 0;
+  return testResult;
 }
 
 

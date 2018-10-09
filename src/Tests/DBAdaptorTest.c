@@ -23,12 +23,13 @@
 
 int main(int argc, char *argv[]) {
   DBAdaptor *dba;
+  int testResult = 0;
 
   initEnsC(argc, argv);
 
   dba = DBAdaptor_new("ensembldb.ensembl.org","anonymous",NULL,"homo_sapiens_core_70_37",3306,NULL);
 
-  ok(1,!strcmp("GRCh37",DBAdaptor_getAssemblyType(dba)));
+  testResult += ok(1,!strcmp("GRCh37",DBAdaptor_getAssemblyType(dba)));
 
-  return 0;
+  return testResult;
 }

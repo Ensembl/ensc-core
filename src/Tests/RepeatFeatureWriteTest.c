@@ -26,6 +26,7 @@
 #include "BaseRWDBTest.h"
 
 int main(int argc, char *argv[]) {
+  int testResult = 0;
   DBAdaptor *dba;
   DBAdaptor *writeDba;
   RepeatFeatureAdaptor *sfa;
@@ -42,12 +43,12 @@ int main(int argc, char *argv[]) {
 
   slice = Test_getStandardSlice(dba);
 
-  ok(1, slice!=NULL);
+  testResult += ok(1, slice!=NULL);
 
   sfa = DBAdaptor_getRepeatFeatureAdaptor(writeDba);
   SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
 
-  ok(2, sfa!=NULL);
+  testResult += ok(2, sfa!=NULL);
 
   //features =  Slice_getAllRepeatFeatures(slice,NULL,NULL, NULL,NULL);
 
@@ -55,10 +56,10 @@ int main(int argc, char *argv[]) {
   Slice *slice2 = SliceAdaptor_fetchByRegion(sa,"chromosome","1",1000000,4000000,1,NULL,0);
   features =  Slice_getAllRepeatFeatures(slice2,NULL,NULL, NULL);
 
-  ok(3, features!=NULL);
-  ok(4, Vector_getNumElement(features)!=0);
+  testResult += ok(3, features!=NULL);
+  testResult += ok(4, Vector_getNumElement(features)!=0);
 
   RepeatFeatureAdaptor_store((BaseFeatureAdaptor*)sfa, features);
 
-  return 0;
+  return testResult;
 }

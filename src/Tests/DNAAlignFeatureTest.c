@@ -34,6 +34,7 @@ int main(int argc, char *argv[]) {
   Vector *features;
   int i;
   int failed;
+  int testResult = 0;
   
   initEnsC(argc, argv);
 
@@ -41,12 +42,12 @@ int main(int argc, char *argv[]) {
 
   slice = Test_getStandardSlice(dba);
 
-  ok(1, slice!=NULL);
+  testResult += ok(1, slice!=NULL);
 
   dafa = DBAdaptor_getDNAAlignFeatureAdaptor(dba);
   SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
 
-  ok(2, dafa!=NULL);
+  testResult += ok(2, dafa!=NULL);
 
   //features =  Slice_getAllDNAAlignFeatures(slice,NULL,NULL, NULL,NULL);
 
@@ -54,8 +55,8 @@ int main(int argc, char *argv[]) {
   //Slice *slice2 = SliceAdaptor_fetchByRegion(sa,"chromosome","Y",1000000,4000000,1,NULL,0);
   features =  Slice_getAllDNAAlignFeatures(slice,NULL,NULL, NULL,NULL);
 
-  ok(3, features!=NULL);
-  ok(4, Vector_getNumElement(features)!=0);
+  testResult += ok(3, features!=NULL);
+  testResult += ok(4, Vector_getNumElement(features)!=0);
 //  MallocExtension_ReleaseFreeMemory();
 //  tc_malloc_stats();
 //  exit(1);
@@ -86,9 +87,9 @@ int main(int argc, char *argv[]) {
     }
 */
   }
-  ok(5, !failed);
+  testResult += ok(5, !failed);
 
-exit(1);
+exit(testResult);
 
 //  fprintf(stderr,"Clearing dafa cache\n");
 //  DNAAlignFeatureAdaptor_clearCache(dafa);
@@ -129,6 +130,6 @@ exit(1);
       }
     }
   }
-  ok(6, !failed);
+  testResult += ok(6, !failed);
   return 0;
 }

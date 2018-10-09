@@ -26,8 +26,8 @@
 #include "BaseTest.h"
 
 void printSlices(Vector *slices);
-void testTopLevelLocation(SliceAdaptor *sa, char *location, char *csName, char *seqRegionName, long start, long end, int strand);
-void testLocationSlice(char *location, Slice *incomingSlice, char *csName, char *seqRegionName, long start, long end, int strand);
+int testTopLevelLocation(SliceAdaptor *sa, char *location, char *csName, char *seqRegionName, long start, long end, int strand);
+int testLocationSlice(char *location, Slice *incomingSlice, char *csName, char *seqRegionName, long start, long end, int strand);
 
 int nTest = 1;
 
@@ -41,14 +41,16 @@ void printSlices(Vector *slices) {
 }
 
 
-void testTopLevelLocation(SliceAdaptor *sa, char *location, char *csName, char *seqRegionName, long start, long end, int strand) {
+int testTopLevelLocation(SliceAdaptor *sa, char *location, char *csName, char *seqRegionName, long start, long end, int strand) {
+  int testResult = 0;
   Slice *incomingSlice = SliceAdaptor_fetchByTopLevelLocation(sa, location, 1, 0);
   fprintf(stderr,"Location test with %s\n", location);
-  testLocationSlice(location, incomingSlice, csName, seqRegionName, start, end, strand);
-  return;
+  testResult += testLocationSlice(location, incomingSlice, csName, seqRegionName, start, end, strand);
+  return testResult;
 }
 
-void testLocationSlice(char *location, Slice *incomingSlice, char *csName, char *seqRegionName, long start, long end, int strand) {
+int testLocationSlice(char *location, Slice *incomingSlice, char *csName, char *seqRegionName, long start, long end, int strand) {
+  int testResult = 0;
   if (strand == STRAND_UNDEF) strand = 1;
 
   int okFlag = 0;
@@ -57,12 +59,12 @@ void testLocationSlice(char *location, Slice *incomingSlice, char *csName, char 
               Slice_getStrand(incomingSlice) == strand &&
               !strcmp(Slice_getSeqRegionName(incomingSlice), seqRegionName) &&
               !strcmp(Slice_getCoordSystemName(incomingSlice), csName));
-  ok(nTest++, okFlag);
+  testResult += ok(nTest++, okFlag);
 
   if (!okFlag) {
     fprintf(stderr, " slice name is %s\n", Slice_getName(incomingSlice)); 
   }
-  return;
+  return testResult;
 }
 
 static char *CHR = "20";
@@ -72,28 +74,27 @@ static long FLANKING = 1000;
 
 
 int main(int argc, char *argv[]) {
+  int testResult = 0;
   DBAdaptor *dba;
   Slice *slice;
   SliceAdaptor *sa;
 
   initEnsC(argc, argv);
 
-  //dba = DBAdaptor_new("ensembldb.ensembl.org","anonymous",NULL,"homo_sapiens_core_70_37",5306,NULL);
-  dba = DBAdaptor_new("ens-livemirror.internal.sanger.ac.uk","ensro",NULL,"homo_sapiens_core_70_37",3306,NULL);
-  //dba = DBAdaptor_new("genebuild2.internal.sanger.ac.uk","ensadmin","ensembl","steve_hs_testdb",3306,NULL);
+  dba = DBAdaptor_new("ensembldb.ensembl.org","anonymous",NULL,"homo_sapiens_core_70_37",3306,NULL);
 
-  ok(nTest++,!strcmp("NCBI34",DBAdaptor_getAssemblyType(dba)));
+  testResult += ok(nTest++,!strcmp("GRCh37",DBAdaptor_getAssemblyType(dba)));
 
   sa = DBAdaptor_getSliceAdaptor(dba);
 
-  ok(nTest++, sa!=NULL);
+  testResult += ok(nTest++, sa!=NULL);
 
   slice = SliceAdaptor_fetchByRegion(sa,"chromosome","1",1,250000000,1,NULL,0);
 
-  ok(nTest++, slice!=NULL);
+  testResult += ok(nTest++, slice!=NULL);
 
   printf("slice name = %s\n",Slice_getName(slice));
-  ok(nTest++, !strcmp(Slice_getName(slice),"chromosome:NCBI33:1:1:250000000:1"));
+  testResult += ok(nTest++, !strcmp(Slice_getName(slice),"chromosome:GRCh37:1:1:250000000:1"));
 
 //  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","Y",1,3000000,1,NULL,0);
   slice = SliceAdaptor_fetchByRegion(sa,"chromosome","1",1,250000000,1,NULL,0);
@@ -111,10 +112,10 @@ int main(int argc, char *argv[]) {
 // fetch_by_region
 //
   slice = SliceAdaptor_fetchByRegion(sa, "chromosome",CHR, START, END, STRAND_UNDEF, NULL, 0);
-  ok(nTest++, !strcmp(Slice_getSeqRegionName(slice), CHR));
-  ok(nTest++, Slice_getStart(slice) == START);
-  ok(nTest++, Slice_getEnd(slice) == END);
-  ok(nTest++, Slice_getSeqRegionLength(slice) == 62842997);
+  testResult += ok(nTest++, !strcmp(Slice_getSeqRegionName(slice), CHR));
+  testResult += ok(nTest++, Slice_getStart(slice) == START);
+  testResult += ok(nTest++, Slice_getEnd(slice) == END);
+  testResult += ok(nTest++, Slice_getSeqRegionLength(slice) == 62842997);
   fprintf(stderr,"slice seq_region length = %ld\n", Slice_getSeqRegionLength(slice));
 
 
@@ -135,12 +136,12 @@ int main(int argc, char *argv[]) {
   long chrEnd   = ProjectionSegment_getFromEnd(p1);
   Slice *contig = ProjectionSegment_getToSlice(p1);
 
-  ok(nTest++, Slice_getLength(contig) == (chrEnd - chrStart + 1));
+  testResult += ok(nTest++, Slice_getLength(contig) == (chrEnd - chrStart + 1));
 
 //  char *seq1 = Slice_getSubSeq(slice, chrStart, chrEnd, 1);
 //  char *seq2 = Slice_getSeq(contig);
 
-//  ok(10, !strcmp(seq1,seq2));
+//  testResult += ok(10, !strcmp(seq1,seq2));
 
 
 #ifdef DONE
@@ -149,8 +150,8 @@ int main(int argc, char *argv[]) {
 #
 #my $fpc_name = 'NT_011387';
 #$slice = $slice_adaptor->fetch_by_supercontig_name($fpc_name);
-#ok($new_slice->chr_start);
-#ok($new_slice->chr_end);
+#testResult += ok($new_slice->chr_start);
+#testResult += ok($new_slice->chr_end);
 
 
 
@@ -160,8 +161,8 @@ int main(int argc, char *argv[]) {
 #my $clone_acc = 'AL031658';
 #$slice = $slice_adaptor->fetch_by_clone_accession($clone_acc);
 #$new_slice = $slice_adaptor->fetch_by_clone_accession($clone_acc, $FLANKING);
-#ok($new_slice->chr_start == $slice->chr_start - $FLANKING);
-#ok($new_slice->chr_end   == $slice->chr_end   + $FLANKING);
+#testResult += ok($new_slice->chr_start == $slice->chr_start - $FLANKING);
+#testResult += ok($new_slice->chr_end   == $slice->chr_end   + $FLANKING);
 
 
 #
@@ -172,8 +173,8 @@ $slice = $slice_adaptor->fetch_by_transcript_stable_id($t_stable_id);
 my $new_slice = $slice_adaptor->fetch_by_transcript_stable_id($t_stable_id,
                                                            $FLANKING);
 
-ok($new_slice->start == $slice->start - $FLANKING);
-ok($new_slice->end   == $slice->end   + $FLANKING);
+testResult += ok($new_slice->start == $slice->start - $FLANKING);
+testResult += ok($new_slice->end   == $slice->end   + $FLANKING);
 
 
 #
@@ -183,9 +184,9 @@ my $transcript = $db->get_TranscriptAdaptor->fetch_by_stable_id($t_stable_id);
 my $tid = $transcript->dbID;
 $slice = $slice_adaptor->fetch_by_transcript_id($tid);
 $new_slice = $slice_adaptor->fetch_by_transcript_id($tid, $FLANKING);
-ok($new_slice->start == $slice->start - $FLANKING);
-ok($new_slice->end   == $slice->end   + $FLANKING);
-ok($slice->seq_region_length == 62842997);
+testResult += ok($new_slice->start == $slice->start - $FLANKING);
+testResult += ok($new_slice->end   == $slice->end   + $FLANKING);
+testResult += ok($slice->seq_region_length == 62842997);
 debug("new slice seq_region length = " . $new_slice->seq_region_length());
 
 #
@@ -194,8 +195,8 @@ debug("new slice seq_region length = " . $new_slice->seq_region_length());
 my $g_stable_id = 'ENSG00000125964';
 $slice = $slice_adaptor->fetch_by_gene_stable_id($g_stable_id);
 $new_slice = $slice_adaptor->fetch_by_gene_stable_id($g_stable_id, $FLANKING);
-ok($new_slice->start == $slice->start - $FLANKING);
-ok($new_slice->end   == $slice->end   + $FLANKING);
+testResult += ok($new_slice->start == $slice->start - $FLANKING);
+testResult += ok($new_slice->end   == $slice->end   + $FLANKING);
 
 #verify we can retrieve the gene from this slice
 my $gene_found = 0;
@@ -205,7 +206,7 @@ foreach my $g (@{$slice->get_all_Genes}) {
     last;
   }
 }
-ok($gene_found);
+testResult += ok($gene_found);
 
 # same test for flanking slice
 $gene_found = 0;
@@ -215,7 +216,7 @@ foreach my $g (@{$new_slice->get_all_Genes}) {
     last;
   }
 }
-ok($gene_found);
+testResult += ok($gene_found);
 
 #endif
 
@@ -224,8 +225,8 @@ ok($gene_found);
 //  fetch_by_region (entire region)
 //
   slice = SliceAdaptor_fetchByRegion(sa, "chromosome", CHR, POS_UNDEF, POS_UNDEF, STRAND_UNDEF, NULL, 0);
-  ok(nTest++, !strcmp(Slice_getSeqRegionName(slice), CHR));
-  ok(nTest++, Slice_getStart(slice) == 1);
+  testResult += ok(nTest++, !strcmp(Slice_getSeqRegionName(slice), CHR));
+  testResult += ok(nTest++, Slice_getStart(slice) == 1);
 
 #ifdef DONE
 
@@ -237,9 +238,9 @@ $slice = $slice_adaptor->fetch_by_misc_feature_attribute('superctg',
                                                          'NT_030871',
                                                          $flanking);
 
-ok($slice->seq_region_name eq '20');
-ok($slice->start == 59707812 - $flanking);
-ok($slice->end   == 60855021 + $flanking);
+testResult += ok($slice->seq_region_name eq '20');
+testResult += ok($slice->start == 59707812 - $flanking);
+testResult += ok($slice->end   == 60855021 + $flanking);
 
 #endif
 
@@ -265,13 +266,13 @@ ok($slice->end   == 60855021 + $flanking);
     fprintf(stderr, "-----------\n" );
   }
 
-  ok(nTest++,  Vector_getNumElement(results) == 3 );
+  testResult += ok(nTest++,  Vector_getNumElement(results) == 3 );
   
   if (Vector_getNumElement(results) > 1) {
     ProjectionSegment *par1 = Vector_getElementAt(results, 1);
-    ok(nTest++,  !strcmp(Slice_getSeqRegionName(ProjectionSegment_getToSlice(par1)), "20") );
+    testResult += ok(nTest++,  !strcmp(Slice_getSeqRegionName(ProjectionSegment_getToSlice(par1)), "20") );
   } else {
-    ok(nTest++,  0);
+    testResult += ok(nTest++,  0);
   }
 
 //
@@ -292,11 +293,11 @@ ok($slice->end   == 60855021 + $flanking);
     fprintf(stderr, "-----------\n" );
   }
 
-  ok(nTest++,  Vector_getNumElement(results) == 3 );
+  testResult += ok(nTest++,  Vector_getNumElement(results) == 3 );
   char *correctHapNames[] = {"20","20_HAP1","20"};
   for (i=0; i<Vector_getNumElement(results); i++) {
     ProjectionSegment *projection = Vector_getElementAt(results, i);
-    ok(nTest++,  !strcmp(Slice_getSeqRegionName(ProjectionSegment_getToSlice(projection)), correctHapNames[i]) );
+    testResult += ok(nTest++,  !strcmp(Slice_getSeqRegionName(ProjectionSegment_getToSlice(projection)), correctHapNames[i]) );
   }
 
 
@@ -306,9 +307,9 @@ ok($slice->end   == 60855021 + $flanking);
 
   fprintf(stderr,"Projection from chromosome 20 to supercontig\n");
   results = Slice_project(slice, "supercontig", NULL);
-  ok(nTest++, Vector_getNumElement(results) == 1);
+  testResult += ok(nTest++, Vector_getNumElement(results) == 1);
   ProjectionSegment *p0 = Vector_getElementAt(results, 0);
-  ok(nTest++,  !strcmp(Slice_getSeqRegionName(ProjectionSegment_getToSlice(p0)), "NT_028392") );
+  testResult += ok(nTest++,  !strcmp(Slice_getSeqRegionName(ProjectionSegment_getToSlice(p0)), "NT_028392") );
 
   for (i=0; i<Vector_getNumElement(results); i++) {
     ProjectionSegment *projection = Vector_getElementAt(results, i);
@@ -324,9 +325,9 @@ ok($slice->end   == 60855021 + $flanking);
   fprintf(stderr, "Projection from clone AL121583.25 to supercontig\n");
 
   results = Slice_project(slice,"supercontig", NULL);
-  ok(nTest++, Vector_getNumElement(results) == 1);
+  testResult += ok(nTest++, Vector_getNumElement(results) == 1);
   p0 = Vector_getElementAt(results, 0);
-  ok(nTest++,  !strcmp(Slice_getSeqRegionName(ProjectionSegment_getToSlice(p0)), "NT_028392") );
+  testResult += ok(nTest++,  !strcmp(Slice_getSeqRegionName(ProjectionSegment_getToSlice(p0)), "NT_028392") );
   for (i=0; i<Vector_getNumElement(results); i++) {
     ProjectionSegment *projection = Vector_getElementAt(results, i);
     fprintf(stderr, "Start: %ld\n",  ProjectionSegment_getFromStart(projection) );
@@ -366,9 +367,9 @@ $slice_adaptor->store($ctg_slice, \$seq);
 
 $ctg_slice = $slice_adaptor->fetch_by_region('contig', $name);
 
-ok($ctg_slice->length == $ctg_len);
-ok($ctg_slice->seq eq $seq);
-ok($ctg_slice->seq_region_name eq $name);
+testResult += ok($ctg_slice->length == $ctg_len);
+testResult += ok($ctg_slice->seq eq $seq);
+testResult += ok($ctg_slice->seq_region_name eq $name);
 
 #
 # Store a slice without sequence
@@ -388,9 +389,9 @@ my $chr_slice = Bio::EnsEMBL::Slice->new(-COORD_SYSTEM    => $chr_cs,
 $slice_adaptor->store($chr_slice);
 
 $chr_slice = $slice_adaptor->fetch_by_region('chromosome', $name);
-ok($chr_slice->length() == $chr_len);
-ok($chr_slice->seq_region_length() == $chr_len);
-ok($chr_slice->seq_region_name eq $name);
+testResult += ok($chr_slice->length() == $chr_len);
+testResult += ok($chr_slice->seq_region_length() == $chr_len);
+testResult += ok($chr_slice->seq_region_name eq $name);
 
 #
 # Store an assembly between the slices
@@ -399,19 +400,19 @@ my $asm_start = 9999;
 my $asm_slice = $chr_slice->sub_Slice( $asm_start, $asm_start + $ctg_len - 1 );
 my $str = $slice_adaptor->store_assembly( $asm_slice, $ctg_slice );
 
-ok( $str eq "chromosome:NCBI33:testregion2:9999:10048:1<>".
+testResult += ok( $str eq "chromosome:NCBI33:testregion2:9999:10048:1<>".
             "contig::testregion:1:50:1" );
 
 my $ctg_map = $chr_slice->project( $ctg_cs->name, $ctg_cs->version );
 # Test currently fails as assembly cached somewhere.
-#ok( @$ctg_map == 1 and
+#testResult += ok( @$ctg_map == 1 and
 #    $ctg_map->[0]->[0] == $asm_slice->start and
 #    $ctg_map->[0]->[1] == $asm_slice->end and
 #    $ctg_map->[0]->[2]->name eq $ctg_slice->name );
 
 my $chr_map = $ctg_slice->project( $chr_cs->name, $chr_cs->version );
 # Test currently fails as assembly cached somewhere.
-#ok( @$chr_map == 1 and
+#testResult += ok( @$chr_map == 1 and
 #    $chr_map->[0]->[0] == $ctg_slice->start and
 #    $chr_map->[0]->[1] == $ctg_slice->end and
 #    $chr_map->[0]->[2]->name eq $chr_slice->name );
@@ -442,7 +443,7 @@ print_features($sfs1);
 my $sfs2 = $slice->get_all_SimpleFeatures();
 print_features($sfs2);
 
-ok(@$sfs1 == @$sfs2);
+testResult += ok(@$sfs1 == @$sfs2);
 
 #endif
 
@@ -451,28 +452,28 @@ ok(@$sfs1 == @$sfs2);
 //
   slice = SliceAdaptor_fetchByName(sa, Slice_getName(slice));
 
-  ok(nTest++, !strcmp(CoordSystem_getName(Slice_getCoordSystem(slice)), "chromosome"));
-  ok(nTest++, !strcmp(Slice_getSeqRegionName(slice), "20"));
-  ok(nTest++, Slice_getStart(slice) == -10);
-  ok(nTest++, Slice_getStrand(slice) == 1);
-  ok(nTest++, Slice_getEnd(slice) == 35000000);
+  testResult += ok(nTest++, !strcmp(CoordSystem_getName(Slice_getCoordSystem(slice)), "chromosome"));
+  testResult += ok(nTest++, !strcmp(Slice_getSeqRegionName(slice), "20"));
+  testResult += ok(nTest++, Slice_getStart(slice) == -10);
+  testResult += ok(nTest++, Slice_getStrand(slice) == 1);
+  testResult += ok(nTest++, Slice_getEnd(slice) == 35000000);
 
   slice = SliceAdaptor_fetchByName(sa, "clone::AL121583.25:1:10000:-1");
 
-  ok(nTest++, !strcmp(CoordSystem_getName(Slice_getCoordSystem(slice)), "clone"));
-  ok(nTest++, !strcmp(Slice_getSeqRegionName(slice), "AL121583.25"));
-  ok(nTest++, Slice_getStart(slice) == 1);
-  ok(nTest++, Slice_getStrand(slice) == -1);
-  ok(nTest++, Slice_getEnd(slice) == 10000);
+  testResult += ok(nTest++, !strcmp(CoordSystem_getName(Slice_getCoordSystem(slice)), "clone"));
+  testResult += ok(nTest++, !strcmp(Slice_getSeqRegionName(slice), "AL121583.25"));
+  testResult += ok(nTest++, Slice_getStart(slice) == 1);
+  testResult += ok(nTest++, Slice_getStrand(slice) == -1);
+  testResult += ok(nTest++, Slice_getEnd(slice) == 10000);
 
   slice = SliceAdaptor_fetchByName(sa, "clone::AL121583.25:1::");
 
   fprintf(stderr,"debug: slice name %s\n", Slice_getName(slice));
-  ok(nTest++, !strcmp(CoordSystem_getName(Slice_getCoordSystem(slice)), "clone"));
-  ok(nTest++, !strcmp(Slice_getSeqRegionName(slice), "AL121583.25"));
-  ok(nTest++, Slice_getStart(slice) == 1);
-  ok(nTest++, Slice_getStrand(slice) == 1);
-  ok(nTest++, Slice_getEnd(slice) == 84710);
+  testResult += ok(nTest++, !strcmp(CoordSystem_getName(Slice_getCoordSystem(slice)), "clone"));
+  testResult += ok(nTest++, !strcmp(Slice_getSeqRegionName(slice), "AL121583.25"));
+  testResult += ok(nTest++, Slice_getStart(slice) == 1);
+  testResult += ok(nTest++, Slice_getStrand(slice) == 1);
+  testResult += ok(nTest++, Slice_getEnd(slice) == 84710);
 
 
 //
@@ -483,17 +484,17 @@ ok(@$sfs1 == @$sfs2);
   Vector *slices = SliceAdaptor_fetchAll(sa, "chromosome", NULL, 0);
   printSlices(slices);
 
-  ok(nTest++, Vector_getNumElement(slices) == 63); //, 'References slices for coord system chromosome');
+  testResult += ok(nTest++, Vector_getNumElement(slices) == 63); //, 'References slices for coord system chromosome');
 
 // include duplicates
   slices = SliceAdaptor_fetchAll(sa, "chromosome", NULL, SA_INCLUDE_DUPLICATES);
   printSlices(slices);
 
-  ok(nTest++, Vector_getNumElement(slices) == 62); //is(@$slices, 62, 'References slices for coord system chromosome when including duplicates (Y should become 1 region not 2)'); 
+  testResult += ok(nTest++, Vector_getNumElement(slices) == 62); //is(@$slices, 62, 'References slices for coord system chromosome when including duplicates (Y should become 1 region not 2)'); 
 
   slices = SliceAdaptor_fetchAll(sa, "contig", NULL, 0);
 
-  ok(nTest++, Vector_getNumElement(slices) == 13);
+  testResult += ok(nTest++, Vector_getNumElement(slices) == 13);
   printSlices(slices);
 
 
@@ -501,7 +502,7 @@ ok(@$sfs1 == @$sfs2);
   slices = SliceAdaptor_fetchAll(sa, "toplevel", NULL, 0);
 
   slice = Vector_getElementAt(slices,0);
-  ok(nTest++, Vector_getNumElement(slices) == 1 && !strcmp(Slice_getSeqRegionName(slice), "20"));
+  testResult += ok(nTest++, Vector_getNumElement(slices) == 1 && !strcmp(Slice_getSeqRegionName(slice), "20"));
   printSlices(slices);
 
 //
@@ -520,31 +521,31 @@ ok(@$sfs1 == @$sfs2);
   if (strstr(regionName, cloneName) == regionName && strlen(regionName) > strlen(cloneName)+2 && StrUtil_isLongInteger(&ver,&(regionName[lenCloneName+2]))) {
     okFlag = 1;
   }
-  ok(nTest++, okFlag);
+  testResult += ok(nTest++, okFlag);
 
 //make sure that it does not fuzzy match too much
   slice = SliceAdaptor_fetchByRegion(sa, "contig", cloneName, POS_UNDEF,POS_UNDEF,STRAND_UNDEF, NULL, 0);
-  ok(nTest++, slice == NULL);
+  testResult += ok(nTest++, slice == NULL);
 //print_slices([$slice]);
 
 //make sure that you can fetch a seq_region without knowing its version
   slice = SliceAdaptor_fetchByRegion(sa, NULL, "20", POS_UNDEF,POS_UNDEF,STRAND_UNDEF, NULL, 0);
-  ok(nTest++, slice!=NULL && !strcmp(Slice_getSeqRegionName(slice), "20"));
+  testResult += ok(nTest++, slice!=NULL && !strcmp(Slice_getSeqRegionName(slice), "20"));
 
   slice = SliceAdaptor_fetchByRegion(sa, "toplevel", "20", POS_UNDEF,POS_UNDEF,STRAND_UNDEF, NULL, 0);
-  ok(nTest++, slice!=NULL && !strcmp(Slice_getSeqRegionName(slice), "20"));
+  testResult += ok(nTest++, slice!=NULL && !strcmp(Slice_getSeqRegionName(slice), "20"));
 
   slice = SliceAdaptor_fetchByRegion(sa, "toplevel", "20", 10, 20, STRAND_UNDEF, NULL, 0);
-  ok(nTest++, slice!=NULL && Slice_getStart(slice) == 10 && Slice_getEnd(slice) == 20);
+  testResult += ok(nTest++, slice!=NULL && Slice_getStart(slice) == 10 && Slice_getEnd(slice) == 20);
 
   slice = SliceAdaptor_fetchByRegion(sa, NULL, "20", 10, 20, 1,"NCBI33", 0);
-  ok(nTest++, slice!=NULL && !strcmp(Slice_getSeqRegionName(slice), "20"));
+  testResult += ok(nTest++, slice!=NULL && !strcmp(Slice_getSeqRegionName(slice), "20"));
 
   slice = SliceAdaptor_fetchByRegion(sa, NULL, "20", 10, 20, 1,"bogus", 0);
-  ok(nTest++, slice == NULL);
+  testResult += ok(nTest++, slice == NULL);
 
   slice = SliceAdaptor_fetchByRegion(sa, "toplevel", "20", 10, 20, 1, "bogus", 0);
-  ok(nTest++, slice!=NULL && !strcmp(Slice_getSeqRegionName(slice), "20"));
+  testResult += ok(nTest++, slice!=NULL && !strcmp(Slice_getSeqRegionName(slice), "20"));
 
   // try fuzzy matching in conjunction with coord system guessing
   slice = SliceAdaptor_fetchByRegion(sa, NULL, cloneName, POS_UNDEF,POS_UNDEF,STRAND_UNDEF, NULL, 0);
@@ -553,7 +554,7 @@ ok(@$sfs1 == @$sfs2);
   if (strstr(regionName, cloneName) == regionName && strlen(regionName) > strlen(cloneName)+2 && StrUtil_isLongInteger(&ver,&(regionName[lenCloneName+2]))) {
     okFlag = 1;
   }
-  ok(nTest++, okFlag);
+  testResult += ok(nTest++, okFlag);
 
 #ifdef DONE
 
@@ -589,42 +590,42 @@ $sth->finish();
 
 $slice = $slice_adaptor->fetch_by_region('toplevel', 'TESTREGION');
 
-ok($slice->seq_region_name() eq 'TESTREGION');
-ok($slice->coord_system()->name() eq 'chromosome');
+testResult += ok($slice->seq_region_name() eq 'TESTREGION');
+testResult += ok($slice->coord_system()->name() eq 'chromosome');
 
 
 $multi->restore('core', 'seq_region');
 #endif
 
 //###### FETCH BY LOCATION
-  testTopLevelLocation(sa, "1:1-1000", "chromosome",  "1", 1, 1000, 1);
+  testResult += testTopLevelLocation(sa, "1:1-1000", "chromosome",  "1", 1, 1000, 1);
 // Silly  testTopLevelLocation(sa, "1:1-", "chromosome",  "1", 1, 246874334, 1);
 // Silly  testTopLevelLocation(sa, "1:-10", "chromosome",  "1", 1, 10, 1);
-  testTopLevelLocation(sa, "1:100", "chromosome",  "1", 100, 246874334, 1);
+  testResult += testTopLevelLocation(sa, "1:100", "chromosome",  "1", 100, 246874334, 1);
 // Silly  testTopLevelLocation(sa, "1:", "chromosome",  "1", 1, 246874334, 1);
-  testTopLevelLocation(sa, "1", "chromosome",  "1", 1, 246874334, 1);
+  testResult += testTopLevelLocation(sa, "1", "chromosome",  "1", 1, 246874334, 1);
   
-  testTopLevelLocation(sa, "1:1..1000", "chromosome",  "1", 1, 1000, 1);
+  testResult += testTopLevelLocation(sa, "1:1..1000", "chromosome",  "1", 1, 1000, 1);
 // Silly  testTopLevelLocation(sa, "1:1..", "chromosome",  "1", 1, 246874334, 1);
 // Silly  testTopLevelLocation(sa, "1:..10", "chromosome",  "1", 1, 10, 1);
-  testTopLevelLocation(sa, "1:100", "chromosome",  "1", 100, 246874334, 1);
+  testResult += testTopLevelLocation(sa, "1:100", "chromosome",  "1", 100, 246874334, 1);
 // Silly  testTopLevelLocation(sa, "1:", "chromosome",  "1", 1, 246874334, 1);
-  testTopLevelLocation(sa, "1", "chromosome",  "1", 1, 246874334, 1);
+  testResult += testTopLevelLocation(sa, "1", "chromosome",  "1", 1, 246874334, 1);
   
-  testTopLevelLocation(sa, "1: 1-1,000", "chromosome",  "1", 1, 1000, 1);
-  testTopLevelLocation(sa, "1: 1-1,000,000", "chromosome",  "1", 1, 1000000, 1);
-  testTopLevelLocation(sa, "1: 1-1 000 000", "chromosome",  "1", 1, 1000000, 1);
-  testTopLevelLocation(sa, "1: 1", "chromosome",  "1", 1, 246874334, 1);
+  testResult += testTopLevelLocation(sa, "1: 1-1,000", "chromosome",  "1", 1, 1000, 1);
+  testResult += testTopLevelLocation(sa, "1: 1-1,000,000", "chromosome",  "1", 1, 1000000, 1);
+  testResult += testTopLevelLocation(sa, "1: 1-1 000 000", "chromosome",  "1", 1, 1000000, 1);
+  testResult += testTopLevelLocation(sa, "1: 1", "chromosome",  "1", 1, 246874334, 1);
 // Silly  testTopLevelLocation(sa, "1: -10", "chromosome",  "1", 1, 10, 1);
-  testTopLevelLocation(sa, "1: 100", "chromosome",  "1", 100, 246874334, 1);
-  testTopLevelLocation(sa, "1:100..2_000_000_000", "chromosome",  "1", 100, 246874334, 1);
-  testTopLevelLocation(sa, "1:100..2E9", "chromosome",  "1", 100, 246874334, 1);
+  testResult += testTopLevelLocation(sa, "1: 100", "chromosome",  "1", 100, 246874334, 1);
+  testResult += testTopLevelLocation(sa, "1:100..2_000_000_000", "chromosome",  "1", 100, 246874334, 1);
+  testResult += testTopLevelLocation(sa, "1:100..2E9", "chromosome",  "1", 100, 246874334, 1);
   
   //#Try strands
-  testTopLevelLocation(sa, "1:1-1000:1", "chromosome",  "1", 1, 1000, 1);
-  testTopLevelLocation(sa, "1:1-1000:-1", "chromosome",  "1", 1, 1000, -1);
-  testTopLevelLocation(sa, "1:1-1000:+", "chromosome",  "1", 1, 1000, 1);
-  testTopLevelLocation(sa, "1:1-1000:-", "chromosome",  "1", 1, 1000, -1);
+  testResult += testTopLevelLocation(sa, "1:1-1000:1", "chromosome",  "1", 1, 1000, 1);
+  testResult += testTopLevelLocation(sa, "1:1-1000:-1", "chromosome",  "1", 1, 1000, -1);
+  testResult += testTopLevelLocation(sa, "1:1-1000:+", "chromosome",  "1", 1, 1000, 1);
+  testResult += testTopLevelLocation(sa, "1:1-1000:-", "chromosome",  "1", 1, 1000, -1);
 // Silly  testTopLevelLocation(sa, "1:1-1000..1", "chromosome",  "1", 1, 1000, 1);
 // Silly  testTopLevelLocation(sa, "1:1-1000--1", "chromosome",  "1", 1, 1000, -1);
 
@@ -632,8 +633,8 @@ $multi->restore('core', 'seq_region');
 dies_ok { $slice_adaptor->fetch_by_toplevel_location(); } 'Checking calling without a location fails';
 dies_ok { $slice_adaptor->fetch_by_toplevel_location('', 1); } 'Checking calling with a blank location fails';
 dies_ok { $slice_adaptor->fetch_by_toplevel_location('1:1_000_000_000..100', 1); } 'Checking calling with an excessive start throws an error';
-ok(!defined $slice_adaptor->fetch_by_toplevel_location('wibble', 1), 'Checking with a bogus region returns undef');
-ok(!defined $slice_adaptor->fetch_by_toplevel_location('1:-100--50', 1), 'Checking with a bogus region with negative coords returns undef');
+testResult += ok(!defined $slice_adaptor->fetch_by_toplevel_location('wibble', 1), 'Checking with a bogus region returns undef');
+testResult += ok(!defined $slice_adaptor->fetch_by_toplevel_location('1:-100--50', 1), 'Checking with a bogus region with negative coords returns undef');
 
 # Try without toplevel_location
 {
@@ -652,9 +653,9 @@ ok(!defined $slice_adaptor->fetch_by_toplevel_location('1:-100--50', 1), 'Checki
   #Non standard name check
   my ($name, $start, $end, $strand) = $slice_adaptor->parse_location_to_values('GL21446.1');
   is($name, 'GL21446.1', 'Name parses out');
-  ok(!defined $start, 'Start is undefined');
-  ok(!defined $end, 'End is undefined');
-  ok(!defined $strand, 'Strand is undefined');
+  testResult += ok(!defined $start, 'Start is undefined');
+  testResult += ok(!defined $end, 'End is undefined');
+  testResult += ok(!defined $strand, 'Strand is undefined');
 }
 
 ############# METHODS BELOW HERE 
@@ -677,5 +678,5 @@ done_testing();
 #endif
 
 
-  return 0;
+  return testResult;
 }

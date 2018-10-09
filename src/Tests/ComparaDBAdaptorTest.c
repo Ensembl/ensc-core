@@ -23,11 +23,13 @@
 
 int main(int argc, char *argv[]) {
   ComparaDBAdaptor *cdba;
+  int testResult = 0;
 
   initEnsC(argc, argv);
 
-  cdba = ComparaDBAdaptor_new("kaka.sanger.ac.uk","anonymous",NULL,"ensembl_compara_14_1",3306,"Tests/Compara.conf");
+  cdba = ComparaDBAdaptor_new("ensembldb.ensembl.org","anonymous",NULL,"ensembl_compara_24_1",4306,"Tests/Compara.conf");
 
+  testResult += ok(1, cdba!=NULL);
 
-  return 0;
+  return testResult;
 }

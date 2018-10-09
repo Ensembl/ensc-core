@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
   Slice *slice = NULL;
   Vector *dnaAligns;
   int i;
+  int testResult = 0;
   
   initEnsC(argc, argv);
 
@@ -36,16 +37,16 @@ int main(int argc, char *argv[]) {
 
   slice = Test_getStandardSlice(cdba);
 
-  ok(1, slice!=NULL);
+  testResult += ok(1, slice!=NULL);
 
   cdafa = ComparaDBAdaptor_getComparaDNAAlignFeatureAdaptor(cdba);
 
-  ok(2, cdafa!=NULL);
+  testResult += ok(2, cdafa!=NULL);
 
-  dnaAligns = ComparaDNAAlignFeatureAdaptor_fetchAllBySlice(cdafa,slice,"mus musculus","NCBIM30","WGA");
+  dnaAligns = ComparaDNAAlignFeatureAdaptor_fetchAllBySlice(cdafa,slice,"mus musculus","NCBIM33","WGA");
 
-  ok(3, dnaAligns!=NULL);
-  ok(4, Vector_getNumElement(dnaAligns)!=0);
+  testResult += ok(3, dnaAligns!=NULL);
+  testResult += ok(4, Vector_getNumElement(dnaAligns)!=0);
 
   for (i=0; i<Vector_getNumElement(dnaAligns); i++) {
     DNAAlignFeature *daf = Vector_getElementAt(dnaAligns,i);
@@ -62,5 +63,5 @@ int main(int argc, char *argv[]) {
                                          DNAAlignFeature_getStrand(daf)));
   }
 
-  return 0;
+  return testResult;
 }

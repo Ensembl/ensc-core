@@ -29,6 +29,7 @@
 #endif
 
 int main(int argc, char *argv[]) {
+  int testResult = 0;
   DBAdaptor *dba;
   DBAdaptor *writeDba;
   GeneAdaptor *ga;
@@ -45,20 +46,20 @@ int main(int argc, char *argv[]) {
 
   slice = Test_getStandardSlice(dba);
 
-  ok(1, slice!=NULL);
+  testResult += ok(1, slice!=NULL);
 
   ga = DBAdaptor_getGeneAdaptor(writeDba);
   SliceAdaptor *sa = DBAdaptor_getSliceAdaptor(dba);
 
-  ok(2, ga!=NULL);
+  testResult += ok(2, ga!=NULL);
 
   //genes =  Slice_getAllGenes(slice,NULL,NULL, NULL,NULL);
 
 //  Slice *slice2 = SliceAdaptor_fetchByRegion(sa,"chromosome","1",1000000,4000000,1,NULL,0);
   genes =  Slice_getAllGenes(slice,NULL,NULL,1,NULL,NULL);
 
-  ok(3, genes!=NULL);
-  ok(4, Vector_getNumElement(genes)!=0);
+  testResult += ok(3, genes!=NULL);
+  testResult += ok(4, Vector_getNumElement(genes)!=0);
 
   fprintf(stderr,"Have %d genes to store\n", Vector_getNumElement(genes));
   for (i=0; i<Vector_getNumElement(genes); i++) {
@@ -68,5 +69,5 @@ int main(int argc, char *argv[]) {
     GeneAdaptor_store(ga, gene, 1);
   }
 
-  return 0;
+  return testResult;
 }

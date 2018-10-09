@@ -139,6 +139,34 @@ TranslateTest_LDADD = $(TEST_LIBS)
 VectorTest_LDADD = $(TEST_LIBS)
 
 
+TESTS = ${check_PROGRAMS}
+
+check_PROGRAMS = \
+AssemblyMapperTest \
+CacheTest \
+CigarStrUtilTest \
+ClassTest \
+ComparaDBAdaptorTest \
+CoordSystemTest \
+DBAdaptorTest \
+DNAAlignFeatureTest \
+DNAPepAlignFeatureTest \
+EcoStringTest \
+FreeTest \
+GeneTest \
+MapperTest \
+PredictionTranscriptTest \
+RepeatFeatureTest \
+SeqUtilTest \
+SequenceAdaptorTest \
+SimpleFeatureTest \
+StrUtilTest \
+StreamTest \
+SyntenyTest \
+TopLevelAssemblyMapperTest \
+TranslateTest \
+VectorTest
+
 # Extra files to remove for the maintainer-clean target.
 #
 MAINTAINERCLEANFILES = $(top_srcdir)/Tests/Makefile.in

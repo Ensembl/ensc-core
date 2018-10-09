@@ -36,7 +36,7 @@ Slice *Test_getStandardSlice(DBAdaptor *dba) {
 
   sa = DBAdaptor_getSliceAdaptor(dba);
 
-  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","20",1000000,260000000,1,NULL,0);
+  slice = SliceAdaptor_fetchByRegion(sa,"chromosome","20",1000000,2600000,1,NULL,0);
 
   return slice;
 }

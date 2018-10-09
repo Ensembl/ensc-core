@@ -21,9 +21,10 @@
 
 int main(int argc, char *argv[]) {
   char transTab[4][4][4];
+  int testResult = 0;
 
   initEnsC(argc, argv);
-  SeqUtil_readTransTab("../data/trans0.txt",transTab);
+  SeqUtil_readTransTab("../data/gc.prt",transTab);
 
-  return 0;
+  return testResult;
 }

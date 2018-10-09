@@ -24,6 +24,7 @@
 #include "BaseRODBTest.h"
 
 int main(int argc, char *argv[]) {
+  int testResult = 0;
   DBAdaptor *dba;
   RepeatFeatureAdaptor *rfa;
   Slice *slice;
@@ -37,16 +38,16 @@ int main(int argc, char *argv[]) {
 
   slice = Test_getStandardSlice(dba);
 
-  ok(1, slice!=NULL);
+  testResult += ok(1, slice!=NULL);
 
   rfa = DBAdaptor_getRepeatFeatureAdaptor(dba);
 
-  ok(2, rfa!=NULL);
+  testResult += ok(2, rfa!=NULL);
 
   features =  Slice_getAllRepeatFeatures(slice,NULL,NULL, NULL);
 
-  ok(3, features!=NULL);
-  ok(4, Vector_getNumElement(features)!=0);
+  testResult += ok(3, features!=NULL);
+  testResult += ok(4, Vector_getNumElement(features)!=0);
 
   failed = 0;
   for (i=0;i<Vector_getNumElement(features) && !failed;i++) {
@@ -74,6 +75,6 @@ int main(int argc, char *argv[]) {
     }
 */
   }
-  ok(5, !failed);
-  return 0;
+  testResult += ok(5, !failed);
+  return testResult;
 }

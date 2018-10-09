@@ -24,6 +24,7 @@
 #include "BaseComparaDBTest.h"
 
 int main(int argc, char *argv[]) {
+  int testResult = 0;
   ComparaDBAdaptor *cdba;
   GenomicAlignAdaptor *gaa;
   Slice *slice = NULL;
@@ -38,16 +39,16 @@ int main(int argc, char *argv[]) {
 
   slice = Test_getStandardSlice(cdba);
 
-  ok(1, slice!=NULL);
+  testResult += ok(1, slice!=NULL);
 
   gaa = ComparaDBAdaptor_getGenomicAlignAdaptor(cdba);
 
-  ok(2, gaa!=NULL);
+  testResult += ok(2, gaa!=NULL);
 
   homolList =  GenomicAlignAdaptor_listStableIdsFromSpecies(gaa,"homo sapiens");
 
-  ok(3, homolList!=NULL);
-  ok(4, Vector_getNumElement(homolList)!=0);
+  testResult += ok(3, homolList!=NULL);
+  testResult += ok(4, Vector_getNumElement(homolList)!=0);
 
   for (i=0;i<Vector_getNumElement(homolList);i++) {
     char *sid = Vector_getElementAt(homolList,i);
@@ -68,5 +69,5 @@ int main(int argc, char *argv[]) {
     Vector_free(geneHomols,NULL);
   }
 
-  return 0;
+  return testResult;
 }
