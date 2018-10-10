@@ -3,13 +3,11 @@ include $(top_srcdir)/Makefile.am.common
 
 SUBDIRS = .
 
-noinst_bindir = $(abs_top_builddir)/bin
-
 #
 # PROGRAMS
 #
 
-noinst_bin_PROGRAMS = \
+noinst_PROGRAMS = \
 AssemblyMapperTest \
 CacheTest \
 ChainedAssemblyMapperTest \
