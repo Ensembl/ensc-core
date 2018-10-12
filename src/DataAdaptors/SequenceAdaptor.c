@@ -92,38 +92,42 @@ SequenceAdaptor *SequenceAdaptor_new(DBAdaptor *dba) {
 // in a  hash.
 //
 
-  char *qStr = "SELECT sra.seq_region_id, sra.value "
-               "FROM seq_region_attrib sra, attrib_type at "
-               "WHERE sra.attrib_type_id = at.attrib_type_id "
-               "AND code like '_rna_edit'";
+  CoordSystem *lrgcs = CoordSystemAdaptor_fetchByName(DBAdaptor_getCoordSystemAdaptor(dba), "lrg", NULL);
+  if (lrgcs != NULL) {
+    char *qStr = "SELECT sra.seq_region_id, sra.value "
+                 "FROM seq_region_attrib sra, attrib_type at "
+                 "WHERE sra.attrib_type_id = at.attrib_type_id "
+                 "AND code like '_rna_edit'";
 
-  StatementHandle *sth = sa->prepare((BaseAdaptor *)sa,qStr,strlen(qStr));
-  
-  sth->execute(sth);
+    fprintf(stderr, "%s\n", qStr);
+    StatementHandle *sth = sa->prepare((BaseAdaptor *)sa,qStr,strlen(qStr));
 
-  IDHash *edits = IDHash_new(IDHASH_SMALL);
+    sth->execute(sth);
 
-  int count = 0;
-  ResultRow *row;
-  while ((row = sth->fetchRow(sth))){
-    IDType seqRegionId = row->getLongLongAt(row, 0);
-    char *value        = row->getStringAt(row, 1);
+    IDHash *edits = IDHash_new(IDHASH_SMALL);
 
-    count++;
-    if (! IDHash_contains(edits, seqRegionId)) {
-      IDHash_add(edits, seqRegionId, Vector_new());
+    int count = 0;
+    ResultRow *row;
+    while ((row = sth->fetchRow(sth))){
+      IDType seqRegionId = row->getLongLongAt(row, 0);
+      char *value        = row->getStringAt(row, 1);
+
+      count++;
+      if (! IDHash_contains(edits, seqRegionId)) {
+        IDHash_add(edits, seqRegionId, Vector_new());
+      }
+      Vector *vec = IDHash_getValue(edits, seqRegionId);
+
+      char *tmp;
+      Vector_addElement(vec, StrUtil_copyString(&tmp, value, 0));
     }
-    Vector *vec = IDHash_getValue(edits, seqRegionId);
+    sth->finish(sth);
 
-    char *tmp;
-    Vector_addElement(vec, StrUtil_copyString(&tmp, value, 0));
-  }
-  sth->finish(sth);
-
-  if (count) {
-    sa->rnaEditsCache = edits;
-  } else {
-    IDHash_free(edits, NULL);
+    if (count) {
+      sa->rnaEditsCache = edits;
+    } else {
+      IDHash_free(edits, NULL);
+    }
   }
   
   return sa;
