@@ -4,4 +4,4 @@ compiler:
   - gcc
   - clang
 
-script: cd src && ./runconfig && make check
+script: cd src && ./autogen.sh && ./runconfig && make check
