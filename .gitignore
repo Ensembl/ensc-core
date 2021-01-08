@@ -58,3 +58,6 @@ src/Programs/.deps
 src/Programs/*.o
 src/Programs/Makefile.in
 src/Programs/*.dSYM
+
+# Files from the tests
+src/Tests/*.trs
