@@ -1,0 +1,5 @@
+compiler:
+  - gcc
+  - clang
+
+script: cd src && ./runconfig && make check
