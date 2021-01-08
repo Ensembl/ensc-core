@@ -55,6 +55,7 @@ void SequenceAdaptor_initFunc() {
 
 char * SequenceAdaptor_fetchSeq(SequenceAdaptor *sa, IDType seqRegionId, long start, long length);
 void SequenceAdaptor_rnaEdit(SequenceAdaptor *sa, Slice *slice, char **seqPP, int recLev);
+void SequenceAdaptor_initialiseRnaEdit(SequenceAdaptor *sa);
 /*
 =head2 new
 
@@ -92,40 +93,6 @@ SequenceAdaptor *SequenceAdaptor_new(DBAdaptor *dba) {
 // in a  hash.
 //
 
-  char *qStr = "SELECT sra.seq_region_id, sra.value "
-               "FROM seq_region_attrib sra, attrib_type at "
-               "WHERE sra.attrib_type_id = at.attrib_type_id "
-               "AND code like '_rna_edit'";
-
-  StatementHandle *sth = sa->prepare((BaseAdaptor *)sa,qStr,strlen(qStr));
-  
-  sth->execute(sth);
-
-  IDHash *edits = IDHash_new(IDHASH_SMALL);
-
-  int count = 0;
-  ResultRow *row;
-  while ((row = sth->fetchRow(sth))){
-    IDType seqRegionId = row->getLongLongAt(row, 0);
-    char *value        = row->getStringAt(row, 1);
-
-    count++;
-    if (! IDHash_contains(edits, seqRegionId)) {
-      IDHash_add(edits, seqRegionId, Vector_new());
-    }
-    Vector *vec = IDHash_getValue(edits, seqRegionId);
-
-    char *tmp;
-    Vector_addElement(vec, StrUtil_copyString(&tmp, value, 0));
-  }
-  sth->finish(sth);
-
-  if (count) {
-    sa->rnaEditsCache = edits;
-  } else {
-    IDHash_free(edits, NULL);
-  }
-  
   return sa;
 }
 
@@ -309,6 +276,9 @@ char *SequenceAdaptor_fetchBySliceStartEndStrandRecursive(SequenceAdaptor *sa,
   // flanking gaps (if the slice is past the edges of the seqregion)
   CoordSystemAdaptor *csa = DBAdaptor_getCoordSystemAdaptor(sa->dba);
   CoordSystem *seqLevelCs = CoordSystemAdaptor_fetchSeqLevel(csa);
+  if (sa->rnaEditsCache == NULL && strcmp(Slice_getCoordSystemName(slice), "lrg") == 0) {
+    SequenceAdaptor_initialiseRnaEdit(sa);
+  }
 
   Vector *projection = Slice_project(slice, CoordSystem_getName(seqLevelCs), CoordSystem_getVersion(seqLevelCs));
 
@@ -827,3 +797,39 @@ sub fetch_by_RawContig_start_end_strand {
 
 
 */
+
+void SequenceAdaptor_initialiseRnaEdit(SequenceAdaptor *sa) {
+  char *qStr = "SELECT sra.seq_region_id, sra.value "
+               "FROM seq_region_attrib sra, attrib_type at "
+               "WHERE sra.attrib_type_id = at.attrib_type_id "
+               "AND code like '_rna_edit'";
+
+  StatementHandle *sth = sa->prepare((BaseAdaptor *)sa,qStr,strlen(qStr));
+
+  sth->execute(sth);
+
+  IDHash *edits = IDHash_new(IDHASH_SMALL);
+
+  int count = 0;
+  ResultRow *row;
+  while ((row = sth->fetchRow(sth))){
+    IDType seqRegionId = row->getLongLongAt(row, 0);
+    char *value        = row->getStringAt(row, 1);
+
+    count++;
+    if (! IDHash_contains(edits, seqRegionId)) {
+      IDHash_add(edits, seqRegionId, Vector_new());
+    }
+    Vector *vec = IDHash_getValue(edits, seqRegionId);
+
+    char *tmp;
+    Vector_addElement(vec, StrUtil_copyString(&tmp, value, 0));
+  }
+  sth->finish(sth);
+
+  if (count) {
+    sa->rnaEditsCache = edits;
+  } else {
+    IDHash_free(edits, NULL);
+  }
+}
